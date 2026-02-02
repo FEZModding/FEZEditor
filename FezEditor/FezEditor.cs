@@ -19,8 +19,16 @@ public class FezEditor : Game
     private static void Main(string[] args)
     {
         Logging.Initialize();
-        using var editor = new FezEditor();
-        editor.Run();
+        Environment.SetEnvironmentVariable("FNA3D_FORCE_DRIVER", "OpenGL");
+        try
+        {
+            using var editor = new FezEditor();
+            editor.Run();
+        }
+        catch (Exception e)
+        {
+            Logger.Fatal(e, "Unhandled Exception");
+        }
     }
     
     private FezEditor()
