@@ -1,4 +1,6 @@
-﻿using Microsoft.Xna.Framework;
+﻿using FezEditor.Components;
+using FezEditor.Services;
+using Microsoft.Xna.Framework;
 using Serilog;
 using Serilog.Core;
 
@@ -9,6 +11,8 @@ public class FezEditor : Game
     private static readonly ILogger Logger = Logging.Create<FezEditor>();
     
     private readonly GraphicsDeviceManager _deviceManager;
+
+    private ImGuiService? _imGuiService;
     
     [STAThread]
     private static void Main(string[] args)
@@ -33,13 +37,28 @@ public class FezEditor : Game
 
     protected override void Initialize()
     {
+        Services.AddService(typeof(ImGuiService), _imGuiService = new ImGuiService(this));
+        
+        Components.Add(new TestComponent(this));
+        
         base.Initialize();
-        Logger.Information("Hello, world!");
     }
 
     protected override void Draw(GameTime gameTime)
     {
-        GraphicsDevice.Clear(Color.CornflowerBlue);
+        GraphicsDevice.Clear(new Color(0.2f, 0.2f, 0.294f));
+        
+        _imGuiService?.BeforeLayout(gameTime);
+        
         base.Draw(gameTime);
+        
+        _imGuiService?.AfterLayout();
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        _imGuiService?.Dispose();
+        
+        base.Dispose(disposing);
     }
 }
