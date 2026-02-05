@@ -1,4 +1,6 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System.Diagnostics;
+using System.Runtime.InteropServices;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 using NVector2 = System.Numerics.Vector2;
@@ -407,18 +409,53 @@ public static class ImGuiX
     #region Extensions
 
     // XNA -> System.Numerics
-    private static NVector2 ToNumerics(this Vector2 v) => new(v.X, v.Y);
-    private static NVector3 ToNumerics(this Vector3 v) => new(v.X, v.Y, v.Z);
-    private static NVector4 ToNumerics(this Vector4 v) => new(v.X, v.Y, v.Z, v.W);
-    private static NVector3 ToNumerics3(this Color c) => c.ToVector3().ToNumerics();
-    private static NVector4 ToNumerics4(this Color c) => c.ToVector4().ToNumerics();
+    public static NVector2 ToNumerics(this Vector2 v) => new(v.X, v.Y);
+    public static NVector3 ToNumerics(this Vector3 v) => new(v.X, v.Y, v.Z);
+    public static NVector4 ToNumerics(this Vector4 v) => new(v.X, v.Y, v.Z, v.W);
+    public static NVector3 ToNumerics3(this Color c) => c.ToVector3().ToNumerics();
+    public static NVector4 ToNumerics4(this Color c) => c.ToVector4().ToNumerics();
 
     // System.Numerics -> XNA
-    private static Vector2 ToXna(this NVector2 v) => new(v.X, v.Y);
-    private static Vector3 ToXna(this NVector3 v) => new(v.X, v.Y, v.Z);
-    private static Vector4 ToXna(this NVector4 v) => new(v.X, v.Y, v.Z, v.W);
-    private static Color ToXnaColor(this NVector3 v) => new(v.X, v.Y, v.Z);
-    private static Color ToXnaColor(this NVector4 v) => new(v.X, v.Y, v.Z, v.W);
+    public static Vector2 ToXna(this NVector2 v) => new(v.X, v.Y);
+    public static Vector3 ToXna(this NVector3 v) => new(v.X, v.Y, v.Z);
+    public static Vector4 ToXna(this NVector4 v) => new(v.X, v.Y, v.Z, v.W);
+    public static Color ToXnaColor(this NVector3 v) => new(v.X, v.Y, v.Z);
+    public static Color ToXnaColor(this NVector4 v) => new(v.X, v.Y, v.Z, v.W);
 
+    #endregion
+    
+    #region Additions
+
+    public static void Hyperlink(string label, string url)
+    {
+        ImGui.Text(label);
+        var min = ImGui.GetItemRectMin();
+        var max = ImGui.GetItemRectMax();
+        ImGui.GetWindowDrawList().AddLine(
+            new NVector2(min.X, max.Y), max, 
+            new Color(100, 150, 255, 255).PackedValue);
+
+        if (ImGui.IsItemClicked())
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                url = url.Replace("&", "^&");
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                Process.Start("xdg-open", url);
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                Process.Start("open", url);
+            }
+            else
+            {
+                throw new NotSupportedException("Unsupported OS");
+            }
+        }
+    }
+    
     #endregion
 }

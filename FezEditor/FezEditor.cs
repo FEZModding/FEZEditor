@@ -1,7 +1,6 @@
 ﻿using FezEditor.Components;
 using FezEditor.Services;
 using FezEditor.Tools;
-using ImGuiNET;
 using Microsoft.Xna.Framework;
 using Serilog;
 
@@ -40,7 +39,7 @@ public class FezEditor : Game
             PreferredBackBufferWidth = 1280,
             PreferredBackBufferHeight = 720,
             IsFullScreen = false,
-            SynchronizeWithVerticalRetrace = true,
+            SynchronizeWithVerticalRetrace = true
         };
         IsMouseVisible = true;
         Window.AllowUserResizing = true;
@@ -52,7 +51,7 @@ public class FezEditor : Game
         _rendering = this.CreateService<IRenderingService, RenderingService>();
         
         this.CreateComponent<TestComponent>();
-        this.CreateComponent<ContentExtractor>();
+        this.CreateComponent<MenuBar>();
         
         base.Initialize();
     }
