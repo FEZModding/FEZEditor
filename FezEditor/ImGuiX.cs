@@ -456,6 +456,12 @@ public static class ImGuiX
             }
         }
     }
+
+    public static void SetNextWindowCentered()
+    {
+        var center = ImGui.GetMainViewport().GetCenter();
+        ImGui.SetNextWindowPos(center, ImGuiCond.Appearing, NVector2.One / 2f);
+    }
     
     #endregion
 }

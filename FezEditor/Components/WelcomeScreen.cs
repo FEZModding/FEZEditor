@@ -14,6 +14,8 @@ public class WelcomeScreen : DrawableGameComponent
 
     private bool _open = true;
 
+    private ResourceExtractor? _resourceExtractor;
+
     public WelcomeScreen(Game game) : base(game)
     {
     }
@@ -32,7 +34,7 @@ public class WelcomeScreen : DrawableGameComponent
 
         if (ImGui.Begin("Start", ref _open,
                 ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar |
-                ImGuiWindowFlags.NoMove))
+                ImGuiWindowFlags.NoMove | ImGuiWindowFlags.AlwaysAutoResize))
         {
             ImGuiX.Image(_logoTexture, new Vector2(64, 64));
             ImGui.NewLine();
@@ -41,7 +43,7 @@ public class WelcomeScreen : DrawableGameComponent
 
             if (ImGui.Button("Open PAK..."))
             {
-                FileDialog.Show(FileDialog.Type.OpenFile, CreatePakService, new FileDialog.Options
+                FileDialog.Show(FileDialog.Type.OpenFile, OpenPakFile, new FileDialog.Options
                 {
                     Title = "Choose PAK file...",
                     Filters = new FileDialog.Filter[]
@@ -53,13 +55,13 @@ public class WelcomeScreen : DrawableGameComponent
 
             if (ImGui.Button("Open assets directory..."))
             {
-                FileDialog.Show(FileDialog.Type.OpenFolder, CreateDirService, new FileDialog.Options
+                FileDialog.Show(FileDialog.Type.OpenFolder, OpenDirectory, new FileDialog.Options
                 {
                     Title = "Choose assets directory..."
                 });
             }
 
-            if (ImGui.Button("Extract assets and open..."))
+            if (ImGui.Button("Extract assets and open them..."))
             {
                 var selectOptions = new FileDialog.Options
                 {
@@ -73,11 +75,14 @@ public class WelcomeScreen : DrawableGameComponent
 
                 FileDialog.Show(FileDialog.Type.OpenFile, source =>
                     {
-                        FileDialog.Show(FileDialog.Type.OpenFolder,
-                            target => CreateContentExtractor(source, target), new FileDialog.Options
-                            {
-                                Title = "Choose a directory to save assets..."
-                            });
+                        if (source.Files.Length > 0)
+                        {
+                            FileDialog.Show(FileDialog.Type.OpenFolder,
+                                target => ExtractPaksAndOpenDirectory(source, target), new FileDialog.Options
+                                {
+                                    Title = "Choose a directory to save assets..."
+                                });
+                        }
                     },
                     selectOptions);
             }
@@ -86,18 +91,16 @@ public class WelcomeScreen : DrawableGameComponent
         ImGui.End();
     }
 
-    private void CreateContentExtractor(FileDialog.Result source, FileDialog.Result target)
+    private void ExtractPaksAndOpenDirectory(FileDialog.Result source, FileDialog.Result target)
     {
-    }
-
-    private void CreatePakService(FileDialog.Result result)
-    {
-        if (result.Files.Length > 0)
+        if (source.Files.Length > 0 && target.Files.Length > 0 && _resourceExtractor == null)
         {
             try
             {
-                var pakService = Game.CreateService<IResourceService, PakResourceService>();
-                pakService.Initialize(new FileInfo(result.Files[0]));
+                _resourceExtractor = Game.CreateComponent<ResourceExtractor>();
+                _resourceExtractor.Disposed += (_, _) => { _resourceExtractor = null; };
+                _resourceExtractor.Initialize(source.Files, target.Files[0]);
+                _resourceExtractor.Competed += () => OpenDirectory(target);
             }
             catch (Exception ex)
             {
@@ -106,7 +109,24 @@ public class WelcomeScreen : DrawableGameComponent
         }
     }
 
-    private void CreateDirService(FileDialog.Result result)
+    private void OpenPakFile(FileDialog.Result result)
+    {
+        if (result.Files.Length > 0)
+        {
+            try
+            {
+                var pakService = Game.CreateService<IResourceService, PakResourceService>();
+                pakService.Initialize(new FileInfo(result.Files[0]));
+                Game.RemoveComponent(this);
+            }
+            catch (Exception ex)
+            {
+                Game.CreateComponent<ModalWindow>().Show(ex.Message, "Error occured!");
+            }
+        }
+    }
+
+    private void OpenDirectory(FileDialog.Result result)
     {
         if (result.Files.Length > 0)
         {
@@ -114,6 +134,7 @@ public class WelcomeScreen : DrawableGameComponent
             {
                 var dirService = Game.CreateService<IResourceService, DirResourceService>();
                 dirService.Initialize(new DirectoryInfo(result.Files[0]));
+                Game.RemoveComponent(this);
             }
             catch (Exception ex)
             {

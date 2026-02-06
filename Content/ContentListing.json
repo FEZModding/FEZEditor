@@ -1,11 +1,4 @@
-{
-  "PakFiles": [
-    "Essentials.pak",
-    "Music.pak",
-    "Other.pak",
-    "Updates.pak"
-  ],
-  "Listing": [
+[
     "MapTree",
     "Art Objects\\16_BIT_DOORAO",
     "Art Objects\\1_BIT_DOORAO",
@@ -2761,5 +2754,4 @@
     "Trile Sets\\WALL",
     "Trile Sets\\XU",
     "Trile Sets\\ZU"
-  ]
-}
+]
