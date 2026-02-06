@@ -14,6 +14,8 @@ public class DirResourceService : IResourceService
     public string Root => _directory.Name;
 
     public IEnumerable<string> Files => _files.Keys;
+    
+    public event Action? Refreshed;
 
     private readonly Dictionary<string, FileInfo> _files = new(StringComparer.OrdinalIgnoreCase);
 
@@ -83,8 +85,9 @@ public class DirResourceService : IResourceService
         foreach (var file in _directory.EnumerateFiles("*", SearchOption.AllDirectories))
         {
             var path = file.FullName.WithoutBaseDirectory(_directory.FullName);
-            var filePath = path.Replace(path.GetExtension(), "");
-            _files[filePath] = file;
+            var normalizedPath = path.Replace(path.GetExtension(), "").Replace('\\', '/');
+            _files[normalizedPath] = file;
         }
+        Refreshed?.Invoke();
     }
 }

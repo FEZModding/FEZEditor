@@ -1,4 +1,5 @@
-﻿using ImGuiNET;
+﻿using FezEditor.Services;
+using ImGuiNET;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 
@@ -23,6 +24,8 @@ public class FileBrowser : DrawableGameComponent
 
     private SortMode _sortMode = SortMode.NameAscending;
 
+    private readonly IResourceService _resourceService;
+
     private enum SortMode
     {
         NameAscending,
@@ -31,13 +34,15 @@ public class FileBrowser : DrawableGameComponent
         TypeDescending
     }
 
-    public FileBrowser(Game game) : base(game)
+    public FileBrowser(Game game, IResourceService resourceService) : base(game)
     {
+        _resourceService = resourceService;
+        _resourceService.Refreshed += UpdateNodeTree;
     }
 
-    protected override void LoadContent()
+    public override void Initialize()
     {
-        _root = LoadDirectory(@"D:\Projects\fez-assets\Assets");
+        UpdateNodeTree();
     }
 
     public override void Draw(GameTime gameTime)
@@ -54,6 +59,7 @@ public class FileBrowser : DrawableGameComponent
                     _selected = _selectionHistory[_historyIndex];
                     _path = _selected.Path;
                 }
+
                 ImGui.EndDisabled();
 
                 ImGui.SameLine();
@@ -64,6 +70,7 @@ public class FileBrowser : DrawableGameComponent
                     _selected = _selectionHistory[_historyIndex];
                     _path = _selected.Path;
                 }
+
                 ImGui.EndDisabled();
 
                 ImGui.SameLine();
@@ -79,7 +86,8 @@ public class FileBrowser : DrawableGameComponent
                         // Add to selection history
                         if (_historyIndex < _selectionHistory.Count - 1)
                         {
-                            _selectionHistory.RemoveRange(_historyIndex + 1, _selectionHistory.Count - _historyIndex - 1);
+                            _selectionHistory.RemoveRange(_historyIndex + 1,
+                                _selectionHistory.Count - _historyIndex - 1);
                         }
 
                         if (_selectionHistory.Count == 0 || _selectionHistory[^1] != node)
@@ -108,24 +116,28 @@ public class FileBrowser : DrawableGameComponent
 
                     if (ImGui.MenuItem("Name (A-Z)", null, _sortMode == SortMode.NameAscending))
                     {
-                        SortAllNodes(SortMode.NameAscending);
+                        _sortMode = SortMode.NameAscending;
+                        SortAllNodes();
                     }
 
                     if (ImGui.MenuItem("Name (Z-A)", null, _sortMode == SortMode.NameDescending))
                     {
-                        SortAllNodes(SortMode.NameDescending);
+                        _sortMode = SortMode.NameDescending;
+                        SortAllNodes();
                     }
 
                     ImGui.Separator();
 
                     if (ImGui.MenuItem("Type (A-Z)", null, _sortMode == SortMode.TypeAscending))
                     {
-                        SortAllNodes(SortMode.TypeAscending);
+                        _sortMode = SortMode.TypeAscending;
+                        SortAllNodes();
                     }
 
                     if (ImGui.MenuItem("Type (Z-A)", null, _sortMode == SortMode.TypeDescending))
                     {
-                        SortAllNodes(SortMode.TypeDescending);
+                        _sortMode = SortMode.TypeDescending;
+                        SortAllNodes();
                     }
 
                     ImGui.EndPopup();
@@ -148,7 +160,7 @@ public class FileBrowser : DrawableGameComponent
 
                 _tree.Clear();
                 _tree.Push((_root, false));
-                
+
                 while (_tree.Count > 0)
                 {
                     var (node, shouldPop) = _tree.Pop();
@@ -187,7 +199,8 @@ public class FileBrowser : DrawableGameComponent
                         // Remove any forward history if we're not at the end
                         if (_historyIndex < _selectionHistory.Count - 1)
                         {
-                            _selectionHistory.RemoveRange(_historyIndex + 1, _selectionHistory.Count - _historyIndex - 1);
+                            _selectionHistory.RemoveRange(_historyIndex + 1,
+                                _selectionHistory.Count - _historyIndex - 1);
                         }
 
                         // Only add if it's different from the last selection
@@ -232,63 +245,78 @@ public class FileBrowser : DrawableGameComponent
         ImGui.End();
     }
 
-    private static FileNode LoadDirectory(string path)
+    protected override void Dispose(bool disposing)
     {
-        var rootNode = new FileNode
+        _resourceService.Refreshed -= UpdateNodeTree;
+        base.Dispose(disposing);
+    }
+
+    private void UpdateNodeTree()
+    {
+        BuildNodeTree();
+        SortAllNodes();
+    }
+
+    private void BuildNodeTree()
+    {
+        _root = new FileNode
         {
-            Name = Path.GetFileName(path),
-            Path = path,
+            Name = _resourceService.Root,
+            Path = _resourceService.Root,
             IsDirectory = true,
-            Depth = 0,
-            Extension = ""
+            Depth = 0
         };
 
-        var queue = new Queue<FileNode>();
-        queue.Enqueue(rootNode);
-
-        while (queue.Count > 0)
+        var lookup = new Dictionary<string, FileNode>
         {
-            var currentNode = queue.Dequeue();
-            if (!currentNode.IsDirectory)
-            {
-                continue;
-            }
+            [""] = _root
+        };
 
-            try
+        foreach (var path in _resourceService.Files)
+        {
+            var segments = path.Split('/');
+            var currentPath = "";
+
+            // Build directory nodes first
+            for (var i = 0; i < segments.Length - 1; i++)
             {
-                var entries = Directory.GetFileSystemEntries(currentNode.Path);
-                foreach (var entry in entries)
+                var parentPath = currentPath;
+                currentPath = string.IsNullOrEmpty(parentPath) 
+                    ? segments[i] 
+                    : $"{parentPath}/{segments[i]}";
+
+                if (!lookup.ContainsKey(currentPath))
                 {
-                    var isDirectory = Directory.Exists(entry);
-                    var child = new FileNode
+                    var parentNode = lookup[parentPath];
+                    var dirNode = new FileNode
                     {
-                        Name = Path.GetFileName(entry),
-                        Path = entry,
-                        IsDirectory = isDirectory,
-                        Depth = currentNode.Depth + 1,
-                        Extension = isDirectory ? "" : Path.GetExtension(entry).TrimStart('.')
+                        Name = segments[i],
+                        Path = _root.Path + "/" + currentPath,
+                        IsDirectory = true,
+                        Depth = parentNode.Depth + 1
                     };
-
-                    currentNode.Children.Add(child);
-                    if (child.IsDirectory)
-                    {
-                        queue.Enqueue(child);
-                    }
+                    
+                    parentNode.Children.Add(dirNode);
+                    lookup[currentPath] = dirNode;
                 }
-
-                // Sort directories first, then files alphabetically (default sort)
-                currentNode.Children = currentNode.Children
-                    .OrderByDescending(n => n.IsDirectory)
-                    .ThenBy(n => n.Name, StringComparer.OrdinalIgnoreCase)
-                    .ToList();
             }
-            catch (UnauthorizedAccessException)
+            
+            // Add the file node
+            var fileName = segments[^1];
+            var fileParentPath = string.Join('/', segments.Take(segments.Length - 1));
+            var parentNodeForFile = lookup[fileParentPath];
+            
+            var fileNode = new FileNode
             {
-                // Handle permission errors
-            }
+                Name = fileName,
+                Path = _root.Path + "/" + path,
+                IsDirectory = false,
+                Depth = parentNodeForFile.Depth + 1,
+                Extension = Path.GetExtension(fileName)
+            };
+            
+            parentNodeForFile.Children.Add(fileNode);
         }
-
-        return rootNode;
     }
 
     private FileNode? FindNodeByPath(string path)
@@ -330,17 +358,18 @@ public class FileBrowser : DrawableGameComponent
             {
                 patternIndex++;
             }
+
             textIndex++;
         }
 
         return patternIndex == pattern.Length;
     }
 
-    private void SortAllNodes(SortMode sortMode)
+    private void SortAllNodes()
     {
-        _sortMode = sortMode;
         var stack = new Stack<FileNode>();
         stack.Push(_root!);
+        
         while (stack.Count > 0)
         {
             var node = stack.Pop();
@@ -348,7 +377,7 @@ public class FileBrowser : DrawableGameComponent
             {
                 continue;
             }
-            
+
             node.Children = _sortMode switch
             {
                 SortMode.NameAscending => node.Children
@@ -372,7 +401,7 @@ public class FileBrowser : DrawableGameComponent
                     .ThenByDescending(n => n.Extension, StringComparer.OrdinalIgnoreCase)
                     .ThenBy(n => n.Name, StringComparer.OrdinalIgnoreCase)
                     .ToList(),
-            
+
                 _ => node.Children
             };
 
@@ -383,7 +412,7 @@ public class FileBrowser : DrawableGameComponent
         }
     }
 
-    public class FileNode
+    private class FileNode
     {
         public string Name { get; init; } = "";
         public string Path { get; init; } = "";

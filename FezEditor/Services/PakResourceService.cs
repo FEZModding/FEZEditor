@@ -13,6 +13,8 @@ public class PakResourceService : IResourceService
 
     public IEnumerable<string> Files => _records.Keys;
     
+    public event Action? Refreshed;
+
     private readonly Dictionary<string, string> _records = new(StringComparer.OrdinalIgnoreCase);
     
     private FileInfo _pakFile = null!;
@@ -82,7 +84,10 @@ public class PakResourceService : IResourceService
         _records.Clear();
         foreach (var record in reader.ReadFiles())
         {
-            _records[record.Path] = record.FindExtension();
+            var normalizedPath = record.Path.Replace('\\', '/');
+            _records[normalizedPath] = record.FindExtension();
         }
+        
+        Refreshed?.Invoke();
     }
 }

@@ -7,6 +7,8 @@ public interface IResourceService
     string Root { get; }
     
     IEnumerable<string> Files { get; }
+    
+    event Action? Refreshed;
 
     void Initialize(FileSystemInfo info);
 
