@@ -24,10 +24,8 @@ public class FileBrowser : DrawableGameComponent
     private int _historyIndex = -1;
 
     private SortMode _sortMode = SortMode.NameAscending;
-
-    private readonly IEditorService _editorService;
     
-    private IResourceService? _resourceService;
+    private readonly IResourceService _resourceService;
 
     private enum SortMode
     {
@@ -37,26 +35,16 @@ public class FileBrowser : DrawableGameComponent
         TypeDescending
     }
 
-    public FileBrowser(Game game, IEditorService editorService) : base(game)
-    {
-        _editorService = editorService;
-        _editorService.ResourcesChanged += OnResourcesChanged;
-    }
-
-    private void OnResourcesChanged(IResourceService? resourceService)
+    public FileBrowser(Game game, IResourceService resourceService) : base(game)
     {
         _resourceService = resourceService;
-        if (_resourceService != null)
-        {
-            _resourceService.Refreshed += UpdateNodeTree;
-            
-        }
-        UpdateNodeTree();
+        _resourceService.ProviderOpened += UpdateNodeTree;
+        _resourceService.ProviderClosed += UpdateNodeTree;
     }
 
     public void Draw()
     {
-        if (_resourceService == null)
+        if (_resourceService.Provider == null)
         {
             ImGui.TextDisabled("No resources loaded.");
         }
@@ -170,8 +158,6 @@ public class FileBrowser : DrawableGameComponent
     {
         if (ImGui.BeginChild("FileTree") && _root != null)
         {
-            // Reduce tree node padding for more compact display
-            ImGuiX.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(4, 2));
             // Check if empty space was clicked to deselect
             if (ImGui.IsWindowHovered() && ImGui.IsMouseClicked(ImGuiMouseButton.Left) && !ImGui.IsAnyItemHovered())
             {
@@ -182,6 +168,8 @@ public class FileBrowser : DrawableGameComponent
             _tree.Clear();
             _tree.Push((_root, false));
 
+            ImGui.PushStyleVar(ImGuiStyleVar.IndentSpacing, 8);
+            ImGuiX.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(8, 4));
             while (_tree.Count > 0)
             {
                 var (node, shouldPop) = _tree.Pop();
@@ -256,20 +244,10 @@ public class FileBrowser : DrawableGameComponent
                     }
                 }
             }
-
-            ImGui.PopStyleVar(); // Pop ItemSpacing
+            ImGui.PopStyleVar(2);
         }
 
         ImGui.EndChild();
-    }
-
-    protected override void Dispose(bool disposing)
-    {
-        if (_resourceService != null)
-        {
-            _resourceService.Refreshed -= UpdateNodeTree;
-        }
-        base.Dispose(disposing);
     }
 
     private void UpdateNodeTree()
@@ -280,16 +258,17 @@ public class FileBrowser : DrawableGameComponent
 
     private void BuildNodeTree()
     {
-        if (_resourceService == null)
+        if (_resourceService.Provider == null)
         {
             _root = null;
             return;
         }
 
+        var provider = _resourceService.Provider;
         _root = new FileNode
         {
-            Name = _resourceService.Root,
-            Path = _resourceService.Root,
+            Name = provider.Root,
+            Path = provider.Root,
             IsDirectory = true,
             Depth = 0
         };
@@ -299,7 +278,7 @@ public class FileBrowser : DrawableGameComponent
             [""] = _root
         };
 
-        foreach (var path in _resourceService.Files)
+        foreach (var path in provider.Files)
         {
             var segments = path.Split('/');
             var currentPath = "";

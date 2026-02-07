@@ -7,5 +7,6 @@ public enum EditorFlags : ulong
     SaveFile = 1,
     CloseFile = 1 << 1,
     Undo = 1 << 2,
-    Redo = 1 << 3
+    Redo = 1 << 3,
+    QuitToWelcome = 1 << 4
 }

@@ -2,12 +2,10 @@
 using FEZRepacker.Core.Conversion;
 using FEZRepacker.Core.FileSystem;
 using FEZRepacker.Core.XNB;
-using JetBrains.Annotations;
 
-namespace FezEditor.Services;
+namespace FezEditor.Structure;
 
-[UsedImplicitly]
-public class DirResourceService : IResourceService
+public class DirResourceProvider : IResourceProvider
 {
     public bool IsReadonly => false;
     
@@ -22,7 +20,7 @@ public class DirResourceService : IResourceService
 
     private readonly DirectoryInfo _directory;
 
-    public DirResourceService(DirectoryInfo info)
+    public DirResourceProvider(DirectoryInfo info)
     {
         if (info is not { Exists: true })
         {

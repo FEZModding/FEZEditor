@@ -12,11 +12,13 @@ public class FezEditor : Game
     
     private readonly GraphicsDeviceManager _deviceManager;
     
-    private IRenderingService _rendering = null!;
-
     private IImGuiService _imGui = null!;
     
-    private EditorService _editor = null!;
+    private IRenderingService _rendering = null!;
+
+    private IResourceService _resource = null!;
+    
+    private IEditorService _editor = null!;
 
     [STAThread]
     private static void Main(string[] args)
@@ -51,6 +53,7 @@ public class FezEditor : Game
     {
         _imGui = this.CreateService<IImGuiService, ImGuiService>();
         _rendering = this.CreateService<IRenderingService, RenderingService>();
+        _resource = this.CreateService<IResourceService, ResourceService>();
         _editor = this.CreateService<IEditorService, EditorService>();
         
         this.CreateComponent<MenuBar>();
@@ -58,8 +61,7 @@ public class FezEditor : Game
         this.CreateComponent<StatusBar>();
         this.CreateComponent<MainLayout>();
         
-        _editor.OpenEditor(new WelcomeComponent(this, _editor));
-        _editor.OpenEditor(new TestComponent(this, _rendering));
+        _editor.OpenEditor(new WelcomeComponent(this, _editor, _resource));
 
         base.Initialize();
     }

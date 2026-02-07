@@ -1,11 +1,9 @@
 ﻿using FEZRepacker.Core.FileSystem;
 using FEZRepacker.Core.XNB;
-using JetBrains.Annotations;
 
-namespace FezEditor.Services;
+namespace FezEditor.Structure;
 
-[UsedImplicitly]
-public class PakResourceService : IResourceService
+public class PakResourceProvider : IResourceProvider
 {
     public bool IsReadonly => true;
 
@@ -20,7 +18,7 @@ public class PakResourceService : IResourceService
     
     private readonly FileInfo _pakFile;
 
-    public PakResourceService(FileInfo info)
+    public PakResourceProvider(FileInfo info)
     {
         if (info is not  { Extension: ".pak", Exists: true })
         {

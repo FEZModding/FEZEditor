@@ -15,11 +15,9 @@ public interface IEditorService
 
     void CloseEditor(EditorComponent editor);
     
+    void CloseAllEditors();
+
+    void FlushPendingCloses();
+
     void MarkEditorActive(EditorComponent editor);
-
-    public event Action<IResourceService?> ResourcesChanged;
-
-    void OpenResources(IResourceService service);
-    
-    void CloseResources();
 }

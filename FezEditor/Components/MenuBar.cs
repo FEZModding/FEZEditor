@@ -1,4 +1,5 @@
 ﻿using FezEditor.Services;
+using FezEditor.Structure;
 using FezEditor.Tools;
 using ImGuiNET;
 using JetBrains.Annotations;
@@ -13,8 +14,16 @@ public class MenuBar : DrawableGameComponent
     private Texture2D _logoTexture = null!;
 
     private AboutWindow? _aboutWindow;
+    
+    private readonly IEditorService _editorService;
+    
+    private readonly IResourceService _resourceService;
 
-    public MenuBar(Game game) : base(game) { }
+    public MenuBar(Game game, IEditorService editorService, IResourceService resourceService) : base(game)
+    {
+        _editorService = editorService;
+        _resourceService = resourceService;
+    }
 
     protected override void LoadContent()
     {
@@ -29,43 +38,52 @@ public class MenuBar : DrawableGameComponent
             {
                 ImGui.Separator();
 
-                if (ImGui.MenuItem("Save File"))
+                if (ImGui.MenuItem("Save File", _editorService.Flags.HasFlag(EditorFlags.SaveFile)))
                 {
                     // TODO: saving single modified file
                 }
                 
-                if (ImGui.MenuItem("Save File As..."))
+                if (ImGui.MenuItem("Save File As...", _editorService.Flags.HasFlag(EditorFlags.SaveFile)))
                 {
                     // TODO: saving single modified file to different location
                 }
                 
-                if (ImGui.MenuItem("Save All Files"))
+                if (ImGui.MenuItem("Save All Files", _editorService.Flags.HasFlag(EditorFlags.SaveFile)))
                 {
                     // TODO: saving all modified files
                 }
                 
                 ImGui.Separator();
                 
-                if (ImGui.MenuItem("Undo"))
+                if (ImGui.MenuItem("Undo", _editorService.Flags.HasFlag(EditorFlags.Undo)))
                 {
                     // TODO: History undo
                 }
                 
-                if (ImGui.MenuItem("Redo"))
+                if (ImGui.MenuItem("Redo", _editorService.Flags.HasFlag(EditorFlags.Redo)))
                 {
                     // TODO: History redo
                 }
                 
                 ImGui.Separator();
                 
-                if (ImGui.MenuItem("Close File"))
+                if (ImGui.MenuItem("Close File", _editorService.Flags.HasFlag(EditorFlags.CloseFile)))
                 {
-                    // TODO: Closing currently opened file
+                    _editorService.CloseEditor(_editorService.ActiveEditor!);
+                }
+
+                if (ImGui.MenuItem("Quit To Welcome", _editorService.Flags.HasFlag(EditorFlags.QuitToWelcome)))
+                {
+                    // TODO: add safeguard modal
+                    _resourceService.CloseProvider();
+                    _editorService.CloseAllEditors();
+                    _editorService.OpenEditor(new WelcomeComponent(Game, _editorService, _resourceService));
                 }
                 
                 if (ImGui.MenuItem("Quit"))
                 {
-                    // TODO: Quiting the editor
+                    // TODO: add safeguard modal
+                    Game.Exit();
                 }
 
                 ImGui.EndMenu();

@@ -12,8 +12,6 @@ public class TestComponent : EditorComponent
 
     private readonly IRenderingService _rs;
 
-    private Texture2D? _rtTexture;
-
     private Rid _world;
 
     private Rid _camera;
@@ -99,29 +97,23 @@ public class TestComponent : EditorComponent
             
         if (w > 0 && h > 0)
         {
-            _rtTexture = _rs.RenderTargetGetTexture(_rt);
-            if (_rtTexture == null || _rtTexture.Width != w || _rtTexture.Height != h)
+            var texture = _rs.RenderTargetGetTexture(_rt);
+            if (texture == null || texture.Width != w || texture.Height != h)
             {
                 _rs.RenderTargetSetSize(_rt, w, h);
                 var aspect = (float)w / h;
                 _rs.CameraSetProjection(_camera, Matrix.CreateOrthographic(2f * aspect, 2f, 0.1f, 10f));
             }
 
-            if (_rtTexture is { IsDisposed: false })
+            if (texture is { IsDisposed: false })
             {
-                ImGuiX.Image(_rtTexture, size);
+                ImGuiX.Image(texture, size);
             }
         }
     }
 
     public override void Dispose()
     {
-        if (_rtTexture != null)
-        {
-            ImGuiX.Unbind(_rtTexture);
-            _rtTexture.Dispose();
-        }
-        
         _rs.FreeRid(_instance);
         _rs.FreeRid(_mesh);
         _rs.FreeRid(_material);

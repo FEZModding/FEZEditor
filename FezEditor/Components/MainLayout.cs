@@ -12,7 +12,7 @@ public class MainLayout : DrawableGameComponent
     private const float DefaultLeftPaneWidth = 250f;
 
     private readonly IEditorService _editorService;
-    
+
     private readonly FileBrowser _fileBrowser;
 
     private readonly StatusBar _statusBar;
@@ -32,6 +32,9 @@ public class MainLayout : DrawableGameComponent
 
     public override void Draw(GameTime gameTime)
     {
+        // Clear previously closed editors
+        _editorService.FlushPendingCloses();
+        
         var viewport = ImGui.GetMainViewport();
         ImGui.SetNextWindowPos(viewport.WorkPos, ImGuiCond.Always);
         ImGui.SetNextWindowSize(viewport.WorkSize, ImGuiCond.Always);
@@ -50,20 +53,33 @@ public class MainLayout : DrawableGameComponent
             {
                 // Left pane - File Browser (resizable horizontally)
                 {
-                    ImGuiX.BeginChild("LeftPane", new Vector2(DefaultLeftPaneWidth, -statusBarHeight), 
+                    ImGuiX.BeginChild("LeftPane", new Vector2(DefaultLeftPaneWidth, -statusBarHeight),
                         ImGuiChildFlags.Border | ImGuiChildFlags.ResizeX);
                     _fileBrowser.Draw();
                     ImGui.EndChild();
                     ImGui.SameLine();
                 }
-                
+
                 // Right pane - Editor tabs
+                ImGuiX.BeginChild("RightPane", new Vector2(0, -statusBarHeight));
+                if (_editorService.Editors.Any())
                 {
-                    ImGuiX.BeginChild("RightPane", new Vector2(0, -statusBarHeight));
                     if (ImGui.BeginTabBar("##EditorTabs"))
                     {
                         foreach (var editor in _editorService.Editors)
                         {
+                            if (editor is WelcomeComponent)
+                            {
+                                if (ImGui.BeginTabItem(editor.Title))
+                                {
+                                    _editorService.MarkEditorActive(editor);
+                                    editor.Draw(gameTime);
+                                    ImGui.EndTabItem();
+                                }
+
+                                continue;
+                            }
+
                             var isOpen = true;
                             if (ImGui.BeginTabItem(editor.Title, ref isOpen))
                             {
@@ -71,16 +87,21 @@ public class MainLayout : DrawableGameComponent
                                 editor.Draw(gameTime);
                                 ImGui.EndTabItem();
                             }
+
                             if (!isOpen)
                             {
                                 _editorService.CloseEditor(editor);
-                                break;
                             }
                         }
+
                         ImGui.EndTabBar();
                     }
-                    ImGui.EndChild();
                 }
+                else
+                {
+                    ImGuiX.TextCentered("Open an asset from File Browser on the left...");
+                }
+                ImGui.EndChild();
             }
 
             // Full width, bottom

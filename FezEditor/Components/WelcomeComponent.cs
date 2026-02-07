@@ -13,16 +13,19 @@ public class WelcomeComponent : EditorComponent
     private const float ContentHeight = 230f;
 
     public override string Title => "Welcome!";
-    
+
     private Texture2D _logoTexture = null!;
     
     private ResourceExtractor? _resourceExtractor;
     
     private readonly IEditorService _editorService;
+    
+    private readonly IResourceService _resourceService;
 
-    public WelcomeComponent(Game game, IEditorService editorService) : base(game)
+    public WelcomeComponent(Game game, IEditorService editorService, IResourceService resourceService) : base(game)
     {
         _editorService = editorService;
+        _resourceService = resourceService;
     }
 
     public override void Initialize()
@@ -114,8 +117,7 @@ public class WelcomeComponent : EditorComponent
         var pakPath = result.Files.FirstOrDefault();
         if (!string.IsNullOrEmpty(pakPath))
         {
-            var service = new PakResourceService(new FileInfo(pakPath));
-            _editorService.OpenResources(service);
+            _resourceService.OpenProvider(new FileInfo(pakPath));
             _editorService.CloseEditor(this);
         }
     }
@@ -125,8 +127,7 @@ public class WelcomeComponent : EditorComponent
         var dirPath = result.Files.FirstOrDefault();
         if (!string.IsNullOrEmpty(dirPath))
         {
-            var service = new DirResourceService(new DirectoryInfo(dirPath));
-            _editorService.OpenResources(service);
+            _resourceService.OpenProvider(new DirectoryInfo(dirPath));
             _editorService.CloseEditor(this);
         }
     }

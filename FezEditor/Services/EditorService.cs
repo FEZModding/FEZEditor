@@ -1,6 +1,5 @@
 ﻿using FezEditor.Components;
 using FezEditor.Structure;
-using FezEditor.Tools;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 using Serilog;
@@ -17,62 +16,61 @@ public class EditorService : IEditorService
     public IEnumerable<EditorComponent> Editors => _editors;
 
     public EditorComponent? ActiveEditor { get; private set; }
-    
-    public event Action<IResourceService?>? ResourcesChanged;
 
     private readonly List<EditorComponent> _editors = new();
 
-    private readonly Game _game;
-    
-    public EditorService(Game game)
-    {
-        _game = game;
-    }
+    private readonly List<EditorComponent> _pendingClose = new();
 
     public void OpenEditor(EditorComponent editor)
     {
+        editor.Initialize();
         _editors.Add(editor);
-        {
-            editor.Initialize();
-        }
-        
-        if (ActiveEditor != editor)
-        {
-            ActiveEditor = editor;
-        }
+        ActiveEditor = editor;
     }
 
     public void CloseEditor(EditorComponent editor)
     {
-        if (_editors.Remove(editor))
-        {
-            editor.Dispose();
-        }
-        
-        if (editor == ActiveEditor)
-        {
-            ActiveEditor = Editors.FirstOrDefault();
-        }
+        _pendingClose.Add(editor);
+    }
+
+    public void CloseAllEditors()
+    {
+        _pendingClose.AddRange(_editors);
     }
 
     public void MarkEditorActive(EditorComponent editor)
     {
-        if (Editors.Contains(editor) && ActiveEditor != editor) 
+        if (ActiveEditor != editor)
         {
             ActiveEditor = editor;
+            Flags = EditorFlags.None;
+            if (ActiveEditor is not WelcomeComponent)
+            {
+                Flags |= EditorFlags.CloseFile | EditorFlags.QuitToWelcome;
+            }
         }
     }
 
-    public void OpenResources(IResourceService service) 
+    public void FlushPendingCloses()
     {
-        CloseResources();
-        _game.Services.AddService(typeof(IResourceService), service);
-        ResourcesChanged?.Invoke(service);
-    }
+        if (_pendingClose.Count == 0)
+        {
+            return;
+        }
 
-    public void CloseResources()
-    {
-        _game.RemoveService<IResourceService>();
-        ResourcesChanged?.Invoke(null);
+        foreach (var editor in _pendingClose)
+        {
+            if (_editors.Remove(editor))
+            {
+                editor.Dispose();
+            }
+
+            if (editor == ActiveEditor)
+            {
+                ActiveEditor = _editors.Count > 0 ? _editors[^1] : null;
+            }
+        }
+
+        _pendingClose.Clear();
     }
 }
