@@ -194,7 +194,7 @@ public static class GameExtensions
 
     #region Component Management
 
-    private static void AddComponent<T>(this Game game, T component) where T : IGameComponent
+    public static void AddComponent<T>(this Game game, T component) where T : IGameComponent
     {
         lock (Lock)
         {

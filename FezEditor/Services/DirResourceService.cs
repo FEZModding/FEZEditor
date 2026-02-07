@@ -16,19 +16,20 @@ public class DirResourceService : IResourceService
     public IEnumerable<string> Files => _files.Keys;
     
     public event Action? Refreshed;
+    public event Action? Disposed;
 
     private readonly Dictionary<string, FileInfo> _files = new(StringComparer.OrdinalIgnoreCase);
 
-    private DirectoryInfo _directory = null!;
+    private readonly DirectoryInfo _directory;
 
-    public void Initialize(FileSystemInfo info)
+    public DirResourceService(DirectoryInfo info)
     {
-        if (info is not DirectoryInfo directoryInfo)
+        if (info is not { Exists: true })
         {
             throw new DirectoryNotFoundException(info.FullName);
         }
 
-        _directory = directoryInfo;
+        _directory = info;
         Refresh();
     }
 
@@ -89,5 +90,12 @@ public class DirResourceService : IResourceService
             _files[normalizedPath] = file;
         }
         Refreshed?.Invoke();
+    }
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        _files.Clear();
+        Disposed?.Invoke();
     }
 }

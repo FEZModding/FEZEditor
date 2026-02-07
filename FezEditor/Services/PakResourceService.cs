@@ -14,19 +14,20 @@ public class PakResourceService : IResourceService
     public IEnumerable<string> Files => _records.Keys;
     
     public event Action? Refreshed;
+    public event Action? Disposed;
 
     private readonly Dictionary<string, string> _records = new(StringComparer.OrdinalIgnoreCase);
     
-    private FileInfo _pakFile = null!;
+    private readonly FileInfo _pakFile;
 
-    public void Initialize(FileSystemInfo info)
+    public PakResourceService(FileInfo info)
     {
-        if (info is not FileInfo { Extension: ".pak", Exists: true } pakFile)
+        if (info is not  { Extension: ".pak", Exists: true })
         {
             throw new FileNotFoundException(info.FullName);
         }
 
-        _pakFile = pakFile;
+        _pakFile = info;
         Refresh();
     }
 
@@ -89,5 +90,12 @@ public class PakResourceService : IResourceService
         }
         
         Refreshed?.Invoke();
+    }
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        _records.Clear();
+        Disposed?.Invoke();
     }
 }

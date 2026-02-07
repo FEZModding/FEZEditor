@@ -1,6 +1,6 @@
 ﻿namespace FezEditor.Services;
 
-public interface IResourceService
+public interface IResourceService : IDisposable
 {
     bool IsReadonly { get; }
     
@@ -9,8 +9,8 @@ public interface IResourceService
     IEnumerable<string> Files { get; }
     
     event Action? Refreshed;
-
-    void Initialize(FileSystemInfo info);
+    
+    event Action? Disposed;
 
     bool Exists(string path);
     

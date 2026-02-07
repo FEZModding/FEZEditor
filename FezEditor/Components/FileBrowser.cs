@@ -25,6 +25,8 @@ public class FileBrowser : DrawableGameComponent
 
     private SortMode _sortMode = SortMode.NameAscending;
 
+    private readonly IEditorService _editorService;
+    
     private IResourceService? _resourceService;
 
     private enum SortMode
@@ -35,22 +37,25 @@ public class FileBrowser : DrawableGameComponent
         TypeDescending
     }
 
-    public FileBrowser(Game game) : base(game)
+    public FileBrowser(Game game, IEditorService editorService) : base(game)
     {
+        _editorService = editorService;
+        _editorService.ResourcesChanged += OnResourcesChanged;
+    }
+
+    private void OnResourcesChanged(IResourceService? resourceService)
+    {
+        _resourceService = resourceService;
+        if (_resourceService != null)
+        {
+            _resourceService.Refreshed += UpdateNodeTree;
+            
+        }
+        UpdateNodeTree();
     }
 
     public void Draw()
     {
-        if (_resourceService == null)
-        {
-            _resourceService = Game.TryGetService<IResourceService>();
-            if (_resourceService != null)
-            {
-                _resourceService.Refreshed += UpdateNodeTree;
-                UpdateNodeTree();
-            }
-        }
-
         if (_resourceService == null)
         {
             ImGui.TextDisabled("No resources loaded.");
@@ -120,7 +125,7 @@ public class FileBrowser : DrawableGameComponent
             ImGui.SetNextItemWidth(-30);
             ImGui.InputTextWithHint("", "Filter Files", ref _filter, 255);
             ImGui.SameLine();
-            if (ImGui.Button("^⌄"))
+            if (ImGui.Button("^"))
             {
                 ImGui.OpenPopup("SortOptions");
             }
@@ -275,7 +280,11 @@ public class FileBrowser : DrawableGameComponent
 
     private void BuildNodeTree()
     {
-        if (_resourceService == null) return;
+        if (_resourceService == null)
+        {
+            _root = null;
+            return;
+        }
 
         _root = new FileNode
         {
@@ -385,7 +394,10 @@ public class FileBrowser : DrawableGameComponent
 
     private void SortAllNodes()
     {
-        if (_root == null) return;
+        if (_root == null)
+        {
+            return;
+        }
 
         var stack = new Stack<FileNode>();
         stack.Push(_root);

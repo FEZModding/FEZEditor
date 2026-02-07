@@ -58,7 +58,7 @@ public class FezEditor : Game
         this.CreateComponent<StatusBar>();
         this.CreateComponent<MainLayout>();
         
-        _editor.OpenEditor(new WelcomeComponent(this));
+        _editor.OpenEditor(new WelcomeComponent(this, _editor));
         _editor.OpenEditor(new TestComponent(this, _rendering));
 
         base.Initialize();

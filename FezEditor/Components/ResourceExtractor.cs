@@ -19,9 +19,9 @@ public class ResourceExtractor : DrawableGameComponent
 
     private static readonly Dictionary<string, string> ContentListing = new(StringComparer.OrdinalIgnoreCase);
 
-    private List<string> _pakFiles = null!;
+    private readonly List<string> _pakFiles;
 
-    private string _directoryPath = null!;
+    private readonly string _directoryPath;
 
     private float _progress;
 
@@ -45,16 +45,20 @@ public class ResourceExtractor : DrawableGameComponent
 
     public event Action? Competed;
 
-    public ResourceExtractor(Game game) : base(game)
+    public ResourceExtractor(Game game, string[] paks, string directory) : base(game)
     {
-        Enabled = false;
-    }
-
-    public void Initialize(string[] paks, string directory)
-    {
+        if (paks.Length < 1)
+        {
+            throw new ArgumentException("Pak files must be specified.");
+        }
+        
+        if (!string.IsNullOrEmpty(directory))
+        {
+            throw new ArgumentException("Target directory must be specified.");
+        }
+        
         _pakFiles = paks.Where(p => ExpectedPaks.Any(p.EndsWith)).ToList();
         _directoryPath = directory;
-        Enabled = true;
     }
 
     protected override void LoadContent()
@@ -130,7 +134,7 @@ public class ResourceExtractor : DrawableGameComponent
                     ImGui.Text($"File: {_currentFile}");
                     ImGui.Text($"Progress: {_filesProcessed} / {_totalFiles}");
 
-                    ImGuiX.ProgressBar(_progress, new Vector2(400, 0), $"{(_progress * 100):F1}%");
+                    ImGuiX.ProgressBar(_progress, new Vector2(400, 0), $"{_progress * 100:F1}%");
                     if (ImGui.Button("Cancel"))
                     {
                         _cts?.Cancel();

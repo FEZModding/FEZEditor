@@ -1,4 +1,5 @@
-﻿using FezEditor.Tools;
+﻿using FezEditor.Services;
+using FezEditor.Tools;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -14,8 +15,15 @@ public class WelcomeComponent : EditorComponent
     public override string Title => "Welcome!";
     
     private Texture2D _logoTexture = null!;
+    
+    private ResourceExtractor? _resourceExtractor;
+    
+    private readonly IEditorService _editorService;
 
-    public WelcomeComponent(Game game) : base (game) { }
+    public WelcomeComponent(Game game, IEditorService editorService) : base(game)
+    {
+        _editorService = editorService;
+    }
 
     public override void Initialize()
     {
@@ -92,53 +100,34 @@ public class WelcomeComponent : EditorComponent
 
     private void ExtractPaksAndOpenDirectory(FileDialog.Result source, FileDialog.Result target)
     {
-        // if (source.Files.Length > 0 && target.Files.Length > 0 && _resourceExtractor == null)
-        // {
-        //     try
-        //     {
-        //         _resourceExtractor = Game.CreateComponent<ResourceExtractor>();
-        //         _resourceExtractor.Disposed += (_, _) => { _resourceExtractor = null; };
-        //         _resourceExtractor.Initialize(source.Files, target.Files[0]);
-        //         _resourceExtractor.Competed += () => OpenDirectory(target);
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         Game.CreateComponent<ModalWindow>().Show(ex.Message, "Error occured!");
-        //     }
-        // }
+        if (_resourceExtractor == null)
+        {
+            _resourceExtractor = new ResourceExtractor(Game, source.Files, target.Files[0]);
+            _resourceExtractor.Disposed += (_, _) => { _resourceExtractor = null; };
+            _resourceExtractor.Competed += () => OpenDirectory(target);
+            Game.AddComponent(_resourceExtractor);
+        }
     }
 
     private void OpenPakFile(FileDialog.Result result)
     {
-        // if (result.Files.Length > 0)
-        // {
-        //     try
-        //     {
-        //         var pakService = Game.CreateService<IResourceService, PakResourceService>();
-        //         pakService.Initialize(new FileInfo(result.Files[0]));
-        //         Game.RemoveComponent(this);
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         Game.CreateComponent<ModalWindow>().Show(ex.Message, "Error occured!");
-        //     }
-        // }
+        var pakPath = result.Files.FirstOrDefault();
+        if (!string.IsNullOrEmpty(pakPath))
+        {
+            var service = new PakResourceService(new FileInfo(pakPath));
+            _editorService.OpenResources(service);
+            _editorService.CloseEditor(this);
+        }
     }
 
     private void OpenDirectory(FileDialog.Result result)
     {
-        // if (result.Files.Length > 0)
-        // {
-        //     try
-        //     {
-        //         var dirService = Game.CreateService<IResourceService, DirResourceService>();
-        //         dirService.Initialize(new DirectoryInfo(result.Files[0]));
-        //         Game.RemoveComponent(this);
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         Game.CreateComponent<ModalWindow>().Show(ex.Message, "Error occured!");
-        //     }
-        // }
+        var dirPath = result.Files.FirstOrDefault();
+        if (!string.IsNullOrEmpty(dirPath))
+        {
+            var service = new DirResourceService(new DirectoryInfo(dirPath));
+            _editorService.OpenResources(service);
+            _editorService.CloseEditor(this);
+        }
     }
 }
