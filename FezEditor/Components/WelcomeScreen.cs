@@ -12,10 +12,8 @@ public class WelcomeScreen : DrawableGameComponent
 {
     private Texture2D _logoTexture = null!;
 
-    private bool _open = true;
-
     private ResourceExtractor? _resourceExtractor;
-    
+
     private readonly IStateService _stateService;
 
     public WelcomeScreen(Game game, IStateService stateService) : base(game)
@@ -28,75 +26,76 @@ public class WelcomeScreen : DrawableGameComponent
         _logoTexture = Game.Content.Load<Texture2D>("Content/Icon");
     }
 
-    public override void Draw(GameTime gameTime)
+    public void Draw()
     {
-        ImGui.SetNextWindowCollapsed(!_open, ImGuiCond.FirstUseEver);
+        // Estimate content size for centering
+        const float contentWidth = 250f;
+        const float contentHeight = 230f;
 
-        var center = ImGui.GetMainViewport().GetCenter().ToXna();
-        ImGuiX.SetNextWindowPos(center, ImGuiCond.Appearing, Vector2.One / 2);
+        var regionSize = ImGui.GetContentRegionAvail();
+        var offsetX = Math.Max(0, (regionSize.X - contentWidth) / 2);
+        var offsetY = Math.Max(0, (regionSize.Y - contentHeight) / 2);
 
-        if (ImGui.Begin("Start", ref _open,
-                ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar |
-                ImGuiWindowFlags.NoMove | ImGuiWindowFlags.AlwaysAutoResize))
+        ImGui.SetCursorPos(ImGui.GetCursorPos() + new System.Numerics.Vector2(offsetX, offsetY));
+        ImGui.BeginGroup();
+
+        ImGuiX.Image(_logoTexture);
+        ImGui.NewLine();
+        ImGui.Text("Welcome to FEZEDITOR!");
+        ImGui.NewLine();
+
+        if (ImGui.Button("Open PAK..."))
         {
-            ImGuiX.Image(_logoTexture, new Vector2(64, 64));
-            ImGui.NewLine();
-            ImGui.Text("Welcome to FEZEDITOR!");
-            ImGui.NewLine();
-
-            if (ImGui.Button("Open PAK..."))
+            FileDialog.Show(FileDialog.Type.OpenFile, OpenPakFile, new FileDialog.Options
             {
-                FileDialog.Show(FileDialog.Type.OpenFile, OpenPakFile, new FileDialog.Options
+                Title = "Choose PAK file...",
+                Filters = new FileDialog.Filter[]
                 {
-                    Title = "Choose PAK file...",
-                    Filters = new FileDialog.Filter[]
-                    {
-                        new("PAK files", "pak")
-                    }
-                });
-            }
-
-            if (ImGui.Button("Open assets directory..."))
-            {
-                FileDialog.Show(FileDialog.Type.OpenFolder, OpenDirectory, new FileDialog.Options
-                {
-                    Title = "Choose assets directory..."
-                });
-            }
-
-            if (ImGui.Button("Extract assets and open them..."))
-            {
-                var selectOptions = new FileDialog.Options
-                {
-                    Title = "Select PAK files to extract...",
-                    AllowMultiple = true,
-                    Filters = new FileDialog.Filter[]
-                    {
-                        new("PAK files", "pak")
-                    }
-                };
-
-                FileDialog.Show(FileDialog.Type.OpenFile, source =>
-                    {
-                        if (source.Files.Length > 0)
-                        {
-                            FileDialog.Show(FileDialog.Type.OpenFolder,
-                                target => ExtractPaksAndOpenDirectory(source, target), new FileDialog.Options
-                                {
-                                    Title = "Choose a directory to save assets..."
-                                });
-                        }
-                    },
-                    selectOptions);
-            }
-
-            if (ImGui.Button("Quit"))
-            {
-                _stateService.Quit();
-            }
+                    new("PAK files", "pak")
+                }
+            });
         }
 
-        ImGui.End();
+        if (ImGui.Button("Open assets directory..."))
+        {
+            FileDialog.Show(FileDialog.Type.OpenFolder, OpenDirectory, new FileDialog.Options
+            {
+                Title = "Choose assets directory..."
+            });
+        }
+
+        if (ImGui.Button("Extract assets and open them..."))
+        {
+            var selectOptions = new FileDialog.Options
+            {
+                Title = "Select PAK files to extract...",
+                AllowMultiple = true,
+                Filters = new FileDialog.Filter[]
+                {
+                    new("PAK files", "pak")
+                }
+            };
+
+            FileDialog.Show(FileDialog.Type.OpenFile, source =>
+                {
+                    if (source.Files.Length > 0)
+                    {
+                        FileDialog.Show(FileDialog.Type.OpenFolder,
+                            target => ExtractPaksAndOpenDirectory(source, target), new FileDialog.Options
+                            {
+                                Title = "Choose a directory to save assets..."
+                            });
+                    }
+                },
+                selectOptions);
+        }
+
+        if (ImGui.Button("Quit"))
+        {
+            _stateService.Quit();
+        }
+
+        ImGui.EndGroup();
     }
 
     private void ExtractPaksAndOpenDirectory(FileDialog.Result source, FileDialog.Result target)

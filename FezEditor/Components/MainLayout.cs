@@ -11,7 +11,9 @@ public class MainLayout : DrawableGameComponent
     private const float DefaultLeftPaneWidth = 250f;
 
     private FileBrowser? FileBrowser => Game.TryGetComponent<FileBrowser>();
-    
+
+    private WelcomeScreen? WelcomeScreen => Game.TryGetComponent<WelcomeScreen>();
+
     private StatusBar? StatusBar => Game.TryGetComponent<StatusBar>();
 
     public MainLayout(Game game) : base(game)
@@ -51,11 +53,13 @@ public class MainLayout : DrawableGameComponent
                     ImGuiX.BeginChild("RightPane", new Vector2(0, -statusBarHeight));
                     if (ImGui.BeginTabBar("##EditorTabs"))
                     {
-                        if (ImGui.BeginTabItem("Welcome"))
+                        var welcome = WelcomeScreen;
+                        if (welcome != null && ImGui.BeginTabItem("Welcome"))
                         {
-                            ImGui.TextDisabled("Select a file to edit.");
+                            welcome.Draw();
                             ImGui.EndTabItem();
                         }
+
                         ImGui.EndTabBar();
                     }
                     ImGui.EndChild();
@@ -63,6 +67,7 @@ public class MainLayout : DrawableGameComponent
             }
 
             // Full width, bottom
+            ImGui.Separator();
             StatusBar?.Draw();
         }
 
