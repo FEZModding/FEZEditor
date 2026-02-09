@@ -91,9 +91,7 @@ public partial class RenderingService
         effect.Projection = matrices.Projection;
         effect.DiffuseColor = material.Diffuse;
         effect.Alpha = material.Opacity;
-        effect.VertexColorEnabled = true;
         effect.TextureEnabled = false;
-
         if (material.Texture != null)
         {
             effect.TextureEnabled = true;
