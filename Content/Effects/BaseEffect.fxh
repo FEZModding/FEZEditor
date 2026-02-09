@@ -156,10 +156,6 @@ float3 Eye;
 
 float3 DiffuseLight;
 
-float3 EyeSign;
-
-float3 LevelCenter;
-
 float4 ApplyTexelOffset(float4 position)
 {
     return float4(position.xy + (TexelOffset * position.w), position.zw);
@@ -168,11 +164,6 @@ float4 ApplyTexelOffset(float4 position)
 float4 ApplyTexelOffset(float4 position, float2 offset)
 {
     return float4(position.xy + (offset * position.w), position.zw);
-}
-
-float4 ApplyEyeParallax(float4 position)
-{
-    return position + float4(dot(position.xyz - LevelCenter, Eye) * EyeSign, 0);
 }
 
 float3 PerAxisShading(float3 normal, float emissive)

@@ -49,6 +49,7 @@ public class ArtObjectHost : Host
         var effect = Game.Content.Load<Effect>("Effects/ArtObject");
         _material = RenderingService.MaterialCreate(effect);
         RenderingService.MaterialAssignBaseTexture(_material, ao.Cubemap.ToXna(RenderingService.GraphicsDevice));
+        RenderingService.MaterialSetBlendMode(_material, BlendMode.AlphaBlend);
         RenderingService.MaterialSetCullMode(_material, CullMode.CullCounterClockwiseFace);
         RenderingService.MaterialSetSamplerState(_material, SamplerState.PointClamp);
         

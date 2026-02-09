@@ -9,12 +9,14 @@ namespace FezEditor.Components;
 
 public class TestComponent : EditorComponent
 {
-    private readonly TestHost _host;
+    private readonly GeometryHost _host;
     
     public TestComponent(Game game, string title) : base(game, title)
     {
-        _host = new TestHost(game);
-        _host.Load(new object());
+        var resourceService = game.GetService<IResourceService>();
+        var artObject = resourceService.Provider!.Load<object>("art objects/big_treeao");
+        _host = new GeometryHost(game);
+        _host.Load(artObject);
     }
 
     public override void Update(GameTime gameTime)
