@@ -2,6 +2,7 @@
 using FezEditor.Services;
 using FezEditor.Tools;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Serilog;
 
 namespace FezEditor;
@@ -36,7 +37,12 @@ public class FezEditor : Game
     
     private FezEditor()
     {
+#if DEBUG
+        Content = new ContentManager(Services, "Content");
+#else
         Content = new ZipContentManager(Services, "Content.pkz");
+#endif
+
         _deviceManager = new GraphicsDeviceManager(this)
         {
             PreferredBackBufferWidth = 1280,
@@ -54,7 +60,7 @@ public class FezEditor : Game
         _rendering = this.CreateService<IRenderingService, RenderingService>();
         _editor = this.CreateService<IEditorService, EditorService>();
         this.CreateService<IResourceService, ResourceService>();
-        
+
         this.CreateComponent<MenuBar>();
         this.CreateComponent<FileBrowser>();
         this.CreateComponent<StatusBar>();

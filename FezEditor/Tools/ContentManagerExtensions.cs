@@ -1,4 +1,6 @@
-﻿using Microsoft.Xna.Framework.Content;
+﻿using System.Text.Json;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 
 namespace FezEditor.Tools;
 
@@ -11,6 +13,7 @@ public static class ContentManagerExtensions
             return zip.LoadJson<T>(assetName);
         }
 
-        throw new NotSupportedException();
+        using var stream = TitleContainer.OpenStream(Path.ChangeExtension(assetName, ".json"));
+        return JsonSerializer.Deserialize<T>(stream)!;
     }
 }

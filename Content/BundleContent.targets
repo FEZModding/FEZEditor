@@ -1,44 +1,52 @@
 <Project>
   <Import Project="../FXC/CompileShaders.targets"/>
 
-  <Target Name="BundleContent" AfterTargets="Build">
-    <!-- Read .ignore file -->
+  <!-- Debug: Copy to folder -->
+  <Target Name="BundleContentDebug" AfterTargets="Build" Condition="'$(Configuration)' == 'Debug'">
     <ReadLinesFromFile File="$(MSBuildThisFileDirectory).ignore" Condition="Exists('$(MSBuildThisFileDirectory).ignore')">
       <Output TaskParameter="Lines" ItemName="IgnorePatterns"/>
     </ReadLinesFromFile>
 
-    <!-- Build exclude patterns -->
-    <PropertyGroup>
-      <DefaultExcludes>$(MSBuildThisFileDirectory).ignore</DefaultExcludes>
-      <UserExcludes>@(IgnorePatterns->'$(MSBuildThisFileDirectory)%(Identity)', ';')</UserExcludes>
-    </PropertyGroup>
-
-    <!-- Gather content files -->
     <ItemGroup>
       <ContentFiles Include="$(MSBuildThisFileDirectory)**\*.*"
-                    Exclude="$(DefaultExcludes);$(UserExcludes)"/>
+                    Exclude="$(MSBuildThisFileDirectory).ignore;$(MSBuildThisFileDirectory)**\*.fx;$(MSBuildThisFileDirectory)**\*.targets;@(IgnorePatterns->'$(MSBuildThisFileDirectory)%(Identity)', ';')"/>
     </ItemGroup>
 
-    <!-- Copy to temp folder -->
+    <Copy SourceFiles="@(ContentFiles)"
+          DestinationFiles="@(ContentFiles->'$(OutputPath)Content\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true"/>
+  </Target>
+
+  <!-- Release: Bundle to pkz -->
+  <Target Name="BundleContent" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
+    <ReadLinesFromFile File="$(MSBuildThisFileDirectory).ignore" Condition="Exists('$(MSBuildThisFileDirectory).ignore')">
+      <Output TaskParameter="Lines" ItemName="IgnorePatterns"/>
+    </ReadLinesFromFile>
+
+    <ItemGroup>
+      <ContentFiles Include="$(MSBuildThisFileDirectory)**\*.*"
+                    Exclude="$(MSBuildThisFileDirectory).ignore;$(MSBuildThisFileDirectory)**\*.fx;$(MSBuildThisFileDirectory)**\*.targets;@(IgnorePatterns->'$(MSBuildThisFileDirectory)%(Identity)', ';')"/>
+    </ItemGroup>
+
     <Copy SourceFiles="@(ContentFiles)"
           DestinationFiles="@(ContentFiles->'$(IntermediateOutputPath)Content\%(RecursiveDir)%(Filename)%(Extension)')"
           SkipUnchangedFiles="true"/>
 
-    <!-- Zip -->
     <Delete Files="$(OutputPath)Content.pkz" Condition="Exists('$(OutputPath)Content.pkz')"/>
     <ZipDirectory SourceDirectory="$(IntermediateOutputPath)Content"
                   DestinationFile="$(OutputPath)Content.pkz"
                   Overwrite="true"/>
 
-    <!-- Clean compiled shaders from source tree (already bundled) -->
     <ItemGroup>
       <CompiledShaders Include="$(MSBuildThisFileDirectory)**\*.fxb"/>
     </ItemGroup>
     <Delete Files="@(CompiledShaders)"/>
   </Target>
 
+  <!-- Clean -->
   <Target Name="CleanBundledContent" AfterTargets="Clean">
     <Delete Files="$(OutputPath)Content.pkz"/>
     <RemoveDir Directories="$(IntermediateOutputPath)Content"/>
+    <RemoveDir Directories="$(OutputPath)Content"/>
   </Target>
 </Project>
