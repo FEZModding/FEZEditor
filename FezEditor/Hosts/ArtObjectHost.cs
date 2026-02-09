@@ -46,7 +46,7 @@ public class ArtObjectHost : Host
         Name = ao.Name;
         Size = ao.Size.ToXna();
         
-        var effect = Game.Content.Load<Effect>("Content/Effects/ArtObject");
+        var effect = Game.Content.Load<Effect>("Effects/ArtObject");
         _material = RenderingService.MaterialCreate(effect);
         RenderingService.MaterialAssignBaseTexture(_material, ao.Cubemap.ToXna(RenderingService.GraphicsDevice));
         RenderingService.MaterialSetCullMode(_material, CullMode.CullCounterClockwiseFace);

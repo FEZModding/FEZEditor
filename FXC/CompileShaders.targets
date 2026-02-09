@@ -1,0 +1,15 @@
+<Project>
+  <Target Name="CompileShaders" BeforeTargets="BundleContent">
+    <ItemGroup>
+      <ShaderFiles Include="$(MSBuildThisFileDirectory)..\Content\**\*.fx"/>
+    </ItemGroup>
+
+    <!-- Windows -->
+    <Exec Command="&quot;$(MSBuildThisFileDirectory)fxc.exe&quot; /T fx_2_0 /Fo &quot;%(ShaderFiles.RootDir)%(ShaderFiles.Directory)%(ShaderFiles.Filename).fxb&quot; &quot;%(ShaderFiles.FullPath)&quot;"
+          Condition="'$(OS)' == 'Windows_NT' AND '@(ShaderFiles)' != ''"/>
+
+    <!-- Linux/macOS -->
+    <Exec Command="wine &quot;$(MSBuildThisFileDirectory)fxc.exe&quot; /T fx_2_0 /Fo &quot;%(ShaderFiles.RootDir)%(ShaderFiles.Directory)%(ShaderFiles.Filename).fxb&quot; &quot;%(ShaderFiles.FullPath)&quot;"
+          Condition="'$(OS)' != 'Windows_NT' AND '@(ShaderFiles)' != ''"/>
+  </Target>
+</Project>

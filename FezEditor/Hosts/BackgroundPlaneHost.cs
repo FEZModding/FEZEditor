@@ -65,7 +65,7 @@ public class BackgroundPlaneHost : Host
             case RAnimatedTexture animatedTexture:
             {
                 frames = animatedTexture.Frames;
-                effect = Game.Content.Load<Effect>("Content/Effects/AnimatedPlane");
+                effect = Game.Content.Load<Effect>("Effects/AnimatedPlane");
                 baseTexture = animatedTexture.ToXna(RenderingService.GraphicsDevice);
                 Size = new Vector3(animatedTexture.AtlasWidth / 16f, animatedTexture.AtlasHeight / 16f, 0.125f);
                 break;
@@ -74,7 +74,7 @@ public class BackgroundPlaneHost : Host
             case RTexture2D texture:
             {
                 frames = new List<FrameContent>();
-                effect = Game.Content.Load<Effect>("Content/Effects/StaticPlane");
+                effect = Game.Content.Load<Effect>("StaticPlane");
                 baseTexture = texture.ToXna(RenderingService.GraphicsDevice);
                 Size = new Vector3(texture.Width / 16f, texture.Height / 16f, 0.125f);
                 break;

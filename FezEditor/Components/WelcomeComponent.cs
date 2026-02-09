@@ -28,7 +28,7 @@ public class WelcomeComponent : EditorComponent
 
     public override void Initialize()
     {
-        _logoTexture = Game.Content.Load<Texture2D>("Content/Icon");
+        _logoTexture = Game.Content.Load<Texture2D>("Icon");
     }
 
     public override void Draw(GameTime gameTime)

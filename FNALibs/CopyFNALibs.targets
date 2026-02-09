@@ -11,4 +11,14 @@
           DestinationFiles="@(_FNALibs->'$(OutputPath)%(RecursiveDir)%(Filename)%(Extension)')"
           SkipUnchangedFiles="true" />
   </Target>
+
+  <Target Name="CleanFNALibs" AfterTargets="Clean">
+    <ItemGroup>
+      <_FNALibs Include="$(MSBuildThisFileDirectory)x86\**\*.*" Condition="'$(OS)' == 'Windows_NT' AND '$(Platform)' == 'x86'" />
+      <_FNALibs Include="$(MSBuildThisFileDirectory)x64\**\*.*" Condition="'$(OS)' == 'Windows_NT' AND '$(Platform)' == 'x64'" />
+      <_FNALibs Include="$(MSBuildThisFileDirectory)libaarch64\**\*.*" Condition="'$(OS)' != 'Windows_NT' AND '$(Platform)' == 'arm64'" />
+      <_FNALibs Include="$(MSBuildThisFileDirectory)lib64\**\*.*" Condition="'$(OS)' != 'Windows_NT' AND '$(Platform)' == 'x64'" />
+    </ItemGroup>
+    <Delete Files="@(_FNALibs->'$(OutputPath)%(RecursiveDir)%(Filename)%(Extension)')"/>
+  </Target>
 </Project>

@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using FezEditor.Tools;
+﻿using FezEditor.Tools;
 using FEZRepacker.Core.Conversion;
 using FEZRepacker.Core.FileSystem;
 using FEZRepacker.Core.XNB;
@@ -15,9 +14,9 @@ public class ResourceExtractor : DrawableGameComponent
 {
     private static readonly ILogger Logger = Logging.Create<ResourceExtractor>();
 
-    private static readonly HashSet<string> ExpectedPaks = ["Essentials.pak", "Music.pak", "Other.pak", "Updates.pak"];
+    private readonly HashSet<string> _expectedPaks = ["Essentials.pak", "Music.pak", "Other.pak", "Updates.pak"];
 
-    private static readonly Dictionary<string, string> ContentListing = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, string> _contentListing = new(StringComparer.OrdinalIgnoreCase);
 
     private readonly List<string> _pakFiles;
 
@@ -52,25 +51,21 @@ public class ResourceExtractor : DrawableGameComponent
             throw new ArgumentException("Pak files must be specified.");
         }
         
-        if (!string.IsNullOrEmpty(directory))
+        if (string.IsNullOrEmpty(directory))
         {
             throw new ArgumentException("Target directory must be specified.");
         }
         
-        _pakFiles = paks.Where(p => ExpectedPaks.Any(p.EndsWith)).ToList();
+        _pakFiles = paks.Where(p => _expectedPaks.Any(p.EndsWith)).ToList();
         _directoryPath = directory;
     }
 
     protected override void LoadContent()
     {
-        if (ContentListing.Count == 0)
+        var listing = Game.Content.LoadFromJson<string[]>("ContentListing");
+        foreach (var file in listing)
         {
-            using var jsonStream = File.Open("Content/ContentListing.json", FileMode.Open);
-            var listing = JsonSerializer.Deserialize<string[]>(jsonStream);
-            foreach (var file in listing ?? Array.Empty<string>())
-            {
-                ContentListing.Add(file, file);
-            }
+            _contentListing.Add(file, file);
         }
     }
 
@@ -220,7 +215,7 @@ public class ResourceExtractor : DrawableGameComponent
                     ? $"music\\{pakFile.Path}"
                     : pakFile.Path;
 
-                if (ContentListing.ContainsKey(path))
+                if (_contentListing.ContainsKey(path))
                 {
                     _totalFiles += 1;
                 }
@@ -261,8 +256,8 @@ public class ResourceExtractor : DrawableGameComponent
                 ct.ThrowIfCancellationRequested();
 
                 _currentFile = file.EndsWith("Music.pak")
-                    ? ContentListing[$"music\\{pakFile.Path}"]
-                    : ContentListing[pakFile.Path];
+                    ? _contentListing[$"music\\{pakFile.Path}"]
+                    : _contentListing[pakFile.Path];
 
                 _status = $"Extracting: {file}";
                 var extension = pakFile.FindExtension();

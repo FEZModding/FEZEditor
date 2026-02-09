@@ -429,3 +429,12 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# FXC binary and DLLs
+fxc.exe
+d3dx9_43.dll
+D3DCOMPILER_43.dll
+
+# HLSL compiled shaders
+*.fxb
+*.fxc

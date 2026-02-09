@@ -20,7 +20,7 @@ public class AboutWindow : DrawableGameComponent
 
     protected override void LoadContent()
     {
-        _logoTexture = Game.Content.Load<Texture2D>("Content/Icon");
+        _logoTexture = Game.Content.Load<Texture2D>("Icon");
     }
 
     public override void Update(GameTime gameTime)

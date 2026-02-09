@@ -62,7 +62,7 @@ public class TrilesHost : Host
             return;
         }
         
-        var effect = Game.Content.Load<Effect>("Content/Effects/TrileEffect");
+        var effect = Game.Content.Load<Effect>("Effects/TrileEffect");
         var texture = trileSet.TextureAtlas.ToXna(RenderingService.GraphicsDevice);
         
         foreach (var (id, trile) in trileSet.Triles)

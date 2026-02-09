@@ -36,6 +36,7 @@ public class FezEditor : Game
     
     private FezEditor()
     {
+        Content = new ZipContentManager(Services, "Content.pkz");
         _deviceManager = new GraphicsDeviceManager(this)
         {
             PreferredBackBufferWidth = 1280,
