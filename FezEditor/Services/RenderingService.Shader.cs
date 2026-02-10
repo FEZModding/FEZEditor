@@ -89,8 +89,8 @@ public partial class RenderingService
         effect.World = matrices.World;
         effect.View = matrices.View;
         effect.Projection = matrices.Projection;
-        effect.DiffuseColor = material.Diffuse;
-        effect.Alpha = material.Opacity;
+        effect.DiffuseColor = material.Albedo.ToVector3();
+        effect.Alpha = material.Albedo.A / 255f;
         effect.TextureEnabled = false;
         if (material.Texture != null)
         {
@@ -113,8 +113,8 @@ public partial class RenderingService
         parameters["Matrices_Texture"].SetValue(material.TextureTransform);
 
         // Material
-        parameters["Material_Diffuse"].SetValue(material.Diffuse);
-        parameters["Material_Opacity"].SetValue(material.Opacity);
+        parameters["Material_Diffuse"].SetValue(material.Albedo.ToVector3());
+        parameters["Material_Opacity"].SetValue(material.Albedo.A / 255f);
         parameters["BaseTexture"].SetValue(material.Texture);
 
         // Lighting

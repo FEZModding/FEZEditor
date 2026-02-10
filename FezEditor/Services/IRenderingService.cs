@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace FezEditor.Services;
 
-public partial interface IRenderingService : IDisposable
+public interface IRenderingService : IDisposable
 {
     #region Public
     
@@ -132,15 +132,11 @@ public partial interface IRenderingService : IDisposable
     
     void MaterialSetTextureTransform(Rid material, Matrix transform);
 
-    void MaterialSetDiffuse(Rid material, Vector3 color);
-
-    void MaterialSetOpacity(Rid material, float opacity);
+    void MaterialSetAlbedo(Rid material, Color color);
     
     Matrix MaterialGetTextureTransform(Rid material);
 
-    Vector3 MaterialGetDiffuse(Rid material);
-
-    float MaterialGetOpacity(Rid material);
+    Color MaterialGetAlbedo(Rid material);
 
     void MaterialSetBlendMode(Rid material, BlendMode mode);
 

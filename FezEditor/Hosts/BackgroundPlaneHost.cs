@@ -122,8 +122,7 @@ public class BackgroundPlaneHost : Host
 
         }
         
-        RenderingService.MaterialSetDiffuse(_material, Color.ToVector3());
-        RenderingService.MaterialSetOpacity(_material, Color.A / 255f);
+        RenderingService.MaterialSetAlbedo(_material, Color);
         RenderingService.MaterialSetCullMode(_material,
             DoubleSided ? CullMode.None : CullMode.CullCounterClockwiseFace);
 

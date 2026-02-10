@@ -13,8 +13,7 @@ public partial class RenderingService
         public required Effect Effect;
         public Texture2D? Texture;
         public Matrix TextureTransform = Matrix.Identity;
-        public Vector3 Diffuse = Vector3.One;
-        public float Opacity = 1.0f;
+        public Color Albedo = Color.White;
         public BlendMode BlendMode = BlendMode.AlphaBlend;
         public CullMode CullMode = CullMode.CullCounterClockwiseFace;
         public ColorWriteChannels ColorWriteChannels = ColorWriteChannels.All;
@@ -45,14 +44,9 @@ public partial class RenderingService
         GetResource(_materials, material).TextureTransform = transform;
     }
 
-    public void MaterialSetDiffuse(Rid material, Vector3 color)
+    public void MaterialSetAlbedo(Rid material, Color color)
     {
-        GetResource(_materials, material).Diffuse = color;
-    }
-
-    public void MaterialSetOpacity(Rid material, float opacity)
-    {
-        GetResource(_materials, material).Opacity = opacity;
+        GetResource(_materials, material).Albedo = color;
     }
 
     public Matrix MaterialGetTextureTransform(Rid material)
@@ -60,14 +54,9 @@ public partial class RenderingService
         return GetResource(_materials, material).TextureTransform;
     }
 
-    public Vector3 MaterialGetDiffuse(Rid material)
+    public Color MaterialGetAlbedo(Rid material)
     {
-        return GetResource(_materials, material).Diffuse;
-    }
-
-    public float MaterialGetOpacity(Rid material)
-    {
-        return GetResource(_materials, material).Opacity;
+        return GetResource(_materials, material).Albedo;
     }
 
     public void MaterialSetBlendMode(Rid material, BlendMode mode)
