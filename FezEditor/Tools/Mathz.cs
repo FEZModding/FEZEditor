@@ -4,6 +4,11 @@ namespace FezEditor.Tools;
 
 public static class Mathz
 {
+    public static bool IsZeroApprox(float value)
+    {
+        return MathF.Abs(value) < float.Epsilon;
+    }
+    
     public static int Clamp(int value, int min, int max)
     {
         value = (value > max) ? max : value;

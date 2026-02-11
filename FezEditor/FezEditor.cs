@@ -18,6 +18,8 @@ public class FezEditor : Game
     private IRenderingService _rendering = null!;
     
     private IEditorService _editor = null!;
+    
+    private IInputService _input = null!;
 
     [STAThread]
     private static void Main(string[] args)
@@ -59,6 +61,7 @@ public class FezEditor : Game
         _imGui = this.CreateService<IImGuiService, ImGuiService>();
         _rendering = this.CreateService<IRenderingService, RenderingService>();
         _editor = this.CreateService<IEditorService, EditorService>();
+        _input = this.CreateService<IInputService, InputService>();
         this.CreateService<IResourceService, ResourceService>();
 
         this.CreateComponent<MenuBar>();
@@ -68,6 +71,12 @@ public class FezEditor : Game
         _editor.OpenEditor(new WelcomeComponent(this));
 
         base.Initialize();
+    }
+
+    protected override void Update(GameTime gameTime)
+    {
+        _input.Update();
+        base.Update(gameTime);
     }
 
     protected override void Draw(GameTime gameTime)

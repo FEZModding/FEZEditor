@@ -1,0 +1,200 @@
+﻿{
+  "UiAccept": [
+    {
+      "Key": "Enter",
+      "Ctrl": false,
+      "Shift": false,
+      "Alt": false
+    },
+    {
+      "Key": "Space",
+      "Ctrl": false,
+      "Shift": false,
+      "Alt": false
+    }
+  ],
+  "UiSelect": [
+    {
+      "Key": "Space",
+      "Ctrl": false,
+      "Shift": false,
+      "Alt": false
+    }
+  ],
+  "UiCancel": [
+    {
+      "Key": "Escape",
+      "Ctrl": false,
+      "Shift": false,
+      "Alt": false
+    }
+  ],
+  "UiCloseDialog": [
+    {
+      "Key": "Escape",
+      "Ctrl": false,
+      "Shift": false,
+      "Alt": false
+    }
+  ],
+  "UiLeft": [
+    {
+      "Key": "Left",
+      "Ctrl": false,
+      "Shift": false,
+      "Alt": false
+    }
+  ],
+  "UiRight": [
+    {
+      "Key": "Right",
+      "Ctrl": false,
+      "Shift": false,
+      "Alt": false
+    }
+  ],
+  "UiUp": [
+    {
+      "Key": "Up",
+      "Ctrl": false,
+      "Shift": false,
+      "Alt": false
+    }
+  ],
+  "UiDown": [
+    {
+      "Key": "Down",
+      "Ctrl": false,
+      "Shift": false,
+      "Alt": false
+    }
+  ],
+  "UiPageUp": [
+    {
+      "Key": "PageUp",
+      "Ctrl": false,
+      "Shift": false,
+      "Alt": false
+    }
+  ],
+  "UiPageDown": [
+    {
+      "Key": "PageDown",
+      "Ctrl": false,
+      "Shift": false,
+      "Alt": false
+    }
+  ],
+  "UiHome": [
+    {
+      "Key": "Home",
+      "Ctrl": false,
+      "Shift": false,
+      "Alt": false
+    }
+  ],
+  "UiEnd": [
+    {
+      "Key": "End",
+      "Ctrl": false,
+      "Shift": false,
+      "Alt": false
+    }
+  ],
+  "UiCut": [
+    {
+      "Key": "X",
+      "Ctrl": true,
+      "Shift": false,
+      "Alt": false
+    },
+    {
+      "Key": "Delete",
+      "Ctrl": false,
+      "Shift": true,
+      "Alt": false
+    }
+  ],
+  "UiCopy": [
+    {
+      "Key": "C",
+      "Ctrl": true,
+      "Shift": false,
+      "Alt": false
+    },
+    {
+      "Key": "Insert",
+      "Ctrl": true,
+      "Shift": false,
+      "Alt": false
+    }
+  ],
+  "UiPaste": [
+    {
+      "Key": "V",
+      "Ctrl": true,
+      "Shift": false,
+      "Alt": false
+    },
+    {
+      "Key": "Insert",
+      "Ctrl": false,
+      "Shift": true,
+      "Alt": false
+    }
+  ],
+  "UiUndo": [
+    {
+      "Key": "Z",
+      "Ctrl": true,
+      "Shift": false,
+      "Alt": false
+    }
+  ],
+  "UiRedo": [
+    {
+      "Key": "Y",
+      "Ctrl": true,
+      "Shift": false,
+      "Alt": false
+    },
+    {
+      "Key": "Z",
+      "Ctrl": true,
+      "Shift": true,
+      "Alt": false
+    }
+  ],
+  "MoveForward": [
+    {
+      "Key": "W",
+      "Ctrl": false,
+      "Shift": false,
+      "Alt": false
+    }
+  ],
+  "MoveBackward": [
+    {
+      "Key": "S",
+      "Ctrl": false,
+      "Shift": false,
+      "Alt": false
+    }
+  ],
+  "MoveLeft": [
+    {
+      "Key": "A",
+      "Ctrl": false,
+      "Shift": false,
+      "Alt": false
+    }
+  ],
+  "MoveRight": [
+    {
+      "Key": "D",
+      "Ctrl": false,
+      "Shift": false,
+      "Alt": false
+    }
+  ]
+}

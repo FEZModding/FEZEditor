@@ -1,6 +1,7 @@
-﻿using ImGuiNET;
+﻿using FezEditor.Services;
+using FezEditor.Structure;
+using FezEditor.Tools;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
 
 namespace FezEditor.Hosts;
 
@@ -16,61 +17,47 @@ public class FirstPersonControl
 
     private float _pitch;
 
-    private MouseState _previousMouseState;
+    private readonly IInputService _inputService;
 
     private readonly Game _game;
 
     public FirstPersonControl(Game game)
     {
         _game = game;
-        _previousMouseState = Mouse.GetState();
+        _inputService = game.GetService<IInputService>();
     }
 
     public void Update(GameTime gameTime)
     {
         #region Handle mouse input
         
-        var currentMouseState = Mouse.GetState();
-        SetMouseVisibility(true);
-        
-        if (currentMouseState.RightButton == ButtonState.Pressed)
+        _inputService.CaptureMouse(false);
+        if (_inputService.IsRightMousePressed())
         {
-            var deltaX = currentMouseState.X - _previousMouseState.X;
-            var deltaY = currentMouseState.Y - _previousMouseState.Y;
-            _yaw -= deltaX * MouseSensitivity;
-            _pitch += deltaY * MouseSensitivity;
-            
-            _pitch = MathHelper.Clamp(_pitch, -MathHelper.PiOver2 + 0.01f,
-                MathHelper.PiOver2 - 0.01f);
-            
-            // This prevents the mouse from leaving the window
-            if (_game.IsActive)
-            {
-                Mouse.SetPosition(_game.Window.ClientBounds.Width / 2, _game.Window.ClientBounds.Height / 2);
-                _previousMouseState = Mouse.GetState();
-                SetMouseVisibility(false);
-            }
+            var delta = _inputService.GetMouseDelta();
+            _yaw -= delta.X * MouseSensitivity;
+            _pitch += delta.Y * MouseSensitivity;
+            _pitch = MathHelper.Clamp(_pitch, -MathHelper.PiOver2 + 0.01f, MathHelper.PiOver2 - 0.01f);
+            _inputService.CaptureMouse(true);
         }
         
         #endregion
         
         #region Handle key input
-
-        var currentKeyboardState = Keyboard.GetState();
         
-        var direction = Vector3.Zero;
-        if (currentKeyboardState.IsKeyDown(Keys.W)) direction += Vector3.Forward;
-        if (currentKeyboardState.IsKeyDown(Keys.S)) direction += Vector3.Backward;
-        if (currentKeyboardState.IsKeyDown(Keys.A)) direction += Vector3.Right;
-        if (currentKeyboardState.IsKeyDown(Keys.D)) direction += Vector3.Left;
-        if (direction != Vector3.Zero) direction.Normalize();
+        var inputDirection = _inputService.GetActionsVector(
+            negativeX: InputActions.MoveLeft,
+            positiveX: InputActions.MoveRight,
+            negativeY: InputActions.MoveBackward,
+            positiveY: InputActions.MoveForward
+        );
         
         var rotation = Camera.Rotation;
         var forward = Vector3.Transform(Vector3.Forward, rotation);
         var right = Vector3.Transform(Vector3.Right, rotation);
         if (forward.LengthSquared() > 0) forward.Normalize();
         if (right.LengthSquared() > 0) right.Normalize();
-        direction = (forward * direction.Z + right * direction.X);
+        var direction = (forward * inputDirection.Y + right * inputDirection.X);
         
         #endregion
 
@@ -90,12 +77,5 @@ public class FirstPersonControl
         #endregion
 
         Camera.Update(gameTime);
-        _previousMouseState = Mouse.GetState();
-    }
-
-    private void SetMouseVisibility(bool enabled)
-    {
-        ImGui.GetIO().WantCaptureMouse = enabled;
-        _game.IsMouseVisible = enabled;
     }
 }
