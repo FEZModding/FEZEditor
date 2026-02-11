@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 
@@ -6,6 +7,14 @@ namespace FezEditor.Tools;
 
 public static class ContentManagerExtensions
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        Converters =
+        {
+            new JsonStringEnumConverter()
+        }
+    };
+    
     public static T LoadFromJson<T>(this ContentManager content, string assetName)
     {
         if (content is ZipContentManager zip)
@@ -13,7 +22,8 @@ public static class ContentManagerExtensions
             return zip.LoadJson<T>(assetName);
         }
 
-        using var stream = TitleContainer.OpenStream(Path.ChangeExtension(assetName, ".json"));
-        return JsonSerializer.Deserialize<T>(stream)!;
+        var path = Path.Combine(content.RootDirectory, Path.ChangeExtension(assetName, ".json"));
+        using var stream = TitleContainer.OpenStream(path);
+        return JsonSerializer.Deserialize<T>(stream, JsonOptions)!;
     }
 }
