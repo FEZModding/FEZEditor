@@ -36,6 +36,18 @@ public static class InputActions
     
     public const string UiRedo = "UiRedo";
     
+    public const string UiSave = "UiSave";
+    
+    public const string UiSaveAs = "UiSaveAs";
+    
+    public const string UiSaveAll = "UiSaveAll";
+    
+    public const string UiClose = "UiClose";
+    
+    public const string UiQuitToWelcome = "UiQuitToWelcome";
+    
+    public const string UiQuit = "UiClose";
+    
     public const string MoveForward = "MoveForward";
     
     public const string MoveBackward = "MoveBackward";

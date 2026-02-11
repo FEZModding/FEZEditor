@@ -1,5 +1,6 @@
 ﻿using FezEditor.Components;
 using FezEditor.Structure;
+using FezEditor.Tools;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 using Serilog;
@@ -19,7 +20,14 @@ public class EditorService : IEditorService
 
     private readonly List<EditorComponent> _pendingClose = new();
     
+    private readonly IInputService _inputService;
+    
     private EditorComponent? _activeEditor;
+
+    public EditorService(Game game)
+    {
+        _inputService = game.GetService<IInputService>();
+    }
 
     public void OpenEditor(EditorComponent editor)
     {
@@ -54,7 +62,19 @@ public class EditorService : IEditorService
 
     public void UpdateActiveEditor(GameTime gameTime)
     {
-        _activeEditor?.Update(gameTime);
+        if (_activeEditor != null)
+        {
+            _activeEditor.Update(gameTime);
+            if (_inputService.IsActionPressed(InputActions.UiUndo))
+            {
+                _activeEditor.History.Undo();
+            }
+
+            if (_inputService.IsActionPressed(InputActions.UiRedo))
+            {
+                _activeEditor.History.Redo();
+            }
+        }
     }
 
     public void UndoActiveEditorChanges()

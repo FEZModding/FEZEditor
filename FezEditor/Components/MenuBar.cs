@@ -16,11 +16,14 @@ public class MenuBar : DrawableGameComponent
     private readonly IEditorService _editorService;
     
     private readonly IResourceService _resourceService;
+    
+    private readonly IInputService _inputService;
 
     public MenuBar(Game game) : base(game)
     {
         _editorService = game.GetService<IEditorService>();
         _resourceService = game.GetService<IResourceService>();
+        _inputService = game.GetService<IInputService>();
     }
 
     protected override void LoadContent()
@@ -36,42 +39,56 @@ public class MenuBar : DrawableGameComponent
             {
                 ImGui.Separator();
 
-                if (ImGui.MenuItem("Save File", _editorService.Flags.HasFlag(EditorFlags.SaveFile)))
+                var enabled = _editorService.Flags.HasFlag(EditorFlags.SaveFile);
+                var shortcut = _inputService.GetActionBinding(InputActions.UiSave);
+                if (ImGui.MenuItem("Save File", shortcut, false, enabled))
                 {
                     // TODO: saving single modified file
                 }
                 
-                if (ImGui.MenuItem("Save File As...", _editorService.Flags.HasFlag(EditorFlags.SaveFile)))
+                enabled = _editorService.Flags.HasFlag(EditorFlags.SaveFile);
+                shortcut = _inputService.GetActionBinding(InputActions.UiSaveAs);
+                if (ImGui.MenuItem("Save File As...", shortcut, false, enabled))
                 {
                     // TODO: saving single modified file to different location
                 }
                 
-                if (ImGui.MenuItem("Save All Files", _editorService.Flags.HasFlag(EditorFlags.SaveFile)))
+                enabled = _editorService.Flags.HasFlag(EditorFlags.SaveFile);
+                shortcut = _inputService.GetActionBinding(InputActions.UiSaveAll);
+                if (ImGui.MenuItem("Save All Files", shortcut, false, enabled))
                 {
                     // TODO: saving all modified files
                 }
                 
                 ImGui.Separator();
-                
-                if (ImGui.MenuItem("Undo", "Ctrl", _editorService.Flags.HasFlag(EditorFlags.Undo)))
+
+                enabled = _editorService.Flags.HasFlag(EditorFlags.Undo);
+                shortcut = _inputService.GetActionBinding(InputActions.UiUndo);
+                if (ImGui.MenuItem("Undo", shortcut, false, enabled))
                 {
                     _editorService.UndoActiveEditorChanges();
                 }
                 
-                if (ImGui.MenuItem("Redo", _editorService.Flags.HasFlag(EditorFlags.Redo)))
+                enabled = _editorService.Flags.HasFlag(EditorFlags.Redo);
+                shortcut = _inputService.GetActionBinding(InputActions.UiRedo);
+                if (ImGui.MenuItem("Redo", shortcut, false, enabled))
                 {
                     _editorService.RedoActiveEditorChanges();
                 }
                 
                 ImGui.Separator();
-                
-                if (ImGui.MenuItem("Close File", _editorService.Flags.HasFlag(EditorFlags.CloseFile)))
+
+                enabled = _editorService.Flags.HasFlag(EditorFlags.CloseFile);
+                shortcut = _inputService.GetActionBinding(InputActions.UiClose);
+                if (ImGui.MenuItem("Close File", shortcut, false, enabled))
                 {
                     // TODO: add safeguard modal
                     _editorService.CloseActiveEditor();
                 }
 
-                if (ImGui.MenuItem("Quit To Welcome", _editorService.Flags.HasFlag(EditorFlags.QuitToWelcome)))
+                enabled = _editorService.Flags.HasFlag(EditorFlags.QuitToWelcome);
+                shortcut = _inputService.GetActionBinding(InputActions.UiQuitToWelcome);
+                if (ImGui.MenuItem("Quit To Welcome", shortcut, false, enabled))
                 {
                     // TODO: add safeguard modal
                     _resourceService.CloseProvider();
@@ -79,7 +96,8 @@ public class MenuBar : DrawableGameComponent
                     _editorService.OpenEditor(new WelcomeComponent(Game));
                 }
                 
-                if (ImGui.MenuItem("Quit"))
+                shortcut = _inputService.GetActionBinding(InputActions.UiQuit);
+                if (ImGui.MenuItem("Quit", shortcut))
                 {
                     // TODO: add safeguard modal
                     Game.Exit();

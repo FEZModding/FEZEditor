@@ -1,4 +1,5 @@
-﻿using FezEditor.Tools;
+﻿using System.Text;
+using FezEditor.Tools;
 using ImGuiNET;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
@@ -47,6 +48,19 @@ public class InputService : IInputService
     public bool HasAction(string action)
     {
         return _bindings.ContainsKey(action);
+    }
+
+    public string GetActionBinding(string action, int index = 0)
+    {
+        var binding = _bindings[action][index];
+        var strings = new List<string>();
+        
+        if (binding.Ctrl) strings.Add("Ctrl");
+        if (binding.Shift) strings.Add("Shift");
+        if (binding.Alt) strings.Add("Alt");
+        strings.Add(binding.Key.ToString());
+        
+        return string.Join("+", strings);
     }
 
     public bool IsActionJustPressed(string action)

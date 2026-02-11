@@ -13,6 +13,8 @@ public interface IInputService
 
     bool HasAction(string action);
     
+    string GetActionBinding(string action, int index = 0);
+    
     bool IsActionJustPressed(string action);
     
     bool IsActionPressed(string action);

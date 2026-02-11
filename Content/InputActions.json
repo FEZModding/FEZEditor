@@ -196,5 +196,53 @@
       "Shift": false,
       "Alt": false
     }
+  ],
+  "UiSave": [
+    {
+      "Key": "S",
+      "Ctrl": true,
+      "Shift": false,
+      "Alt": false
+    }
+  ],
+  "UiSaveAs": [
+    {
+      "Key": "S",
+      "Ctrl": true,
+      "Shift": false,
+      "Alt": true
+    }
+  ],
+  "UiSaveAll": [
+    {
+      "Key": "S",
+      "Ctrl": true,
+      "Shift": true,
+      "Alt": false
+    }
+  ],
+  "UiClose": [
+    {
+      "Key": "W",
+      "Ctrl": true,
+      "Shift": false,
+      "Alt": false
+    }
+  ],
+  "UiQuitToWelcome": [
+    {
+      "Key": "W",
+      "Ctrl": true,
+      "Shift": true,
+      "Alt": false
+    }
+  ],
+  "UiQuit": [
+    {
+      "Key": "Q",
+      "Ctrl": true,
+      "Shift": false,
+      "Alt": false
+    }
   ]
 }
