@@ -1,6 +1,6 @@
 ﻿using FezEditor.Components;
 using FezEditor.Structure;
-using FezEditor.Tools;
+using FEZRepacker.Core.Definitions.Game.TrackedSong;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 
@@ -43,7 +43,12 @@ public class ResourceService : IResourceService
 
     public EditorComponent CreateEditorFor(string path)
     {
-        return new TestComponent(_game, path);
+        var asset = Provider!.Load<object>(path);
+        return asset switch
+        {
+            TrackedSong song => new DiezEditor(_game, path, song),
+            _ => new NotSupportedComponent(_game, path)
+        };
     }
     
     public void Dispose()

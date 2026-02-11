@@ -57,19 +57,20 @@ public class MenuBar : DrawableGameComponent
                 
                 if (ImGui.MenuItem("Undo", _editorService.Flags.HasFlag(EditorFlags.Undo)))
                 {
-                    // TODO: History undo
+                    _editorService.UndoActiveEditorChanges();
                 }
                 
                 if (ImGui.MenuItem("Redo", _editorService.Flags.HasFlag(EditorFlags.Redo)))
                 {
-                    // TODO: History redo
+                    _editorService.RedoActiveEditorChanges();
                 }
                 
                 ImGui.Separator();
                 
                 if (ImGui.MenuItem("Close File", _editorService.Flags.HasFlag(EditorFlags.CloseFile)))
                 {
-                    _editorService.CloseEditor(_editorService.ActiveEditor!);
+                    // TODO: add safeguard modal
+                    _editorService.CloseActiveEditor();
                 }
 
                 if (ImGui.MenuItem("Quit To Welcome", _editorService.Flags.HasFlag(EditorFlags.QuitToWelcome)))

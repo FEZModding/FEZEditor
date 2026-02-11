@@ -1,6 +1,7 @@
 ﻿using FezEditor.Components;
 using FezEditor.Structure;
 using JetBrains.Annotations;
+using Microsoft.Xna.Framework;
 using Serilog;
 
 namespace FezEditor.Services;
@@ -14,19 +15,19 @@ public class EditorService : IEditorService
 
     public IEnumerable<EditorComponent> Editors => _editors;
 
-    public EditorComponent? ActiveEditor { get; private set; }
-
     private readonly List<EditorComponent> _editors = new();
 
     private readonly List<EditorComponent> _pendingClose = new();
+    
+    private EditorComponent? _activeEditor;
 
     public void OpenEditor(EditorComponent editor)
     {
         if (_editors.All(e => e.Title != editor.Title))
         {
-            editor.Initialize();
             _editors.Add(editor);
-            ActiveEditor = editor;
+            _activeEditor = editor;
+            _activeEditor.History.StateChanged += UpdateHistoryFlags;
             UpdateFlags();
         }
     }
@@ -36,6 +37,11 @@ public class EditorService : IEditorService
         _pendingClose.Add(editor);
     }
 
+    public void CloseActiveEditor()
+    {
+        _pendingClose.Add(_activeEditor!);
+    }
+
     public void CloseAllEditors()
     {
         _pendingClose.AddRange(_editors);
@@ -43,10 +49,28 @@ public class EditorService : IEditorService
 
     public void MarkEditorActive(EditorComponent editor)
     {
-        if (ActiveEditor != editor)
-        {
-            ActiveEditor = editor;
-        }
+        _activeEditor = editor;
+    }
+
+    public void UpdateActiveEditor(GameTime gameTime)
+    {
+        _activeEditor?.Update(gameTime);
+    }
+
+    public void UndoActiveEditorChanges()
+    {
+        _activeEditor!.History.Undo();
+    }
+
+    public void RedoActiveEditorChanges()
+    {
+        _activeEditor!.History.Redo();
+    }
+    
+    public bool HasEditorUnsavedChanges()
+    {
+        // TODO: implement this with saving
+        return _activeEditor!.History.UndoCount > 0;
     }
 
     public void FlushPendingCloses()
@@ -56,6 +80,7 @@ public class EditorService : IEditorService
             return;
         }
 
+        _activeEditor!.History.StateChanged -= UpdateHistoryFlags;
         foreach (var editor in _pendingClose)
         {
             if (_editors.Remove(editor))
@@ -63,9 +88,13 @@ public class EditorService : IEditorService
                 editor.Dispose();
             }
 
-            if (editor == ActiveEditor)
+            if (editor == _activeEditor)
             {
-                ActiveEditor = _editors.Count > 0 ? _editors[^1] : null;
+                _activeEditor = _editors.Count > 0 ? _editors[^1] : null;
+                if (_activeEditor != null)
+                {
+                    _activeEditor.History.StateChanged += UpdateHistoryFlags;
+                }
                 UpdateFlags();
             }
         }
@@ -75,7 +104,7 @@ public class EditorService : IEditorService
     
     private void UpdateFlags()
     {
-        if (ActiveEditor is WelcomeComponent)
+        if (_activeEditor is WelcomeComponent)
         {
             Flags &= ~(EditorFlags.CloseFile | EditorFlags.QuitToWelcome);
         }
@@ -90,6 +119,27 @@ public class EditorService : IEditorService
             {
                 Flags &= ~EditorFlags.CloseFile;
             }
+        }
+    }
+    
+    private void UpdateHistoryFlags()
+    {
+        if (_activeEditor!.History.CanUndo)
+        {
+            Flags |= EditorFlags.Undo;
+        }
+        else
+        {
+            Flags &= ~EditorFlags.Undo;
+        }
+
+        if (_activeEditor.History.CanRedo)
+        {
+            Flags |= EditorFlags.Redo;
+        }
+        else
+        {
+            Flags &= ~EditorFlags.Redo;
         }
     }
 }

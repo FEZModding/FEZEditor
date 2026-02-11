@@ -11,10 +11,10 @@ public class WelcomeComponent : EditorComponent
     private const float ContentWidth = 250f;
     
     private const float ContentHeight = 230f;
-
-    private Texture2D _logoTexture = null!;
     
     private ResourceExtractor? _resourceExtractor;
+    
+    private readonly Texture2D _logoTexture;
     
     private readonly IEditorService _editorService;
     
@@ -22,16 +22,12 @@ public class WelcomeComponent : EditorComponent
 
     public WelcomeComponent(Game game) : base(game, "Welcome")
     {
+        _logoTexture = Game.Content.Load<Texture2D>("Icon");
         _editorService = game.GetService<IEditorService>();
         _resourceService = game.GetService<IResourceService>();
     }
 
-    public override void Initialize()
-    {
-        _logoTexture = Game.Content.Load<Texture2D>("Icon");
-    }
-
-    public override void Draw(GameTime gameTime)
+    public override void Draw()
     {
         var regionSize = ImGuiX.GetContentRegionAvail();
         var offsetX = Math.Max(0, (regionSize.X - ContentWidth) / 2);

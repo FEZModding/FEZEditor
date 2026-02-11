@@ -75,6 +75,11 @@ public class PakResourceProvider : IResourceProvider
         }
     }
 
+    public void Save<T>(string path, T asset) where T : class
+    {
+        throw new NotSupportedException();
+    }
+
     public void Refresh()
     {
         using var stream = _pakFile.OpenRead();

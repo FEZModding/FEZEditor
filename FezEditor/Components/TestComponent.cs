@@ -1,6 +1,5 @@
 ﻿using FezEditor.Hosts;
 using FezEditor.Services;
-using FezEditor.Structure;
 using FezEditor.Tools;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
@@ -24,7 +23,7 @@ public class TestComponent : EditorComponent
         _host.Update(gameTime);
     }
 
-    public override void Draw(GameTime gameTime)
+    public override void Draw()
     {
         var size = ImGuiX.GetContentRegionAvail();
         var w = (int)size.X;
@@ -49,5 +48,6 @@ public class TestComponent : EditorComponent
     public override void Dispose()
     {
         _host.Dispose();
+        base.Dispose();
     }
 }

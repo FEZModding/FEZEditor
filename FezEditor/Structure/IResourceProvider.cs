@@ -20,5 +20,7 @@ public interface IResourceProvider : IDisposable
     
     T Load<T>(string path) where T : class;
     
+    void Save<T>(string path, T asset) where T : class;
+    
     void Refresh();
 }

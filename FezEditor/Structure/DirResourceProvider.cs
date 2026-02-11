@@ -78,6 +78,19 @@ public class DirResourceProvider : IResourceProvider
         return (T)FormatConversion.Deconvert(bundles.First())!;
     }
 
+    public void Save<T>(string path, T asset) where T : class
+    {
+        using var bundle = FormatConversion.Convert(asset);
+        bundle.BundlePath = Path.Combine(_directory.FullName, path);
+        
+        foreach (var outputFile in bundle.Files)
+        {
+            var fileOutputPath = bundle.BundlePath + bundle.MainExtension + outputFile.Extension;
+            using var fileOutputStream = new FileInfo(fileOutputPath).Create();
+            outputFile.Data.CopyTo(fileOutputStream);
+        }
+    }
+
     public void Refresh()
     {
         _files.Clear();

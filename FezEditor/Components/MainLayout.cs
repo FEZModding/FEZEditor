@@ -27,7 +27,7 @@ public class MainLayout : DrawableGameComponent
 
     public override void Update(GameTime gameTime)
     {
-        _editorService.ActiveEditor?.Update(gameTime);
+        _editorService.UpdateActiveEditor(gameTime);
     }
 
     public override void Draw(GameTime gameTime)
@@ -68,15 +68,21 @@ public class MainLayout : DrawableGameComponent
                     {
                         foreach (var editor in _editorService.Editors)
                         {
+                            var title = editor.Title;
+                            if (_editorService.HasEditorUnsavedChanges())
+                            {
+                                title = "(*) " + title;
+                            }
+                            
                             var isOpen = true;
                             var beginTabItem = editor is WelcomeComponent
-                                ? ImGui.BeginTabItem(editor.Title)
-                                : ImGui.BeginTabItem(editor.Title, ref isOpen);
+                                ? ImGui.BeginTabItem(title)
+                                : ImGui.BeginTabItem(title, ref isOpen);
                             
                             if (beginTabItem)
                             {
                                 _editorService.MarkEditorActive(editor);
-                                editor.Draw(gameTime);
+                                editor.Draw();
                                 ImGui.EndTabItem();
                             }
 
