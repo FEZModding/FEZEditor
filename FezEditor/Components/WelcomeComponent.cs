@@ -89,7 +89,7 @@ public class WelcomeComponent : EditorComponent
 
         if (ImGui.Button("Quit"))
         {
-            // TODO: Quiting the editor
+            Game.Exit();
         }
 
         ImGui.EndGroup();
