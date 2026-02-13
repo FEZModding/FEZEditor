@@ -10,6 +10,7 @@ public partial class EditorService
         return asset switch
         {
             TrackedSong song => new DiezEditor(_game, path, song),
+            TextStorage text => new PoEditor(_game, path, text),
             _ => new NotSupportedComponent(_game, path, asset.GetType())
         };
     }

@@ -466,8 +466,13 @@ public static class ImGuiX
     public static void SetTextCentered(string text)
     {
         var textSize = ImGui.CalcTextSize(text);
-        var windowSize = ImGui.GetWindowSize();
+        var windowSize = ImGui.GetContentRegionAvail();
         ImGui.SetCursorPos((windowSize - textSize) * 0.5f);
+    }
+
+    public static bool InputTextMultiline(string label, ref string input, uint maxLength, Vector2 size)
+    {
+        return ImGui.InputTextMultiline(label, ref input, maxLength, size.ToNumerics());
     }
     
     #endregion
