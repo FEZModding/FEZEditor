@@ -9,7 +9,7 @@ public class MainLayout : DrawableGameComponent
 {
     private const float DefaultLeftPaneWidth = 250f;
 
-    private readonly IEditorService _editorService;
+    private readonly EditorService _editorService;
 
     private readonly FileBrowser _fileBrowser;
 
@@ -17,7 +17,7 @@ public class MainLayout : DrawableGameComponent
 
     public MainLayout(Game game) : base(game)
     {
-        _editorService = Game.GetService<IEditorService>();
+        _editorService = Game.GetService<EditorService>();
         _fileBrowser = Game.GetComponent<FileBrowser>();
         _statusBar = Game.GetComponent<StatusBar>();
         DrawOrder = -1;

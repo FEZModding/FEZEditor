@@ -15,14 +15,14 @@ public abstract class EditorComponent
 
     protected Game Game { get; }
 
-    protected IRenderingService RenderingService { get; }
+    protected RenderingService RenderingService { get; }
 
     protected EditorComponent(Game game, string title)
     {
         Game = game;
         Title = title;
         History = new History();
-        RenderingService = game.GetService<IRenderingService>();
+        RenderingService = game.GetService<RenderingService>();
     }
 
     public virtual void Update(GameTime gameTime)

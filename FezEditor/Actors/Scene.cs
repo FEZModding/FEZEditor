@@ -16,7 +16,7 @@ public class Scene : IDisposable
 
     private readonly Rid _rtRid;
 
-    private readonly IRenderingService _rendering;
+    private readonly RenderingService _rendering;
     
     private readonly Dictionary<int, Actor> _actors = new();
 
@@ -29,7 +29,7 @@ public class Scene : IDisposable
         #region Main services
 
         _game = game;
-        _rendering = game.GetService<IRenderingService>();
+        _rendering = game.GetService<RenderingService>();
 
         #endregion
 

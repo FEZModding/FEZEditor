@@ -16,7 +16,7 @@ public class TrileMesh : ActorComponent
 
     private readonly OrderedDictionary<TrileEmplacement, InstanceData> _instances = new();
 
-    private IRenderingService _rendering = null!;
+    private RenderingService _rendering = null!;
 
     private Rid _mesh;
 
@@ -28,7 +28,7 @@ public class TrileMesh : ActorComponent
 
     public override void Initialize()
     {
-        _rendering = Game.GetService<IRenderingService>();
+        _rendering = Game.GetService<RenderingService>();
         _mesh = _rendering.MeshCreate();
         _material = _rendering.MaterialCreate();
         _multiMesh = _rendering.MeshCreate();

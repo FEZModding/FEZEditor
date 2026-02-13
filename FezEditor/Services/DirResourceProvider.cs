@@ -3,9 +3,9 @@ using FEZRepacker.Core.Conversion;
 using FEZRepacker.Core.FileSystem;
 using FEZRepacker.Core.XNB;
 
-namespace FezEditor.Structure;
+namespace FezEditor.Services;
 
-public class DirResourceProvider : IResourceProvider
+internal class DirResourceProvider : IResourceProvider
 {
     public bool IsReadonly => false;
     

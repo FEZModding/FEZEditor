@@ -23,9 +23,9 @@ public class FileBrowser : DrawableGameComponent
 
     private SortMode _sortMode = SortMode.NameAscending;
     
-    private readonly IEditorService _editorService;
+    private readonly EditorService _editorService;
     
-    private readonly IResourceService _resourceService;
+    private readonly ResourceService _resourceService;
 
     private enum SortMode
     {
@@ -37,8 +37,8 @@ public class FileBrowser : DrawableGameComponent
 
     public FileBrowser(Game game) : base(game)
     {
-        _editorService = game.GetService<IEditorService>();
-        _resourceService = game.GetService<IResourceService>();
+        _editorService = game.GetService<EditorService>();
+        _resourceService = game.GetService<ResourceService>();
         _resourceService.ProviderChanged += UpdateNodeTree;
     }
 

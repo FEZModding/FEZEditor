@@ -1,9 +1,9 @@
 ﻿using FEZRepacker.Core.FileSystem;
 using FEZRepacker.Core.XNB;
 
-namespace FezEditor.Structure;
+namespace FezEditor.Services;
 
-public class PakResourceProvider : IResourceProvider
+internal class PakResourceProvider : IResourceProvider
 {
     public bool IsReadonly => true;
 

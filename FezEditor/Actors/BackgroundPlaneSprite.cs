@@ -24,7 +24,7 @@ public class BackgroundPlaneSprite : ActorComponent
 
     private readonly List<FrameContent> _frames = new();
 
-    private IRenderingService _rendering = null!;
+    private RenderingService _rendering = null!;
 
     private Vector2 _textureSize = Vector2.Zero;
 
@@ -42,7 +42,7 @@ public class BackgroundPlaneSprite : ActorComponent
 
     public override void Initialize()
     {
-        _rendering = Game.GetService<IRenderingService>();
+        _rendering = Game.GetService<RenderingService>();
         _mesh = _rendering.MeshCreate();
         _material = _rendering.MaterialCreate();
         var world = _rendering.InstanceGetWorld(Actor.InstanceRid);

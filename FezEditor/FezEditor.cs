@@ -13,15 +13,15 @@ public class FezEditor : Game
     
     private readonly GraphicsDeviceManager _deviceManager;
     
-    private IImGuiService _imGui = null!;
+    private ImGuiService _imGui = null!;
     
-    private IRenderingService _rendering = null!;
+    private RenderingService _rendering = null!;
 
-    private IResourceService _resource = null!;
+    private ResourceService _resource = null!;
     
-    private IInputService _input = null!;
+    private InputService _input = null!;
     
-    private IEditorService _editor = null!;
+    private EditorService _editor = null!;
 
     [STAThread]
     private static void Main(string[] args)
@@ -60,11 +60,11 @@ public class FezEditor : Game
 
     protected override void Initialize()
     {
-        _imGui = this.CreateService<IImGuiService, ImGuiService>();
-        _rendering = this.CreateService<IRenderingService, RenderingService>();
-        _resource = this.CreateService<IResourceService, ResourceService>();
-        _input = this.CreateService<IInputService, InputService>();
-        _editor = this.CreateService<IEditorService, EditorService>();
+        _imGui = this.CreateService<ImGuiService>();
+        _rendering = this.CreateService<RenderingService>();
+        _resource = this.CreateService<ResourceService>();
+        _input = this.CreateService<InputService>();
+        _editor = this.CreateService<EditorService>();
 
         this.AddComponent(new MenuBar(this));
         this.AddComponent(new FileBrowser(this));

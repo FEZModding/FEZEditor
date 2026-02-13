@@ -1,6 +1,6 @@
-﻿namespace FezEditor.Structure;
+﻿namespace FezEditor.Services;
 
-public interface IResourceProvider : IDisposable
+internal interface IResourceProvider : IDisposable
 {
     bool IsReadonly { get; }
     

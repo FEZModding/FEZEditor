@@ -8,7 +8,7 @@ namespace FezEditor.Actors;
 
 public class ArtObjectMesh : ActorComponent
 {
-    private IRenderingService _rendering = null!;
+    private RenderingService _rendering = null!;
     
     private Rid _mesh;
 
@@ -16,7 +16,7 @@ public class ArtObjectMesh : ActorComponent
 
     public override void Initialize()
     {
-        _rendering = Game.GetService<IRenderingService>();
+        _rendering = Game.GetService<RenderingService>();
         _mesh = _rendering.MeshCreate();
         _material = _rendering.MaterialCreate();
     }

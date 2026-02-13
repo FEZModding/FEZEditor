@@ -11,11 +11,11 @@ public class Transform : ActorComponent
     
     public Vector3 Scale { get; set; }
 
-    private IRenderingService _rendering = null!;
+    private RenderingService _rendering = null!;
 
     public override void Initialize()
     {
-        _rendering = Game.GetService<IRenderingService>();
+        _rendering = Game.GetService<RenderingService>();
         Position = _rendering.InstanceGetPosition(Actor.InstanceRid);
         Rotation = _rendering.InstanceGetRotation(Actor.InstanceRid);
         Scale = _rendering.InstanceGetScale(Actor.InstanceRid);

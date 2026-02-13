@@ -1,5 +1,4 @@
-﻿using System.Text;
-using FezEditor.Tools;
+﻿using FezEditor.Tools;
 using ImGuiNET;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
@@ -8,7 +7,7 @@ using Microsoft.Xna.Framework.Input;
 namespace FezEditor.Services;
 
 [UsedImplicitly]
-public class InputService : IInputService
+public class InputService
 {
     private readonly Game _game;
 

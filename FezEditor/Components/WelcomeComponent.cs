@@ -16,15 +16,15 @@ public class WelcomeComponent : EditorComponent
     
     private readonly Texture2D _logoTexture;
     
-    private readonly IEditorService _editorService;
+    private readonly EditorService _editorService;
     
-    private readonly IResourceService _resourceService;
+    private readonly ResourceService _resourceService;
 
     public WelcomeComponent(Game game) : base(game, "Welcome")
     {
         _logoTexture = Game.Content.Load<Texture2D>("Icon");
-        _editorService = game.GetService<IEditorService>();
-        _resourceService = game.GetService<IResourceService>();
+        _editorService = game.GetService<EditorService>();
+        _resourceService = game.GetService<ResourceService>();
     }
 
     public override void Draw()

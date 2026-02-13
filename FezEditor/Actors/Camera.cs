@@ -25,7 +25,7 @@ public class Camera : ActorComponent
 
     public float AspectRatio { get; set; } = 1.0f;
 
-    private IRenderingService _rendering = null!;
+    private RenderingService _rendering = null!;
 
     private Rid _camera;
 
@@ -35,7 +35,7 @@ public class Camera : ActorComponent
     
     public override void Initialize()
     {
-        _rendering = Game.GetService<IRenderingService>();
+        _rendering = Game.GetService<RenderingService>();
         _camera = _rendering.CameraCreate();
         _world = _rendering.InstanceGetWorld(Actor.InstanceRid);
         _rendering.WorldSetCamera(_world, _camera);

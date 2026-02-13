@@ -13,28 +13,14 @@ public static class GameExtensions
 
     public static T CreateService<T>(this Game game) where T : class
     {
-        var service = CreateInstance<T>(game);
+        var service = (T)CreateInstance(game, typeof(T));
         game.AddService(service);
-        return service;
-    }
-
-    public static T CreateService<TInterface, T>(this Game game)
-        where T : class, TInterface
-        where TInterface : class
-    {
-        var service = CreateInstance<T>(game);
-        game.AddService<TInterface>(service);
         return service;
     }
 
     #endregion
 
     #region Instance Creation
-
-    private static T CreateInstance<T>(Game game) where T : class
-    {
-        return (T)CreateInstance(game, typeof(T));
-    }
 
     private static object CreateInstance(Game game, Type type)
     {
@@ -85,14 +71,6 @@ public static class GameExtensions
             return true;
         }
 
-        // Handle Lazy<T> for deferred resolution
-        if (paramType.IsGenericType && paramType.GetGenericTypeDefinition() == typeof(Lazy<>))
-        {
-            var innerType = paramType.GetGenericArguments()[0];
-            value = CreateLazyResolver(game, innerType);
-            return true;
-        }
-
         // Try to get existing service
         var service = game.Services.GetService(paramType);
         if (service != null)
@@ -105,35 +83,19 @@ public static class GameExtensions
         return false;
     }
 
-    private static object CreateLazyResolver(Game game, Type serviceType)
-    {
-        var lazyType = typeof(Lazy<>).MakeGenericType(serviceType);
-        var funcType = typeof(Func<>).MakeGenericType(serviceType);
-
-        var resolver = () => game.Services.GetService(serviceType)
-            ?? throw new InvalidOperationException($"Service {serviceType.Name} not registered");
-
-        var typedDelegate = Delegate.CreateDelegate(funcType,
-            resolver.Target,
-            resolver.Method);
-
-        return Activator.CreateInstance(lazyType, typedDelegate)!;
-    }
-
     #endregion
 
     #region Service Management
 
     private static void AddService<T>(this Game game, T service)
     {
-        if (service is not IUpdateable &&
-            service is not IDrawable &&
-            service is not IGameComponent &&
-            service is not IComparable)
+        if (service is IUpdateable || service is IDrawable || service is IGameComponent || service is IComparable)
         {
-            game.Services.AddService(typeof(T), service);
-            Services.Add(service!);
+            throw new ArgumentException("Only a service with or without IDisposable interface can be added!");
         }
+        
+        game.Services.AddService(typeof(T), service);
+        Services.Add(service!);
     }
 
     public static T GetService<T>(this Game game) where T : class
@@ -145,25 +107,6 @@ public static class GameExtensions
         }
         
         return service;
-    }
-
-    public static T? TryGetService<T>(this Game game) where T : class
-    {
-        return game.Services.GetService(typeof(T)) as T;
-    }
-
-    public static void RemoveService<T>(this Game game)
-    {
-        var @object = game.Services.GetService(typeof(T));
-        if (@object is T service)
-        {
-            game.Services.RemoveService(typeof(T));
-            if (service is IDisposable disposable)
-            {
-                disposable.Dispose();
-            }
-            Services.Remove(service);
-        }
     }
 
     public static void RemoveServices(this Game game)
@@ -196,14 +139,6 @@ public static class GameExtensions
         lock (Lock)
         {
             return game.Components.OfType<T>().First();
-        }
-    }
-
-    public static T? TryGetComponent<T>(this Game game) where T : class, IGameComponent
-    {
-        lock (Lock)
-        {
-            return game.Components.OfType<T>().FirstOrDefault();
         }
     }
 

@@ -13,7 +13,7 @@ namespace FezEditor.Services;
 /// Renders Dear ImGui user interfaces by integrating ImGui.NET with the FNA graphics pipeline.
 /// </summary>
 [UsedImplicitly]
-public partial class ImGuiService : IImGuiService
+public partial class ImGuiService : IDisposable
 {
     private static readonly ILogger Logger = Logging.Create<ImGuiService>();
     

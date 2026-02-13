@@ -1,11 +1,10 @@
-﻿using FezEditor.Structure;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 
 namespace FezEditor.Services;
 
 [UsedImplicitly]
-public class ResourceService : IResourceService
+public class ResourceService : IDisposable
 {
     public event Action? ProviderChanged;
 

@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework;
 namespace FezEditor.Services;
 
 [UsedImplicitly]
-public partial class EditorService : IEditorService
+public partial class EditorService
 {
     public EditorFlags Flags { get; private set; }
 
@@ -21,17 +21,17 @@ public partial class EditorService : IEditorService
 
     private readonly Game _game;
     
-    private readonly IInputService _inputService;
+    private readonly InputService _inputService;
     
-    private readonly IResourceService _resourceService;
+    private readonly ResourceService _resourceService;
     
     private EditorComponent? _activeEditor;
 
     public EditorService(Game game)
     {
         _game = game;
-        _inputService = game.GetService<IInputService>();
-        _resourceService = game.GetService<IResourceService>();
+        _inputService = game.GetService<InputService>();
+        _resourceService = game.GetService<ResourceService>();
     }
     
     public void Update(GameTime gameTime)

@@ -24,7 +24,7 @@ public class Grid : ActorComponent
     
     public int SecondaryStep { get; set; } = 1;
 
-    private IRenderingService _rendering = null!;
+    private RenderingService _rendering = null!;
     
     private readonly GridPlaneData[] _planes = new GridPlaneData[3];
 
@@ -35,7 +35,7 @@ public class Grid : ActorComponent
     public override void Initialize()
     {
         var effect = Game.Content.Load<Effect>("Effects/Grid");
-        _rendering = Game.GetService<IRenderingService>();
+        _rendering = Game.GetService<RenderingService>();
 
         _primaryMaterial = _rendering.MaterialCreate();
         _rendering.MaterialAssignEffect(_primaryMaterial, effect);

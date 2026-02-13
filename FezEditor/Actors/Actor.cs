@@ -19,7 +19,7 @@ public class Actor : IDisposable
 
     private readonly Game _game;
 
-    private readonly IRenderingService _rendering;
+    private readonly RenderingService _rendering;
     
     private bool _disposed;
 
@@ -27,7 +27,7 @@ public class Actor : IDisposable
     {
         _id = id;
         _game = game;
-        _rendering = game.GetService<IRenderingService>();
+        _rendering = game.GetService<RenderingService>();
         InstanceRid = _rendering.InstanceCreate(parentRid);
         Transform = AddComponent<Transform>();
     }

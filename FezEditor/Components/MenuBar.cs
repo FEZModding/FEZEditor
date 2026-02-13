@@ -13,17 +13,17 @@ public class MenuBar : DrawableGameComponent
 
     private AboutWindow? _aboutWindow;
     
-    private readonly IEditorService _editorService;
+    private readonly EditorService _editorService;
     
-    private readonly IResourceService _resourceService;
+    private readonly ResourceService _resourceService;
     
-    private readonly IInputService _inputService;
+    private readonly InputService _inputService;
 
     public MenuBar(Game game) : base(game)
     {
-        _editorService = game.GetService<IEditorService>();
-        _resourceService = game.GetService<IResourceService>();
-        _inputService = game.GetService<IInputService>();
+        _editorService = game.GetService<EditorService>();
+        _resourceService = game.GetService<ResourceService>();
+        _inputService = game.GetService<InputService>();
     }
 
     protected override void LoadContent()

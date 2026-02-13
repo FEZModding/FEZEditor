@@ -6,7 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 namespace FezEditor.Services;
 
 [UsedImplicitly]
-public partial class RenderingService : IRenderingService
+public partial class RenderingService : IDisposable
 {
     public GraphicsDevice GraphicsDevice { get; }
 

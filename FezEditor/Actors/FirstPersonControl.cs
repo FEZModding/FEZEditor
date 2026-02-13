@@ -15,13 +15,13 @@ public class FirstPersonControl : ActorComponent
 
     private float _pitch;
 
-    private IInputService _input = null!;
+    private InputService _input = null!;
 
     private Transform _transform = null!;
 
     public override void Initialize()
     {
-        _input = Game.GetService<IInputService>();
+        _input = Game.GetService<InputService>();
         _transform = Actor.GetComponent<Transform>();
     }
     
