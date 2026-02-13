@@ -45,6 +45,8 @@ public partial class ImGuiService : IDisposable
 
     private int _indexBufferSize;
 
+    private bool _gameWindowFocused = true;
+
     public unsafe ImGuiService(Game game)
     {
         _game = game;
@@ -60,6 +62,12 @@ public partial class ImGuiService : IDisposable
             ImGuiX.Bind = BindTexture;
             ImGuiX.Unbind = UnbindTexture;
             ImGuiX.GetTexture = GetBoundTexture;
+        }
+        
+        // Disable mouse if window not focused
+        {
+            _game.Deactivated += (_, _) => _gameWindowFocused = false;
+            _game.Activated += (_, _) => _gameWindowFocused = true;
         }
 
         // Rebuild Font atlas
@@ -118,6 +126,7 @@ public partial class ImGuiService : IDisposable
         io.DeltaTime = delta > 0f ? delta : FallbackFrameTime;
 
         // Update inputs
+        if (_gameWindowFocused)
         {
             var mouse = Mouse.GetState();
             io.AddMousePosEvent(mouse.X, mouse.Y);
