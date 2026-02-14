@@ -26,4 +26,23 @@ public static class ContentManagerExtensions
         using var stream = TitleContainer.OpenStream(path);
         return JsonSerializer.Deserialize<T>(stream, JsonOptions)!;
     }
+
+    public static byte[] LoadTrueTypeFont(this ContentManager content, string assetName)
+    {
+        return content.LoadBytes(Path.ChangeExtension(assetName, ".ttf"));
+    }
+
+    private static byte[] LoadBytes(this ContentManager content, string assetName)
+    {
+        if (content is ZipContentManager zip)
+        {
+            return zip.LoadBytes(assetName);
+        }
+
+        var path = Path.Combine(content.RootDirectory, assetName);
+        using var stream = TitleContainer.OpenStream(path);
+        var data = new byte[stream.Length];
+        stream.ReadExactly(data);
+        return data;
+    }
 }

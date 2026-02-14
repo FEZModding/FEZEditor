@@ -24,6 +24,15 @@ public class ZipContentManager : ContentManager
         return JsonSerializer.Deserialize<T>(stream)!;
     }
 
+    public byte[] LoadBytes(string assetName)
+    {
+        var entry = _archive.GetEntry(assetName)!;
+        using var stream = entry.Open();
+        var data = new byte[stream.Length];
+        stream.ReadExactly(data);
+        return data;
+    }
+
     protected override Stream OpenStream(string assetName)
     {
         var entry = _archive.Entries

@@ -11,6 +11,7 @@ public partial class EditorService
         {
             TrackedSong song => new DiezEditor(_game, path, song),
             TextStorage text => new PoEditor(_game, path, text),
+            FezFont font => new ZuEditor(_game, path, font),
             _ => new NotSupportedComponent(_game, path, asset.GetType())
         };
     }

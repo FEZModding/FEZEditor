@@ -1,5 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using FezEditor.Structure;
+using FezEditor.Tools;
 using ImGuiNET;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
@@ -68,6 +69,16 @@ public partial class ImGuiService : IDisposable
         {
             _game.Deactivated += (_, _) => _gameWindowFocused = false;
             _game.Activated += (_, _) => _gameWindowFocused = true;
+        }
+        
+        // Load fonts
+        {
+            var io = ImGui.GetIO();
+            io.Fonts.AddFontDefault();
+            ImGuiX.Fonts.NotoSans = LoadFont("Fonts/NotoSans", io.Fonts.GetGlyphRangesDefault());
+            ImGuiX.Fonts.NotoSansJp = LoadFont("Fonts/NotoSansJP", io.Fonts.GetGlyphRangesJapanese());
+            ImGuiX.Fonts.NotoSansKr = LoadFont("Fonts/NotoSansKR", io.Fonts.GetGlyphRangesKorean());
+            ImGuiX.Fonts.NotoSansTc = LoadFont("Fonts/NotoSansTc", io.Fonts.GetGlyphRangesChineseFull());
         }
 
         // Rebuild Font atlas
@@ -333,6 +344,21 @@ public partial class ImGuiService : IDisposable
         if (UnbindTexture(_fontTexture))
         {
             _fontTexture.Dispose();
+        }
+    }
+    
+    /// <summary>
+    /// Loads font into ImGui from the game resources
+    /// </summary>
+    private unsafe ImFontPtr LoadFont(string path, nint glyphRanges, float size = 24f)
+    {
+        var io = ImGui.GetIO();
+        var data = _game.Content.LoadTrueTypeFont(path);
+        fixed (byte* ptr = data)
+        {
+            var config = ImGuiNative.ImFontConfig_ImFontConfig();
+            config->MergeMode = 0;
+            return io.Fonts.AddFontFromMemoryTTF((nint)ptr, data.Length, size, config, glyphRanges);
         }
     }
     
