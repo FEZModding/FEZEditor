@@ -1,4 +1,5 @@
 ﻿using FezEditor.Structure;
+using FezEditor.Tools;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
 
@@ -9,6 +10,10 @@ public class PoEditor : EditorComponent
     private static readonly string[] ColumnNames = ["Text Id", "Source Text", "Translation Text"];
 
     public override object Asset => _textStorage;
+
+    private readonly EditWindow _edit;
+
+    private readonly ConfirmWindow _confirm;
 
     private readonly TextStorage _textStorage;
 
@@ -33,6 +38,14 @@ public class PoEditor : EditorComponent
         _textStorage = textStorage;
         History.Track(_textStorage);
         History.StateChanged += UpdateTableView;
+        Game.AddComponent(_edit = new EditWindow(game));
+        Game.AddComponent(_confirm = new ConfirmWindow(game));
+    }
+
+    public override void Dispose()
+    {
+        Game.RemoveComponent(_edit);
+        Game.RemoveComponent(_confirm);
     }
 
     public override void LoadContent()
@@ -130,7 +143,7 @@ public class PoEditor : EditorComponent
                     {
                         flags |= ImGuiSelectableFlags.Disabled;
                     }
-                    
+
                     if (ImGui.Selectable(row[j], false, flags))
                     {
                         _activeCell = (i, j);
@@ -143,25 +156,31 @@ public class PoEditor : EditorComponent
             ImGui.EndTable();
         }
 
-        ImGui.PopStyleVar();
-
         #endregion
-        
-        #region Menu Popup
 
+        DrawMenuPopup();
+        DrawEditTextCellModal();
+        DrawAddEntryModal();
+        DrawRemoveEntryModal();
+
+        ImGui.PopStyleVar();
+    }
+
+    private void DrawMenuPopup()
+    {
         if (_nextState == State.MenuPopup)
         {
             ImGui.OpenPopup("##MenuPopup");
             _nextState = State.TableView;
         }
-        
+
         if (ImGui.BeginPopup("##MenuPopup"))
         {
             if (ImGui.MenuItem("Edit This Cell"))
             {
                 _nextState = State.EditCell;
             }
-            
+
             if (ImGui.MenuItem("Add New Entry"))
             {
                 _newEntryId = "";
@@ -176,212 +195,149 @@ public class PoEditor : EditorComponent
 
             ImGui.EndPopup();
         }
-        
-        #endregion
+    }
 
-        #region Edit Text Cell Modal
-
-        if (_nextState == State.EditCell)
+    private void DrawRemoveEntryModal()
+    {
+        if (_nextState != State.DeleteEntry)
         {
-            ImGuiX.SetNextWindowCentered();
-            ImGui.OpenPopup("##CellEditor");
-            _nextState = State.TableView;
+            return;
         }
 
-        ImGuiX.SetNextWindowSize(new Vector2(512, 0), ImGuiCond.FirstUseEver);
-        if (ImGui.BeginPopupModal("##CellEditor",
-                ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar))
+        _confirm.Text = $"Delete \"{_pendingDeleteId}\" from all languages?";
+        _confirm.Confirmed = () =>
         {
-            var row = _textTable[_activeCell.Row];
-            ImGui.Text($"Editing {ColumnNames[_activeCell.Column]}");
-            ImGui.Separator();
-
-            ImGuiX.InputTextMultiline("##edit", ref _cellText, 2048, new Vector2(-1, 240));
-            if (ImGui.IsWindowAppearing())
+            using (History.BeginScope("Delete text entry"))
             {
-                ImGui.SetKeyboardFocusHere(-1);
-            }
-
-            ImGui.Separator();
-            if (ImGui.Button("Save"))
-            {
-                switch (_activeCell.Column)
+                foreach (var storage in _textStorage.Values)
                 {
-                    case 0: // Row
-                        UpdateId(row[_activeCell.Column], _cellText);
-                        break;
-
-                    case 1: // Source
-                        UpdateSource(row[0], _cellText);
-                        break;
-
-                    case 2: // Translation
-                        UpdateTranslation(row[0], _cellText);
-                        break;
+                    if (storage.Remove(_pendingDeleteId))
+                    {
+                        _pendingDeleteId = "";
+                    }
                 }
-
-                _activeCell = (-1, -1);
-                ImGui.CloseCurrentPopup();
-                UpdateTableView();
             }
+            UpdateTableView();
+        };
 
-            ImGui.SameLine();
-            if (ImGui.Button("Cancel"))
-            {
-                _activeCell = (-1, -1);
-                ImGui.CloseCurrentPopup();
-            }
+        _confirm.Canceled = () => { _pendingDeleteId = ""; };
 
-            ImGui.EndPopup();
+        _nextState = State.TableView;
+    }
+
+    private void DrawAddEntryModal()
+    {
+        if (_nextState != State.AddEntry)
+        {
+            return;
         }
 
-        #endregion
-
-        #region Add New Entry Modal
-
-        if (_nextState == State.AddEntry)
+        _edit.Text = "Enter new text ID";
+        _edit.EditValue = () =>
         {
-            ImGuiX.SetNextWindowCentered();
-            ImGui.OpenPopup("##AddEntry");
-            _nextState = State.TableView;
-        }
-
-        ImGuiX.SetNextWindowSize(new Vector2(400, 0), ImGuiCond.FirstUseEver);
-        if (ImGui.BeginPopupModal("##AddEntry",
-                ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar))
-        {
-            ImGui.Text("New Text ID");
-            ImGui.Separator();
-
             ImGuiX.InputTextMultiline("##NewId", ref _newEntryId, 256, new Vector2(-1, 40));
-            if (ImGui.IsWindowAppearing())
-                ImGui.SetKeyboardFocusHere(-1);
-
-            ImGui.Separator();
 
             var idExists = _textStorage[Language.English.GetId()].ContainsKey(_newEntryId);
-            var idEmpty = string.IsNullOrWhiteSpace(_newEntryId);
-
             if (idExists)
             {
                 ImGuiX.TextColored(new Color(1, 0.3f, 0.3f, 1), "ID already exists.");
             }
-            
+
+            var idEmpty = string.IsNullOrWhiteSpace(_newEntryId);
             if (idEmpty)
             {
                 ImGuiX.TextColored(new Color(1, 0.3f, 0.3f, 1), "ID cannot be empty.");
             }
 
-            ImGui.BeginDisabled(idExists || idEmpty);
-            if (ImGui.Button("Add"))
-            {
-                AddEntry(_newEntryId);
-                ImGui.CloseCurrentPopup();
-                UpdateTableView();
-            }
+            return !idExists && !idEmpty;
+        };
 
-            ImGui.EndDisabled();
-
-            ImGui.SameLine();
-            if (ImGui.Button("Cancel"))
-                ImGui.CloseCurrentPopup();
-
-            ImGui.EndPopup();
-        }
-
-        #endregion
-
-        #region Delete Entry Modal
-
-        if (_nextState == State.DeleteEntry)
+        _edit.Accepted = () =>
         {
-            ImGuiX.SetNextWindowCentered();
-            ImGui.OpenPopup("##DeleteEntry");
-            _nextState = State.TableView;
-        }
-
-        ImGuiX.SetNextWindowSize(new Vector2(360, 0), ImGuiCond.FirstUseEver);
-        if (ImGui.BeginPopupModal("##DeleteEntry",
-                ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar))
-        {
-            ImGui.Text($"Delete \"{_pendingDeleteId}\" from all languages?");
-            ImGui.Separator();
-
-            if (ImGui.Button("Delete"))
+            using (History.BeginScope("Add text entry"))
             {
-                DeleteEntry(_pendingDeleteId);
-                _pendingDeleteId = "";
-                ImGui.CloseCurrentPopup();
-                UpdateTableView();
-            }
-
-            ImGui.SameLine();
-            if (ImGui.Button("Cancel"))
-            {
-                _pendingDeleteId = "";
-                ImGui.CloseCurrentPopup();
-            }
-
-            ImGui.EndPopup();
-        }
-
-        #endregion
-    }
-
-    private void UpdateId(string id, string newId)
-    {
-        using (History.BeginScope("Update id of text"))
-        {
-            foreach (var storage in _textStorage.Values)
-            {
-                if (storage.Remove(id, out var text))
+                foreach (var storage in _textStorage.Values)
                 {
-                    storage.Add(newId, text);
+                    storage.TryAdd(_newEntryId, "");
                 }
             }
-        }
+
+            UpdateTableView();
+        };
+
+        _nextState = State.TableView;
     }
 
-    private void UpdateSource(string id, string source)
+    private void DrawEditTextCellModal()
     {
-        using (History.BeginScope("Update source of text"))
+        if (_nextState != State.EditCell)
         {
-            var englishStorage = _textStorage[Language.English.GetId()];
-            englishStorage[id] = NormalizeLineEndings(source);
+            return;
         }
-    }
 
-    private void UpdateTranslation(string id, string translation)
-    {
-        using (History.BeginScope("Update translation of text"))
+        _edit.Text = $"Editing {ColumnNames[_activeCell.Column]}...";
+        _edit.EditValue = () =>
         {
-            var languageStorage = _textStorage[_selectedLanguage.GetId()];
-            languageStorage[id] = NormalizeLineEndings(translation);
-        }
-    }
-    
-    private void AddEntry(string id)
-    {
-        using (History.BeginScope("Add text entry"))
+            ImGuiX.InputTextMultiline("##edit", ref _cellText, 2048, new Vector2(-1, 240));
+            return true;
+        };
+
+        _edit.Accepted = () =>
         {
-            foreach (var storage in _textStorage.Values)
+            var row = _textTable[_activeCell.Row];
+            switch (_activeCell.Column)
             {
-                storage.TryAdd(id, "");
+                case 0: // Row
+                {
+                    using (History.BeginScope("Update id of text"))
+                    {
+                        foreach (var storage in _textStorage.Values)
+                        {
+                            if (storage.Remove(row[_activeCell.Column], out var text))
+                            {
+                                storage.Add(_cellText, text);
+                            }
+                        }
+                    }
+
+                    break;
+                }
+
+                case 1: // Source
+                {
+                    using (History.BeginScope("Update source of text"))
+                    {
+                        var englishStorage = _textStorage[Language.English.GetId()];
+                        englishStorage[row[0]] = NormalizeLineEndings(_cellText);
+                    }
+
+                    break;
+                }
+
+                case 2: // Translation
+                {
+                    using (History.BeginScope("Update translation of text"))
+                    {
+                        var languageStorage = _textStorage[_selectedLanguage.GetId()];
+                        languageStorage[row[0]] = NormalizeLineEndings(_cellText);
+                    }
+
+                    break;
+                }
             }
-        }
+
+            _activeCell = (-1, -1);
+            UpdateTableView();
+        };
+
+        _edit.Canceled = () =>
+        {
+            _activeCell = (-1, -1);
+        };
+
+        _nextState = State.TableView;
     }
 
-    private void DeleteEntry(string id)
-    {
-        using (History.BeginScope("Delete text entry"))
-        {
-            foreach (var storage in _textStorage.Values)
-            {
-                storage.Remove(id);
-            }
-        }
-    }
-    
     private static string NormalizeLineEndings(string text)
     {
         return text.Replace("\r\n", "\n").Replace("\n", "\r\n");
