@@ -39,20 +39,17 @@ public class SallyEditor : EditorComponent
 
     private void LoadLevelIcons()
     {
-        var listing = Game.Content.LoadFromJson<Dictionary<string, string>>("MapScreensListing");
+        var content = Game.GetService<ContentService>().Get(this);
+        var listing = content.LoadJson<Dictionary<string, string>>("MapScreensListing");
         foreach (var (level, texturePath) in listing)
         {
-            _icons[level] = Game.Content.Load<Texture2D>(texturePath);
+            _icons[level] = content.Load<Texture2D>(texturePath);
         }
     }
 
     public override void Dispose()
     {
-        foreach (var icon in _icons.Values)
-        {
-            ImGuiX.Unbind(icon);
-            icon.Dispose();
-        }
+        Game.GetService<ContentService>().Unload(this);
     }
 
     public override void Draw()

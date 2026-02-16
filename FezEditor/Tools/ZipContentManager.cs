@@ -1,14 +1,23 @@
 ﻿using System.IO.Compression;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Xna.Framework.Content;
 
 namespace FezEditor.Tools;
 
-public class ZipContentManager : ContentManager
+public class ZipContentManager : ContentManager, IContentManager
 {
-    private readonly ZipArchive _archive;
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        Converters =
+        {
+            new JsonStringEnumConverter()
+        }
+    };
     
+    private readonly ZipArchive _archive;
+
     public ZipContentManager(IServiceProvider serviceProvider, string zipPath)
         : base(serviceProvider)
     {
@@ -21,16 +30,21 @@ public class ZipContentManager : ContentManager
         var path = Path.ChangeExtension(assetName, ".json");
         var entry = _archive.GetEntry(path)!;
         using var stream = entry.Open();
-        return JsonSerializer.Deserialize<T>(stream)!;
+        return JsonSerializer.Deserialize<T>(stream, JsonOptions)!;
     }
 
     public byte[] LoadBytes(string assetName)
     {
-        var entry = _archive.GetEntry(assetName)!;
-        using var stream = entry.Open();
+        using var stream = LoadStream(assetName);
         var data = new byte[stream.Length];
         stream.ReadExactly(data);
         return data;
+    }
+
+    public Stream LoadStream(string assetName)
+    {
+        var entry = _archive.GetEntry(assetName)!;
+        return entry.Open();
     }
 
     protected override Stream OpenStream(string assetName)

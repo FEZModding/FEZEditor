@@ -1,4 +1,5 @@
-﻿using FezEditor.Tools;
+﻿using FezEditor.Services;
+using FezEditor.Tools;
 using FEZRepacker.Core.Conversion;
 using FEZRepacker.Core.FileSystem;
 using FEZRepacker.Core.XNB;
@@ -62,7 +63,8 @@ public class ResourceExtractor : DrawableGameComponent
 
     protected override void LoadContent()
     {
-        var listing = Game.Content.LoadFromJson<string[]>("ContentListing");
+        var content = Game.GetService<ContentService>().Get(this);
+        var listing = content.LoadJson<string[]>("ContentListing");
         foreach (var file in listing)
         {
             _contentListing.Add(file, file);
@@ -298,6 +300,7 @@ public class ResourceExtractor : DrawableGameComponent
     protected override void Dispose(bool disposing)
     {
         _cts?.Dispose();
+        Game.GetService<ContentService>().Unload(this);
         base.Dispose(disposing);
     }
 

@@ -353,7 +353,8 @@ public partial class ImGuiService : IDisposable
     private unsafe ImFontPtr LoadFont(string path, nint glyphRanges, float size = 24f)
     {
         var io = ImGui.GetIO();
-        var data = _game.Content.LoadTrueTypeFont(path);
+        var content = _game.GetService<ContentService>().Global;
+        var data = content.LoadBytes(path);
         fixed (byte* ptr = data)
         {
             var config = ImGuiNative.ImFontConfig_ImFontConfig();

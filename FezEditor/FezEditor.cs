@@ -10,8 +10,16 @@ namespace FezEditor;
 public class FezEditor : Game
 {
     private static readonly ILogger Logger = Logging.Create<FezEditor>();
+
+#if DEBUG
+    public const bool IsDebugBuild = true;
+#else
+    public const bool IsDebugBuild = false;
+#endif
     
     private readonly GraphicsDeviceManager _deviceManager;
+    
+    private ContentService _content = null!;
     
     private ImGuiService _imGui = null!;
     
@@ -41,12 +49,6 @@ public class FezEditor : Game
     
     private FezEditor()
     {
-#if DEBUG
-        Content = new ContentManager(Services, "Content");
-#else
-        Content = new ZipContentManager(Services, "Content.pkz");
-#endif
-
         _deviceManager = new GraphicsDeviceManager(this)
         {
             PreferredBackBufferWidth = 1280,
@@ -60,12 +62,14 @@ public class FezEditor : Game
 
     protected override void Initialize()
     {
+        _content = this.CreateService<ContentService>();
         _imGui = this.CreateService<ImGuiService>();
         _rendering = this.CreateService<RenderingService>();
         _resource = this.CreateService<ResourceService>();
         _input = this.CreateService<InputService>();
         _editor = this.CreateService<EditorService>();
 
+        Content = (ContentManager)_content.Global;
         this.AddComponent(new MenuBar(this));
         this.AddComponent(new FileBrowser(this));
         this.AddComponent(new StatusBar(this));

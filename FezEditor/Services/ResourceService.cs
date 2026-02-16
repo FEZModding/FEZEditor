@@ -19,6 +19,8 @@ public class ResourceService : IDisposable
     public IEnumerable<string> Files => _provider?.Files ?? Enumerable.Empty<string>();
 
     private IResourceProvider? _provider;
+    
+    private readonly IContentManager _content;
 
     private readonly Game _game;
 
@@ -26,6 +28,7 @@ public class ResourceService : IDisposable
     {
         _game = game;
         _game.Activated += OnGameActivated;
+        _content = game.GetService<ContentService>().Global;
     }
 
     private void OnGameActivated(object? o, EventArgs eventArgs)
@@ -78,8 +81,7 @@ public class ResourceService : IDisposable
     
     public SaveData LoadSaveDataFromContent(string path)
     {
-        var bytes = _game.Content.LoadBytes(path);
-        using var stream = new MemoryStream(bytes);
+        using var stream = _content.LoadStream(path);
         return SaveData.Read(stream);
     }
 

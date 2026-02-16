@@ -26,7 +26,8 @@ public class InputService
     public InputService(Game game)
     {
         _game = game;
-        _bindings = game.Content.LoadFromJson<Dictionary<string, List<Binding>>>("InputActions");
+        _bindings = game.GetService<ContentService>()
+            .Global.LoadJson<Dictionary<string, List<Binding>>>("InputActions");
     }
 
     public void AddAction(string action, params Keys[] keys)
