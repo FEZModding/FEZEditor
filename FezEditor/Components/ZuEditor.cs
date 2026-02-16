@@ -31,7 +31,20 @@ public class ZuEditor : EditorComponent
 
     private bool _needsFit = true;
 
-    private int _fitFrameDelay = 2; 
+    private int _fitFrameDelay = 2;
+
+    private bool _showPreview;
+
+    private string _previewText = "The quick brown fox jumps over the lazy dog.\n" +
+                                  "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n" +
+                                  "abcdefghijklmnopqrstuvwxyz\n" +
+                                  "0123456789 !@#$%^&*()_+-=[]{}|;':\",./<>?";
+
+    private float _previewScale = 2.0f;
+
+    private bool _showKerning = true;
+
+    private bool _showGlyphBounds = true; 
 
     public ZuEditor(Game game, string title, FezFont font) : base(game, title)
     {
@@ -81,6 +94,11 @@ public class ZuEditor : EditorComponent
         }
 
         ImGui.PopStyleVar();
+
+        if (_showPreview)
+        {
+            DrawPreviewWindow();
+        }
     }
     
     #region Left Pane
@@ -394,6 +412,12 @@ public class ZuEditor : EditorComponent
             _needsFit = true;
             _fitFrameDelay = 0;
         }
+        
+        ImGui.SameLine();
+        if (ImGui.Button(_showPreview ? "Hide Preview" : "Show Preview"))
+        {
+            _showPreview = !_showPreview;
+        }
 
         if (_font.Texture is { Width: > 0 } tex)
         {
@@ -602,7 +626,155 @@ public class ZuEditor : EditorComponent
     }
     
     #endregion
+    
+    #region Preview Window
 
+    private void DrawPreviewWindow()
+    {
+        ImGui.SetNextWindowSize(new NVector2(800, 600), ImGuiCond.FirstUseEver);
+        if (!ImGui.Begin($"Font Preview##{Title}", ref _showPreview, ImGuiWindowFlags.None))
+        {
+            ImGui.End();
+            return;
+        }
+
+        ImGui.Text("Preview Text:");
+        ImGui.PushFont(_charactersFont);
+        ImGui.InputTextMultiline("##PreviewText", ref _previewText, 1024, new NVector2(-1, 0));
+        ImGui.PopFont();
+        
+        ImGui.Text("Scale:");
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(200f);
+        ImGui.SliderFloat("##PreviewScale", ref _previewScale, 0.5f, 8.0f, "%.1fx");
+
+        ImGui.SameLine();
+        ImGui.Checkbox("Show Glyph Bounds", ref _showGlyphBounds);
+        ImGui.SameLine();
+        ImGui.Checkbox("Show Kerning", ref _showKerning);
+
+        ImGui.Separator();
+
+        if (ImGuiX.BeginChild("##PreviewCanvas", Vector2.Zero, ImGuiChildFlags.Border))
+        {
+            var canvasPos = ImGui.GetCursorScreenPos();
+            var canvasSize = ImGui.GetContentRegionAvail();
+
+            if (canvasSize is { X: > 1f, Y: > 1f })
+            {
+                var dl = ImGui.GetWindowDrawList();
+                dl.PushClipRect(canvasPos, canvasPos + canvasSize, true);
+                dl.AddRectFilled(canvasPos, canvasPos + canvasSize, Color.Black.PackedValue);
+                DrawPreviewText(dl, canvasPos + new NVector2(10, 10));
+                dl.PopClipRect();
+            }
+
+            ImGui.EndChild();
+        }
+
+        ImGui.End();
+    }
+
+    private void DrawPreviewText(ImDrawListPtr dl, NVector2 startPos)
+    {
+        var pos = startPos;
+        var lineHeight = _font.LineSpacing * _previewScale;
+
+        foreach (var ch in _previewText)
+        {
+            switch (ch)
+            {
+                case '\n':
+                    pos.X = startPos.X;
+                    pos.Y += lineHeight;
+                    continue;
+                
+                case '\r':
+                    continue;
+            }
+
+            var charIndex = _font.Characters.IndexOf(ch);
+            if (charIndex < 0)
+            {
+                // Use default character if available
+                if (_font.DefaultCharacter != '\u0000')
+                {
+                    charIndex = _font.Characters.IndexOf(_font.DefaultCharacter);
+                }
+
+                if (charIndex < 0)
+                {
+                    // Skip character if not found
+                    continue;
+                }
+            }
+
+            // Get glyph data
+            if (charIndex >= _font.GlyphBounds.Count)
+            {
+                continue;
+            }
+
+            var glyphBounds = _font.GlyphBounds[charIndex];
+            var cropping = charIndex < _font.Cropping.Count
+                ? _font.Cropping[charIndex]
+                : new RRectangle(0, 0, glyphBounds.Width, glyphBounds.Height);
+
+            var kerning = charIndex < _font.KerningData.Count
+                ? _font.KerningData[charIndex].ToXna()
+                : new Vector3(0, glyphBounds.Width, 0);
+
+            var charStartX = pos.X;
+
+            // Calculate render position with kerning
+            var renderX = pos.X + (kerning.X + cropping.X) * _previewScale;
+            var renderY = pos.Y + cropping.Y * _previewScale;
+
+            // Calculate UV coordinates from atlas
+            var texW = (float)_fontTexture.Width;
+            var texH = (float)_fontTexture.Height;
+            var uv0 = new NVector2(glyphBounds.X / texW, glyphBounds.Y / texH);
+            var uv1 = new NVector2((glyphBounds.X + glyphBounds.Width) / texW, (glyphBounds.Y + glyphBounds.Height) / texH);
+
+            // Draw glyph from atlas
+            var renderPos = new NVector2(renderX, renderY);
+            var renderSize = new NVector2(glyphBounds.Width * _previewScale, glyphBounds.Height * _previewScale);
+
+            if (glyphBounds is { Width: > 0, Height: > 0 })
+            {
+                dl.AddImage(_fontTexturePtr, renderPos, renderPos + renderSize, uv0, uv1);
+            }
+
+            // Draw glyph bounds (actual rendered area)
+            if (_showGlyphBounds && glyphBounds is { Width: > 0, Height: > 0 })
+            {
+                dl.AddRect(
+                    renderPos,
+                    renderPos + renderSize,
+                    0xFFFFFF40u, // Yellow
+                    0f, ImDrawFlags.None, 1f);
+            }
+
+            // Draw kerning box (entire advance area)
+            if (_showKerning)
+            {
+                var advanceWidth = kerning.Y * _previewScale;
+                var boxTop = pos.Y - 2f;
+                var boxBottom = pos.Y + lineHeight + 2f;
+                dl.AddRect(
+                    new NVector2(charStartX, boxTop),
+                    new NVector2(charStartX + advanceWidth, boxBottom),
+                    0x80FF8040u, // Semi-transparent orange
+                    0f, ImDrawFlags.None, 1f);
+            }
+
+            // Advance position (includes spacing)
+            pos.X += (kerning.Y + _font.Spacing) * _previewScale;
+        }
+    }
+
+    #endregion
+    
     #region Updates
     
     private void AddCharacter(char character)
@@ -676,6 +848,6 @@ public class ZuEditor : EditorComponent
     {
         if (i < list.Count) list.RemoveAt(i);
     }
-    
+
     #endregion
 }
