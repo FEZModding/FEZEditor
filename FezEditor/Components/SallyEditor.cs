@@ -23,7 +23,9 @@ public class SallyEditor : EditorComponent
     
     private readonly SaveData _saveData;
     
-    private readonly Dictionary<string, Texture2D> _icons = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, Texture2D> _iconsPath = new(StringComparer.OrdinalIgnoreCase);
+    
+    private Dictionary<string, string> _listing = null!;
 
     private int _levelIndex = -1;
     
@@ -50,11 +52,7 @@ public class SallyEditor : EditorComponent
 
     public override void LoadContent()
     {
-        var listing = ContentManager.LoadJson<Dictionary<string, string>>("MapScreensListing");
-        foreach (var (level, texturePath) in listing)
-        {
-            _icons[level] = ContentManager.Load<Texture2D>(texturePath);
-        }
+        _listing = ContentManager.LoadJson<Dictionary<string, string>>("MapScreensListing");
     }
 
     public override void Draw()
@@ -497,7 +495,7 @@ public class SallyEditor : EditorComponent
             for (var i = 0; i < _saveData.World.Count; i++)
             {
                 var level = _saveData.World.GetAt(i).Key;
-                var icon = _icons.GetValueOrDefault(level, _icons[Missing]);
+                var icon = GetOrLoadIcon(level);
                 if (ImGuiX.SelectableWithImage(icon, new Vector2(64, 64), level, i == _levelIndex))
                 {
                     _levelIndex = i;
@@ -506,6 +504,19 @@ public class SallyEditor : EditorComponent
 
             ImGui.EndChild();
         }
+    }
+
+    private Texture2D GetOrLoadIcon(string level)
+    {
+        var path = _listing.GetValueOrDefault(level, _listing[Missing]);
+        if (_iconsPath.TryGetValue(path, out var icon))
+        {
+            return icon;
+        }
+        
+        icon = ContentManager.Load<Texture2D>(path);
+        _iconsPath[path] = icon;
+        return icon;
     }
 
     private void DrawLevelProperties()
