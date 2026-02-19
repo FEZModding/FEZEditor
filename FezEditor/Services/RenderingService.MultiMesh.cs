@@ -12,9 +12,7 @@ public partial class RenderingService
         public int InstanceCount;
         public int VisibleInstances = -1; // -1 = all
         public MultiMeshDataType DataType;
-        public int Stride; // Vector4s per instance: 1 for Vector4, 4 for Matrix
-        public Matrix[] MatrixData = Array.Empty<Matrix>();
-        public Vector4[] Vector4Data = Array.Empty<Vector4>();
+        public float[] UploadBuffer = Array.Empty<float>(); // pre-allocated, reused every frame
         public bool Dirty = true;
 
         // GPU buffers for hardware instancing.
@@ -26,9 +24,9 @@ public partial class RenderingService
         public int TemplatePrimitiveCount;
         public PrimitiveType TemplatePrimitiveType;
     }
-    
+
     private readonly Dictionary<Rid, MultiMeshData> _multiMeshes = new();
-    
+
     public Rid MultiMeshCreate()
     {
         var rid = AllocateRid(typeof(MultiMeshData));
@@ -59,24 +57,21 @@ public partial class RenderingService
         data.DataType = dataType;
         data.VisibleInstances = instances;
         data.Dirty = true;
+        
+        // Pre-allocate upload buffer
+        var stride = dataType.GetStride();
+        var floatsPerInstance = dataType.GetFloatsPerInstance();
+        data.UploadBuffer = new float[instances * floatsPerInstance];
 
-        // Determine stride and allocate typed arrays.
-        if (dataType == MultiMeshDataType.Matrix)
+        // Pre-fill instance indices (never change after allocation).
+        for (var i = 0; i < instances; i++)
         {
-            data.Stride = 4;
-            data.MatrixData = new Matrix[instances];
-            data.Vector4Data = Array.Empty<Vector4>();
-        }
-        else
-        {
-            data.Stride = 1;
-            data.Vector4Data = new Vector4[instances];
-            data.MatrixData = Array.Empty<Matrix>();
+            data.UploadBuffer[i * floatsPerInstance] = i;
         }
 
         // Build instance vertex declaration.
         // Layout: InstanceIndex (TEXCOORD1) + Data0..DataN (TEXCOORD2..TEXCOORD5)
-        var elements = new VertexElement[1 + data.Stride];
+        var elements = new VertexElement[1 + stride];
         var offset = 0;
 
         // InstanceIndex: float -> TEXCOORD1
@@ -84,7 +79,7 @@ public partial class RenderingService
         offset += sizeof(float);
 
         // Data0..DataN: Vector4 -> TEXCOORD2..TEXCOORD5
-        for (var i = 0; i < data.Stride; i++)
+        for (var i = 0; i < stride; i++)
         {
             elements[1 + i] = new VertexElement(offset, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 2 + i);
             offset += 16; // sizeof(Vector4)
@@ -130,7 +125,7 @@ public partial class RenderingService
         return data.VisibleInstances < 0 ? data.InstanceCount : data.VisibleInstances;
     }
 
-    public void MultiMeshSetInstanceMatrix(Rid multiMesh, int index, Matrix data)
+    public void MultiMeshSetInstanceMatrix(Rid multiMesh, int index, Matrix value)
     {
         var mm = GetResource(_multiMeshes, multiMesh);
         ValidateMultiMeshIndex(mm, index);
@@ -140,11 +135,28 @@ public partial class RenderingService
                 "MultiMesh was allocated with Vector4 data type, use MultiMeshSetInstanceVector4");
         }
 
-        mm.MatrixData[index] = data;
+        var offset = index * mm.DataType.GetFloatsPerInstance() + 1;
+        var b = mm.UploadBuffer;
+        b[offset] = value.M11;
+        b[offset + 1] = value.M12;
+        b[offset + 2] = value.M13;
+        b[offset + 3] = value.M14;
+        b[offset + 4] = value.M21;
+        b[offset + 5] = value.M22;
+        b[offset + 6] = value.M23;
+        b[offset + 7] = value.M24;
+        b[offset + 8] = value.M31;
+        b[offset + 9] = value.M32;
+        b[offset + 10] = value.M33;
+        b[offset + 11] = value.M34;
+        b[offset + 12] = value.M41;
+        b[offset + 13] = value.M42;
+        b[offset + 14] = value.M43;
+        b[offset + 15] = value.M44;
         mm.Dirty = true;
     }
 
-    public void MultiMeshSetInstanceVector4(Rid multiMesh, int index, Vector4 data)
+    public void MultiMeshSetInstanceVector4(Rid multiMesh, int index, Vector4 value)
     {
         var mm = GetResource(_multiMeshes, multiMesh);
         ValidateMultiMeshIndex(mm, index);
@@ -154,10 +166,15 @@ public partial class RenderingService
                 "MultiMesh was allocated with Matrix data type, use MultiMeshSetInstanceMatrix");
         }
 
-        mm.Vector4Data[index] = data;
+        var offset = index * mm.DataType.GetFloatsPerInstance() + 1;
+        var b = mm.UploadBuffer;
+        b[offset] = value.X;
+        b[offset + 1] = value.Y;
+        b[offset + 2] = value.Z;
+        b[offset + 3] = value.W;
         mm.Dirty = true;
     }
-    
+
     private void DrawMultiMesh(RenderTargetData rt, WorldData world, Rid multiMeshRid, InstanceMatrices matrices)
     {
         if (!TryGetResource(_multiMeshes, multiMeshRid, out var mm))
@@ -180,7 +197,11 @@ public partial class RenderingService
         // Upload dirty instance data to GPU.
         if (mm.Dirty)
         {
-            UploadInstanceData(mm, visible);
+            if (mm.InstanceBuffer != null)
+            {
+                var floatsPerInstance = mm.DataType.GetFloatsPerInstance();
+                mm.InstanceBuffer.SetData(mm.UploadBuffer, 0, visible * floatsPerInstance, SetDataOptions.Discard);
+            }
             mm.Dirty = false;
         }
 
@@ -191,12 +212,12 @@ public partial class RenderingService
             var firstSurface = mesh!.Surfaces.FirstOrDefault();
             TryGetResource(_materials, firstSurface?.Material ?? Rid.Invalid, out mat);
         }
-        
+
         if (mat == null)
         {
             return;
         }
-       
+
         ApplyMaterialState(mat);
         if (mat.Effect is BasicEffect)
         {
@@ -246,53 +267,7 @@ public partial class RenderingService
             }
         }
     }
-        
-    /// <summary>
-    /// Pack per-instance data into a flat float array and upload to the DynamicVertexBuffer.
-    /// <para/>Layout per instance: [InstanceIndex (float)] + [Data0..DataN (Vector4s)]
-    /// <para/>This maps to the shader's VS_INPUT: InstanceIndex (TEXCOORD1), Data0-3 (TEXCOORD2-5).
-    /// </summary>
-    private static void UploadInstanceData(MultiMeshData mm, int visible)
-    {
-        if (mm.InstanceBuffer == null)
-        {
-            return;
-        }
 
-        var floatsPerInstance = 1 + mm.Stride * 4; // 1 float index + N * 4 floats
-        var buffer = new float[visible * floatsPerInstance];
-
-        for (var i = 0; i < visible; i++)
-        {
-            var offset = i * floatsPerInstance;
-
-            // InstanceIndex
-            buffer[offset] = i;
-
-            // Custom data
-            if (mm.DataType == MultiMeshDataType.Matrix)
-            {
-                var m = mm.MatrixData[i];
-                buffer[offset + 1] = m.M11; buffer[offset + 2] = m.M12;
-                buffer[offset + 3] = m.M13; buffer[offset + 4] = m.M14;
-                buffer[offset + 5] = m.M21; buffer[offset + 6] = m.M22;
-                buffer[offset + 7] = m.M23; buffer[offset + 8] = m.M24;
-                buffer[offset + 9] = m.M31; buffer[offset + 10] = m.M32;
-                buffer[offset + 11] = m.M33; buffer[offset + 12] = m.M34;
-                buffer[offset + 13] = m.M41; buffer[offset + 14] = m.M42;
-                buffer[offset + 15] = m.M43; buffer[offset + 16] = m.M44;
-            }
-            else
-            {
-                var v = mm.Vector4Data[i];
-                buffer[offset + 1] = v.X; buffer[offset + 2] = v.Y;
-                buffer[offset + 3] = v.Z; buffer[offset + 4] = v.W;
-            }
-        }
-
-        mm.InstanceBuffer.SetData(buffer, 0, buffer.Length, SetDataOptions.Discard);
-    }
-    
     private static void ValidateMultiMeshIndex(MultiMeshData mm, int index)
     {
         if (index < 0 || index >= mm.InstanceCount)
