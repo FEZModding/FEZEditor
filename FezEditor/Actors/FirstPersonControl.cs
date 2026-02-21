@@ -34,7 +34,7 @@ public class FirstPersonControl : ActorComponent
         {
             var delta = _input.GetMouseDelta();
             _yaw -= delta.X * MouseSensitivity;
-            _pitch += delta.Y * MouseSensitivity;
+            _pitch -= delta.Y * MouseSensitivity;
             _pitch = MathHelper.Clamp(_pitch, -MathHelper.PiOver2 + 0.01f, MathHelper.PiOver2 - 0.01f);
             _input.CaptureMouse(true);
         }
@@ -51,8 +51,8 @@ public class FirstPersonControl : ActorComponent
         );
         
         var rotation = _transform.Rotation;
-        var forward = Vector3.Transform(Vector3.Backward, rotation);
-        var right = Vector3.Transform(Vector3.Left, rotation);
+        var forward = Vector3.Transform(Vector3.Forward, rotation);
+        var right = Vector3.Transform(Vector3.Right, rotation);
         if (forward.LengthSquared() > 0) forward.Normalize();
         if (right.LengthSquared() > 0) right.Normalize();
         var direction = (forward * inputDirection.Y + right * inputDirection.X);
