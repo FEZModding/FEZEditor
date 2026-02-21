@@ -12,7 +12,7 @@ public class TestComponent : EditorComponent
     {
         _test = new Scene(game);
         {
-            var actor = _test.CreateRootActor();
+            var actor = _test.CreateActor();
             var camera = actor.AddComponent<Camera>();
             var transform = actor.GetComponent<Transform>();
             camera.Projection = Camera.ProjectionType.Orthographic;
@@ -21,7 +21,7 @@ public class TestComponent : EditorComponent
             transform.Rotation = Quaternion.Identity;
         }
         {
-            var actor = _test.CreateRootActor();
+            var actor = _test.CreateActor();
             var mesh = actor.AddComponent<TestMesh>();
             mesh.Load();
         }
@@ -40,11 +40,10 @@ public class TestComponent : EditorComponent
             
         if (w > 0 && h > 0)
         {
-            var texture = _test.GetViewportTexture();
+            var texture = _test.Viewport.GetTexture();
             if (texture == null || texture.Width != w || texture.Height != h)
             {
-                _test.SetViewportSize(w, h);
-                _test.SetViewportAspectRatio((float)w / h);
+                _test.Viewport.SetSize(w, h);
             }
 
             if (texture is { IsDisposed: false })

@@ -24,10 +24,10 @@ public class ChrisEditor : EditorComponent
         _ao = ao;
         _scene = new Scene(game);
         {
-            var pivot = _scene.CreateRootActor();
+            var pivot = _scene.CreateActor();
             pivot.AddComponent<OrbitControl>();
             {
-                var cameraActor = _scene.CreateChildActor(pivot);
+                var cameraActor = _scene.CreateActor(pivot);
                 var camera = cameraActor.AddComponent<Camera>();
                 camera.Projection = Camera.ProjectionType.Perspective;
                 camera.FieldOfView = 90f;
@@ -39,7 +39,7 @@ public class ChrisEditor : EditorComponent
             }
         }
         {
-            var actor = _scene.CreateRootActor();
+            var actor = _scene.CreateActor();
             _mesh = actor.AddComponent<TrixelsMesh>();
         }
     }
@@ -73,11 +73,10 @@ public class ChrisEditor : EditorComponent
 
         if (w > 0 && h > 0)
         {
-            var texture = _scene.GetViewportTexture();
+            var texture = _scene.Viewport.GetTexture();
             if (texture == null || texture.Width != w || texture.Height != h)
             {
-                _scene.SetViewportSize(w, h);
-                _scene.SetViewportAspectRatio((float)w / h);
+                _scene.Viewport.SetSize(w, h);
             }
 
             if (texture is { IsDisposed: false })

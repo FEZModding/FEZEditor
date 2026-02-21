@@ -2,128 +2,121 @@
 using FezEditor.Structure;
 using FezEditor.Tools;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 
 namespace FezEditor.Actors;
 
 public class Scene : IDisposable
 {
-    public Color AmbientLight { get; set; } = Color.Gray;
+    public SceneViewport Viewport { get; }
     
-    public Color DiffuseLight { get; set; } = Color.White;
-    
-    private readonly Game _game;
+    public SceneLighting Lighting { get; }
 
-    private readonly Rid _rootRid;
+    private readonly Game _game;
 
     private readonly Rid _worldRid;
 
-    private readonly Rid _rtRid;
-
     private readonly RenderingService _rendering;
-    
-    private readonly Dictionary<int, Actor> _actors = new();
 
-    private int _nextId = -1;
-    
+    private readonly HashSet<Actor> _actors = new();
+
+    private readonly Dictionary<Actor, HierarchyNode> _hierarchy = new();
+
+    private readonly Actor _root;
+
     private bool _disposed;
 
     public Scene(Game game)
     {
-        #region Main services
-
         _game = game;
         _rendering = game.GetService<RenderingService>();
-
-        #endregion
-
-        #region World setup
-
+        
         _worldRid = _rendering.WorldCreate();
-        _rtRid = _rendering.RenderTargetCreate();
-        _rootRid = _rendering.WorldGetRoot(_worldRid);
-        _rendering.RenderTargetSetWorld(_rtRid, _worldRid);
-        _rendering.RenderTargetSetClearColor(_rtRid, Color.Black);
+        Viewport = new SceneViewport(game, _worldRid);
+        Lighting = new SceneLighting(game, _worldRid);
 
-        #endregion
+        var rootRid = _rendering.WorldGetRoot(_worldRid);
+        _root = new Actor(_game, rootRid);
+        _actors.Add(_root);
+        _hierarchy[_root] = new HierarchyNode(null, new List<Actor>());
     }
 
-    public Actor CreateRootActor(int id = -1)
+    public Actor CreateActor(Actor? parent = null)
     {
-        id = id == -1 ? _nextId++ : id;
-        var actor = new Actor(_game, _rootRid, id);
-        _actors.Add(id, actor);
+        var parentActor = parent ?? _root;
+        var actor = new Actor(_game, parentActor.InstanceRid);
+        _actors.Add(actor);
+        _hierarchy[parentActor].Children.Add(actor);
+        _hierarchy[actor] = new HierarchyNode(parentActor, new List<Actor>());
         return actor;
     }
 
-    public Actor CreateChildActor(Actor parentActor, int id = -1)
+    public void DestroyActor(Actor actor)
     {
-        id = id == -1 ? _nextId++ : id;
-        var actor = new Actor(_game, parentActor.InstanceRid, id);
-        _actors.Add(id, actor);
-        return actor;
-    }
-
-    public Actor? FindActor(int id)
-    {
-        return _actors.GetValueOrDefault(id);
-    }
-
-    public void DestroyActor(int id)
-    {
-        if (_actors.Remove(id, out var actor))
+        if (actor == _root)
         {
-            actor.Dispose();
+            throw new InvalidOperationException("Cannot destroy the root actor.");
         }
+
+        var parent = _hierarchy[actor].Parent;
+        if (parent != null)
+        {
+            _hierarchy[parent].Children.Remove(actor);
+        }
+
+        var stack = new Stack<Actor>();
+        stack.Push(actor);
+        while (stack.Count > 0)
+        {
+            var current = stack.Pop();
+            foreach (var child in _hierarchy[current].Children)
+            {
+                stack.Push(child);
+            }
+
+            _hierarchy.Remove(current);
+            _actors.Remove(current);
+            current.Dispose();
+        }
+    }
+
+    public Actor? GetParent(Actor actor)
+    {
+        return _hierarchy.TryGetValue(actor, out var node) ? node.Parent : null;
+    }
+
+    public IReadOnlyList<Actor> GetChildren(Actor actor)
+    {
+        return _hierarchy.TryGetValue(actor, out var node) ? node.Children : [];
     }
 
     public void Update(GameTime gameTime)
     {
-        _rendering.WorldSetAmbientLight(_worldRid, AmbientLight.ToVector3());
-        _rendering.WorldSetDiffuseLight(_worldRid, DiffuseLight.ToVector3());
-        foreach (var actor in _actors.Values)
+        foreach (var actor in _actors.Where(a => a.Active))
         {
             actor.Update(gameTime);
         }
     }
 
-    public Texture2D? GetViewportTexture()
+    public void Dispose()
     {
-        return _rendering.RenderTargetGetTexture(_rtRid);
-    }
-
-    public void SetViewportSize(int width, int height)
-    {
-        _rendering.RenderTargetSetSize(_rtRid, width, height);
-    }
-
-    public void SetViewportAspectRatio(float ratio)
-    {
-        var camera = _actors.Values
-            .FirstOrDefault(a => a.HasComponent<Camera>())?
-            .GetComponent<Camera>();
-        
-        if (camera != null)
-        {
-            camera.AspectRatio = ratio;
-        }
-    }
-    
-    public virtual void Dispose()
-    {
+        GC.SuppressFinalize(this);
         if (_disposed)
         {
             return;
         }
-        
+
         _disposed = true;
-        foreach (var actor in _actors.Values)
+        foreach (var actor in _actors)
         {
             actor.Dispose();
         }
 
         _actors.Clear();
-        _rendering.FreeRid(_rtRid);
+        _hierarchy.Clear();
+        Lighting.Dispose();
+        Viewport.Dispose();
         _rendering.FreeRid(_worldRid);
     }
+
+    private record HierarchyNode(Actor? Parent, List<Actor> Children);
 }
