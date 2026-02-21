@@ -17,7 +17,7 @@ public class TestComponent : EditorComponent
             var transform = actor.GetComponent<Transform>();
             camera.Projection = Camera.ProjectionType.Orthographic;
             camera.Size = 4f;
-            transform.Position = new Vector3(0f, 0f, -4f);
+            transform.Position = new Vector3(0f, 0f, 4f);
             transform.Rotation = Quaternion.Identity;
         }
         {

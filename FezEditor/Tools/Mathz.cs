@@ -1,13 +1,18 @@
-﻿using FEZRepacker.Core.Definitions.Game.Common;
-using FEZRepacker.Core.Definitions.Game.Level;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 
 namespace FezEditor.Tools;
 
 public static class Mathz
 {
     public const float TrixelSize = 1f / 16f;
-    
+
+    public static Vector3 XzMask { get; set; } = new(1f, 0f, 1f);
+
+    public static bool IsEqualApprox(float lhs, float rhs)
+    {
+        return Math.Abs(lhs - rhs) < float.Epsilon;
+    }
+
     public static bool IsZeroApprox(float value)
     {
         return MathF.Abs(value) < float.Epsilon;

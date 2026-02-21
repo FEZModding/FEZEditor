@@ -66,4 +66,9 @@ public partial class RenderingService
     {
         GetResource(_worlds, world).FogDensity = density;
     }
+
+    public bool WorldHasCamera(Rid world)
+    {
+        return TryGetResource(_worlds, world, out var wd) && (wd?.Camera.IsValid ?? false);
+    }
 }

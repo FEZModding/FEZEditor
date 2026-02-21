@@ -12,45 +12,80 @@ public class Camera : ActorComponent
         Perspective,
         Orthographic
     }
-    
+
     public ProjectionType Projection { get; set; } = ProjectionType.Perspective;
 
-    public float FieldOfView { get; set; } = 75.0f;
+    public float FieldOfView
+    {
+        get => _fieldOfView;
+        set
+        {
+            if (Projection != ProjectionType.Perspective)
+            {
+                throw new ArgumentException("Projection type must be perspective!");
+            }
 
-    public float Size { get; set; } = 1.0f;
+            _fieldOfView = value;
+        }
+    }
+
+    public float Size
+    {
+        get => _size;
+        set
+        {
+            if (Projection != ProjectionType.Orthographic)
+            {
+                throw new ArgumentException("Projection type must be orthographic!");
+            }
+
+            _size = value;
+        }
+    }
 
     public float Near { get; set; } = 0.05f;
-    
-    public float Far { get; set; } = 1000.0f;
 
-    public float AspectRatio { get; set; } = 1.0f;
+    public float Far { get; set; } = 1000.0f;
 
     private RenderingService _rendering = null!;
 
     private Rid _camera;
 
-    private Rid _world;
-    
+    private Rid _rt;
+
+    private float _size = 1.0f;
+
+    private float _fieldOfView = 75.0f;
+
     public override void Initialize()
     {
         _rendering = Game.GetService<RenderingService>();
+        var world = _rendering.InstanceGetWorld(Actor.InstanceRid);
+        if (_rendering.WorldHasCamera(world))
+        {
+            throw new InvalidOperationException("A single camera was already initialized!");
+        }
+
         _camera = _rendering.CameraCreate();
-        _world = _rendering.InstanceGetWorld(Actor.InstanceRid);
-        _rendering.WorldSetCamera(_world, _camera);
+        _rendering.WorldSetCamera(world, _camera);
+        _rt = _rendering.WorldGetRenderTarget(world);
     }
 
     public override void Update(GameTime gameTime)
     {
         var world = _rendering.InstanceGetWorldMatrix(Actor.InstanceRid);
         var viewMatrix = Matrix.CreateLookAt(world.Translation, world.Translation + world.Forward, world.Up);
+
+        var (width, height) = _rendering.RenderTargetGetSize(_rt);
+        var aspectRatio = (float)width / height;
         var projectionMatrix = Projection switch
         {
             ProjectionType.Perspective => Matrix
-                .CreatePerspectiveFieldOfView(MathHelper.ToRadians(FieldOfView), AspectRatio, Near, Far),
-            
+                .CreatePerspectiveFieldOfView(MathHelper.ToRadians(FieldOfView), aspectRatio, Near, Far),
+
             ProjectionType.Orthographic => Matrix
-                .CreateOrthographic(AspectRatio * Size, Size, Near, Far),
-            
+                .CreateOrthographic(aspectRatio * Size, Size, Near, Far),
+
             _ => Matrix.Identity
         };
 
