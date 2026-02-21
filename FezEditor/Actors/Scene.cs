@@ -83,6 +83,29 @@ public class Scene : IDisposable
         }
     }
 
+    public Actor? Raycast(Ray ray)
+    {
+        Actor? nearest = null;
+        var nearestDist = float.MaxValue;
+
+        foreach (var actor in _actors)
+        {
+            if (!actor.TryGetComponent<Collider>(out var collider))
+            {
+                continue;
+            }
+            
+            var dist = ray.Intersects(collider!.BoundingBox);
+            if (dist < nearestDist)
+            {
+                nearestDist = dist.Value;
+                nearest = actor;
+            }
+        }
+
+        return nearest;
+    }
+
     public Actor? GetParent(Actor actor)
     {
         return _hierarchy.TryGetValue(actor, out var node) ? node.Parent : null;

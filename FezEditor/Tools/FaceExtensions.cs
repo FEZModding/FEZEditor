@@ -5,6 +5,16 @@ namespace FezEditor.Tools;
 
 public static class FaceExtensions
 {
+    public static readonly FaceOrientation[] NaturalOrder = new[]
+    {
+        FaceOrientation.Front,
+        FaceOrientation.Right,
+        FaceOrientation.Back,
+        FaceOrientation.Left,
+        FaceOrientation.Top,
+        FaceOrientation.Down
+    };
+    
     public static FaceOrientation OrientationFromDirection(Vector3 direction)
     {
         if (direction == Vector3.Forward) return FaceOrientation.Back;
@@ -18,6 +28,16 @@ public static class FaceExtensions
     public static bool IsPositive(this FaceOrientation face)
     {
         return face > FaceOrientation.Back;
+    }
+
+    public static FaceOrientation GetOpposite(this FaceOrientation face)
+    {
+        return (FaceOrientation)((int)(face + 3) % 6);
+    }
+    
+    public static bool IsSide(this FaceOrientation face)
+    {
+        return face is not (FaceOrientation.Down or FaceOrientation.Top);
     }
     
     public static Vector3 AsVector(this FaceOrientation face)

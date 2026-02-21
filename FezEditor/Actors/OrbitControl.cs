@@ -6,13 +6,21 @@ namespace FezEditor.Actors;
 
 public class OrbitControl : ActorComponent
 {
-    public float MouseSensitivity { get; set; } = 0.005f;
-    
+    private const float MouseSensitivity = 0.005f;
+
+    public float Yaw { get; set; } = 0f;
+
+    public float Pitch
+    {
+        get => _pitch;
+        set => _pitch = MathHelper.Clamp(value, PitchClamp.X + 0.01f, PitchClamp.Y - 0.01f);
+    }
+
+    public Vector2 PitchClamp { get; set; } = new Vector2(-1f, 1f) * MathHelper.PiOver2;
+
     private readonly InputService _input;
 
     private readonly Transform _transform;
-
-    private float _yaw;
 
     private float _pitch;
 
@@ -28,14 +36,11 @@ public class OrbitControl : ActorComponent
         if (_input.IsMiddleMousePressed())
         {
             var delta = _input.GetMouseDelta();
-            _yaw -= delta.X * MouseSensitivity;
-            _pitch -= delta.Y * MouseSensitivity;
-            _pitch = MathHelper.Clamp(_pitch, -MathHelper.PiOver2 + 0.01f, MathHelper.PiOver2 - 0.01f);
+            Yaw -= delta.X * MouseSensitivity;
+            Pitch -= delta.Y * MouseSensitivity;
             _input.CaptureMouse(true);
         }
 
-        var yawQ = Quaternion.CreateFromAxisAngle(Vector3.Up, _yaw);
-        var pitchQ = Quaternion.CreateFromAxisAngle(Vector3.Right, _pitch);
-        _transform.Rotation = yawQ * pitchQ;
+        _transform.Rotation = Quaternion.CreateFromYawPitchRoll(Yaw, Pitch, 0f);
     }
 }

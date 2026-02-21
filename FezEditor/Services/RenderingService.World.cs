@@ -37,6 +37,11 @@ public partial class RenderingService
         return GetResource(_worlds, world).Camera;
     }
 
+    public Rid WorldGetRenderTarget(Rid world)
+    {
+        return _renderTargets.FirstOrDefault(kv => kv.Value.World == world).Key;
+    }
+
     public void WorldSetCamera(Rid world, Rid camera)
     {
         GetResource(_worlds, world).Camera = camera;

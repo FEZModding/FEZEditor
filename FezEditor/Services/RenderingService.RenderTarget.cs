@@ -50,6 +50,12 @@ public partial class RenderingService
         return data.IsBackbuffer ? null! : data.Target;
     }
 
+    public (int width, int height) RenderTargetGetSize(Rid rt)
+    {
+        var data = GetResource(_renderTargets, rt);
+        return (data.Width, data.Height);
+    }
+
     public void RenderTargetSetWorld(Rid rt, Rid world)
     {
         GetResource(_renderTargets, rt).World = world;

@@ -1,0 +1,59 @@
+using FezEditor.Services;
+using FezEditor.Tools;
+using Microsoft.Xna.Framework;
+
+namespace FezEditor.Actors;
+
+public class MapPanControl : ActorComponent
+{
+    private const float PanSensitivity = 0.0008f;
+
+    private const float FocusSpeed = 15f;
+    
+    public bool Focused => !_focusTarget.HasValue;
+
+    private readonly InputService _input;
+
+    private readonly Transform _transform;
+    
+    private readonly Camera _camera;
+
+    private Vector3? _focusTarget;
+
+    internal MapPanControl(Game game, Actor actor) : base(game, actor)
+    {
+        _input = game.GetService<InputService>();
+        _transform = actor.GetComponent<Transform>();
+        _camera = actor.GetComponent<Camera>();
+    }
+
+    public void FocusOn(Vector3 worldPosition)
+    {
+        _focusTarget = worldPosition;
+    }
+
+    public override void Update(GameTime gameTime)
+    {
+        if (_focusTarget.HasValue)
+        {
+            var delta = (float)gameTime.ElapsedGameTime.TotalSeconds;
+            _transform.Position = Vector3.Lerp(_transform.Position, _focusTarget.Value, FocusSpeed * delta);
+            if ((_transform.Position - _focusTarget.Value).LengthSquared() < 0.01f)
+            {
+                _transform.Position = _focusTarget.Value;
+                _focusTarget = null;
+            }
+            return;
+        }
+
+        _input.CaptureMouse(false);
+        if (_input.IsRightMousePressed())
+        {
+            var delta = _input.GetMouseDelta();
+            var right = Vector3.Transform(Vector3.Right, _transform.Rotation);
+            _transform.Position -= right * delta.X * PanSensitivity * _camera.Size;
+            _transform.Position += Vector3.Up * delta.Y * PanSensitivity * _camera.Size;
+            _input.CaptureMouse(true);
+        }
+    }
+}

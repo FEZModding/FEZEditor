@@ -43,6 +43,8 @@ public class Camera : ActorComponent
         }
     }
 
+    public Vector3 Offset { get; set; } = Vector3.Zero;
+
     public float Near { get; set; } = 0.05f;
 
     public float Far { get; set; } = 1000.0f;
@@ -74,7 +76,8 @@ public class Camera : ActorComponent
     public override void Update(GameTime gameTime)
     {
         var world = _rendering.InstanceGetWorldMatrix(Actor.InstanceRid);
-        var viewMatrix = Matrix.CreateLookAt(world.Translation, world.Translation + world.Forward, world.Up);
+        var position = Vector3.Transform(Offset, world);
+        var viewMatrix = Matrix.CreateLookAt(position, position + world.Forward, world.Up);
 
         var (width, height) = _rendering.RenderTargetGetSize(_rt);
         var aspectRatio = (float)width / height;
