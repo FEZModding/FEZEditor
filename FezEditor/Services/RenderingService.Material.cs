@@ -40,20 +40,14 @@ public partial class RenderingService
     public void MaterialReset(Rid material)
     {
         var data = GetResource(_materials, material);
-        if (data.Effect is not BasicEffect)
-        {
-            data.Effect?.Dispose();
-        }
+        data.Effect?.Dispose();
         data.Effect = null;
     }
 
     public void MaterialAssignEffect(Rid material, Effect effect)
     {
         var data = GetResource(_materials, material);
-        if (data.Effect is not BasicEffect)
-        {
-            data.Effect?.Dispose();
-        }
+        data.Effect?.Dispose();
         data.Effect = effect.Clone();
     }
 
@@ -306,10 +300,5 @@ public partial class RenderingService
                 surface.Material = Rid.Invalid;
             }
         }
-    }
-
-    private void CheckMaterialEffect(MaterialData material)
-    {
-        material.Effect ??= new BasicEffect(GraphicsDevice) { VertexColorEnabled = true };
     }
 }

@@ -26,9 +26,12 @@ public class TestMesh : ActorComponent
 
     public override void LoadContent(IContentManager content)
     {
+        var effect = new BasicEffect(_rendering.GraphicsDevice) { VertexColorEnabled = true };
+        _rendering.MaterialAssignEffect(_material, effect);
+        _rendering.MaterialSetCullMode(_material, CullMode.None);
+
         var surface = MeshSurface.CreateTestTriangle();
         _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface, _material);
-        _rendering.MaterialSetCullMode(_material, CullMode.None);
     }
     
     public override void Update(GameTime gameTime)

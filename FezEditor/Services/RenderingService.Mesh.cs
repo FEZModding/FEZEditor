@@ -91,21 +91,27 @@ public partial class RenderingService
         {
             foreach (var surface in mesh!.Surfaces)
             {
-                if (TryGetResource(_materials, surface.Material, out var mat) && mat != null)
+                if (!TryGetResource(_materials, surface.Material, out var mat) || mat == null)
                 {
-                    CheckMaterialEffect(mat);
-                    ApplyMaterialState(mat);
-                    if (mat.Effect is BasicEffect)
-                    {
-                        UpdateBasicEffect(mat, matrices);
-                    }
-                    else
-                    {
-                        UpdateBaseEffect(rt, world, mat, matrices);
-                    }
-                    DrawSurfaceEntry(surface, mat.Effect!);
-                    RestoreDefaultState();
+                    continue;
                 }
+
+                ApplyMaterialState(mat);
+                if (mat.Effect is BasicEffect)
+                {
+                    UpdateBasicEffect(mat, matrices);
+                }
+                else if (mat.Effect != null)
+                {
+                    UpdateBaseEffect(rt, world, mat, matrices);
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Effect was not assigned to material {surface.Material}!");
+                }
+
+                DrawSurfaceEntry(surface, mat.Effect);
+                RestoreDefaultState();
             }
         }
     }

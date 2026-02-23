@@ -213,27 +213,30 @@ public partial class RenderingService
         }
 
         // Resolve material from first surface.
-        MaterialData? mat = null;
+        var material = Rid.Invalid;
         if (TryGetResource(_meshes, mm.Mesh, out var mesh))
         {
             var firstSurface = mesh!.Surfaces.FirstOrDefault();
-            TryGetResource(_materials, firstSurface?.Material ?? Rid.Invalid, out mat);
+            material = firstSurface?.Material ?? Rid.Invalid;
         }
 
-        if (mat == null)
+        if (!TryGetResource(_materials, material, out var mat) || mat == null)
         {
             return;
         }
 
-        CheckMaterialEffect(mat);
         ApplyMaterialState(mat);
-        if (mat.Effect is BasicEffect)
+        if (mat!.Effect is BasicEffect)
         {
             UpdateBasicEffect(mat, matrices);
         }
-        else
+        else if (mat.Effect != null)
         {
             UpdateBaseEffect(rt, world, mat, matrices);
+        }
+        else
+        {
+            throw new InvalidOperationException($"Effect was not assigned to material {material}!");
         }
 
         // Bind template geometry + instance buffer.
@@ -244,7 +247,7 @@ public partial class RenderingService
         GraphicsDevice.Indices = mm.TemplateIndexBuffer;
 
         // Draw instanced.
-        foreach (var pass in mat.Effect!.CurrentTechnique.Passes)
+        foreach (var pass in mat.Effect.CurrentTechnique.Passes)
         {
             pass.Apply();
             GraphicsDevice.DrawInstancedPrimitives(
