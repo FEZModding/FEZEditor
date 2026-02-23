@@ -29,58 +29,38 @@ public class TrixelsMesh : ActorComponent
         }
     }
     
-    private RenderingService _rendering = null!;
+    private readonly RenderingService _rendering;
 
-    private Transform _transform = null!;
+    private readonly Transform _transform;
 
-    private Rid _mesh;
+    private readonly Rid _mesh;
 
-    private Rid _multiMesh;
+    private readonly Rid _multiMesh;
 
-    private Rid _material;
+    private readonly Rid _material;
 
     private bool _wireframe;
 
-    public override void Initialize()
+    internal TrixelsMesh(Game game, Actor actor) : base(game, actor)
     {
-        _rendering = Game.GetService<RenderingService>();
-        _transform = Actor.GetComponent<Transform>();
-
-        var effect = Game.Content.Load<Effect>("Effects/TrixelsMesh");
+        _rendering = game.GetService<RenderingService>();
+        _transform = actor.GetComponent<Transform>();
+        _mesh = _rendering.MeshCreate();
         _material = _rendering.MaterialCreate();
+        _multiMesh = _rendering.MultiMeshCreate();
+        _rendering.MultiMeshSetMesh(_multiMesh, _mesh);
+        _rendering.InstanceSetMultiMesh(actor.InstanceRid, _multiMesh);
+    }
+
+    public override void LoadContent(IContentManager content)
+    {
+        var effect = content.Load<Effect>("Effects/TrixelsMesh");
         _rendering.MaterialAssignEffect(_material, effect);
         _rendering.MaterialSetFillMode(_material, FillMode.Solid);
         _rendering.MaterialSetCullMode(_material, CullMode.CullClockwiseFace);
-
-        var surface = new MeshSurface
-        {
-            Vertices = new[]
-            {
-                new Vector3(-0.5f, -0.5f, 0f),
-                new Vector3(0.5f, -0.5f, 0f),
-                new Vector3(-0.5f, 0.5f, 0f),
-                new Vector3(0.5f, 0.5f, 0f)
-            },
-            Normals = new[]
-            {
-                Vector3.Forward,
-                Vector3.Forward,
-                Vector3.Forward,
-                Vector3.Forward
-            },
-            Indices = new[]
-            {
-                0, 1, 2, // Triangle 1
-                2, 1, 3 // Triangle 2
-            }
-        };
-
-        _mesh = _rendering.MeshCreate();
+        
+        var surface = MeshSurface.CreateQuad(Vector3.One);
         _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface, _material);
-
-        _multiMesh = _rendering.MultiMeshCreate();
-        _rendering.MultiMeshSetMesh(_multiMesh, _mesh);
-        _rendering.InstanceSetMultiMesh(Actor.InstanceRid, _multiMesh);
     }
 
     public void Visualize(TrixelObject obj)

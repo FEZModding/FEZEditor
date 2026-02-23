@@ -1,4 +1,5 @@
-﻿using FezEditor.Services;
+﻿using System.Reflection;
+using FezEditor.Services;
 using FezEditor.Structure;
 using FezEditor.Tools;
 using Microsoft.Xna.Framework;
@@ -34,17 +35,16 @@ public class Actor : IDisposable
         return _components.OfType<T>().Any();
     }
 
-    public T AddComponent<T>() where T : ActorComponent, new()
+    public T AddComponent<T>() where T : ActorComponent
     {
         if (HasComponent<T>())
         {
             throw new InvalidOperationException($"Actor already has component {typeof(T).Name}");
         }
 
-        var component = new T();
-        component.Initialize(_game, this);
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+        var component = (T)Activator.CreateInstance(typeof(T), flags, null, new object[] { _game, this }, null)!;
         _components.Add(component);
-        component.Initialize();
         return component;
     }
 
@@ -76,6 +76,14 @@ public class Actor : IDisposable
 
         component.Dispose();
         return _components.Remove(component);
+    }
+
+    public void LoadContent(IContentManager content)
+    {
+        foreach (var component in _components)
+        {
+            component.LoadContent(content);
+        }
     }
 
     public void Update(GameTime gameTime)

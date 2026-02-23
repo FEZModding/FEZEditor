@@ -9,11 +9,11 @@ public class Collider : ActorComponent
     
     public Vector3 Size { get; set; }
 
-    private Transform _transform = null!;
+    private readonly Transform _transform;
     
-    public override void Initialize()
+    internal Collider(Game game, Actor actor) : base(game, actor)
     {
-        _transform = Actor.GetComponent<Transform>();
+        _transform = actor.GetComponent<Transform>();
     }
 
     public override void Update(GameTime gameTime)

@@ -1,22 +1,23 @@
+using FezEditor.Tools;
 using Microsoft.Xna.Framework;
 
 namespace FezEditor.Actors;
 
 public abstract class ActorComponent : IDisposable
 {
-    protected Actor Actor { get; private set; } = null!;
-
-    protected Game Game { get; private set; } = null!;
+    protected Actor Actor { get; }
+    
+    protected Game Game { get; }
 
     public bool Enabled { get; set; } = true;
-        
-    internal void Initialize(Game game, Actor host)
+
+    internal ActorComponent(Game game, Actor actor)
     {
         Game = game;
-        Actor = host;
+        Actor = actor;
     }
-
-    public virtual void Initialize()
+    
+    public virtual void LoadContent(IContentManager content)
     {
     }
 

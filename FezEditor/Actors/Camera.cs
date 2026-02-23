@@ -47,20 +47,20 @@ public class Camera : ActorComponent
 
     public float Far { get; set; } = 1000.0f;
 
-    private RenderingService _rendering = null!;
+    private readonly RenderingService _rendering;
 
-    private Rid _camera;
+    private readonly Rid _camera;
 
-    private Rid _rt;
+    private readonly Rid _rt;
 
     private float _size = 1.0f;
 
     private float _fieldOfView = 75.0f;
 
-    public override void Initialize()
+    internal Camera(Game game, Actor actor) : base(game, actor)
     {
-        _rendering = Game.GetService<RenderingService>();
-        var world = _rendering.InstanceGetWorld(Actor.InstanceRid);
+        _rendering = game.GetService<RenderingService>();
+        var world = _rendering.InstanceGetWorld(actor.InstanceRid);
         if (_rendering.WorldHasCamera(world))
         {
             throw new InvalidOperationException("A single camera was already initialized!");

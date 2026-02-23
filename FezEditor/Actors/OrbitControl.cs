@@ -7,19 +7,19 @@ namespace FezEditor.Actors;
 public class OrbitControl : ActorComponent
 {
     public float MouseSensitivity { get; set; } = 0.005f;
+    
+    private readonly InputService _input;
+
+    private readonly Transform _transform;
 
     private float _yaw;
 
     private float _pitch;
 
-    private InputService _input = null!;
-
-    private Transform _transform = null!;
-
-    public override void Initialize()
+    internal OrbitControl(Game game, Actor actor) : base(game, actor)
     {
-        _input = Game.GetService<InputService>();
-        _transform = Actor.GetComponent<Transform>();
+        _input = game.GetService<InputService>();
+        _transform = actor.GetComponent<Transform>();
     }
 
     public override void Update(GameTime gameTime)

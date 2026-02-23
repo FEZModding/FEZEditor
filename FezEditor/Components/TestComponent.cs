@@ -22,9 +22,13 @@ public class TestComponent : EditorComponent
         }
         {
             var actor = _test.CreateActor();
-            var mesh = actor.AddComponent<TestMesh>();
-            mesh.Load();
+            actor.AddComponent<TestMesh>();
         }
+    }
+
+    public override void LoadContent()
+    {
+        _test.LoadContent();
     }
 
     public override void Update(GameTime gameTime)

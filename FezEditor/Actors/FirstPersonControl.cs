@@ -15,14 +15,14 @@ public class FirstPersonControl : ActorComponent
 
     private float _pitch;
 
-    private InputService _input = null!;
+    private readonly InputService _input;
 
-    private Transform _transform = null!;
+    private readonly Transform _transform;
 
-    public override void Initialize()
+    internal FirstPersonControl(Game game, Actor actor) : base(game, actor)
     {
-        _input = Game.GetService<InputService>();
-        _transform = Actor.GetComponent<Transform>();
+        _input = game.GetService<InputService>();
+        _transform = actor.GetComponent<Transform>();
     }
     
     public override void Update(GameTime gameTime)

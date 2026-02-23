@@ -11,14 +11,14 @@ public class Transform : ActorComponent
     
     public Vector3 Scale { get; set; }
 
-    private RenderingService _rendering = null!;
+    private readonly RenderingService _rendering;
 
-    public override void Initialize()
+    internal Transform(Game game, Actor actor) : base(game, actor)
     {
-        _rendering = Game.GetService<RenderingService>();
-        Position = _rendering.InstanceGetPosition(Actor.InstanceRid);
-        Rotation = _rendering.InstanceGetRotation(Actor.InstanceRid);
-        Scale = _rendering.InstanceGetScale(Actor.InstanceRid);
+        _rendering = game.GetService<RenderingService>();
+        Position = _rendering.InstanceGetPosition(actor.InstanceRid);
+        Rotation = _rendering.InstanceGetRotation(actor.InstanceRid);
+        Scale = _rendering.InstanceGetScale(actor.InstanceRid);
     }
 
     public override void Update(GameTime gameTime)

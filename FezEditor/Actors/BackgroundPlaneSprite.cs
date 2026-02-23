@@ -4,92 +4,90 @@ using FezEditor.Tools;
 using FEZRepacker.Core.Definitions.Game.Graphics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using SharpGLTF.Schema2;
+using PrimitiveType = Microsoft.Xna.Framework.Graphics.PrimitiveType;
 
 namespace FezEditor.Actors;
 
 public class BackgroundPlaneSprite : ActorComponent
 {
-    public Vector3 PlaneSize { get; set; }
-    
+    public Vector3 PlaneSize { get; private set; }
+
     public bool Animated { get; private set; }
 
     public bool Billboard { get; set; } = false;
 
-    public bool DoubleSided { get; set; } = false;
-
     public Color Color { get; set; } = Color.White;
 
-    private readonly List<FrameContent> _frames = new();
+    private readonly RenderingService _rendering;
 
-    private RenderingService _rendering = null!;
+    private readonly Rid _mesh;
 
-    private Vector2 _textureSize = Vector2.Zero;
+    private readonly Rid _material;
+
+    private readonly Rid _camera;
+
+    private readonly Transform _transform;
+
+    private List<FrameContent> _frames = [];
+    
+    private Effect? _animatedEffect;
+
+    private Effect? _staticEffect;
+    
+    private Texture2D? _texture;
 
     private TimeSpan _frameElapsed = TimeSpan.Zero;
 
     private int _frameCounter;
 
-    private Rid _mesh;
-
-    private Rid _material;
-
-    private Rid _camera;
-
-    private Transform _transform = null!;
-
-    public override void Initialize()
+    internal BackgroundPlaneSprite(Game game, Actor actor) : base(game, actor)
     {
-        _rendering = Game.GetService<RenderingService>();
+        _rendering = game.GetService<RenderingService>();
         _mesh = _rendering.MeshCreate();
         _material = _rendering.MaterialCreate();
-        var world = _rendering.InstanceGetWorld(Actor.InstanceRid);
-        _camera = _rendering.WorldGetCamera(world);
-        _transform = Actor.GetComponent<Transform>();
+        _camera = _rendering.WorldGetCamera(_rendering.InstanceGetWorld(actor.InstanceRid));
+        _rendering.InstanceSetMesh(actor.InstanceRid, _mesh);
+        _transform = actor.GetComponent<Transform>();
     }
 
-    public void Load(object plane)
+    public override void LoadContent(IContentManager content)
     {
-        Effect effect;
-        Texture2D baseTexture;
-        List<FrameContent> frames;
+        _animatedEffect = content.Load<Effect>("Effects/AnimatedPlane");
+        _staticEffect = content.Load<Effect>("Effects/StaticPlane");
+    }
 
-        switch (plane)
-        {
-            case RAnimatedTexture animatedTexture:
-            {
-                frames = animatedTexture.Frames;
-                effect = Game.Content.Load<Effect>("Effects/AnimatedPlane");
-                baseTexture = RepackerExtensions.ConvertToTexture2D(animatedTexture);
-                PlaneSize = new Vector3(animatedTexture.AtlasWidth / 16f, animatedTexture.AtlasHeight / 16f, 0.125f);
-                break;
-            }
+    public void Visualize(RAnimatedTexture animatedTexture)
+    {
+        _texture = RepackerExtensions.ConvertToTexture2D(animatedTexture);
+        _rendering.MaterialAssignEffect(_material, _animatedEffect!);
+        _rendering.MaterialAssignBaseTexture(_material, _texture);
+        _frames = animatedTexture.Frames;
+        PlaneSize = new Vector3(animatedTexture.FrameWidth / 16f, animatedTexture.FrameHeight / 16f, 0.125f);
+        VisualizeInternal();
+    }
 
-            case RTexture2D texture:
-            {
-                frames = new List<FrameContent>();
-                effect = Game.Content.Load<Effect>("StaticPlane");
-                baseTexture = RepackerExtensions.ConvertToTexture2D(texture);
-                PlaneSize = new Vector3(texture.Width / 16f, texture.Height / 16f, 0.125f);
-                break;
-            }
+    public void Visualize(RTexture2D texture)
+    {
+        _texture = RepackerExtensions.ConvertToTexture2D(texture);
+        _rendering.MaterialAssignEffect(_material, _staticEffect!);
+        _rendering.MaterialAssignBaseTexture(_material, _texture);
+        _frames = new List<FrameContent>();
+        PlaneSize = new Vector3(texture.Width / 16f, texture.Height / 16f, 0.125f);
+        VisualizeInternal();
+    }
 
-            default:
-            {
-                throw new NotSupportedException();
-            }
-        }
-
-        _textureSize = new Vector2(baseTexture.Width, baseTexture.Height);
-        _frameCounter = 0;
-        _frames.AddRange(frames);
-        Animated = _frames.Count > 0;
+    private void VisualizeInternal()
+    {
+        var surface = MeshSurface.CreateQuad(PlaneSize);
+        _rendering.MeshClear(_mesh);
         
-        _rendering.InstanceSetMesh(Actor.InstanceRid, _mesh);
-        UpdateMeshSurface();
-
-        _rendering.MaterialAssignEffect(_material, effect);
+        _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface, _material);
         _rendering.MaterialSetBlendMode(_material, BlendMode.AlphaBlend);
-        _rendering.MaterialAssignBaseTexture(_material, baseTexture);
+        _rendering.MaterialSetCullMode(_material, CullMode.CullCounterClockwiseFace);
+        
+        _frameCounter = 0;
+        Animated = _frames.Count > 0;
     }
 
     public override void Dispose()
@@ -110,17 +108,16 @@ public class BackgroundPlaneSprite : ActorComponent
             }
             else
             {
-                var transform = Mathz.CreateTextureTransform(currentFrame.Rectangle.ToXna(), _textureSize);
+                var textureSize = new Vector2(_texture!.Width, _texture!.Height);
+                var transform = Mathz.CreateTextureTransform(currentFrame.Rectangle.ToXna(), textureSize);
                 _rendering.MaterialSetTextureTransform(_material, transform);
                 _frameCounter = Mathz.Clamp(_frameCounter + 1, 0, _frames.Count - 1);
                 _frameElapsed = TimeSpan.Zero;
             }
         }
-        
+
         _rendering.MaterialSetAlbedo(_material, Color);
-        _rendering.MaterialSetCullMode(_material,
-            DoubleSided ? CullMode.None : CullMode.CullCounterClockwiseFace);
-        
+
         var rotation = _transform.Rotation;
         if (Billboard && _camera.IsValid)
         {
@@ -138,57 +135,7 @@ public class BackgroundPlaneSprite : ActorComponent
 
             rotation = Quaternion.CreateFromAxisAngle(Vector3.Up, angleY);
         }
-        
+
         _transform.Rotation = rotation;
-        UpdateMeshSurface();
-    }
-
-    private void UpdateMeshSurface()
-    {
-        _rendering.MeshClear(_mesh);
-
-        var halfSize = PlaneSize * 0.5f;
-        var meshSurface = new MeshSurface
-        {
-            Vertices = new[]
-            {
-                new Vector3(-halfSize.X, -halfSize.Y, 0),
-                new Vector3(halfSize.X, -halfSize.Y, 0),
-                new Vector3(-halfSize.X, halfSize.Y, 0),
-                new Vector3(halfSize.X, halfSize.Y, 0)
-            },
-            Normals = new[]
-            {
-                Vector3.Forward,
-                Vector3.Forward,
-                Vector3.Forward,
-                Vector3.Forward
-            },
-            TexCoords = new[]
-            {
-                new Vector2(0, 1),
-                new Vector2(1, 1),
-                new Vector2(0, 0),
-                new Vector2(1, 0)
-            },
-            Indices = DoubleSided
-                ? new[]
-                {
-                    // Front face triangles (counter-clockwise when viewed from front)
-                    0, 1, 2, // Triangle 1
-                    2, 1, 3, // Triangle 2
-
-                    // Back face triangles (clockwise when viewed from front)
-                    0, 2, 1, // Triangle 1 (reversed order)
-                    2, 3, 1 // Triangle 2 (reversed order)
-                }
-                : new[]
-                {
-                    0, 1, 2, // Triangle 1
-                    2, 1, 3 // Triangle 2
-                }
-        };
-
-        _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, meshSurface, _material);
     }
 }

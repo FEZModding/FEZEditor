@@ -2,6 +2,7 @@
 using FezEditor.Structure;
 using FezEditor.Tools;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 
 namespace FezEditor.Actors;
 
@@ -16,6 +17,8 @@ public class Scene : IDisposable
     private readonly Rid _worldRid;
 
     private readonly RenderingService _rendering;
+    
+    private readonly IContentManager _content;
 
     private readonly HashSet<Actor> _actors = new();
 
@@ -29,6 +32,7 @@ public class Scene : IDisposable
     {
         _game = game;
         _rendering = game.GetService<RenderingService>();
+        _content =  game.GetService<ContentService>().Get(this);
         
         _worldRid = _rendering.WorldCreate();
         Viewport = new SceneViewport(game, _worldRid);
@@ -89,6 +93,14 @@ public class Scene : IDisposable
         return _hierarchy.TryGetValue(actor, out var node) ? node.Children : [];
     }
 
+    public void LoadContent()
+    {
+        foreach (var actor in _actors)
+        {
+            actor.LoadContent(_content);
+        }
+    }
+
     public void Update(GameTime gameTime)
     {
         foreach (var actor in _actors.Where(a => a.Active))
@@ -116,6 +128,7 @@ public class Scene : IDisposable
         Lighting.Dispose();
         Viewport.Dispose();
         _rendering.FreeRid(_worldRid);
+        _game.GetService<ContentService>().Unload(this);
     }
 
     private record HierarchyNode(Actor? Parent, List<Actor> Children);

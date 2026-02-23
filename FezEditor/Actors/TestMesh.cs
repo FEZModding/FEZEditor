@@ -8,44 +8,27 @@ namespace FezEditor.Actors;
 
 public class TestMesh : ActorComponent
 {
-    private RenderingService _rendering = null!;
+    private readonly RenderingService _rendering;
     
-    private Rid _mesh;
+    private readonly Rid _mesh;
 
-    private Rid _material;
+    private readonly Rid _material;
     
     private float _elapsed;
     
-    public override void Initialize()
+    internal TestMesh(Game game, Actor actor) : base(game, actor)
     {
-        _rendering = Game.GetService<RenderingService>();
+        _rendering = game.GetService<RenderingService>();
         _mesh = _rendering.MeshCreate();
         _material = _rendering.MaterialCreate();
+        _rendering.InstanceSetMesh(actor.InstanceRid, _mesh);
     }
 
-    public void Load()
+    public override void LoadContent(IContentManager content)
     {
-        _rendering.MaterialSetCullMode(_material, CullMode.None);
-        
-        var surface = new MeshSurface
-        {
-            Vertices = new[]
-            {
-                new Vector3(0.0f, 0.5f, 0f), // top
-                new Vector3(0.5f, -0.5f, 0f), // bottom-right
-                new Vector3(-0.5f, -0.5f, 0f) // bottom-left
-            },
-            Indices = new[] { 0, 1, 2 },
-            Colors = new[]
-            {
-                Color.Red,
-                Color.Green,
-                Color.Blue
-            }
-        };
-        
+        var surface = MeshSurface.CreateTestTriangle();
         _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface, _material);
-        _rendering.InstanceSetMesh(Actor.InstanceRid, _mesh);
+        _rendering.MaterialSetCullMode(_material, CullMode.None);
     }
     
     public override void Update(GameTime gameTime)

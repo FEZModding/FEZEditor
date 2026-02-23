@@ -8,8 +8,6 @@ namespace FezEditor.Actors;
 
 public class Grid : ActorComponent
 {
-    public bool Enabled { get; set; } = true;
-
     public GridPlane Plane { get; set; } = GridPlane.Z;
 
     public Color PrimaryColor { get; set; } = new(0.5f, 0.5f, 0.5f);
@@ -24,43 +22,43 @@ public class Grid : ActorComponent
     
     public int SecondaryStep { get; set; } = 1;
 
-    private RenderingService _rendering = null!;
+    private readonly RenderingService _rendering;
+    
+    private readonly Rid _primaryMaterial;
+    
+    private readonly Rid _secondaryMaterial;
     
     private readonly GridPlaneData[] _planes = new GridPlaneData[3];
 
-    private Rid _primaryMaterial;
-    
-    private Rid _secondaryMaterial;
-
-    public override void Initialize()
+    internal Grid(Game game, Actor actor) : base(game, actor)
     {
-        var effect = Game.Content.Load<Effect>("Effects/Grid");
-        _rendering = Game.GetService<RenderingService>();
-
+        _rendering = game.GetService<RenderingService>();
         _primaryMaterial = _rendering.MaterialCreate();
-        _rendering.MaterialAssignEffect(_primaryMaterial, effect);
-        _rendering.MaterialSetAlbedo(_primaryMaterial, PrimaryColor);
-
         _secondaryMaterial = _rendering.MaterialCreate();
-        _rendering.MaterialAssignEffect(_secondaryMaterial, effect);
-        _rendering.MaterialSetAlbedo(_secondaryMaterial, SecondaryColor);
         
         for (var i = 0; i < 3; i++)
         {
             var mesh = _rendering.MeshCreate();
-            var instance = _rendering.InstanceCreate(Actor.InstanceRid);
+            var instance = _rendering.InstanceCreate(actor.InstanceRid);
             _rendering.InstanceSetMesh(instance, mesh);
             _planes[i] = new GridPlaneData(instance, mesh);
         }
         
         _rendering.InstanceSetRotation(_planes[1].Instance, Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathHelper.PiOver2));
         _rendering.InstanceSetRotation(_planes[2].Instance, Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathHelper.PiOver2));
+    }
+
+    public override void LoadContent(IContentManager content)
+    {
+        var effect = content.Load<Effect>("Effects/Grid");
+        _rendering.MaterialAssignEffect(_primaryMaterial, effect);
+        _rendering.MaterialAssignEffect(_secondaryMaterial, effect);
         
         GenerateGridMesh(_planes[0].Mesh, GridPlane.X);
         GenerateGridMesh(_planes[1].Mesh, GridPlane.Y);
         GenerateGridMesh(_planes[2].Mesh, GridPlane.Z);
     }
-    
+
     public override void Dispose()
     {
         GC.SuppressFinalize(this);
@@ -75,6 +73,9 @@ public class Grid : ActorComponent
 
     public override void Update(GameTime gameTime)
     {
+        _rendering.MaterialSetAlbedo(_primaryMaterial, PrimaryColor);
+        _rendering.MaterialSetAlbedo(_secondaryMaterial, SecondaryColor);
+        
         for (var i = 0; i < 3; i++)
         {
             _rendering.InstanceSetVisibility(_planes[i].Instance, Enabled && i == (int)Plane);

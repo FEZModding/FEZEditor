@@ -16,22 +16,30 @@ public class TrileMesh : ActorComponent
 
     private readonly OrderedDictionary<TrileEmplacement, InstanceData> _instances = new();
 
-    private RenderingService _rendering = null!;
+    private readonly RenderingService _rendering;
 
-    private Rid _mesh;
+    private readonly Rid _mesh;
 
-    private Rid _multiMesh;
+    private readonly Rid _multiMesh;
 
-    private Rid _material;
+    private readonly Rid _material;
     
     private Vector3 _size;
 
-    public override void Initialize()
+    internal TrileMesh(Game game, Actor actor) : base(game, actor)
     {
-        _rendering = Game.GetService<RenderingService>();
+        _rendering = game.GetService<RenderingService>();
         _mesh = _rendering.MeshCreate();
         _material = _rendering.MaterialCreate();
         _multiMesh = _rendering.MeshCreate();
+        _rendering.MultiMeshSetMesh(_multiMesh, _mesh);
+        _rendering.InstanceSetMultiMesh(actor.InstanceRid, _multiMesh);
+    }
+
+    public override void LoadContent(IContentManager content)
+    {
+        var effect = content.Load<Effect>("Effects/Trile");
+        _rendering.MaterialAssignEffect(_material, effect);
     }
 
     public override void Dispose()
@@ -42,11 +50,8 @@ public class TrileMesh : ActorComponent
         _rendering.FreeRid(_material);
     }
 
-    public void Load(TrileSet trileSet, int id)
+    public void Visualize(TrileSet trileSet, int id)
     {
-        var effect = Game.Content.Load<Effect>("Effects/Trile");
-        _rendering.MaterialAssignEffect(_material, effect);
-
         var texture = RepackerExtensions.ConvertToTexture2D(trileSet.TextureAtlas);
         _rendering.MaterialAssignBaseTexture(_material, texture);
 
@@ -55,20 +60,7 @@ public class TrileMesh : ActorComponent
         _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface, _material);
         
         _rendering.MultiMeshAllocate(_multiMesh, MaxInstancesCount, MultiMeshDataType.Vector4);
-        _rendering.MultiMeshSetMesh(_multiMesh, _mesh);
-        _rendering.InstanceSetMultiMesh(Actor.InstanceRid, _multiMesh);
-
         _size = trileSet.Triles[id].Size.ToXna();
-    }
-
-    public void Unload()
-    {
-        _instances.Clear();
-        _size = Vector3.Zero;
-        _rendering.InstanceSetMultiMesh(Actor.InstanceRid, Rid.Invalid);
-        _rendering.MultiMeshDeallocate(_multiMesh);
-        _rendering.MeshClear(_mesh);
-        _rendering.MaterialReset(_material);
     }
 
     public void SetInstancePosition(TrileEmplacement emplacement, Vector3 position)
