@@ -48,7 +48,7 @@ public partial class RenderingService
     {
         var data = GetResource(_materials, material);
         data.Effect?.Dispose();
-        data.Effect = effect.Clone();
+        data.Effect = effect is BasicEffect ? effect : effect.Clone();
     }
 
     public void MaterialAssignBaseTexture(Rid material, Texture2D texture)
