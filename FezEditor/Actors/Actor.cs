@@ -11,6 +11,8 @@ public class Actor : IDisposable
     public Transform Transform { get; private set; }
 
     public bool Active { get; set; } = true;
+    
+    public string Name { get; set; } = "Actor";
 
     public Rid InstanceRid { get; }
 
@@ -59,7 +61,7 @@ public class Actor : IDisposable
             : throw new InvalidOperationException($"Actor has no component {typeof(T).Name}");
     }
 
-    private bool TryGetComponent<T>(out T? component) where T : ActorComponent
+    public bool TryGetComponent<T>(out T? component) where T : ActorComponent
     {
         component = _components.OfType<T>().FirstOrDefault();
         return component is not null;
@@ -106,5 +108,10 @@ public class Actor : IDisposable
 
         _rendering.FreeRid(InstanceRid);
         _components.Clear();
+    }
+
+    public override string ToString()
+    {
+        return $"{{Name: {Name}}}";
     }
 }
