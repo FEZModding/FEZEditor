@@ -1,9 +1,12 @@
 ﻿using FezEditor.Actors;
+using FezEditor.Services;
 using FezEditor.Structure;
+using FezEditor.Tools;
 using FEZRepacker.Core.Definitions.Game.ArtObject;
 using FEZRepacker.Core.Definitions.Game.TrileSet;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace FezEditor.Components;
 
@@ -12,6 +15,10 @@ public class ChrisEditor : EditorComponent
     public override object Asset => _subject.GetAsset(_obj);
 
     private readonly ITrixelSubject _subject;
+    
+    private readonly ExportService _exportService;
+
+    private readonly ConfirmWindow _confirm;
     
     private Scene _scene = null!;
 
@@ -36,7 +43,10 @@ public class ChrisEditor : EditorComponent
     private ChrisEditor(Game game, string title, ITrixelSubject subject) : base(game, title)
     {
         _subject = subject;
+        _exportService = game.GetService<ExportService>();
+        _exportService.TextureReloaded += OnTextureReload;
         History.StateChanged += RevisualizeSubject;
+        Game.AddComponent(_confirm = new ConfirmWindow(game));
     }
 
     public override void LoadContent()
@@ -62,6 +72,7 @@ public class ChrisEditor : EditorComponent
         }
         
         RevisualizeSubject();
+        ExportTexture();
     }
 
     public override void Update(GameTime gameTime)
@@ -115,6 +126,9 @@ public class ChrisEditor : EditorComponent
 
     public override void Dispose()
     {
+        Game.RemoveComponent(_confirm);
+        _exportService.TextureReloaded -= OnTextureReload;
+        _exportService.UntrackTexture(Title);
         _scene.Dispose();
         base.Dispose();
     }
@@ -131,5 +145,33 @@ public class ChrisEditor : EditorComponent
 
         var zoom = _cameraActor.GetComponent<ZoomControl>();
         zoom.Distance = _obj.Size.X * 2f;
+    }
+
+    private void ExportTexture()
+    {
+        var texture = _meshActor.GetComponent<TrixelsMesh>().Texture;
+        _exportService.ExportTexture(Title, texture!);
+    }
+    
+    private void OnTextureReload(string path, Texture2D newTexture)
+    {
+        if (path != Title) return;
+        
+        var mesh = _meshActor.GetComponent<TrixelsMesh>();
+        var oldTexture = mesh.Texture;
+        mesh.Texture = newTexture;
+        mesh.Visualize(_obj);
+        
+        _subject.UpdateTexture(newTexture);
+        {
+            _confirm.Title = "Confirm texture overriding";
+            _confirm.Text = $"The texture has been changed externally. Save it to the bundle '{Title}'?";
+            _confirm.Confirmed += () => ResourceService.Save(Title, _subject.GetAsset(_obj));
+        }
+        
+        if (oldTexture != newTexture)
+        {
+            oldTexture?.Dispose();
+        }
     }
 }

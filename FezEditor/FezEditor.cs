@@ -68,6 +68,7 @@ public class FezEditor : Game
         this.CreateService<ResourceService>();
         _input = this.CreateService<InputService>();
         _editor = this.CreateService<EditorService>();
+        this.CreateService<ExportService>();
 
         Content = (ContentManager)_content.Global;
         this.AddComponent(new MenuBar(this));

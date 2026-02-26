@@ -73,6 +73,11 @@ public class ResourceService : IDisposable
         return _provider?.GetExtension(path) ?? string.Empty;
     }
 
+    public string GetFullPath(string path)
+    {
+        return _provider?.GetFullPath(path) ?? string.Empty;
+    }
+
     public object Load(string path)
     {
         if (path.Contains("SaveSlot", StringComparison.OrdinalIgnoreCase))
