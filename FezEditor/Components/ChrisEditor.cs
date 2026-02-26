@@ -16,9 +16,17 @@ public class ChrisEditor : EditorComponent
 
     private readonly ITrixelSubject _subject;
     
+    private readonly ResourceService _resourceService;
+    
     private readonly ExportService _exportService;
 
     private readonly ConfirmWindow _confirm;
+
+    private readonly HashSet<int> _selectedTriles = new();
+    
+    private int _currentTrile = -1;
+
+    private string _filterTriles = "";
     
     private Scene _scene = null!;
 
@@ -37,7 +45,7 @@ public class ChrisEditor : EditorComponent
         History.Track(ao);
     }
 
-    public ChrisEditor(Game game, string title, TrileSet set) : this(game, title, new TrileSubject(set))
+    public ChrisEditor(Game game, string title, TrileSet set) : this(game, title, new TrileSubject(set, game))
     {
         History.Track(set);
     }
@@ -45,6 +53,7 @@ public class ChrisEditor : EditorComponent
     private ChrisEditor(Game game, string title, ITrixelSubject subject) : base(game, title)
     {
         _subject = subject;
+        _resourceService = game.GetService<ResourceService>();
         _exportService = game.GetService<ExportService>();
         _exportService.TextureReloaded += OnTextureReload;
         History.StateChanged += RevisualizeSubject;
@@ -83,10 +92,36 @@ public class ChrisEditor : EditorComponent
 
     public override void Draw()
     {
+        ImGuiX.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(8, 8));
+        
         DrawToolbar();
-        DrawSceneViewport();
+
+        if (_subject is TrileSubject subject)
+        {
+            var width = ImGui.GetContentRegionAvail().X;
+            if (ImGuiX.BeginChild("##SceneViewport", new Vector2(width - 300, 0)))
+            {
+                DrawSceneViewport();
+                ImGui.EndChild();
+            }
+        
+            ImGui.SameLine();
+        
+            if (ImGuiX.BeginChild("##TrileSet", Vector2.Zero, ImGuiChildFlags.Border))
+            {
+                DrawTrileList(subject);
+                ImGui.EndChild();
+            }
+        }
+        else if (_subject is ArtObjectSubject)
+        {
+            DrawSceneViewport();
+        }
+        
         DrawPropertiesWindow();
         DrawTextureWindow();
+        
+        ImGui.PopStyleVar();
     }
 
     private void DrawToolbar()
@@ -107,6 +142,146 @@ public class ChrisEditor : EditorComponent
         ImGui.EndDisabled();
 
         ImGui.Separator();
+    }
+    
+    private void DrawTrileList(TrileSubject subject)
+    {
+        var name = subject.Name;
+        ImGui.SetNextItemWidth(150f);
+        if (ImGui.InputText("Trile Set Name", ref name, 255))
+        {
+            using (History.BeginScope("Rename Trile Set"))
+            {
+                subject.Name = name;
+            }
+        }
+
+        ImGui.Separator();
+        if (ImGui.Button($"{Icons.Add} Add"))
+        {
+            using (History.BeginScope("Add Trile"))
+            {
+                var newId = subject.AddTrile();
+                _selectedTriles.Clear();
+                _selectedTriles.Add(newId);
+                _currentTrile = newId;
+                subject.Id = newId;
+                RevisualizeSubject();
+            }
+        }
+
+        ImGui.SameLine();
+        ImGui.BeginDisabled(_selectedTriles.Count == 0);
+        if (ImGui.Button($"{Icons.Remove} Remove"))
+        {
+            using (History.BeginScope("Remove Trile"))
+            {
+                var nextId = subject.RemoveTriles(_selectedTriles);
+                _selectedTriles.Clear();
+                _selectedTriles.Add(nextId);
+                _currentTrile = nextId;
+                subject.Id = nextId;
+                RevisualizeSubject();
+            }
+        }
+        ImGui.EndDisabled();
+
+        ImGui.SameLine();
+        ImGui.BeginDisabled(_selectedTriles.Count == 0);
+        if (ImGui.Button($"{Icons.Copy} Copy"))
+        {
+            using (History.BeginScope("Copy Triles"))
+            {
+                var newId = subject.CopyTriles(_selectedTriles);
+                _selectedTriles.Clear();
+                _selectedTriles.Add(newId);
+                _currentTrile = newId;
+                subject.Id = newId;
+                RevisualizeSubject();
+            }
+        }
+        ImGui.EndDisabled();
+
+        ImGui.SameLine();
+        ImGui.BeginDisabled(_selectedTriles.Count == 0);
+        if (ImGui.Button($"{Icons.ClearAll} Clear"))
+        {
+            _selectedTriles.Clear();
+        }
+        ImGui.EndDisabled();
+
+        ImGui.BeginDisabled(_selectedTriles.Count == 0);
+        if (ImGui.Button($"{Icons.Export} Export Selected"))
+        {
+            var options = new FileDialog.Options
+            {
+                Title = "Choose trile set file...",
+                Filters = new FileDialog.Filter[]
+                {
+                    new("FEZTS files", "fezts.glb")
+                }
+            };
+            
+            FileDialog.Show(FileDialog.Type.OpenFile, result =>
+            {
+                if (result.Files.Length > 0)
+                {
+                    var path = result.Files[0];
+                    var targetSet = (TrileSet)_resourceService.Load(path);
+                    subject.AppendTriles(_selectedTriles, targetSet);
+                    _resourceService.Save(path, targetSet);
+                }
+            }, options);
+        }
+        ImGui.EndDisabled();
+
+        ImGui.SetNextItemWidth(-40);
+        ImGui.InputTextWithHint("", "Filter", ref _filterTriles, 255);
+        
+        if (!string.IsNullOrEmpty(_filterTriles))
+        {
+            ImGui.SameLine();
+            if (ImGui.Button(Icons.ClearAll))
+            {
+                _filterTriles = "";
+            }
+        }
+        
+        ImGui.Separator();
+
+        if (ImGuiX.BeginChild("##TrileSetList", Vector2.Zero))
+        {
+            foreach (var entry in subject.EnumerateEntries(_filterTriles))
+            {
+                var toggled = _selectedTriles.Contains(entry.Id);
+                if (ImGui.Checkbox($"##chk_{entry.Id}", ref toggled))
+                {
+                    if (toggled)
+                    {
+                        _selectedTriles.Add(entry.Id);
+                    }
+                    else
+                    {
+                        _selectedTriles.Remove(entry.Id);
+                    }
+                }
+
+                ImGui.SameLine();
+
+                var sel = _currentTrile == entry.Id;
+                var size = new Vector2(32f);
+                var text = $"{entry.Id}: {entry.Name}";
+
+                if (ImGuiX.SelectableWithImage(entry.Texture, size, entry.Uv0, entry.Uv1, text, sel))
+                {
+                    _currentTrile = entry.Id;
+                    subject.Id = _currentTrile;
+                    RevisualizeSubject();
+                }
+            }
+            
+            ImGui.EndChild();
+        }
     }
 
     private void DrawSceneViewport()
@@ -155,23 +330,25 @@ public class ChrisEditor : EditorComponent
     {
         if (_showTexture)
         {
+            var texture = _meshActor.GetComponent<TrixelsMesh>().Texture!;
             const ImGuiWindowFlags flags = ImGuiWindowFlags.NoCollapse;
+            
+            ImGuiX.SetNextWindowSize(new Vector2(640, 160), ImGuiCond.Appearing);
             if (ImGui.Begin($"Texture Viewer##{Title}", ref _showTexture, flags))
             {
                 if (ImGui.Button("Edit Externally"))
                 {
-                    var texture1 = _meshActor.GetComponent<TrixelsMesh>().Texture;
-                    _exportService.ExportTexture(Title, texture1!);
+                    var exportKey = _subject.TextureExportKey;
+                    _exportService.ExportTexture(exportKey, texture);
                     {
                         _confirm.Title = "Export";
-                        _confirm.Text = $"The texture has been exported to\n'{Title}'";
+                        _confirm.Text = $"The texture has been exported to\n'{exportKey}'";
                         _confirm.ConfirmButtonText = "Ok";
                         _confirm.CancelButtonText = "";
-                        _confirm.Confirmed = () => _exportService.EditTexture(Title);
+                        _confirm.Confirmed = () => _exportService.EditTexture(exportKey);
                     }
                 }
                 
-                var texture = _meshActor.GetComponent<TrixelsMesh>().Texture!;
                 var sizeText = $"Texture Size: {texture.Width}x{texture.Height}px";
                 var textWidth = ImGui.CalcTextSize(sizeText).X;
                 var availWidth = ImGui.GetContentRegionAvail().X;
@@ -217,19 +394,18 @@ public class ChrisEditor : EditorComponent
     {
         Game.RemoveComponent(_confirm);
         _exportService.TextureReloaded -= OnTextureReload;
-        _exportService.UntrackTexture(Title);
+        _exportService.UntrackTexture(_subject.TextureExportKey);
         _scene.Dispose();
+        _subject.Dispose();
         base.Dispose();
     }
 
     private void RevisualizeSubject()
     {
         _obj = _subject.Materialize();
-        
+
         var mesh = _meshActor.GetComponent<TrixelsMesh>();
-        var oldTexture = mesh.Texture;
-        mesh.Texture = _subject.LoadTexture(Game.GraphicsDevice);
-        oldTexture?.Dispose();
+        mesh.Texture = _subject.LoadTexture();
         mesh.Visualize(_obj);
 
         var zoom = _cameraActor.GetComponent<ZoomControl>();
@@ -238,23 +414,19 @@ public class ChrisEditor : EditorComponent
     
     private void OnTextureReload(string path, Texture2D newTexture)
     {
-        if (path != Title) return;
-        
+        if (path != _subject.TextureExportKey) return;
+
+        _subject.UpdateTexture(newTexture);
+
         var mesh = _meshActor.GetComponent<TrixelsMesh>();
-        var oldTexture = mesh.Texture;
         mesh.Texture = newTexture;
         mesh.Visualize(_obj);
-        
-        _subject.UpdateTexture(newTexture);
-        {
-            _confirm.Title = "Confirm texture overriding";
-            _confirm.Text = $"The texture has been changed externally. Save it to the bundle '{Title}'?";
-            _confirm.Confirmed = () => ResourceService.Save(Title, _subject.GetAsset(_obj));
-        }
-        
-        if (oldTexture != newTexture)
-        {
-            oldTexture?.Dispose();
-        }
+
+        _confirm.Title = "Confirm texture overriding";
+        _confirm.Text = $"The texture has been changed externally. Save it to the bundle '{Title}'?";
+        _confirm.ConfirmButtonText = "Yes";
+        _confirm.CancelButtonText = "No";
+        _confirm.Confirmed = () => ResourceService.Save(Title, _subject.GetAsset(_obj));
+        _confirm.Canceled = null;
     }
 }

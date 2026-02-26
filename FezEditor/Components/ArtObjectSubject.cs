@@ -16,10 +16,19 @@ public class ArtObjectSubject : ITrixelSubject
     
     private Action<Vector3>? _resized;
 
+    private Texture2D? _texture;
+
     public ArtObjectSubject(ArtObject ao)
     {
         _ao = ao;
         TextureExportKey = ao.Name;
+    }
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        _texture?.Dispose();
+        _texture = null;
     }
     
     public TrixelObject Materialize()
@@ -40,11 +49,12 @@ public class ArtObjectSubject : ITrixelSubject
         return ao;
     }
 
-    public Texture2D LoadTexture(GraphicsDevice gd)
+    public Texture2D LoadTexture()
     {
-        var texture = RepackerExtensions.ConvertToTexture2D(_ao.Cubemap);
-        RepackerExtensions.SetAlpha(texture, 1f);
-        return texture;
+        _texture?.Dispose();
+        _texture = RepackerExtensions.ConvertToTexture2D(_ao.Cubemap);
+        RepackerExtensions.SetAlpha(_texture, 1f);
+        return _texture;
     }
 
     public void UpdateTexture(Texture2D texture)

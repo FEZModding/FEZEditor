@@ -725,20 +725,39 @@ public static class ImGuiX
         return changed;
     }
     
-    public static bool SelectableWithImage(Texture2D texture, Vector2 imageSize, string label, bool selected)
+    public static bool SelectableWithImage(Texture2D texture, Vector2 size, string label, bool selected)
     {
-        var itemHeight = Math.Max(imageSize.Y, ImGui.GetTextLineHeight());
+        var itemHeight = Math.Max(size.Y, ImGui.GetTextLineHeight());
     
         // Selectable
         var clicked = Selectable($"##{label}_sel", selected, ImGuiSelectableFlags.None, new Vector2(0, itemHeight));
     
         // Go back to draw image and text
         ImGui.SameLine(0, 0);
-        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (itemHeight - imageSize.Y) * 0.5f);
-        Image(texture, imageSize);
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (itemHeight - size.Y) * 0.5f);
+        Image(texture, size);
     
         ImGui.SameLine();
-        ImGui.SetCursorPosY(ImGui.GetCursorPosY() - (itemHeight - imageSize.Y) * 0.5f + (itemHeight - ImGui.GetTextLineHeight()) * 0.5f);
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() - (itemHeight - size.Y) * 0.5f + (itemHeight - ImGui.GetTextLineHeight()) * 0.5f);
+        ImGui.Text(label);
+    
+        return clicked;
+    }
+
+    public static bool SelectableWithImage(Texture2D texture, Vector2 size, Vector2 uv0, Vector2 uv1, string label, bool selected)
+    {
+        var itemHeight = Math.Max(size.Y, ImGui.GetTextLineHeight());
+    
+        // Selectable
+        var clicked = Selectable($"##{label}_sel", selected, ImGuiSelectableFlags.None, new Vector2(0, itemHeight));
+    
+        // Go back to draw image and text
+        ImGui.SameLine(0, 0);
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (itemHeight - size.Y) * 0.5f);
+        Image(texture, size,  uv0, uv1);
+    
+        ImGui.SameLine();
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() - (itemHeight - size.Y) * 0.5f + (itemHeight - ImGui.GetTextLineHeight()) * 0.5f);
         ImGui.Text(label);
     
         return clicked;

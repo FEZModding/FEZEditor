@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace FezEditor.Components;
 
-public interface ITrixelSubject
+public interface ITrixelSubject : IDisposable
 {
     string TextureExportKey { get; }
     
@@ -11,7 +11,7 @@ public interface ITrixelSubject
 
     object GetAsset(TrixelObject obj);
     
-    Texture2D LoadTexture(GraphicsDevice gd);
+    Texture2D LoadTexture();
     
     void UpdateTexture(Texture2D texture);
 
