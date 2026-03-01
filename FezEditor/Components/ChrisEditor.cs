@@ -16,8 +16,6 @@ public class ChrisEditor : EditorComponent
 
     private readonly ITrixelSubject _subject;
     
-    private readonly ResourceService _resourceService;
-    
     private readonly ExportService _exportService;
 
     private readonly ConfirmWindow _confirm;
@@ -53,7 +51,6 @@ public class ChrisEditor : EditorComponent
     private ChrisEditor(Game game, string title, ITrixelSubject subject) : base(game, title)
     {
         _subject = subject;
-        _resourceService = game.GetService<ResourceService>();
         _exportService = game.GetService<ExportService>();
         _exportService.TextureReloaded += OnTextureReload;
         History.StateChanged += RevisualizeSubject;
@@ -240,9 +237,9 @@ public class ChrisEditor : EditorComponent
                 if (result.Files.Length > 0)
                 {
                     var path = result.Files[0];
-                    var targetSet = (TrileSet)_resourceService.Load(path);
+                    var targetSet = (TrileSet)ResourceService.Load(path);
                     subject.AppendTriles(_selectedTriles, targetSet);
-                    _resourceService.Save(path, targetSet);
+                    ResourceService.Save(path, targetSet);
                 }
             }, options);
         }
@@ -314,6 +311,7 @@ public class ChrisEditor : EditorComponent
             if (texture is { IsDisposed: false })
             {
                 ImGuiX.Image(texture, size);
+                InputService.CaptureScroll(ImGui.IsItemHovered());
 
                 var gizmo = _cameraActor.GetComponent<OrientationGizmo>();
                 {

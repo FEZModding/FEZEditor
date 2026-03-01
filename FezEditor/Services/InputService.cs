@@ -27,6 +27,8 @@ public class InputService
 
     private bool _mouseWasCaptured;
 
+    private bool _scrollCaptured;
+
     public InputService(Game game)
     {
         _game = game;
@@ -128,7 +130,13 @@ public class InputService
 
     public int GetScrollWheelDelta()
     {
+        if (!_scrollCaptured) return 0;
         return _currentMouseState.ScrollWheelValue - _previousMouseState.ScrollWheelValue;
+    }
+
+    public void CaptureScroll(bool captured)
+    {
+        _scrollCaptured = captured;
     }
 
     public void CaptureMouse(bool captured)

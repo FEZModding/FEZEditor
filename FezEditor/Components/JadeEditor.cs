@@ -84,6 +84,7 @@ public class JadeEditor : EditorComponent
             if (texture is { IsDisposed: false })
             {
                 ImGuiX.Image(texture, size);
+                InputService.CaptureScroll(ImGui.IsItemHovered());
                 
                 var gizmo = _cameraActor.GetComponent<OrientationGizmo>();
                 {

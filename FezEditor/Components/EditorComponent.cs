@@ -15,7 +15,7 @@ public abstract class EditorComponent
 
     protected Game Game { get; }
 
-    protected RenderingService RenderingService { get; }
+    protected InputService InputService { get; }
     
     protected ResourceService ResourceService { get; }
     
@@ -26,7 +26,7 @@ public abstract class EditorComponent
         Game = game;
         Title = title;
         History = new History();
-        RenderingService = game.GetService<RenderingService>();
+        InputService = game.GetService<InputService>();
         ResourceService = game.GetService<ResourceService>();
         ContentManager = game.GetService<ContentService>().Get(this);
     }
