@@ -4,15 +4,15 @@ static const float3 TRIXEL_SIZE = float3(1.0 / 16.0, 1.0 / 16.0, 1.0 / 16.0);
 
 DECLARE_TEXTURE(BaseTexture);
 
-float3 SelectedColor;
-float SelectedAlpha;
+float4 Hovered;
+float4 Selected;
 
 struct VS_INPUT
 {
     float4 Position : POSITION0;
     float3 Normal : NORMAL0;
     float InstanceIndex : TEXCOORD1;
-    float4 InstancePosition : TEXCOORD2;
+    float4 InstancePositionFace : TEXCOORD2;
     float4 InstanceQuaternion : TEXCOORD3;
     float4 InstanceTexCoord01 : TEXCOORD4;
     float4 InstanceTexCoord23 : TEXCOORD5;
@@ -23,7 +23,7 @@ struct VS_OUTPUT
     float4 Position : POSITION0;
     float3 Normal : TEXCOORD0;
     float2 TexCoord : TEXCOORD1;
-    float Selected : TEXCOORD2;
+    float FaceIndex : TEXCOORD2;
 };
 
 VS_OUTPUT VS(VS_INPUT input)
@@ -31,7 +31,7 @@ VS_OUTPUT VS(VS_INPUT input)
     VS_OUTPUT output;
     
     float3x3 basis = QuaternionToMatrix(input.InstanceQuaternion);
-    float4x4 xform = CreateTransform(input.InstancePosition.xyz, basis, TRIXEL_SIZE);
+    float4x4 xform = CreateTransform(input.InstancePositionFace.xyz, basis, TRIXEL_SIZE);
     float4 worldPos = mul(input.Position, xform);
     
     float4 worldViewPos = TransformPositionToClip(worldPos);
@@ -43,7 +43,7 @@ VS_OUTPUT VS(VS_INPUT input)
     float2 top = lerp(input.InstanceTexCoord23.xy, input.InstanceTexCoord23.zw, t.x);
     output.TexCoord = lerp(bottom, top, t.y);
     
-    output.Selected = input.InstancePosition.w;
+    output.FaceIndex = input.InstancePositionFace.w;
 
     return output;
 }
@@ -55,9 +55,17 @@ float4 PS(VS_OUTPUT input) : COLOR0
     float3 color = texColor.rgb;
     color *= ComputeLight(input.Normal, 0.0);
     
-    if (input.Selected == 1.0)
+    int faceRaw = (int)input.FaceIndex;
+    bool isHovered  = (faceRaw / 10) % 2 == 1;
+    bool isSelected = (faceRaw / 20) >= 1;
+
+    if (isSelected)
     {
-        color = lerp(color, SelectedColor, SelectedAlpha);
+        color = lerp(color, Selected.rgb, Selected.a);
+    }
+    else if (isHovered)
+    {
+        color = lerp(color, Hovered.rgb, Hovered.a);
     }
     
     return float4(color, 1.0);

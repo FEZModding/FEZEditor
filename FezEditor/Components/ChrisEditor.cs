@@ -2,6 +2,7 @@
 using FezEditor.Structure;
 using FezEditor.Tools;
 using FEZRepacker.Core.Definitions.Game.ArtObject;
+using FEZRepacker.Core.Definitions.Game.Common;
 using FEZRepacker.Core.Definitions.Game.TrileSet;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
@@ -11,6 +12,8 @@ namespace FezEditor.Components;
 
 public partial class ChrisEditor : EditorComponent
 {
+    private static readonly TimeSpan EditStep = TimeSpan.FromMilliseconds(100);
+    
     public override object Asset => _subject.GetAsset(_obj);
 
     private readonly ISubject _subject;
@@ -36,6 +39,20 @@ public partial class ChrisEditor : EditorComponent
     private bool _showProperties;
 
     private bool _showTexture;
+    
+    private EditMode _editMode = EditMode.Select;
+    
+    private TrixelFace? _hoveredFace;
+
+    private readonly HashSet<TrixelFace> _selectedFaces = new();
+
+    private FaceOrientation? _selectionOrientation;
+
+    private TrixelFace? _dragStartFace;
+
+    private TimeSpan _nowTime;
+
+    private TimeSpan _lastEditTime;
 
     public ChrisEditor(Game game, string title, ArtObject ao) : this(game, title, new ArtObjectSubject(ao))
     {
@@ -57,6 +74,7 @@ public partial class ChrisEditor : EditorComponent
     public override void LoadContent()
     {
         _scene = new Scene(Game);
+        _scene.Lighting.Ambient = Color.LightGray;
         {
             _cameraActor = _scene.CreateActor();
             _cameraActor.Name = "Camera";
@@ -83,6 +101,7 @@ public partial class ChrisEditor : EditorComponent
 
     public override void Update(GameTime gameTime)
     {
+        _nowTime = gameTime.TotalGameTime;
         _scene.Update(gameTime);
     }
 
@@ -98,6 +117,7 @@ public partial class ChrisEditor : EditorComponent
             if (ImGuiX.BeginChild("##SceneViewport", new Vector2(width - 300, 0)))
             {
                 DrawSceneViewport();
+                EditTrixelObject();
                 ImGui.EndChild();
             }
         
@@ -112,6 +132,7 @@ public partial class ChrisEditor : EditorComponent
         else if (_subject is ArtObjectSubject)
         {
             DrawSceneViewport();
+            EditTrixelObject();
         }
         
         DrawPropertiesWindow();
@@ -122,6 +143,33 @@ public partial class ChrisEditor : EditorComponent
 
     private void DrawToolbar()
     {
+        ImGui.BeginDisabled(_editMode == EditMode.Select);
+        if (ImGui.Button($"{Icons.Cursor} Select"))
+        {
+            _editMode = EditMode.Select;
+        }
+        ImGui.EndDisabled();
+
+        ImGui.SameLine();
+        ImGui.BeginDisabled(_editMode == EditMode.Remove);
+        if (ImGui.Button($"{Icons.Eraser} Remove"))
+        {
+            _editMode = EditMode.Remove;
+        }
+        ImGui.EndDisabled();
+        
+        ImGui.SameLine();
+        ImGui.BeginDisabled(_editMode == EditMode.Add);
+        if (ImGui.Button($"{Icons.Pencil} Add"))
+        {
+            _editMode = EditMode.Add;
+        }
+        ImGui.EndDisabled();
+        
+        ImGui.SameLine();
+        ImGui.TextDisabled("|");
+        
+        ImGui.SameLine();
         ImGui.BeginDisabled(_showProperties);
         if (ImGui.Button($"{Icons.SymbolProperty} Properties"))
         {
@@ -134,6 +182,15 @@ public partial class ChrisEditor : EditorComponent
         if (ImGui.Button($"{Icons.FileMedia} Texture"))
         {
             _showTexture = true;
+        }
+        ImGui.EndDisabled();
+
+        var mesh = _meshActor.GetComponent<TrixelsMesh>();
+        var wireFrame = mesh.Wireframe;
+        ImGui.SameLine();
+        if (ImGui.Checkbox("Wireframe", ref wireFrame))
+        {
+            mesh.Wireframe = wireFrame;
         }
         ImGui.EndDisabled();
 
@@ -320,6 +377,107 @@ public partial class ChrisEditor : EditorComponent
         }
     }
 
+    private void EditTrixelObject()
+    {
+        var viewportMin = ImGuiX.GetItemRectMin();
+        var mesh = _meshActor.GetComponent<TrixelsMesh>();
+
+        if (!ImGui.IsItemHovered())
+        {
+            if (_hoveredFace.HasValue)
+            {
+                _hoveredFace = null;
+                mesh.SetHoveredFace(null);
+            }
+            return;
+        }
+
+        var ray = _scene.Viewport.Unproject(ImGuiX.GetMousePos(), viewportMin);
+        var hit = RaycastTrixelFace(ray);
+        if (hit != _hoveredFace)
+        {
+            _hoveredFace = hit;
+            mesh.SetHoveredFace(_hoveredFace);
+        }
+
+        if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
+        {
+            _dragStartFace = hit;
+            if (!hit.HasValue)
+            {
+                _selectedFaces.Clear();
+                _selectionOrientation = null;
+                _editMode = EditMode.Select;
+                mesh.SetSelectedFaces(_selectedFaces);
+                return;
+            }
+        }
+
+        if (!ImGui.IsMouseDown(ImGuiMouseButton.Left))
+        {
+            _dragStartFace = null;
+            return;
+        }
+
+        switch (_editMode)
+        {
+            case EditMode.Select:
+            {
+                if (!hit.HasValue || !_dragStartFace.HasValue)
+                {
+                    break;
+                }
+
+                var orientation = _dragStartFace.Value.Face;
+                if (orientation != hit.Value.Face)
+                {
+                    break;
+                }
+
+                var newSelection = BuildRectSelection(orientation, _dragStartFace.Value.Emplacement, hit.Value.Emplacement);
+                if (orientation != _selectionOrientation || !newSelection.SetEquals(_selectedFaces))
+                {
+                    _selectionOrientation = orientation;
+                    _selectedFaces.Clear();
+                    foreach (var f in newSelection)
+                    {
+                        _selectedFaces.Add(f);
+                    }
+                    mesh.SetSelectedFaces(_selectedFaces);
+                }
+                
+                break;
+            }
+
+            case EditMode.Remove:
+            case EditMode.Add:
+            {
+                if (!hit.HasValue || _selectedFaces.Count == 0 ||
+                    !(ImGui.IsMouseClicked(ImGuiMouseButton.Left) || _nowTime - _lastEditTime >= EditStep))
+                {
+                    break;
+                }
+                
+                _lastEditTime = _nowTime;
+                var edit = _editMode == EditMode.Remove;
+                
+                using (History.BeginScope(edit ? "Remove Trixels" : "Add Trixels"))
+                {
+                    ApplyChanges(hit.Value.Face, missing: edit);
+                }
+                
+                mesh.Visualize(_obj);
+                RemapSelectionAfterCarve(hit.Value.Face, inward: edit);
+                mesh.SetSelectedFaces(_selectedFaces);
+                
+                break;
+            }
+
+            default:
+                throw new InvalidOperationException();
+        }
+    }
+
     private void DrawPropertiesWindow()
     {
         if (_showProperties)
@@ -432,7 +590,7 @@ public partial class ChrisEditor : EditorComponent
         bounds.Visualize(_obj.Size);
 
         var zoom = _cameraActor.GetComponent<ZoomControl>();
-        zoom.Distance = _obj.Size.X * 2f;
+        zoom.Distance = _obj.Size.X * 1.1f;
     }
     
     private void OnTextureReload(Texture2D newTexture)
@@ -449,6 +607,146 @@ public partial class ChrisEditor : EditorComponent
         _confirm.CancelButtonText = "No";
         _confirm.Confirmed = () => ResourceService.Save(Title, _subject.GetAsset(_obj));
         _confirm.Canceled = null;
+    }
+    
+    private TrixelFace? RaycastTrixelFace(Ray ray)
+    {
+        var mesh = _meshActor.GetComponent<TrixelsMesh>();
+        var meshOffset = Vector3.Zero - _obj.Size / 2f;
+        var best = default(TrixelFace?);
+        var bestT = float.MaxValue;
+
+        foreach (var tf in mesh.Faces)
+        {
+            var normal = tf.Face.AsVector();
+            var denom = Vector3.Dot(normal, ray.Direction);
+            if (MathF.Abs(denom) < 1e-6f)
+            {
+                continue;
+            }
+
+            var faceCenter = (tf.Emplacement.ToVector3() + (Vector3.One + normal) * 0.5f)
+                * Mathz.TrixelSize + meshOffset;
+            
+            var t = (Vector3.Dot(normal, faceCenter) - Vector3.Dot(normal, ray.Position)) / denom;
+            if (t < 0f || t >= bestT)
+            {
+                continue;
+            }
+
+            var hit = ray.Position + ray.Direction * t;
+            var local = hit - faceCenter;
+            var tan = tf.Face.GetTangent().AsVector();
+            var bitan = tf.Face.GetBitangent().AsVector();
+            
+            const float h = Mathz.TrixelSize / 2f;
+            if (MathF.Abs(Vector3.Dot(local, tan)) <= h && MathF.Abs(Vector3.Dot(local, bitan)) <= h)
+            {
+                best = tf;
+                bestT = t;
+            }
+        }
+        
+        return best;
+    }
+    
+    private void RemapSelectionAfterCarve(FaceOrientation orientation, bool inward)
+    {
+        if (_selectionOrientation != orientation || _selectedFaces.Count == 0) return;
+
+        var normal = orientation.AsVector();
+        var step = inward ? -normal : normal;
+        var ni = new Vector3I((int)step.X, (int)step.Y, (int)step.Z);
+
+        var newFaces = new HashSet<TrixelFace>(_meshActor.GetComponent<TrixelsMesh>().Faces);
+        var remapped = new HashSet<TrixelFace>();
+        foreach (var tf in _selectedFaces)
+        {
+            var shifted = new TrixelFace(
+                new Vector3I(tf.Emplacement.X + ni.X, tf.Emplacement.Y + ni.Y, tf.Emplacement.Z + ni.Z),
+                orientation);
+            if (newFaces.Contains(shifted))
+                remapped.Add(shifted);
+        }
+
+        _selectedFaces.Clear();
+        foreach (var f in remapped) _selectedFaces.Add(f);
+    }
+
+    private HashSet<TrixelFace> BuildRectSelection(FaceOrientation orientation, Vector3I start, Vector3I end)
+    {
+        var tan = orientation.GetTangent().AsVector();
+        var bitan = orientation.GetBitangent().AsVector();
+
+        var startT = (int)(start.X * tan.X + start.Y * tan.Y + start.Z * tan.Z);
+        var startB = (int)(start.X * bitan.X + start.Y * bitan.Y + start.Z * bitan.Z);
+        var endT = (int)(end.X * tan.X + end.Y * tan.Y + end.Z * tan.Z);
+        var endB = (int)(end.X * bitan.X + end.Y * bitan.Y + end.Z * bitan.Z);
+
+        var minT = Math.Min(startT, endT);
+        var maxT = Math.Max(startT, endT);
+        var minB = Math.Min(startB, endB);
+        var maxB = Math.Max(startB, endB);
+
+        var result = new HashSet<TrixelFace>();
+        var mesh = _meshActor.GetComponent<TrixelsMesh>();
+        foreach (var tf in mesh.Faces)
+        {
+            if (tf.Face != orientation)
+            {
+                continue;
+            }
+            
+            var t = (int)(tf.Emplacement.X * tan.X + tf.Emplacement.Y * tan.Y + tf.Emplacement.Z * tan.Z);
+            var b = (int)(tf.Emplacement.X * bitan.X + tf.Emplacement.Y * bitan.Y + tf.Emplacement.Z * bitan.Z);
+            if (t >= minT && t <= maxT && b >= minB && b <= maxB)
+            {
+                result.Add(tf);
+            }
+        }
+        return result;
+    }
+
+    private void ApplyChanges(FaceOrientation orientation, bool missing)
+    {
+        var selected = new HashSet<Vector3I>(_selectedFaces
+            .Where(tf => tf.Face == orientation)
+            .Select(tf => tf.Emplacement));
+
+        if (missing)
+        {
+            foreach (var emp in selected)
+            {
+                _obj.SetMissing(emp, true);
+            }
+
+            return;
+        }
+
+        var ni = new Vector3I(orientation.AsVector());
+        var toAdd = new HashSet<Vector3I>();
+        var size = new Vector3I(_obj.Width, _obj.Height, _obj.Depth);
+
+        foreach (var emp in selected)
+        {
+            var next = emp + ni;
+            if (next.LengthSquared() > 0 && next < size)
+            {
+                toAdd.Add(next);
+            }
+        }
+
+        foreach (var emp in toAdd)
+        {
+            _obj.SetMissing(emp, false);
+        }
+    }
+
+    private enum EditMode
+    {
+        Select,
+        Remove,
+        Add
     }
     
     private interface ISubject : IDisposable

@@ -9,11 +9,13 @@ namespace FezEditor.Actors;
 
 public class TrixelsMesh : ActorComponent
 {
-    public Color SelectedColor { get; set; } = Color.Red;
+    private static readonly Color SelectedColor = Color.Red with { A = 85 }; // 33%
 
-    public float SelectedAlpha { get; set;} = 0.3f;
+    private static readonly Color HoveredColor = Color.White with { A = 85 }; // 53%
 
     public Texture2D? Texture { get; set; }
+    
+    public IReadOnlyList<TrixelFace> Faces => _faces;
 
     public bool Wireframe
     {
@@ -28,7 +30,7 @@ public class TrixelsMesh : ActorComponent
             }
         }
     }
-    
+
     private readonly RenderingService _rendering;
 
     private readonly Transform _transform;
@@ -40,6 +42,14 @@ public class TrixelsMesh : ActorComponent
     private readonly Rid _material;
 
     private bool _wireframe;
+
+    private TrixelFace? _hoveredFace;
+
+    private HashSet<TrixelFace> _selectedFaces = [];
+
+    private Vector3 _objSize;
+
+    private TrixelFace[] _faces = [];
 
     internal TrixelsMesh(Game game, Actor actor) : base(game, actor)
     {
@@ -58,26 +68,50 @@ public class TrixelsMesh : ActorComponent
         _rendering.MaterialAssignEffect(_material, effect);
         _rendering.MaterialSetFillMode(_material, FillMode.Solid);
         _rendering.MaterialSetCullMode(_material, CullMode.CullClockwiseFace);
-        
+        _rendering.MaterialShaderSetParam(_material, "Selected", SelectedColor);
+        _rendering.MaterialShaderSetParam(_material, "Hovered", HoveredColor);
+
         var surface = MeshSurface.CreateQuad(Vector3.One);
         _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface, _material);
     }
 
     public void Visualize(TrixelObject obj)
     {
-        var faces = TrixelMaterializer.BuildVisibleFaces(obj).ToArray();
+        _objSize = obj.Size;
+        _faces = TrixelMaterializer.BuildVisibleFaces(obj).ToArray();
         _transform.Position = Vector3.Zero - obj.Size / 2f;
-        
-        _rendering.MultiMeshAllocate(_multiMesh, faces.Length, MultiMeshDataType.Matrix);
+        _rendering.MultiMeshAllocate(_multiMesh, _faces.Length, MultiMeshDataType.Matrix);
         _rendering.MaterialAssignBaseTexture(_material, Texture!);
-        _rendering.MaterialShaderSetParam(_material, "SelectedColor", SelectedColor);
-        _rendering.MaterialShaderSetParam(_material, "SelectedAlpha", SelectedAlpha);
+        UploadInstances();
+    }
 
-        for (var i = 0; i < faces.Length; i++)
+    public void SetHoveredFace(TrixelFace? face)
+    {
+        _hoveredFace = face;
+        if (_faces.Length > 0)
         {
-            var emplacement = faces[i].Emplacement;
-            var face = faces[i].Face;
-            var selected = faces[i].Selected;
+            UploadInstances();
+        }
+    }
+
+    public void SetSelectedFaces(HashSet<TrixelFace> faces)
+    {
+        _selectedFaces = faces;
+        if (_faces.Length > 0)
+        {
+            UploadInstances();
+        }
+    }
+
+    private void UploadInstances()
+    {
+        for (var i = 0; i < _faces.Length; i++)
+        {
+            var emplacement = _faces[i].Emplacement;
+            var face = _faces[i].Face;
+
+            var isHovered  = _hoveredFace.HasValue && _faces[i] == _hoveredFace.Value;
+            var isSelected = _selectedFaces.Contains(_faces[i]);
 
             var worldPos = (emplacement.ToVector3() + (Vector3.One + face.AsVector()) * 0.5f) * Mathz.TrixelSize;
             var quaternion = face.AsQuaternion();
@@ -92,21 +126,14 @@ public class TrixelsMesh : ActorComponent
                 _ => throw new InvalidOperationException()
             };
 
-            var uSize = (int)((uAxis.X != 0 ? obj.Size.X : uAxis.Z != 0 ? obj.Size.Z : obj.Size.Y) / Mathz.TrixelSize);
-            var vSize = (int)((vAxis.Y != 0 ? obj.Size.Y : vAxis.Z != 0 ? obj.Size.Z : obj.Size.X) / Mathz.TrixelSize);
+            var uSize = (int)((uAxis.X != 0 ? _objSize.X : uAxis.Z != 0 ? _objSize.Z : _objSize.Y) / Mathz.TrixelSize);
+            var vSize = (int)((vAxis.Y != 0 ? _objSize.Y : vAxis.Z != 0 ? _objSize.Z : _objSize.X) / Mathz.TrixelSize);
 
             var uIndex = emplacement.X * uAxis.X + emplacement.Y * uAxis.Y + emplacement.Z * uAxis.Z;
             var vIndex = emplacement.X * vAxis.X + emplacement.Y * vAxis.Y + emplacement.Z * vAxis.Z;
 
-            if (flipU)
-            {
-                uIndex = uSize - 1 - uIndex;
-            }
-
-            if (flipV)
-            {
-                vIndex = vSize - 1 - vIndex;
-            }
+            if (flipU) uIndex = uSize - 1 - uIndex;
+            if (flipV) vIndex = vSize - 1 - vIndex;
 
             var uStep = 1f / (6f * uSize);
             var vStep = 1f / vSize;
@@ -119,8 +146,9 @@ public class TrixelsMesh : ActorComponent
             var uv2 = new Vector2(u0, v0);
             var uv3 = new Vector2(u0 + uStep, v0);
 
+            var w = (int)face + (isHovered ? 10f : 0f) + (isSelected ? 20f : 0f);
             var data = new Matrix(
-                worldPos.X, worldPos.Y, worldPos.Z, selected ? 1f : 0f,
+                worldPos.X, worldPos.Y, worldPos.Z, w,
                 quaternion.X, quaternion.Y, quaternion.Z, quaternion.W,
                 uv0.X, uv0.Y, uv1.X, uv1.Y,
                 uv2.X, uv2.Y, uv3.X, uv3.Y

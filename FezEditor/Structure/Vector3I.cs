@@ -39,6 +39,11 @@ public struct Vector3I : IEquatable<Vector3I>, IComparable<Vector3I>
         Y = (int)MathF.Round(vector.Y);
         Z = (int)MathF.Round(vector.Z);
     }
+
+    public float LengthSquared()
+    {
+        return X * X + Y * Y + Z * Z;
+    }
     
     public readonly Vector3 ToVector3()
     {
