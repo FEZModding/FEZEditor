@@ -31,7 +31,7 @@ public partial class RenderingService
         [typeof(Vector4)] = (ep, _) => ep.GetValueVector4(),
         [typeof(Quaternion)] = (ep, _) => ep.GetValueQuaternion(),
         [typeof(Matrix)] = (ep, _) => ep.GetValueMatrix(),
-        [typeof(Color)] = (ep, _) => { var v = ep.GetValueVector3(); return new Color(v.X, v.Y, v.Z); },
+        [typeof(Color)] = (ep, _) => { var v = ep.GetValueVector4(); return new Color(v.X, v.Y, v.Z, v.W); },
         [typeof(Vector4[])] = (ep, i) => ep.GetValueVector4Array(i),
         [typeof(Matrix[])] = (ep, i) => ep.GetValueMatrixArray(i)
     };
@@ -46,7 +46,7 @@ public partial class RenderingService
         [typeof(Vector4)] = (ep, v) => ep.SetValue((Vector4)v),
         [typeof(Quaternion)] = (ep, v) => ep.SetValue((Quaternion)v),
         [typeof(Matrix)] = (ep, v) => ep.SetValue((Matrix)v),
-        [typeof(Color)] = (ep, v) => ep.SetValue(((Color)v).ToVector3()),
+        [typeof(Color)] = (ep, v) => ep.SetValue(((Color)v).ToVector4()),
         [typeof(Vector4[])] = (ep, v) => ep.SetValue((Vector4[])v),
         [typeof(Matrix[])] = (ep, v) => ep.SetValue((Matrix[])v)
     };
@@ -54,7 +54,7 @@ public partial class RenderingService
     public T MaterialShaderGetParam<T>(Rid material, string name, int count = 0)
     {
         var effect = GetResource(_materials, material).Effect;
-        var parameter = GetEffectParameter<T>(effect, name);
+        var parameter = GetEffectParameter<T>(effect!, name);
         var getter = GetParameterFunctions[typeof(T)];
         return (T)getter(parameter, count);
     }
@@ -62,7 +62,7 @@ public partial class RenderingService
     public void MaterialShaderSetParam<T>(Rid material, string name, T value)
     {
         var effect = GetResource(_materials, material).Effect;
-        var parameter = GetEffectParameter<T>(effect, name);
+        var parameter = GetEffectParameter<T>(effect!, name);
         var setter = SetParameterFunctions[typeof(T)];
         setter(parameter, value!);
     }
@@ -85,7 +85,7 @@ public partial class RenderingService
 
     private static void UpdateBasicEffect(MaterialData material, InstanceMatrices matrices)
     {
-        var effect = (BasicEffect)material.Effect;
+        var effect = (BasicEffect)material.Effect!;
         effect.World = matrices.World;
         effect.View = matrices.View;
         effect.Projection = matrices.Projection;
@@ -101,7 +101,7 @@ public partial class RenderingService
 
     private static void UpdateBaseEffect(RenderTargetData rt, WorldData world, MaterialData material, InstanceMatrices matrices)
     {
-        var parameters = material.Effect.Parameters;
+        var parameters = material.Effect!.Parameters;
         var worldViewProjection = matrices.World * matrices.ViewProjection;
         var worldInverseTranspose = Matrix.Transpose(Matrix.Invert(matrices.World));
         
