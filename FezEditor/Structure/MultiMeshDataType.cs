@@ -21,6 +21,6 @@ public static class MultiMeshDataTypeExtensions
     public static int GetFloatsPerInstance(this MultiMeshDataType type)
     {
         // 1 float (index) + Stride * 4 floats (data) per instance.
-        return 1 + type.GetStride() * 4;
+        return 1 + (type.GetStride() * 4);
     }
 }

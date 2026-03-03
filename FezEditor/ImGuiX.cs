@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿// @formatter:off
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using FezEditor.Structure;

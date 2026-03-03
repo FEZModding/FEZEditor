@@ -13,9 +13,9 @@ public class OrientationGizmo : ActorComponent
     [
         (FaceOrientation.Right, 0xFF4444FF, "X"),
         (FaceOrientation.Top, 0xFF44FF44, "Y"),
-        (FaceOrientation.Front, 0xFFFF4444, "Z"),
+        (FaceOrientation.Front, 0xFFFF4444, "Z")
     ];
-    
+
     private const float Radius = 40f;
 
     private const float LineLength = 28f;
@@ -66,8 +66,8 @@ public class OrientationGizmo : ActorComponent
                 var negativeText = UseFaceLabels ? positive.GetOpposite().ToString()[..1] : "-" + xyz;
                 var posTextSize = ImGui.CalcTextSize(positiveText);
                 var negTextSize = ImGui.CalcTextSize(negativeText);
-                dl.AddText((posTip + dir * LabelOffset - posTextSize * 0.5f), color, positiveText);
-                dl.AddText((negTip - dir * LabelOffset - negTextSize * 0.5f), dimColor, negativeText);
+                dl.AddText(posTip + (dir * LabelOffset) - (posTextSize * 0.5f), color, positiveText);
+                dl.AddText(negTip - (dir * LabelOffset) - (negTextSize * 0.5f), dimColor, negativeText);
             }
         }
     }

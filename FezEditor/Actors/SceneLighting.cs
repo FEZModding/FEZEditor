@@ -32,11 +32,11 @@ public class SceneLighting : IDisposable
             }
         }
     }
-    
+
     private Color _ambient = Color.Gray;
-    
+
     private Color _diffuse = Color.White;
-    
+
     private readonly RenderingService _rendering;
 
     private readonly Rid _world;

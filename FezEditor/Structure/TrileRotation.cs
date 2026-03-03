@@ -19,10 +19,10 @@ public static class TrileRotationExtensions
         +MathF.Tau * 0f,
         +MathF.Tau / 4f
     };
-    
+
     public static Quaternion AsQuaternion(this TrileRotation rot)
     {
-        return Quaternion.CreateFromAxisAngle(Vector3.Up, Angles[(int) rot]);
+        return Quaternion.CreateFromAxisAngle(Vector3.Up, Angles[(int)rot]);
     }
 
     public static float AsPhi(this TrileRotation rot)

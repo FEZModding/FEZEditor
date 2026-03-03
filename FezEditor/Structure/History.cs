@@ -5,29 +5,29 @@ namespace FezEditor.Structure;
 public class History : IDisposable
 {
     private const int MaxHistorySize = byte.MaxValue;
-    
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         IncludeFields = true,
-        WriteIndented = false,
+        WriteIndented = false
     };
-    
+
     private readonly LinkedList<UndoOperation> _undoStack = new();
-    
+
     private readonly LinkedList<UndoOperation> _redoStack = new();
-    
+
     private readonly HashSet<object> _tracked = new();
-    
+
     public bool CanUndo => _undoStack.Count > 0;
 
     public bool CanRedo => _redoStack.Count > 0;
 
     public int UndoCount => _undoStack.Count;
-    
+
     public int RedoCount => _redoStack.Count;
-    
+
     public event Action? StateChanged;
-    
+
     public void Dispose()
     {
         GC.SuppressFinalize(this);
@@ -40,12 +40,12 @@ public class History : IDisposable
         {
             uo.States.Clear();
         }
-        
+
         _undoStack.Clear();
         _redoStack.Clear();
         _tracked.Clear();
     }
-    
+
     public void Track(object target)
     {
         _tracked.Add(target);
@@ -64,7 +64,10 @@ public class History : IDisposable
         }
     }
 
-    public IDisposable BeginScope(string name) => new Scope(this, name);
+    public IDisposable BeginScope(string name)
+    {
+        return new Scope(this, name);
+    }
 
     public void Undo()
     {
@@ -72,14 +75,16 @@ public class History : IDisposable
         {
             return;
         }
-        
+
         var op = _undoStack.Last!.Value;
         _undoStack.RemoveLast();
-        
+
         _redoStack.AddLast(CaptureState(op.Name));
         if (_redoStack.Count > MaxHistorySize)
+        {
             _redoStack.RemoveFirst();
-        
+        }
+
         Restore(op);
         StateChanged?.Invoke();
     }
@@ -90,14 +95,16 @@ public class History : IDisposable
         {
             return;
         }
-        
+
         var op = _redoStack.Last!.Value;
         _redoStack.RemoveLast();
-        
+
         _undoStack.AddLast(CaptureState(op.Name));
         if (_undoStack.Count > MaxHistorySize)
+        {
             _undoStack.RemoveFirst();
-        
+        }
+
         Restore(op);
         StateChanged?.Invoke();
     }
@@ -117,6 +124,7 @@ public class History : IDisposable
             var json = JsonSerializer.Serialize(target, target.GetType(), JsonOptions);
             states[target] = (target.GetType(), json);
         }
+
         return new UndoOperation(name, states);
     }
 
@@ -125,7 +133,7 @@ public class History : IDisposable
         foreach (var (target, (type, json)) in op.States)
         {
             var restored = JsonSerializer.Deserialize(json, type, JsonOptions)!;
-            
+
             var targetType = target.GetType();
             foreach (var prop in targetType.GetProperties())
             {
@@ -144,7 +152,7 @@ public class History : IDisposable
             }
         }
     }
-    
+
     private void Push(UndoOperation before, UndoOperation after)
     {
         var hasChanges = false;
@@ -161,17 +169,17 @@ public class History : IDisposable
         {
             return;
         }
-        
+
         _undoStack.AddLast(before);
         if (_undoStack.Count > MaxHistorySize)
         {
             _undoStack.RemoveFirst();
         }
-        
+
         _redoStack.Clear();
         StateChanged?.Invoke();
     }
-    
+
     private sealed class Scope : IDisposable
     {
         private readonly History _service;
@@ -190,11 +198,12 @@ public class History : IDisposable
             {
                 return;
             }
+
             _disposed = true;
             var after = _service.CaptureState(_before.Name);
             _service.Push(_before, after);
         }
     }
-    
+
     private record UndoOperation(string Name, Dictionary<object, (Type type, string Json)> States);
 }

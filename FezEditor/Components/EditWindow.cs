@@ -7,29 +7,29 @@ namespace FezEditor.Components;
 public class EditWindow : DrawableGameComponent
 {
     public delegate bool EditValueDelegate();
-    
+
     public Dirty<string> Title { get; set; } = new("");
-    
+
     public Dirty<string> Text { get; set; } = new("Edit the value");
-    
+
     public Dirty<string> AcceptButtonText { get; set; } = new("Accept");
 
     public Dirty<string> CancelButtonText { get; set; } = new("Cancel");
-    
+
     public EditValueDelegate? EditValue { get; set; }
-    
+
     public Action? Accepted { get; set; }
 
     public Action? Canceled { get; set; }
-    
+
     private bool _isDirty;
-    
+
     private readonly int _popupId = Random.Shared.Next();
-    
+
     public EditWindow(Game game) : base(game)
     {
     }
-    
+
     public void ForceToShow()
     {
         _isDirty = true;
@@ -62,7 +62,7 @@ public class EditWindow : DrawableGameComponent
             {
                 throw new ArgumentException("Dialog text is empty");
             }
-            
+
             ImGuiX.SetNextWindowCentered();
             ImGui.OpenPopup(strId);
             Clear();
@@ -73,9 +73,9 @@ public class EditWindow : DrawableGameComponent
         {
             flags |= ImGuiWindowFlags.NoTitleBar;
         }
-        
+
         ImGuiX.SetNextWindowSize(new Vector2(320, 0));
-        
+
         if (ImGui.BeginPopupModal(strId, flags))
         {
             ImGui.Text(Text);
@@ -89,7 +89,7 @@ public class EditWindow : DrawableGameComponent
 
             ImGui.Separator();
             ImGui.BeginDisabled(!valid);
-            
+
             if (ImGui.Button(AcceptButtonText))
             {
                 Accepted?.Invoke();
@@ -98,7 +98,7 @@ public class EditWindow : DrawableGameComponent
 
             ImGui.EndDisabled();
             ImGui.SameLine();
-            
+
             if (ImGui.Button(CancelButtonText))
             {
                 Canceled?.Invoke();

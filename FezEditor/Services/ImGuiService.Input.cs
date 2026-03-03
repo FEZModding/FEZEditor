@@ -64,15 +64,15 @@ public partial class ImGuiService
                 case >= Keys.D0 and <= Keys.D9:
                     KeyMappings.Add(keys, ImGuiKey._0 + (keys - Keys.D0));
                     break;
-                    
+
                 case >= Keys.A and <= Keys.Z:
                     KeyMappings.Add(keys, ImGuiKey.A + (keys - Keys.A));
                     break;
-                    
+
                 case >= Keys.NumPad0 and <= Keys.NumPad9:
                     KeyMappings.Add(keys, ImGuiKey.Keypad0 + (keys - Keys.NumPad0));
                     break;
-                    
+
                 case >= Keys.F1 and <= Keys.F24:
                     KeyMappings.Add(keys, ImGuiKey.F1 + (keys - Keys.F1));
                     break;

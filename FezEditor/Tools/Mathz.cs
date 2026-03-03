@@ -17,11 +17,11 @@ public static class Mathz
     {
         return MathF.Abs(value) < float.Epsilon;
     }
-    
+
     public static int Clamp(int value, int min, int max)
     {
-        value = (value > max) ? max : value;
-        value = (value < min) ? min : value;
+        value = value > max ? max : value;
+        value = value < min ? min : value;
         return value;
     }
 
@@ -39,28 +39,28 @@ public static class Mathz
     public static BoundingBox ComputeBoundingBox(Vector3 position, Quaternion rotation, Vector3 scale, Vector3 size)
     {
         var halfExtents = size * 0.5f;
-        var worldMatrix = Matrix.CreateScale(scale) * 
-                          Matrix.CreateFromQuaternion(rotation) * 
+        var worldMatrix = Matrix.CreateScale(scale) *
+                          Matrix.CreateFromQuaternion(rotation) *
                           Matrix.CreateTranslation(position);
-        
+
         var localCorners = new Vector3[]
         {
             new(-halfExtents.X, -halfExtents.Y, -halfExtents.Z), // left-bottom-back
-            new(halfExtents.X, -halfExtents.Y, -halfExtents.Z),  // right-bottom-back
-            new(-halfExtents.X, halfExtents.Y, -halfExtents.Z),  // left-top-back
-            new(halfExtents.X, halfExtents.Y, -halfExtents.Z),   // right-top-back
-            new(-halfExtents.X, -halfExtents.Y, halfExtents.Z),  // left-bottom-front
-            new(halfExtents.X, -halfExtents.Y, halfExtents.Z),   // right-bottom-front
-            new(-halfExtents.X, halfExtents.Y, halfExtents.Z),   // left-top-front
-            new(halfExtents.X, halfExtents.Y, halfExtents.Z)     // right-top-front
+            new(halfExtents.X, -halfExtents.Y, -halfExtents.Z), // right-bottom-back
+            new(-halfExtents.X, halfExtents.Y, -halfExtents.Z), // left-top-back
+            new(halfExtents.X, halfExtents.Y, -halfExtents.Z), // right-top-back
+            new(-halfExtents.X, -halfExtents.Y, halfExtents.Z), // left-bottom-front
+            new(halfExtents.X, -halfExtents.Y, halfExtents.Z), // right-bottom-front
+            new(-halfExtents.X, halfExtents.Y, halfExtents.Z), // left-top-front
+            new(halfExtents.X, halfExtents.Y, halfExtents.Z) // right-top-front
         };
-        
+
         var worldCorners = new Vector3[8];
         for (var i = 0; i < 8; i++)
         {
             worldCorners[i] = Vector3.Transform(localCorners[i], worldMatrix);
         }
-        
+
         var min = worldCorners[0];
         var max = worldCorners[0];
         for (var i = 1; i < 8; i++)
@@ -68,24 +68,24 @@ public static class Mathz
             min = Vector3.Min(min, worldCorners[i]);
             max = Vector3.Max(max, worldCorners[i]);
         }
-    
+
         return new BoundingBox(min, max);
     }
-    
+
     public static Vector3 Abs(this Vector3 vector)
     {
         return new Vector3(
-            Math.Abs(vector.X), 
-            Math.Abs(vector.Y), 
+            Math.Abs(vector.X),
+            Math.Abs(vector.Y),
             Math.Abs(vector.Z)
         );
     }
-    
+
     public static Vector3 Round(this Vector3 vector, int decimals = 10)
     {
         return new Vector3(
-            MathF.Round(vector.X, decimals), 
-            MathF.Round(vector.Y, decimals), 
+            MathF.Round(vector.X, decimals),
+            MathF.Round(vector.Y, decimals),
             MathF.Round(vector.Z, decimals)
         );
     }

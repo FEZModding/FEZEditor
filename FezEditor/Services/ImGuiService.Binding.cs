@@ -13,8 +13,8 @@ public partial class ImGuiService
     /// Reverse mapping from Texture2D objects to their pointer handles for efficient bidirectional lookup.
     /// </summary>
     private static readonly Dictionary<Texture2D, IntPtr> LookupReverse = new();
-    
-     /// <summary>
+
+    /// <summary>
     /// Binds a Texture2D to ImGui by creating a pointer handle that can be used in ImGui draw calls.
     /// </summary>
     /// <param name="texture">The texture to bind.</param>
@@ -25,7 +25,7 @@ public partial class ImGuiService
         {
             return IntPtr.Zero;
         }
-            
+
         if (LookupReverse.TryGetValue(texture, out var ptr))
         {
             if (texture.IsDisposed)
@@ -36,7 +36,7 @@ public partial class ImGuiService
 
             return ptr;
         }
-            
+
         ptr = new IntPtr(texture.GetHashCode());
         Lookup[ptr] = new WeakReference<Texture2D>(texture);
         LookupReverse[texture] = ptr;
@@ -77,7 +77,7 @@ public partial class ImGuiService
             Lookup.Remove(ptr);
             return null;
         }
-            
+
         if (texture.IsDisposed)
         {
             Lookup.Remove(ptr);
@@ -96,7 +96,7 @@ public partial class ImGuiService
         var deadPtrs = new List<IntPtr>();
         foreach (var kvp in Lookup)
         {
-            if (!kvp.Value.TryGetTarget(out var texture) || (texture.IsDisposed))
+            if (!kvp.Value.TryGetTarget(out var texture) || texture.IsDisposed)
             {
                 deadPtrs.Add(kvp.Key);
             }
@@ -115,5 +115,4 @@ public partial class ImGuiService
             }
         }
     }
-
 }

@@ -18,11 +18,11 @@ public partial class RenderingService
         public InstanceType Type = InstanceType.None;
         public Rid Internal;
     }
-    
+
     private readonly Dictionary<Rid, InstanceData> _instances = new();
 
     private readonly Stack<InstanceData> _transformChain = new();
-    
+
     public Rid InstanceCreate(Rid parent)
     {
         var rid = AllocateRid(typeof(InstanceData));
@@ -41,6 +41,7 @@ public partial class RenderingService
             {
                 throw new ArgumentException("Cannot set parent: would create a cycle.");
             }
+
             current = check!.Parent;
         }
 
@@ -155,7 +156,7 @@ public partial class RenderingService
         var data = GetResource(_instances, instance);
         return ComputeWorldMatrix(data);
     }
-    
+
     private void MarkWorldMatrixDirty(Rid instanceRid)
     {
         var stack = new Stack<Rid>();
@@ -165,7 +166,11 @@ public partial class RenderingService
         {
             var rid = stack.Pop();
             var instance = GetResource(_instances, rid);
-            if (instance.WorldMatrix.IsDirty) continue;
+            if (instance.WorldMatrix.IsDirty)
+            {
+                continue;
+            }
+
             instance.WorldMatrix = instance.WorldMatrix.Marked();
             foreach (var childRid in instance.Children)
             {
@@ -173,7 +178,7 @@ public partial class RenderingService
             }
         }
     }
-    
+
     private Matrix ComputeWorldMatrix(InstanceData instance)
     {
         if (!instance.WorldMatrix.IsDirty)
@@ -193,8 +198,8 @@ public partial class RenderingService
         while (_transformChain.Count > 0)
         {
             var instanceData = _transformChain.Pop();
-            
-            if ( instanceData is 
+
+            if (instanceData is
                 { Position.IsDirty: true } or
                 { Rotation.IsDirty: true } or
                 { Scale.IsDirty: true })
@@ -219,7 +224,8 @@ public partial class RenderingService
     private void DisposeInstanceTree(Rid instance)
     {
         // Unlink from parent before removing the tree.
-        if (TryGetResource(_instances, instance, out var root) && TryGetResource(_instances, root!.Parent, out var parent))
+        if (TryGetResource(_instances, instance, out var root) &&
+            TryGetResource(_instances, root!.Parent, out var parent))
         {
             parent!.Children.Remove(instance);
         }

@@ -93,7 +93,7 @@ public static class GameExtensions
         {
             throw new ArgumentException("Only a service with or without IDisposable interface can be added!");
         }
-        
+
         game.Services.AddService(typeof(T), service);
         Services.Add(service!);
     }
@@ -105,7 +105,7 @@ public static class GameExtensions
         {
             throw new InvalidCastException($"Could not find or cast service {typeof(T).FullName}");
         }
-        
+
         return service;
     }
 
@@ -119,6 +119,7 @@ public static class GameExtensions
                 disposable.Dispose();
             }
         }
+
         Services.Clear();
     }
 

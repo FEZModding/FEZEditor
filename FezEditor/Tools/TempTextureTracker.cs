@@ -8,13 +8,13 @@ namespace FezEditor.Tools;
 public sealed class TempTextureTracker : IDisposable
 {
     private const int BytesPerPixel = 4;
-    
+
     private readonly string _tempFilePath;
-    
+
     private DateTime _lastWrite;
 
     public event Action<Texture2D>? Changed;
-    
+
     private readonly Game _game;
 
     public TempTextureTracker(Game game, Texture2D source, string tempFilePath)
@@ -38,14 +38,14 @@ public sealed class TempTextureTracker : IDisposable
         _game.Activated -= OnWindowFocused;
         File.Delete(_tempFilePath);
     }
-    
+
     public static void CleanOrphans(string path)
     {
         if (!Directory.Exists(path))
         {
             throw new DirectoryNotFoundException();
         }
-        
+
         var files = Directory.EnumerateFiles(path, "*.tmp.png", SearchOption.AllDirectories);
         foreach (var file in files)
         {

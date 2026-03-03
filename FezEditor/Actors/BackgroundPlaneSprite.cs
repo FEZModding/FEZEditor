@@ -30,11 +30,11 @@ public class BackgroundPlaneSprite : ActorComponent
     private readonly Transform _transform;
 
     private List<FrameContent> _frames = [];
-    
+
     private Effect? _animatedEffect;
 
     private Effect? _staticEffect;
-    
+
     private Texture2D? _texture;
 
     private TimeSpan _frameElapsed = TimeSpan.Zero;
@@ -81,11 +81,11 @@ public class BackgroundPlaneSprite : ActorComponent
     {
         var surface = MeshSurface.CreateQuad(PlaneSize);
         _rendering.MeshClear(_mesh);
-        
+
         _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface, _material);
         _rendering.MaterialSetBlendMode(_material, BlendMode.AlphaBlend);
         _rendering.MaterialSetCullMode(_material, CullMode.CullCounterClockwiseFace);
-        
+
         _frameCounter = 0;
         Animated = _frames.Count > 0;
     }

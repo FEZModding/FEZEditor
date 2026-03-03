@@ -57,7 +57,7 @@ public static class TrixelMaterializer
             var normalVec = orientation.AsVector();
             var isPositive = orientation.IsPositive();
 
-            var startF = (v0 + offset - (isPositive ? 1 : 0) * normalVec / 16f) * 16f;
+            var startF = (v0 + offset - ((isPositive ? 1 : 0) * normalVec / 16f)) * 16f;
             var start = new Vector3I(
                 (int)MathF.Round(startF.X),
                 (int)MathF.Round(startF.Y),
@@ -70,7 +70,7 @@ public static class TrixelMaterializer
             for (var t = 0; t < tw; t++)
             for (var b = 0; b < bh; b++)
             {
-                var pos = start.ToVector3() + tangentVec * t + bitangentVec * b;
+                var pos = start.ToVector3() + (tangentVec * t) + (bitangentVec * b);
                 surface.Add(new Vector3I(
                     (int)MathF.Round(pos.X),
                     (int)MathF.Round(pos.Y),
@@ -95,7 +95,7 @@ public static class TrixelMaterializer
                 return;
             }
 
-            var idx = x + y * w + z * w * h;
+            var idx = x + (y * w) + (z * w * h);
             if (empty[idx] || surface.Contains(new Vector3I(x, y, z)))
             {
                 return;
@@ -137,7 +137,7 @@ public static class TrixelMaterializer
         {
             var idx = queue.Dequeue();
             var z = idx / (w * h);
-            var y = (idx / w) % h;
+            var y = idx / w % h;
             var x = idx % w;
             TrySeed(x + 1, y, z);
             TrySeed(x - 1, y, z);
@@ -154,7 +154,7 @@ public static class TrixelMaterializer
             {
                 for (var z = 0; z < d; z++)
                 {
-                    obj.SetMissing(new Vector3I(x, y, z), empty[x + y * w + z * w * h]);
+                    obj.SetMissing(new Vector3I(x, y, z), empty[x + (y * w) + (z * w * h)]);
                 }
             }
         }
@@ -163,7 +163,7 @@ public static class TrixelMaterializer
     }
 
     #endregion
-    
+
     #region Trixels -> Mesh
 
     public static (VertexInstance[] Vertices, ushort[] Indices) Dematerialize(TrixelObject obj)
@@ -186,7 +186,7 @@ public static class TrixelMaterializer
             {
                 return idx;
             }
-            
+
             idx = (ushort)vertices.Count;
             vertexMap[key] = idx;
 
@@ -209,15 +209,15 @@ public static class TrixelMaterializer
             var isPositive = rect.Orientation >= FaceOrientation.Right;
 
             // Reconstruct Start.Position from grid coordinates
-            var startPos = tangentVec * rect.StartTangent
-                           + bitangentVec * rect.StartBitangent
-                           + normalVec * rect.Depth;
+            var startPos = (tangentVec * rect.StartTangent)
+                           + (bitangentVec * rect.StartBitangent)
+                           + (normalVec * rect.Depth);
 
             // Vertex formula — mirrors TrileMaterializer/ArtObjectMaterializer
-            var v0 = startPos / 16f + (isPositive ? 1 : 0) * normalVec / 16f - offset;
-            var v1 = v0 + tangentVec * rect.TangentSize / 16f;
-            var v2 = v1 + bitangentVec * rect.BitangentSize / 16f;
-            var v3 = v0 + bitangentVec * rect.BitangentSize / 16f;
+            var v0 = (startPos / 16f) + ((isPositive ? 1 : 0) * normalVec / 16f) - offset;
+            var v1 = v0 + (tangentVec * rect.TangentSize / 16f);
+            var v2 = v1 + (bitangentVec * rect.BitangentSize / 16f);
+            var v3 = v0 + (bitangentVec * rect.BitangentSize / 16f);
 
             var i0 = AddVertexInstance(v0, normalVec, rect.Orientation);
             var i1 = AddVertexInstance(v1, normalVec, rect.Orientation);
@@ -245,7 +245,7 @@ public static class TrixelMaterializer
 
         return (vertices.ToArray(), indices.ToArray());
     }
-    
+
     private static List<MeshRect> GreedyMesh(IEnumerable<TrixelFace> faces)
     {
         var groups = new Dictionary<(FaceOrientation, int), List<(int t, int b)>>();
@@ -301,20 +301,20 @@ public static class TrixelMaterializer
             var grid = new bool[w * h];
             foreach (var (t, b) in cells)
             {
-                grid[(t - minT) + (b - minB) * w] = true;
+                grid[t - minT + ((b - minB) * w)] = true;
             }
 
             for (var bIdx = 0; bIdx < h; bIdx++)
             for (var tIdx = 0; tIdx < w; tIdx++)
             {
-                if (!grid[tIdx + bIdx * w])
+                if (!grid[tIdx + (bIdx * w)])
                 {
                     continue;
                 }
 
                 // Extend in tangent direction
                 var tw = 1;
-                while (tIdx + tw < w && grid[tIdx + tw + bIdx * w])
+                while (tIdx + tw < w && grid[tIdx + tw + (bIdx * w)])
                 {
                     tw++;
                 }
@@ -326,7 +326,7 @@ public static class TrixelMaterializer
                     var ok = true;
                     for (var tt = 0; tt < tw; tt++)
                     {
-                        if (!grid[(tIdx + tt) + (bIdx + bh) * w])
+                        if (!grid[tIdx + tt + ((bIdx + bh) * w)])
                         {
                             ok = false;
                             break;
@@ -346,25 +346,25 @@ public static class TrixelMaterializer
                 {
                     for (var tt = 0; tt < tw; tt++)
                     {
-                        grid[(tIdx + tt) + (bIdx + bb) * w] = false;
+                        grid[tIdx + tt + ((bIdx + bb) * w)] = false;
                     }
                 }
 
                 rects.Add(new MeshRect(
-                    Orientation: orient,
-                    StartTangent: tIdx + minT,
-                    StartBitangent: bIdx + minB, depth,
-                    TangentSize: tw,
-                    BitangentSize: bh));
+                    orient,
+                    tIdx + minT,
+                    bIdx + minB, depth,
+                    tw,
+                    bh));
             }
         }
 
         return rects;
     }
-    
+
     private static Vector2 ComputeTexCoord(
-        Vector3 position, 
-        Vector3 normal, 
+        Vector3 position,
+        Vector3 normal,
         Vector3 trileSize,
         FaceOrientation orientation)
     {
@@ -382,11 +382,14 @@ public static class TrixelMaterializer
 
         var u = Vector3.Dot(orientation.RightVector(), projected);
         var v = Vector3.Dot(orientation.UpVector(), projected);
-        if (orientation != FaceOrientation.Top) v = 1f - v;
+        if (orientation != FaceOrientation.Top)
+        {
+            v = 1f - v;
+        }
 
-        return new Vector2(faceOffset.X + u / 8f, faceOffset.Y + v);
+        return new Vector2(faceOffset.X + (u / 8f), faceOffset.Y + v);
     }
-    
+
     private record struct MeshRect(
         FaceOrientation Orientation,
         int StartTangent,

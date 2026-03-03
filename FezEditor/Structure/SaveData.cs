@@ -11,7 +11,7 @@ public sealed class SaveData
     private const long Version = 6L;
 
     private const int EasyStorageMaxSize = 40960;
-    
+
     public bool IsNew { get; set; } = true;
 
     public DateTime CreationTime { get; set; } = DateTime.Now.ToUniversalTime();
@@ -133,7 +133,7 @@ public sealed class SaveData
         d.SecretCubes = SecretCubes;
         d.TimeOfDay = TimeOfDay;
         d.View = View;
-        
+
         d.Artifacts.Clear();
         d.Artifacts.AddRange(Artifacts);
         d.EarnedAchievements.Clear();
@@ -145,7 +145,7 @@ public sealed class SaveData
         d.UnlockedWarpDestinations.Clear();
         d.UnlockedWarpDestinations.AddRange(UnlockedWarpDestinations);
         d.OneTimeTutorials.Clear();
-        
+
         foreach (var key in OneTimeTutorials.Keys)
         {
             d.OneTimeTutorials.Add(key, OneTimeTutorials[key]);
@@ -172,14 +172,14 @@ public sealed class SaveData
             }
         }
     }
-    
+
     public static SaveData Read(Stream stream)
     {
         using var reader = new BinaryReader(stream);
 
         var saveData = new SaveData();
-        reader.ReadInt64();     // Value written in EasyStorage.dll
-        
+        reader.ReadInt64(); // Value written in EasyStorage.dll
+
         var version = reader.ReadInt64();
         if (version != Version)
         {
@@ -290,7 +290,7 @@ public sealed class SaveData
         saveData.HasFpView |= saveData.HasStereo3D;
         return saveData;
     }
-    
+
     public static Stream Write(SaveData saveData)
     {
         var stream = new MemoryStream();
@@ -377,7 +377,7 @@ public sealed class SaveData
             stream.Dispose();
             throw new FormatException("Save file greater than the imposed EasyStorage limit!");
         }
-        
+
         return stream;
     }
 }
@@ -419,7 +419,7 @@ public sealed class LevelSaveData
         d.FilledConditions.SecretCount = FilledConditions.SecretCount;
         d.FilledConditions.ScriptIds.Clear();
         d.FilledConditions.ScriptIds.AddRange(FilledConditions.ScriptIds);
-        
+
         d.FirstVisit = FirstVisit;
         d.LastStableLiquidHeight = LastStableLiquidHeight;
         d.ScriptingState = ScriptingState;
@@ -438,13 +438,13 @@ public sealed class LevelSaveData
         d.InactiveVolumes.Clear();
         d.InactiveVolumes.AddRange(InactiveVolumes);
         d.PivotRotations.Clear();
-        
+
         foreach (var key in PivotRotations.Keys)
         {
             d.PivotRotations.Add(key, PivotRotations[key]);
         }
     }
-    
+
     internal static LevelSaveData FromReader(BinaryReader reader)
     {
         var levelSaveData = new LevelSaveData();
@@ -511,7 +511,7 @@ public sealed class LevelSaveData
         levelSaveData.FilledConditions = ReadWinConditions(reader);
         return levelSaveData;
     }
-    
+
     private static WinConditions ReadWinConditions(BinaryReader reader)
     {
         var winConditions = new WinConditions
@@ -534,7 +534,7 @@ public sealed class LevelSaveData
         winConditions.SecretCount = reader.ReadInt32();
         return winConditions;
     }
-    
+
     internal static void Write(BinaryWriter write, LevelSaveData levelSaveData)
     {
         write.Write(levelSaveData.DestroyedTriles.Count);

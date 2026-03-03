@@ -9,13 +9,13 @@ namespace FezEditor.Components;
 public class DiezEditor : EditorComponent
 {
     public override object Asset => _trackedSong;
-    
+
     private readonly TrackedSong _trackedSong;
-    
+
     private int _loopIndex = -1;
 
     private SoundEffect? _assembleChordSound;
-    
+
     private TimeSpan _assembleChordElapsed = TimeSpan.Zero;
 
     public DiezEditor(Game game, string title, TrackedSong trackedSong) : base(game, title)
@@ -41,10 +41,10 @@ public class DiezEditor : EditorComponent
     public override void Draw()
     {
         ImGuiX.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(8, 8));
-        
+
         var availSize = ImGui.GetContentRegionAvail();
         var width = availSize.X / 3f;
-        
+
         if (ImGuiX.BeginChild("SongProperties", new Vector2(width, 0), ImGuiChildFlags.Border))
         {
             DrawSongProperties();
@@ -60,36 +60,38 @@ public class DiezEditor : EditorComponent
         }
 
         ImGui.SameLine();
-        
+
         if (ImGuiX.BeginChild("LoopProperties", Vector2.Zero, ImGuiChildFlags.Border))
         {
             DrawLoopProperties();
             ImGui.EndChild();
         }
-        
+
         ImGui.PopStyleVar();
     }
-    
-     private void DrawLoopsList()
+
+    private void DrawLoopsList()
     {
         ImGui.Text("Overlay Loops");
         ImGui.Separator();
-            
+
         ImGui.BeginDisabled(_loopIndex == -1 || _loopIndex == _trackedSong.Loops.Count - 1);
         if (ImGui.Button($"{Icons.ChevronDown} Down"))
         {
             MoveLoop(_loopIndex, ++_loopIndex);
         }
+
         ImGui.EndDisabled();
-            
+
         ImGui.SameLine();
         ImGui.BeginDisabled(_loopIndex is -1 or 0);
         if (ImGui.Button($"{Icons.ChevronUp} Up"))
         {
             MoveLoop(_loopIndex, --_loopIndex);
         }
+
         ImGui.EndDisabled();
-            
+
         ImGui.SameLine();
         if (ImGui.Button($"{Icons.Add} Add"))
         {
@@ -101,7 +103,7 @@ public class DiezEditor : EditorComponent
                 });
             }
         }
-            
+
         ImGui.SameLine();
         ImGui.BeginDisabled(_loopIndex == -1);
         if (ImGui.Button($"{Icons.Remove} Remove"))
@@ -112,8 +114,9 @@ public class DiezEditor : EditorComponent
                 _loopIndex = -1;
             }
         }
+
         ImGui.EndDisabled();
-            
+
         ImGui.Separator();
         if (ImGui.BeginChild("##LoopsList"))
         {
@@ -128,7 +131,7 @@ public class DiezEditor : EditorComponent
                 ImGuiX.SetTextCentered(emptyText);
                 ImGui.Text(emptyText);
             }
-                
+
             for (var i = 0; i < _trackedSong.Loops.Count; i++)
             {
                 var loop = _trackedSong.Loops[i];
@@ -146,7 +149,7 @@ public class DiezEditor : EditorComponent
     {
         ImGui.Text("Tracked Song Properties");
         ImGui.Separator();
-            
+
         var name = _trackedSong.Name;
         if (ImGui.InputText("Song Name", ref name, 255))
         {
@@ -173,7 +176,7 @@ public class DiezEditor : EditorComponent
                 _trackedSong.TimeSignature = timeSignature;
             }
         }
-            
+
         ImGui.SeparatorText("Notes");
         {
             var assembleChord = (int)_trackedSong.AssembleChord;
@@ -185,12 +188,12 @@ public class DiezEditor : EditorComponent
                     _trackedSong.AssembleChord = (AssembleChords)assembleChord;
                 }
             }
-                
+
             var notes = Enum.GetNames<ShardNotes>();
             for (var i = 0; i < 8; i++)
             {
                 var note = (int)_trackedSong.Notes[i];
-                if (ImGui.Combo($"Note #{i+1}", ref note, notes, notes.Length))
+                if (ImGui.Combo($"Note #{i + 1}", ref note, notes, notes.Length))
                 {
                     using (History.BeginScope("Change Shard Note"))
                     {
@@ -203,7 +206,7 @@ public class DiezEditor : EditorComponent
             {
                 ImGui.BeginDisabled();
             }
-                
+
             if (ImGui.Button($"{Icons.Play} Preview the Assemble Chord"))
             {
                 var path = $"Sounds/Collects/SplitUpCube/Assemble_{_trackedSong.AssembleChord}";
@@ -212,13 +215,13 @@ public class DiezEditor : EditorComponent
                 _assembleChordSound.Play();
                 _assembleChordElapsed = TimeSpan.Zero;
             }
-                
+
             if (_assembleChordSound != null)
             {
                 ImGui.EndDisabled();
             }
         }
-            
+
         ImGui.SeparatorText("Ordering");
         {
             var randomOrdering = _trackedSong.RandomOrdering;
@@ -240,13 +243,13 @@ public class DiezEditor : EditorComponent
             }
         }
     }
-    
+
     private void DrawLoopProperties()
     {
         const string text = "Selected Loop Properties";
         ImGui.Text(text);
         ImGui.Separator();
-            
+
         if (_loopIndex == -1)
         {
             const string emptyText = "Select Loop from the list";
@@ -254,9 +257,9 @@ public class DiezEditor : EditorComponent
             ImGui.Text(emptyText);
             return;
         }
-            
+
         var loop = _trackedSong.Loops[_loopIndex];
-            
+
         ImGui.SeparatorText("Filename");
         {
             var filename = loop.Name;
@@ -268,7 +271,7 @@ public class DiezEditor : EditorComponent
                 }
             }
         }
-            
+
         ImGui.SeparatorText("Trigger between after every...");
         {
             var triggerFrom = loop.TriggerFrom;
@@ -280,11 +283,11 @@ public class DiezEditor : EditorComponent
                     loop.TriggerFrom = triggerFrom;
                 }
             }
-                
+
             ImGui.SameLine();
             ImGui.Text("and");
             ImGui.SameLine();
-            
+
             var triggerTo = loop.TriggerTo;
             ImGui.SetNextItemWidth(96);
             if (ImGui.InputInt("bars...##TriggerTo", ref triggerTo))
@@ -304,7 +307,7 @@ public class DiezEditor : EditorComponent
                 }
             }
         }
-            
+
         ImGui.SeparatorText("...and loop between...");
         {
             var loopTimesFrom = loop.LoopTimesFrom;
@@ -316,11 +319,11 @@ public class DiezEditor : EditorComponent
                     loop.LoopTimesFrom = loopTimesFrom;
                 }
             }
-                
+
             ImGui.SameLine();
             ImGui.Text("and");
             ImGui.SameLine();
-            
+
             var loopTimesTo = loop.LoopTimesTo;
             ImGui.SetNextItemWidth(96);
             if (ImGui.InputInt("times.##TimesTo", ref loopTimesTo))
@@ -331,7 +334,7 @@ public class DiezEditor : EditorComponent
                 }
             }
         }
-            
+
 
         ImGui.SeparatorText("The loop is...");
         {
@@ -344,7 +347,7 @@ public class DiezEditor : EditorComponent
                 }
             }
         }
-            
+
         ImGui.SeparatorText("Delay first trigger by...");
         {
             var delay = loop.Delay;
@@ -356,7 +359,7 @@ public class DiezEditor : EditorComponent
                 }
             }
         }
-            
+
         var oneAtATime = loop.OneAtATime;
         if (ImGui.Checkbox("One-at-a-time", ref oneAtATime))
         {
@@ -365,9 +368,9 @@ public class DiezEditor : EditorComponent
                 loop.OneAtATime = oneAtATime;
             }
         }
-            
+
         ImGui.SameLine();
-            
+
         var cutOffTail = loop.CutOffTail;
         if (ImGui.Checkbox("Cut off tail", ref cutOffTail))
         {
@@ -376,7 +379,7 @@ public class DiezEditor : EditorComponent
                 loop.CutOffTail = cutOffTail;
             }
         }
-            
+
         ImGui.SeparatorText("Time of day");
         {
             var day = loop.Day;
@@ -387,9 +390,9 @@ public class DiezEditor : EditorComponent
                     loop.Day = day;
                 }
             }
-                
+
             ImGui.SameLine();
-                
+
             var night = loop.Night;
             if (ImGui.Checkbox("Night", ref night))
             {
@@ -398,9 +401,9 @@ public class DiezEditor : EditorComponent
                     loop.Night = night;
                 }
             }
-                
+
             ImGui.SameLine();
-                
+
             var dawn = loop.Dawn;
             if (ImGui.Checkbox("Dawn", ref dawn))
             {
@@ -409,9 +412,9 @@ public class DiezEditor : EditorComponent
                     loop.Dawn = dawn;
                 }
             }
-                
+
             ImGui.SameLine();
-                
+
             var dusk = loop.Dusk;
             if (ImGui.Checkbox("Dusk", ref dusk))
             {
@@ -422,7 +425,7 @@ public class DiezEditor : EditorComponent
             }
         }
     }
-    
+
     private static bool RenderInt(int index, ref int item)
     {
         return ImGui.InputInt("##item" + index, ref item);

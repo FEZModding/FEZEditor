@@ -32,7 +32,7 @@ public class ZoomControl : ActorComponent
             Distance -= scroll * ZoomSensitivity;
             Distance = MathHelper.Clamp(Distance, MinDistance, MaxDistance);
         }
-        
+
         _camera.Offset = new Vector3(0f, 0f, Distance);
     }
 }

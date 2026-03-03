@@ -74,7 +74,7 @@ public class ConfirmWindow : DrawableGameComponent
         {
             flags |= ImGuiWindowFlags.NoTitleBar;
         }
-        
+
         ImGuiX.SetNextWindowSize(new Vector2(320, 0));
         if (ImGui.BeginPopupModal(strId, flags))
         {
@@ -82,7 +82,7 @@ public class ConfirmWindow : DrawableGameComponent
             ImGui.Spacing();
             ImGui.Separator();
             ImGui.Spacing();
-            
+
             if (ImGui.Button(ConfirmButtonText) || ImGui.IsKeyPressed(ImGuiKey.Enter))
             {
                 Confirmed?.Invoke();

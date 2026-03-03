@@ -10,9 +10,9 @@ public partial class RenderingService
         public Matrix View = Matrix.Identity;
         public Matrix Projection = Matrix.Identity;
     }
-    
+
     private readonly Dictionary<Rid, CameraData> _cameras = new();
-    
+
     public Rid CameraCreate()
     {
         var rid = AllocateRid(typeof(CameraData));

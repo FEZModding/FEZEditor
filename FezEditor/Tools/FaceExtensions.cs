@@ -14,17 +14,37 @@ public static class FaceExtensions
         FaceOrientation.Top,
         FaceOrientation.Down
     };
-    
+
     public static FaceOrientation OrientationFromDirection(Vector3 direction)
     {
-        if (direction == Vector3.Forward) return FaceOrientation.Back;
-        if (direction == Vector3.Backward) return FaceOrientation.Front;
-        if (direction == Vector3.Up) return FaceOrientation.Top;
-        if (direction == Vector3.Down) return FaceOrientation.Down;
-        if (direction == Vector3.Left) return FaceOrientation.Left;
+        if (direction == Vector3.Forward)
+        {
+            return FaceOrientation.Back;
+        }
+
+        if (direction == Vector3.Backward)
+        {
+            return FaceOrientation.Front;
+        }
+
+        if (direction == Vector3.Up)
+        {
+            return FaceOrientation.Top;
+        }
+
+        if (direction == Vector3.Down)
+        {
+            return FaceOrientation.Down;
+        }
+
+        if (direction == Vector3.Left)
+        {
+            return FaceOrientation.Left;
+        }
+
         return FaceOrientation.Right;
     }
-    
+
     public static bool IsPositive(this FaceOrientation face)
     {
         return face > FaceOrientation.Back;
@@ -34,12 +54,12 @@ public static class FaceExtensions
     {
         return (FaceOrientation)((int)(face + 3) % 6);
     }
-    
+
     public static bool IsSide(this FaceOrientation face)
     {
         return face is not (FaceOrientation.Down or FaceOrientation.Top);
     }
-    
+
     public static Vector3 AsVector(this FaceOrientation face)
     {
         return face switch
@@ -57,16 +77,19 @@ public static class FaceExtensions
     {
         return face switch
         {
-            FaceOrientation.Front => Quaternion.Identity,                                          // +Z, no rotation
-            FaceOrientation.Back => Quaternion.CreateFromAxisAngle(Vector3.Up, MathF.PI),          // -Z, 180° around Y
-            FaceOrientation.Right => Quaternion.CreateFromAxisAngle(Vector3.Up, MathHelper.PiOver2),  // +X, 90° around Y
-            FaceOrientation.Left => Quaternion.CreateFromAxisAngle(Vector3.Up, -MathHelper.PiOver2),  // -X, -90° around Y
-            FaceOrientation.Top => Quaternion.CreateFromAxisAngle(Vector3.Right, -MathHelper.PiOver2), // +Y, -90° around X
-            FaceOrientation.Down => Quaternion.CreateFromAxisAngle(Vector3.Right, MathHelper.PiOver2), // -Y, 90° around X
+            FaceOrientation.Front => Quaternion.Identity, // +Z, no rotation
+            FaceOrientation.Back => Quaternion.CreateFromAxisAngle(Vector3.Up, MathF.PI), // -Z, 180° around Y
+            FaceOrientation.Right => Quaternion.CreateFromAxisAngle(Vector3.Up, MathHelper.PiOver2), // +X, 90° around Y
+            FaceOrientation.Left => Quaternion.CreateFromAxisAngle(Vector3.Up,
+                -MathHelper.PiOver2), // -X, -90° around Y
+            FaceOrientation.Top => Quaternion.CreateFromAxisAngle(Vector3.Right,
+                -MathHelper.PiOver2), // +Y, -90° around X
+            FaceOrientation.Down => Quaternion.CreateFromAxisAngle(Vector3.Right,
+                MathHelper.PiOver2), // -Y, 90° around X
             _ => Quaternion.Identity
         };
     }
-    
+
     public static FaceOrientation GetTangent(this FaceOrientation face)
     {
         return face switch
@@ -87,7 +110,7 @@ public static class FaceExtensions
             _ => FaceOrientation.Top
         };
     }
-    
+
     public static Vector3 UpVector(this FaceOrientation face)
     {
         return face switch

@@ -17,9 +17,9 @@ namespace FezEditor.Services;
 public partial class ImGuiService : IDisposable
 {
     private static readonly ILogger Logger = Logging.Create<ImGuiService>();
-    
+
     private static readonly Color ClearColor = new(0.2f, 0.2f, 0.294f);
-    
+
     private const float FallbackFrameTime = 1f / 60f;
 
     private const float WheelDelta = 120f;
@@ -64,13 +64,13 @@ public partial class ImGuiService : IDisposable
             ImGuiX.Unbind = UnbindTexture;
             ImGuiX.GetTexture = GetBoundTexture;
         }
-        
+
         // Disable mouse if window not focused
         {
             _game.Deactivated += (_, _) => _gameWindowFocused = false;
             _game.Activated += (_, _) => _gameWindowFocused = true;
         }
-        
+
         // Load fonts
         {
             var io = ImGui.GetIO();
@@ -107,10 +107,10 @@ public partial class ImGuiService : IDisposable
                 World = Matrix.Identity,
                 View = Matrix.Identity,
                 TextureEnabled = true,
-                VertexColorEnabled = true,
+                VertexColorEnabled = true
             };
 
-            _rasterizerState = new RasterizerState()
+            _rasterizerState = new RasterizerState
             {
                 CullMode = CullMode.None,
                 DepthBias = 0,
@@ -120,7 +120,7 @@ public partial class ImGuiService : IDisposable
                 SlopeScaleDepthBias = 0
             };
         }
-        
+
         Logger.Information("Dear ImGui Version: {0}", ImGui.GetVersion());
     }
 
@@ -304,17 +304,17 @@ public partial class ImGuiService : IDisposable
                 _basicEffect.Projection =
                     Matrix.CreateOrthographicOffCenter(0f, io.DisplaySize.X, io.DisplaySize.Y, 0f, -1f, 1f);
                 _basicEffect.Texture = texture;
-                
+
                 foreach (var pass in _basicEffect.CurrentTechnique.Passes)
                 {
                     pass.Apply();
                     _game.GraphicsDevice.DrawIndexedPrimitives(
-                        primitiveType: PrimitiveType.TriangleList,
-                        baseVertex: (int)drawCmd.VtxOffset + vtxOffset,
-                        minVertexIndex: 0,
-                        numVertices: cmdList.VtxBuffer.Size,
-                        startIndex: (int)drawCmd.IdxOffset + idxOffset,
-                        primitiveCount: (int)drawCmd.ElemCount / 3
+                        PrimitiveType.TriangleList,
+                        (int)drawCmd.VtxOffset + vtxOffset,
+                        0,
+                        cmdList.VtxBuffer.Size,
+                        (int)drawCmd.IdxOffset + idxOffset,
+                        (int)drawCmd.ElemCount / 3
                     );
                 }
             }
@@ -347,7 +347,7 @@ public partial class ImGuiService : IDisposable
             _fontTexture.Dispose();
         }
     }
-    
+
     /// <summary>
     /// Loads font into ImGui from game content.
     /// </summary>
@@ -363,7 +363,7 @@ public partial class ImGuiService : IDisposable
             return io.Fonts.AddFontFromMemoryTTF((nint)ptr, data.Length, size, config, glyphRanges);
         }
     }
-    
+
     /// <summary>
     /// Loads icons font into ImGui from game content.
     /// </summary>
@@ -381,17 +381,17 @@ public partial class ImGuiService : IDisposable
             config->MergeMode = 1;
             config->GlyphMinAdvanceX = size;
             config->GlyphOffset = new NVector2(0, size > 16 ? 7 : 5);
-        
+
             var ranges = new ushort[] { Icons.IconMin, Icons.IconMax, 0 };
             fixed (ushort* rangesPtr = ranges)
             {
                 io.Fonts.AddFontFromMemoryTTF((nint)ptr, data.Length, size, config, (nint)rangesPtr);
             }
-        
+
             ImGuiNative.ImFontConfig_destroy(config);
         }
     }
-    
+
     private static class DrawVertDeclaration
     {
         public static readonly VertexDeclaration Declaration;

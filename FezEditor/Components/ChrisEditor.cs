@@ -13,7 +13,7 @@ namespace FezEditor.Components;
 public partial class ChrisEditor : EditorComponent
 {
     private static readonly TimeSpan EditStep = TimeSpan.FromMilliseconds(100);
-    
+
     public override object Asset => _subject.GetAsset(_obj);
 
     private readonly ISubject _subject;
@@ -21,11 +21,11 @@ public partial class ChrisEditor : EditorComponent
     private readonly ConfirmWindow _confirm;
 
     private readonly HashSet<int> _selectedTriles = new();
-    
+
     private int _currentTrile = -1;
 
     private string _filterTriles = "";
-    
+
     private Scene _scene = null!;
 
     private Actor _cameraActor = null!;
@@ -39,9 +39,9 @@ public partial class ChrisEditor : EditorComponent
     private bool _showProperties;
 
     private bool _showTexture;
-    
+
     private EditMode _editMode = EditMode.Select;
-    
+
     private TrixelFace? _hoveredFace;
 
     private readonly HashSet<TrixelFace> _selectedFaces = new();
@@ -67,7 +67,7 @@ public partial class ChrisEditor : EditorComponent
     private ChrisEditor(Game game, string title, ISubject subject) : base(game, title)
     {
         _subject = subject;
-        History.StateChanged += () => RevisualizeSubject(materialize: false);
+        History.StateChanged += () => RevisualizeSubject(false);
         Game.AddComponent(_confirm = new ConfirmWindow(game));
     }
 
@@ -78,7 +78,7 @@ public partial class ChrisEditor : EditorComponent
         {
             _cameraActor = _scene.CreateActor();
             _cameraActor.Name = "Camera";
-            
+
             var camera = _cameraActor.AddComponent<Camera>();
             var zoom = _cameraActor.AddComponent<ZoomControl>();
             _cameraActor.AddComponent<OrbitControl>();
@@ -95,7 +95,7 @@ public partial class ChrisEditor : EditorComponent
             _meshActor.AddComponent<TrileCollisionMesh>();
             _meshActor.AddComponent<BoundsMesh>();
         }
-        
+
         RevisualizeSubject();
         var zoom1 = _cameraActor.GetComponent<ZoomControl>();
         zoom1.Distance = _obj.Size.X * 1.1f;
@@ -110,7 +110,7 @@ public partial class ChrisEditor : EditorComponent
     public override void Draw()
     {
         ImGuiX.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(8, 8));
-        
+
         DrawToolbar();
 
         if (_subject is TrileSetSubject subject)
@@ -122,9 +122,9 @@ public partial class ChrisEditor : EditorComponent
                 EditTrixelObject();
                 ImGui.EndChild();
             }
-        
+
             ImGui.SameLine();
-        
+
             if (ImGuiX.BeginChild("##TrileSet", Vector2.Zero, ImGuiChildFlags.Border))
             {
                 DrawTrileList(subject);
@@ -136,10 +136,10 @@ public partial class ChrisEditor : EditorComponent
             DrawSceneViewport();
             EditTrixelObject();
         }
-        
+
         DrawPropertiesWindow();
         DrawTextureWindow();
-        
+
         ImGui.PopStyleVar();
     }
 
@@ -150,6 +150,7 @@ public partial class ChrisEditor : EditorComponent
         {
             _editMode = EditMode.Select;
         }
+
         ImGui.EndDisabled();
 
         ImGui.SameLine();
@@ -158,25 +159,28 @@ public partial class ChrisEditor : EditorComponent
         {
             _editMode = EditMode.Remove;
         }
+
         ImGui.EndDisabled();
-        
+
         ImGui.SameLine();
         ImGui.BeginDisabled(_editMode == EditMode.Add);
         if (ImGui.Button($"{Icons.Pencil} Add"))
         {
             _editMode = EditMode.Add;
         }
+
         ImGui.EndDisabled();
-        
+
         ImGui.SameLine();
         ImGui.TextDisabled("|");
-        
+
         ImGui.SameLine();
         ImGui.BeginDisabled(_showProperties);
         if (ImGui.Button($"{Icons.SymbolProperty} Properties"))
         {
             _showProperties = true;
         }
+
         ImGui.EndDisabled();
 
         ImGui.SameLine();
@@ -185,6 +189,7 @@ public partial class ChrisEditor : EditorComponent
         {
             _showTexture = true;
         }
+
         ImGui.EndDisabled();
 
         var mesh = _meshActor.GetComponent<TrixelsMesh>();
@@ -194,6 +199,7 @@ public partial class ChrisEditor : EditorComponent
         {
             mesh.Wireframe = wireFrame;
         }
+
         ImGui.EndDisabled();
 
         if (_subject is TrileSetSubject)
@@ -209,7 +215,7 @@ public partial class ChrisEditor : EditorComponent
 
         ImGui.Separator();
     }
-    
+
     private void DrawTrileList(TrileSetSubject setSubject)
     {
         var name = setSubject.Name;
@@ -250,6 +256,7 @@ public partial class ChrisEditor : EditorComponent
                 RevisualizeSubject();
             }
         }
+
         ImGui.EndDisabled();
 
         ImGui.SameLine();
@@ -266,6 +273,7 @@ public partial class ChrisEditor : EditorComponent
                 RevisualizeSubject();
             }
         }
+
         ImGui.EndDisabled();
 
         ImGui.SameLine();
@@ -274,6 +282,7 @@ public partial class ChrisEditor : EditorComponent
         {
             _selectedTriles.Clear();
         }
+
         ImGui.EndDisabled();
 
         ImGui.BeginDisabled(_selectedTriles.Count == 0);
@@ -287,7 +296,7 @@ public partial class ChrisEditor : EditorComponent
                     new("FEZTS files", "fezts.glb")
                 }
             };
-            
+
             FileDialog.Show(FileDialog.Type.OpenFile, result =>
             {
                 if (result.Files.Length > 0)
@@ -299,11 +308,12 @@ public partial class ChrisEditor : EditorComponent
                 }
             }, options);
         }
+
         ImGui.EndDisabled();
 
         ImGui.SetNextItemWidth(-40);
         ImGui.InputTextWithHint("", "Filter", ref _filterTriles, 255);
-        
+
         if (!string.IsNullOrEmpty(_filterTriles))
         {
             ImGui.SameLine();
@@ -312,7 +322,7 @@ public partial class ChrisEditor : EditorComponent
                 _filterTriles = "";
             }
         }
-        
+
         ImGui.Separator();
 
         if (ImGuiX.BeginChild("##TrileSetList", Vector2.Zero))
@@ -345,7 +355,7 @@ public partial class ChrisEditor : EditorComponent
                     RevisualizeSubject();
                 }
             }
-            
+
             ImGui.EndChild();
         }
     }
@@ -391,6 +401,7 @@ public partial class ChrisEditor : EditorComponent
                 _hoveredFace = null;
                 mesh.SetHoveredFace(null);
             }
+
             return;
         }
 
@@ -424,56 +435,58 @@ public partial class ChrisEditor : EditorComponent
         switch (_editMode)
         {
             case EditMode.Select:
-            {
-                if (!hit.HasValue || !_dragStartFace.HasValue)
                 {
-                    break;
-                }
-
-                var orientation = _dragStartFace.Value.Face;
-                if (orientation != hit.Value.Face)
-                {
-                    break;
-                }
-
-                var newSelection = BuildRectSelection(orientation, _dragStartFace.Value.Emplacement, hit.Value.Emplacement);
-                if (orientation != _selectionOrientation || !newSelection.SetEquals(_selectedFaces))
-                {
-                    _selectionOrientation = orientation;
-                    _selectedFaces.Clear();
-                    foreach (var f in newSelection)
+                    if (!hit.HasValue || !_dragStartFace.HasValue)
                     {
-                        _selectedFaces.Add(f);
+                        break;
                     }
-                    mesh.SetSelectedFaces(_selectedFaces);
+
+                    var orientation = _dragStartFace.Value.Face;
+                    if (orientation != hit.Value.Face)
+                    {
+                        break;
+                    }
+
+                    var newSelection = BuildRectSelection(orientation, _dragStartFace.Value.Emplacement,
+                        hit.Value.Emplacement);
+                    if (orientation != _selectionOrientation || !newSelection.SetEquals(_selectedFaces))
+                    {
+                        _selectionOrientation = orientation;
+                        _selectedFaces.Clear();
+                        foreach (var f in newSelection)
+                        {
+                            _selectedFaces.Add(f);
+                        }
+
+                        mesh.SetSelectedFaces(_selectedFaces);
+                    }
+
+                    break;
                 }
-                
-                break;
-            }
 
             case EditMode.Remove:
             case EditMode.Add:
-            {
-                if (!hit.HasValue || _selectedFaces.Count == 0 ||
-                    !(ImGui.IsMouseClicked(ImGuiMouseButton.Left) || _nowTime - _lastEditTime >= EditStep))
                 {
+                    if (!hit.HasValue || _selectedFaces.Count == 0 ||
+                        !(ImGui.IsMouseClicked(ImGuiMouseButton.Left) || _nowTime - _lastEditTime >= EditStep))
+                    {
+                        break;
+                    }
+
+                    _lastEditTime = _nowTime;
+                    var edit = _editMode == EditMode.Remove;
+
+                    using (History.BeginScope(edit ? "Remove Trixels" : "Add Trixels"))
+                    {
+                        ApplyChanges(hit.Value.Face, edit);
+                    }
+
+                    mesh.Visualize(_obj);
+                    RemapSelectionAfterCarve(hit.Value.Face, edit);
+                    mesh.SetSelectedFaces(_selectedFaces);
+
                     break;
                 }
-                
-                _lastEditTime = _nowTime;
-                var edit = _editMode == EditMode.Remove;
-                
-                using (History.BeginScope(edit ? "Remove Trixels" : "Add Trixels"))
-                {
-                    ApplyChanges(hit.Value.Face, missing: edit);
-                }
-                
-                mesh.Visualize(_obj);
-                RemapSelectionAfterCarve(hit.Value.Face, inward: edit);
-                mesh.SetSelectedFaces(_selectedFaces);
-                
-                break;
-            }
 
             default:
                 throw new InvalidOperationException();
@@ -484,7 +497,7 @@ public partial class ChrisEditor : EditorComponent
     {
         if (_showProperties)
         {
-            const ImGuiWindowFlags flags = ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoResize | 
+            const ImGuiWindowFlags flags = ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoResize |
                                            ImGuiWindowFlags.NoCollapse;
             if (ImGui.Begin($"Properties##{Title}", ref _showProperties, flags))
             {
@@ -492,6 +505,7 @@ public partial class ChrisEditor : EditorComponent
                 {
                     RevisualizeSubject();
                 }
+
                 ImGui.End();
             }
         }
@@ -503,7 +517,7 @@ public partial class ChrisEditor : EditorComponent
         {
             var texture = _meshActor.GetComponent<TrixelsMesh>().Texture!;
             const ImGuiWindowFlags flags = ImGuiWindowFlags.NoCollapse;
-            
+
             ImGuiX.SetNextWindowSize(new Vector2(640, 160), ImGuiCond.Appearing);
             if (ImGui.Begin($"Texture Viewer##{Title}", ref _showTexture, flags))
             {
@@ -523,43 +537,43 @@ public partial class ChrisEditor : EditorComponent
                         }
                     }
                 }
-                
+
                 var sizeText = $"Texture Size: {texture.Width}x{texture.Height}px";
                 var textWidth = ImGui.CalcTextSize(sizeText).X;
                 var availWidth = ImGui.GetContentRegionAvail().X;
                 ImGui.SameLine(ImGui.GetCursorPosX() + availWidth - textWidth);
                 ImGui.TextDisabled(sizeText);
-                
+
                 var availW = ImGuiX.GetContentRegionAvail().X;
                 var scale = availW / texture.Width;
                 var displaySize = new Vector2(texture.Width, texture.Height) * scale;
                 ImGuiX.Image(texture, displaySize);
-                
+
                 var drawList = ImGui.GetWindowDrawList();
                 var imageMin = ImGuiX.GetItemRectMin();
                 var imageMax = ImGuiX.GetItemRectMax();
                 var colW = displaySize.X / 6f;
-                    
+
                 var faces = FaceExtensions.NaturalOrder;
                 for (var i = 0; i <= 6; i++)
                 {
-                    var x = imageMin.X + i* colW;
+                    var x = imageMin.X + (i * colW);
                     drawList.AddLine(
-                        p1: new NVector2(x, imageMin.Y),
-                        p2: new NVector2(x, imageMax.Y), 
-                        col: new Color(0, 0.5f, 1, 0.5f).PackedValue
+                        new NVector2(x, imageMin.Y),
+                        new NVector2(x, imageMax.Y),
+                        new Color(0, 0.5f, 1, 0.5f).PackedValue
                     );
-                    
+
                     if (i < 6)
                     {
                         drawList.AddText(
-                            pos: new NVector2(x + 2, imageMin.Y + 2),
-                            col: new Color(0, 0.5f, 1, 1f).PackedValue,
-                            text_begin: faces[i].ToString()
+                            new NVector2(x + 2, imageMin.Y + 2),
+                            new Color(0, 0.5f, 1, 1f).PackedValue,
+                            faces[i].ToString()
                         );
                     }
                 }
-            
+
                 ImGui.End();
             }
         }
@@ -596,7 +610,7 @@ public partial class ChrisEditor : EditorComponent
         var bounds = _meshActor.GetComponent<BoundsMesh>();
         bounds.Visualize(_obj.Size);
     }
-    
+
     private void OnTextureReload(Texture2D newTexture)
     {
         _subject.UpdateTexture(newTexture);
@@ -612,11 +626,11 @@ public partial class ChrisEditor : EditorComponent
         _confirm.Confirmed = () => ResourceService.Save(Title, _subject.GetAsset(_obj));
         _confirm.Canceled = null;
     }
-    
+
     private TrixelFace? RaycastTrixelFace(Ray ray)
     {
         var mesh = _meshActor.GetComponent<TrixelsMesh>();
-        var meshOffset = Vector3.Zero - _obj.Size / 2f;
+        var meshOffset = Vector3.Zero - (_obj.Size / 2f);
         var best = default(TrixelFace?);
         var bestT = float.MaxValue;
 
@@ -629,20 +643,20 @@ public partial class ChrisEditor : EditorComponent
                 continue;
             }
 
-            var faceCenter = (tf.Emplacement.ToVector3() + (Vector3.One + normal) * 0.5f)
-                * Mathz.TrixelSize + meshOffset;
-            
+            var faceCenter = ((tf.Emplacement.ToVector3() + ((Vector3.One + normal) * 0.5f))
+                              * Mathz.TrixelSize) + meshOffset;
+
             var t = (Vector3.Dot(normal, faceCenter) - Vector3.Dot(normal, ray.Position)) / denom;
             if (t < 0f || t >= bestT)
             {
                 continue;
             }
 
-            var hit = ray.Position + ray.Direction * t;
+            var hit = ray.Position + (ray.Direction * t);
             var local = hit - faceCenter;
             var tan = tf.Face.GetTangent().AsVector();
             var bitan = tf.Face.GetBitangent().AsVector();
-            
+
             const float h = Mathz.TrixelSize / 2f;
             if (MathF.Abs(Vector3.Dot(local, tan)) <= h && MathF.Abs(Vector3.Dot(local, bitan)) <= h)
             {
@@ -650,13 +664,16 @@ public partial class ChrisEditor : EditorComponent
                 bestT = t;
             }
         }
-        
+
         return best;
     }
-    
+
     private void RemapSelectionAfterCarve(FaceOrientation orientation, bool inward)
     {
-        if (_selectionOrientation != orientation || _selectedFaces.Count == 0) return;
+        if (_selectionOrientation != orientation || _selectedFaces.Count == 0)
+        {
+            return;
+        }
 
         var normal = orientation.AsVector();
         var step = inward ? -normal : normal;
@@ -670,11 +687,16 @@ public partial class ChrisEditor : EditorComponent
                 new Vector3I(tf.Emplacement.X + ni.X, tf.Emplacement.Y + ni.Y, tf.Emplacement.Z + ni.Z),
                 orientation);
             if (newFaces.Contains(shifted))
+            {
                 remapped.Add(shifted);
+            }
         }
 
         _selectedFaces.Clear();
-        foreach (var f in remapped) _selectedFaces.Add(f);
+        foreach (var f in remapped)
+        {
+            _selectedFaces.Add(f);
+        }
     }
 
     private HashSet<TrixelFace> BuildRectSelection(FaceOrientation orientation, Vector3I start, Vector3I end)
@@ -682,10 +704,10 @@ public partial class ChrisEditor : EditorComponent
         var tan = orientation.GetTangent().AsVector();
         var bitan = orientation.GetBitangent().AsVector();
 
-        var startT = (int)(start.X * tan.X + start.Y * tan.Y + start.Z * tan.Z);
-        var startB = (int)(start.X * bitan.X + start.Y * bitan.Y + start.Z * bitan.Z);
-        var endT = (int)(end.X * tan.X + end.Y * tan.Y + end.Z * tan.Z);
-        var endB = (int)(end.X * bitan.X + end.Y * bitan.Y + end.Z * bitan.Z);
+        var startT = (int)((start.X * tan.X) + (start.Y * tan.Y) + (start.Z * tan.Z));
+        var startB = (int)((start.X * bitan.X) + (start.Y * bitan.Y) + (start.Z * bitan.Z));
+        var endT = (int)((end.X * tan.X) + (end.Y * tan.Y) + (end.Z * tan.Z));
+        var endB = (int)((end.X * bitan.X) + (end.Y * bitan.Y) + (end.Z * bitan.Z));
 
         var minT = Math.Min(startT, endT);
         var maxT = Math.Max(startT, endT);
@@ -700,14 +722,15 @@ public partial class ChrisEditor : EditorComponent
             {
                 continue;
             }
-            
-            var t = (int)(tf.Emplacement.X * tan.X + tf.Emplacement.Y * tan.Y + tf.Emplacement.Z * tan.Z);
-            var b = (int)(tf.Emplacement.X * bitan.X + tf.Emplacement.Y * bitan.Y + tf.Emplacement.Z * bitan.Z);
+
+            var t = (int)((tf.Emplacement.X * tan.X) + (tf.Emplacement.Y * tan.Y) + (tf.Emplacement.Z * tan.Z));
+            var b = (int)((tf.Emplacement.X * bitan.X) + (tf.Emplacement.Y * bitan.Y) + (tf.Emplacement.Z * bitan.Z));
             if (t >= minT && t <= maxT && b >= minB && b <= maxB)
             {
                 result.Add(tf);
             }
         }
+
         return result;
     }
 
@@ -752,17 +775,17 @@ public partial class ChrisEditor : EditorComponent
         Remove,
         Add
     }
-    
+
     private interface ISubject : IDisposable
     {
         string TextureExportKey { get; }
-    
+
         TrixelObject Materialize();
 
         object GetAsset(TrixelObject obj);
-    
+
         Texture2D LoadTexture();
-    
+
         void UpdateTexture(Texture2D texture);
 
         bool DrawProperties(History history);

@@ -22,14 +22,14 @@ public static class FileDialog
         public string AcceptButtonLabel { get; init; } = "";
         public string CancelButtonLabel { get; init; } = "";
     }
-    
+
     public enum Type
     {
         OpenFile,
         SaveFile,
         OpenFolder
     }
-    
+
     public static void Show(
         Type type,
         Action<Result> callback,
@@ -51,29 +51,35 @@ public static class FileDialog
                         SDL.SDL_SetPointerProperty(props, SDL.SDL_PROP_FILE_DIALOG_FILTERS_POINTER, (IntPtr)filterPtr);
                     }
                 }
+
                 SDL.SDL_SetNumberProperty(props, SDL.SDL_PROP_FILE_DIALOG_NFILTERS_NUMBER, nativeFilters.Length);
             }
+
             if (!string.IsNullOrEmpty(options.DefaultLocation))
             {
                 SDL.SDL_SetStringProperty(props, SDL.SDL_PROP_FILE_DIALOG_LOCATION_STRING, options.DefaultLocation);
             }
+
             if (options.AllowMultiple)
             {
                 SDL.SDL_SetBooleanProperty(props, SDL.SDL_PROP_FILE_DIALOG_MANY_BOOLEAN, true);
             }
+
             if (!string.IsNullOrEmpty(options.Title))
             {
                 SDL.SDL_SetStringProperty(props, SDL.SDL_PROP_FILE_DIALOG_TITLE_STRING, options.Title);
             }
+
             if (!string.IsNullOrEmpty(options.AcceptButtonLabel))
             {
                 SDL.SDL_SetStringProperty(props, SDL.SDL_PROP_FILE_DIALOG_ACCEPT_STRING, options.AcceptButtonLabel);
             }
+
             if (!string.IsNullOrEmpty(options.CancelButtonLabel))
             {
                 SDL.SDL_SetStringProperty(props, SDL.SDL_PROP_FILE_DIALOG_CANCEL_STRING, options.CancelButtonLabel);
             }
-            
+
             SDL.SDL_ShowFileDialogWithProperties(
                 type switch
                 {
@@ -121,6 +127,7 @@ public static class FileDialog
             {
                 Marshal.FreeCoTaskMem((IntPtr)filter.name);
             }
+
             if (filter.pattern != null)
             {
                 Marshal.FreeCoTaskMem((IntPtr)filter.pattern);
@@ -131,9 +138,9 @@ public static class FileDialog
     private class DialogContext
     {
         public GCHandle Handle { get; }
-        
+
         public SDL.SDL_DialogFileCallback Callback { get; }
-        
+
         private readonly Action<Result> _userCallback;
 
         public DialogContext(Action<Result> userCallback)

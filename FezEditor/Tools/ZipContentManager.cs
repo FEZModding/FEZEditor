@@ -15,7 +15,7 @@ public class ZipContentManager : ContentManager, IContentManager
             new JsonStringEnumConverter()
         }
     };
-    
+
     private readonly ZipArchive _archive;
 
     public ZipContentManager(IServiceProvider serviceProvider, string zipPath)
@@ -24,7 +24,7 @@ public class ZipContentManager : ContentManager, IContentManager
         _archive = ZipFile.OpenRead(zipPath);
         CheckContentsVersion();
     }
-    
+
     public T LoadJson<T>(string assetName)
     {
         var path = Path.ChangeExtension(assetName, ".json");
@@ -51,28 +51,29 @@ public class ZipContentManager : ContentManager, IContentManager
     {
         var entry = _archive.Entries
             .First(e => e.FullName.StartsWith(assetName, StringComparison.Ordinal));
-        
+
         var memoryStream = new MemoryStream();
         using (var stream = entry.Open())
         {
             stream.CopyTo(memoryStream);
         }
+
         memoryStream.Position = 0;
-        
+
         return memoryStream;
     }
 
     private void CheckContentsVersion()
     {
         var entry = _archive.GetEntry(".version")!;
-        
+
         using var stream = entry.Open();
         using var reader = new StreamReader(stream);
         var rule = reader.ReadToEnd().Trim();
-        
+
         string op;
         string versionStr;
-    
+
         if (rule.StartsWith(">="))
         {
             op = ">=";
@@ -106,7 +107,7 @@ public class ZipContentManager : ContentManager, IContentManager
 
         var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
         var contentsVersion = Version.Parse(versionStr);
-        
+
         var compatible = op switch
         {
             ">=" => contentsVersion >= assemblyVersion,
@@ -129,6 +130,7 @@ public class ZipContentManager : ContentManager, IContentManager
         {
             _archive.Dispose();
         }
+
         base.Dispose(disposing);
     }
 }

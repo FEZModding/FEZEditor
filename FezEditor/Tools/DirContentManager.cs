@@ -14,15 +14,15 @@ public class DirContentManager : ContentManager, IContentManager
             new JsonStringEnumConverter()
         }
     };
-    
+
     private readonly DirectoryInfo _directory;
-    
-    public DirContentManager(IServiceProvider serviceProvider, string rootDirectory) 
+
+    public DirContentManager(IServiceProvider serviceProvider, string rootDirectory)
         : base(serviceProvider, rootDirectory)
     {
         _directory = new DirectoryInfo(rootDirectory);
     }
-    
+
     public T LoadJson<T>(string assetName)
     {
         var file = _directory.GetFiles($"{assetName}.json").Single();

@@ -9,7 +9,7 @@ namespace FezEditor.Actors;
 public class Scene : IDisposable
 {
     public SceneViewport Viewport { get; }
-    
+
     public SceneLighting Lighting { get; }
 
     private readonly Game _game;
@@ -17,7 +17,7 @@ public class Scene : IDisposable
     private readonly Rid _worldRid;
 
     private readonly RenderingService _rendering;
-    
+
     private readonly IContentManager _content;
 
     private readonly HashSet<Actor> _actors = new();
@@ -32,8 +32,8 @@ public class Scene : IDisposable
     {
         _game = game;
         _rendering = game.GetService<RenderingService>();
-        _content =  game.GetService<ContentService>().Get(this);
-        
+        _content = game.GetService<ContentService>().Get(this);
+
         _worldRid = _rendering.WorldCreate();
         Viewport = new SceneViewport(game, _worldRid);
         Lighting = new SceneLighting(game, _worldRid);
@@ -94,7 +94,7 @@ public class Scene : IDisposable
             {
                 continue;
             }
-            
+
             var dist = ray.Intersects(collider!.BoundingBox);
             if (dist < nearestDist)
             {

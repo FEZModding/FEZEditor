@@ -9,7 +9,7 @@ namespace FezEditor.Actors;
 public class MapLinkMesh : ActorComponent
 {
     private readonly RenderingService _rendering;
-    
+
     private readonly Rid _mesh;
 
     private readonly Rid _material;
@@ -30,12 +30,12 @@ public class MapLinkMesh : ActorComponent
         _rendering.MaterialSetAlbedo(_material, Color.White);
         _rendering.MaterialSetDepthWrite(_material, false);
         _rendering.MaterialSetDepthTest(_material, CompareFunction.Less);
-        
+
         var box = MeshSurface.CreateBox(Vector3.One);
         _rendering.MeshClear(_mesh);
         _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, box, _material);
     }
-    
+
     public override void Dispose()
     {
         GC.SuppressFinalize(this);

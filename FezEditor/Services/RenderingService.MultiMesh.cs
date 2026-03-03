@@ -57,7 +57,7 @@ public partial class RenderingService
         data.DataType = dataType;
         data.VisibleInstances = instances;
         data.Dirty = true;
-        
+
         // Pre-allocate upload buffer
         var stride = dataType.GetStride();
         var floatsPerInstance = dataType.GetFloatsPerInstance();
@@ -81,13 +81,15 @@ public partial class RenderingService
         // Data0..DataN: Vector4 -> TEXCOORD2..TEXCOORD5
         for (var i = 0; i < stride; i++)
         {
-            elements[1 + i] = new VertexElement(offset, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 2 + i);
+            elements[1 + i] = new VertexElement(offset, VertexElementFormat.Vector4,
+                VertexElementUsage.TextureCoordinate, 2 + i);
             offset += 16; // sizeof(Vector4)
         }
 
         // Allocate instance buffer.
         data.InstanceDeclaration = new VertexDeclaration(offset, elements);
-        data.InstanceBuffer = new DynamicVertexBuffer(GraphicsDevice, data.InstanceDeclaration, instances, BufferUsage.WriteOnly);
+        data.InstanceBuffer =
+            new DynamicVertexBuffer(GraphicsDevice, data.InstanceDeclaration, instances, BufferUsage.WriteOnly);
     }
 
     public void MultiMeshDeallocate(Rid multiMesh)
@@ -124,7 +126,7 @@ public partial class RenderingService
                 "MultiMesh was allocated with Vector4 data type, use MultiMeshSetInstanceVector4");
         }
 
-        var offset = index * mm.DataType.GetFloatsPerInstance() + 1;
+        var offset = (index * mm.DataType.GetFloatsPerInstance()) + 1;
         var b = mm.UploadBuffer;
         b[offset] = value.M11;
         b[offset + 1] = value.M12;
@@ -155,7 +157,7 @@ public partial class RenderingService
                 "MultiMesh was allocated with Matrix data type, use MultiMeshSetInstanceMatrix");
         }
 
-        var offset = index * mm.DataType.GetFloatsPerInstance() + 1;
+        var offset = (index * mm.DataType.GetFloatsPerInstance()) + 1;
         var b = mm.UploadBuffer;
         b[offset] = value.X;
         b[offset + 1] = value.Y;
@@ -182,7 +184,7 @@ public partial class RenderingService
             {
                 throw new InvalidOperationException($"MultiMesh {multiMeshRid} does not have assigned mesh.");
             }
-                
+
             // Build template GPU buffers from the first surface of the referenced mesh.
             if (md!.Surfaces.Count > 0)
             {
@@ -209,6 +211,7 @@ public partial class RenderingService
                 var floatsPerInstance = mm.DataType.GetFloatsPerInstance();
                 mm.InstanceBuffer.SetData(mm.UploadBuffer, 0, visible * floatsPerInstance, SetDataOptions.Discard);
             }
+
             mm.Dirty = false;
         }
 
@@ -251,13 +254,13 @@ public partial class RenderingService
         {
             pass.Apply();
             GraphicsDevice.DrawInstancedPrimitives(
-                primitiveType: mm.TemplatePrimitiveType,
-                baseVertex: 0,
-                minVertexIndex: 0,
-                numVertices: mm.TemplateVertexCount,
-                startIndex: 0,
-                primitiveCount: mm.TemplatePrimitiveCount,
-                instanceCount: visible
+                mm.TemplatePrimitiveType,
+                0,
+                0,
+                mm.TemplateVertexCount,
+                0,
+                mm.TemplatePrimitiveCount,
+                visible
             );
         }
 

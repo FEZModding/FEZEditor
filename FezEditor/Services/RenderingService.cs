@@ -13,7 +13,7 @@ public partial class RenderingService : IDisposable
     private readonly Queue<Rid> _instanceTraversal = new();
 
     private uint _nextRid = 1;
-    
+
     public RenderingService(Game game)
     {
         GraphicsDevice = game.GraphicsDevice;
@@ -41,6 +41,7 @@ public partial class RenderingService : IDisposable
                 view = cam!.View;
                 projection = cam.Projection;
             }
+
             var viewProjection = view * projection;
 
             // Draw instances in tree traversal order.
@@ -55,7 +56,7 @@ public partial class RenderingService : IDisposable
                 {
                     continue;
                 }
-                
+
                 var worldMatrix = ComputeWorldMatrix(instance);
                 var matrices = new InstanceMatrices(worldMatrix, view, projection, viewProjection);
                 switch (instance.Type)
@@ -94,18 +95,18 @@ public partial class RenderingService : IDisposable
         {
             DisposeRenderTarget(rt);
         }
-        
+
         foreach (var mesh in _meshes.Values)
         {
             DisposeBuffers(mesh);
         }
-        
-        foreach(var mm in _multiMeshes.Values)
+
+        foreach (var mm in _multiMeshes.Values)
         {
             mm.InstanceBuffer?.Dispose();
             mm.InstanceDeclaration?.Dispose();
         }
-        
+
         _cameras.Clear();
         _worlds.Clear();
         _instances.Clear();
@@ -167,7 +168,7 @@ public partial class RenderingService : IDisposable
             }
         }
     }
-    
+
     private Rid AllocateRid(Type type)
     {
         return new Rid(_nextRid++, type);
@@ -206,6 +207,6 @@ public partial class RenderingService : IDisposable
         resource = null;
         return false;
     }
-    
+
     private record InstanceMatrices(Matrix World, Matrix View, Matrix Projection, Matrix ViewProjection);
 }

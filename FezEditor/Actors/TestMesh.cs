@@ -9,13 +9,13 @@ namespace FezEditor.Actors;
 public class TestMesh : ActorComponent
 {
     private readonly RenderingService _rendering;
-    
+
     private readonly Rid _mesh;
 
     private readonly Rid _material;
-    
+
     private float _elapsed;
-    
+
     internal TestMesh(Game game, Actor actor) : base(game, actor)
     {
         _rendering = game.GetService<RenderingService>();
@@ -33,7 +33,7 @@ public class TestMesh : ActorComponent
         var surface = MeshSurface.CreateTestTriangle();
         _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface, _material);
     }
-    
+
     public override void Update(GameTime gameTime)
     {
         _elapsed += (float)gameTime.ElapsedGameTime.TotalSeconds;

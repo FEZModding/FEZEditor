@@ -15,11 +15,11 @@ public partial class RenderingService
         public int Width;
         public int Height;
     }
-    
+
     private readonly Dictionary<Rid, RenderTargetData> _renderTargets = new();
-    
+
     private readonly Rid _backbufferRid;
-    
+
     public Rid RenderTargetCreate()
     {
         var rid = AllocateRid(typeof(RenderTargetData));

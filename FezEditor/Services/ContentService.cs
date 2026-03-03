@@ -8,7 +8,7 @@ namespace FezEditor.Services;
 public class ContentService : IDisposable
 {
     private const string Root = "Content";
-    
+
     private readonly Dictionary<object, IContentManager> _managers = new();
 
     private readonly IServiceProvider _services;
@@ -20,7 +20,7 @@ public class ContentService : IDisposable
         _services = game.Services;
         Global = Get(game);
     }
-    
+
     public IContentManager Get<T>(T context) where T : class
     {
         if (!_managers.TryGetValue(context, out var manager))
@@ -33,13 +33,13 @@ public class ContentService : IDisposable
             {
                 manager = new ZipContentManager(_services, Path.ChangeExtension(Root, ".pkz"));
             }
-            
+
             _managers.Add(context, manager);
         }
-        
+
         return manager;
     }
-    
+
     public void Unload<T>(T context) where T : class
     {
         if (_managers.Remove(context, out var manager))
@@ -57,6 +57,7 @@ public class ContentService : IDisposable
             cm.Unload();
             cm.Dispose();
         }
+
         _managers.Clear();
     }
 }

@@ -10,7 +10,7 @@ namespace FezEditor.Actors;
 public class ArtObjectMesh : ActorComponent
 {
     private readonly RenderingService _rendering;
-    
+
     private readonly Rid _mesh;
 
     private readonly Rid _material;
@@ -33,7 +33,7 @@ public class ArtObjectMesh : ActorComponent
     {
         var texture = RepackerExtensions.ConvertToTexture2D(ao.Cubemap);
         _rendering.MaterialAssignBaseTexture(_material, texture);
-        
+
         var surface = RepackerExtensions.ConvertToMesh(ao.Geometry.Vertices, ao.Geometry.Indices);
         _rendering.MeshClear(_mesh);
         _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface, _material);

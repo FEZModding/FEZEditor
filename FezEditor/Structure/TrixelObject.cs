@@ -21,7 +21,7 @@ public class TrixelObject
     public TrixelObject(Vector3 size)
     {
         Size = size;
-        var needed = (Width * Height * Depth + 7) / 8;
+        var needed = ((Width * Height * Depth) + 7) / 8;
         if (MissingTrixels.Length != needed)
         {
             MissingTrixels = new byte[needed];
@@ -64,7 +64,7 @@ public class TrixelObject
         var w = Width;
         var h = Height;
         var d = Depth;
-        var needed = (w * h * d + 7) / 8;
+        var needed = ((w * h * d) + 7) / 8;
 
         if (MissingTrixels.Length == needed)
         {
@@ -84,7 +84,7 @@ public class TrixelObject
             {
                 for (var z = 0; z < copyD; z++)
                 {
-                    var oldI = x + y * oldW + z * oldW * oldH;
+                    var oldI = x + (y * oldW) + (z * oldW * oldH);
                     if ((oldBytes[oldI >> 3] & (1 << (oldI & 7))) != 0)
                     {
                         SetMissing(new Vector3I(x, y, z), true);
@@ -96,7 +96,7 @@ public class TrixelObject
 
     private int BitIndex(Vector3I emplacement)
     {
-        return emplacement.X + emplacement.Y * Width + emplacement.Z * Width * Height;
+        return emplacement.X + (emplacement.Y * Width) + (emplacement.Z * Width * Height);
     }
 
     private class Base64Converter : JsonConverter<byte[]>

@@ -15,19 +15,19 @@ public class Grid : ActorComponent
     public Color SecondaryColor { get; set; } = new(0.3f, 0.3f, 0.3f, 0.8f);
 
     public float CellSize { get; set; } = 1f;
-    
+
     public int NumberOfCells { get; set; } = 1000;
 
     public int PrimarySteps { get; set; } = 10;
-    
+
     public int SecondaryStep { get; set; } = 1;
 
     private readonly RenderingService _rendering;
-    
+
     private readonly Rid _primaryMaterial;
-    
+
     private readonly Rid _secondaryMaterial;
-    
+
     private readonly GridPlaneData[] _planes = new GridPlaneData[3];
 
     internal Grid(Game game, Actor actor) : base(game, actor)
@@ -35,7 +35,7 @@ public class Grid : ActorComponent
         _rendering = game.GetService<RenderingService>();
         _primaryMaterial = _rendering.MaterialCreate();
         _secondaryMaterial = _rendering.MaterialCreate();
-        
+
         for (var i = 0; i < 3; i++)
         {
             var mesh = _rendering.MeshCreate();
@@ -43,9 +43,11 @@ public class Grid : ActorComponent
             _rendering.InstanceSetMesh(instance, mesh);
             _planes[i] = new GridPlaneData(instance, mesh);
         }
-        
-        _rendering.InstanceSetRotation(_planes[1].Instance, Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathHelper.PiOver2));
-        _rendering.InstanceSetRotation(_planes[2].Instance, Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathHelper.PiOver2));
+
+        _rendering.InstanceSetRotation(_planes[1].Instance,
+            Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathHelper.PiOver2));
+        _rendering.InstanceSetRotation(_planes[2].Instance,
+            Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathHelper.PiOver2));
     }
 
     public override void LoadContent(IContentManager content)
@@ -53,7 +55,7 @@ public class Grid : ActorComponent
         var effect = content.Load<Effect>("Effects/Grid");
         _rendering.MaterialAssignEffect(_primaryMaterial, effect);
         _rendering.MaterialAssignEffect(_secondaryMaterial, effect);
-        
+
         GenerateGridMesh(_planes[0].Mesh, GridPlane.X);
         GenerateGridMesh(_planes[1].Mesh, GridPlane.Y);
         GenerateGridMesh(_planes[2].Mesh, GridPlane.Z);
@@ -67,6 +69,7 @@ public class Grid : ActorComponent
             _rendering.FreeRid(plane.Instance);
             _rendering.FreeRid(plane.Mesh);
         }
+
         _rendering.FreeRid(_primaryMaterial);
         _rendering.FreeRid(_secondaryMaterial);
     }
@@ -75,7 +78,7 @@ public class Grid : ActorComponent
     {
         _rendering.MaterialSetAlbedo(_primaryMaterial, PrimaryColor);
         _rendering.MaterialSetAlbedo(_secondaryMaterial, SecondaryColor);
-        
+
         for (var i = 0; i < 3; i++)
         {
             _rendering.InstanceSetVisibility(_planes[i].Instance, Enabled && i == (int)Plane);
@@ -99,7 +102,7 @@ public class Grid : ActorComponent
         var vertices = new List<Vector3>();
         var indices = new List<int>();
         var colors = new List<Color>();
-        
+
         var worldExtent = NumberOfCells * CellSize;
         var worldStep = stepInCells * CellSize;
         var vertexIndex = 0;
@@ -116,7 +119,7 @@ public class Grid : ActorComponent
                     indices.Add(vertexIndex++);
                     indices.Add(vertexIndex++);
                 }
-                
+
                 for (var x = -worldExtent; x <= worldExtent; x += worldStep)
                 {
                     vertices.Add(new Vector3(x, 0, -worldExtent));
@@ -126,6 +129,7 @@ public class Grid : ActorComponent
                     indices.Add(vertexIndex++);
                     indices.Add(vertexIndex++);
                 }
+
                 break;
 
             case GridPlane.Y:
@@ -138,7 +142,7 @@ public class Grid : ActorComponent
                     indices.Add(vertexIndex++);
                     indices.Add(vertexIndex++);
                 }
-                
+
                 for (var x = -worldExtent; x <= worldExtent; x += worldStep)
                 {
                     vertices.Add(new Vector3(x, -worldExtent, 0));
@@ -148,6 +152,7 @@ public class Grid : ActorComponent
                     indices.Add(vertexIndex++);
                     indices.Add(vertexIndex++);
                 }
+
                 break;
 
             case GridPlane.Z:
@@ -160,7 +165,7 @@ public class Grid : ActorComponent
                     indices.Add(vertexIndex++);
                     indices.Add(vertexIndex++);
                 }
-                
+
                 for (var y = -worldExtent; y <= worldExtent; y += worldStep)
                 {
                     vertices.Add(new Vector3(0, y, -worldExtent));
@@ -170,6 +175,7 @@ public class Grid : ActorComponent
                     indices.Add(vertexIndex++);
                     indices.Add(vertexIndex++);
                 }
+
                 break;
 
             default:
@@ -183,6 +189,6 @@ public class Grid : ActorComponent
             Colors = colors.ToArray()
         };
     }
-    
+
     private readonly record struct GridPlaneData(Rid Instance, Rid Mesh);
 }

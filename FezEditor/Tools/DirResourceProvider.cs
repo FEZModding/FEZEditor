@@ -8,7 +8,7 @@ namespace FezEditor.Services;
 internal class DirResourceProvider : IResourceProvider
 {
     public bool IsReadonly => false;
-    
+
     public string Root => _directory.Name;
 
     public IEnumerable<string> Files => _files.Keys;
@@ -53,7 +53,7 @@ internal class DirResourceProvider : IResourceProvider
         {
             throw new FileNotFoundException(path);
         }
-        
+
         var bundles = FileBundle.BundleFilesAtPath(info.FullName);
         foreach (var bundle in bundles)
         {
@@ -63,7 +63,7 @@ internal class DirResourceProvider : IResourceProvider
                 return file.Data;
             }
         }
-        
+
         throw new FileNotFoundException(path);
     }
 
@@ -103,7 +103,7 @@ internal class DirResourceProvider : IResourceProvider
     {
         using var bundle = FormatConversion.Convert(asset);
         bundle.BundlePath = Path.Combine(_directory.FullName, path);
-        
+
         foreach (var outputFile in bundle.Files)
         {
             var fileOutputPath = bundle.BundlePath + bundle.MainExtension + outputFile.Extension;
@@ -122,6 +122,7 @@ internal class DirResourceProvider : IResourceProvider
             {
                 path = path.Replace(path.GetExtension(), "");
             }
+
             var normalizedPath = path.Replace('\\', '/');
             _files[normalizedPath] = file;
         }

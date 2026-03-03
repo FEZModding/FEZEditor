@@ -7,7 +7,7 @@ namespace FezEditor.Services;
 public partial class RenderingService
 {
     private static readonly Dictionary<(CullMode, FillMode), RasterizerState> RasterizerStateCache = new();
-    
+
     private static readonly Dictionary<int, BlendState> BlendStateCache = new();
 
     private class MaterialData
@@ -22,14 +22,15 @@ public partial class RenderingService
         public ColorWriteChannels ColorWriteChannels = ColorWriteChannels.All;
         public SamplerState? SamplerState = SamplerState.PointClamp;
         public BlendState BlendState = ResolveBlendState(BlendMode.AlphaBlend, ColorWriteChannels.All);
+
         public readonly DepthStencilState DepthStencilState = new()
         {
             DepthBufferEnable = true, DepthBufferWriteEnable = true
         };
     }
-    
+
     private readonly Dictionary<Rid, MaterialData> _materials = new();
-    
+
     public Rid MaterialCreate()
     {
         var rid = AllocateRid(typeof(MaterialData));
@@ -55,7 +56,7 @@ public partial class RenderingService
     {
         GetResource(_materials, material).Texture = texture;
     }
-    
+
     public void MaterialSetTextureTransform(Rid material, Matrix transform)
     {
         GetResource(_materials, material).TextureTransform = transform;
@@ -150,6 +151,7 @@ public partial class RenderingService
             state = new RasterizerState { CullMode = cullMode, FillMode = fillMode };
             RasterizerStateCache[key] = state;
         }
+
         return state;
     }
 
@@ -161,7 +163,7 @@ public partial class RenderingService
         BlendFunction alphaBlendFunction;
         Blend alphaSourceBlend;
         Blend alphaDestinationBlend;
-        
+
         switch (mode)
         {
             case BlendMode.Opaque:
@@ -172,7 +174,7 @@ public partial class RenderingService
                 alphaSourceBlend = BlendState.Opaque.AlphaSourceBlend;
                 alphaDestinationBlend = BlendState.Opaque.AlphaDestinationBlend;
                 break;
-            
+
             case BlendMode.AlphaBlend:
                 colorBlendFunction = BlendState.AlphaBlend.ColorBlendFunction;
                 colorSourceBlend = BlendState.AlphaBlend.ColorSourceBlend;
@@ -181,7 +183,7 @@ public partial class RenderingService
                 alphaSourceBlend = BlendState.AlphaBlend.AlphaSourceBlend;
                 alphaDestinationBlend = BlendState.AlphaBlend.AlphaDestinationBlend;
                 break;
-            
+
             case BlendMode.Additive:
                 colorBlendFunction = BlendState.Additive.ColorBlendFunction;
                 colorSourceBlend = BlendState.Additive.ColorSourceBlend;
@@ -190,7 +192,7 @@ public partial class RenderingService
                 alphaSourceBlend = BlendState.Additive.AlphaSourceBlend;
                 alphaDestinationBlend = BlendState.Additive.AlphaDestinationBlend;
                 break;
-            
+
             case BlendMode.Premultiplied:
                 colorBlendFunction = BlendState.NonPremultiplied.ColorBlendFunction;
                 colorSourceBlend = BlendState.NonPremultiplied.ColorSourceBlend;
@@ -199,7 +201,7 @@ public partial class RenderingService
                 alphaSourceBlend = BlendState.NonPremultiplied.AlphaSourceBlend;
                 alphaDestinationBlend = BlendState.NonPremultiplied.AlphaDestinationBlend;
                 break;
-            
+
             case BlendMode.Multiply:
                 colorBlendFunction = BlendFunction.Add;
                 colorSourceBlend = Blend.DestinationColor;
@@ -208,7 +210,7 @@ public partial class RenderingService
                 alphaSourceBlend = Blend.DestinationAlpha;
                 alphaDestinationBlend = Blend.Zero;
                 break;
-            
+
             case BlendMode.Multiply2X:
                 colorBlendFunction = BlendFunction.Add;
                 colorSourceBlend = Blend.DestinationColor;
@@ -217,7 +219,7 @@ public partial class RenderingService
                 alphaSourceBlend = Blend.DestinationAlpha;
                 alphaDestinationBlend = Blend.SourceAlpha;
                 break;
-            
+
             case BlendMode.Screen:
                 colorBlendFunction = BlendFunction.Add;
                 colorSourceBlend = Blend.InverseDestinationColor;
@@ -226,7 +228,7 @@ public partial class RenderingService
                 alphaSourceBlend = Blend.InverseDestinationAlpha;
                 alphaDestinationBlend = Blend.One;
                 break;
-            
+
             case BlendMode.Maximum:
                 colorBlendFunction = BlendFunction.Max;
                 colorSourceBlend = Blend.One;
@@ -235,7 +237,7 @@ public partial class RenderingService
                 alphaSourceBlend = Blend.One;
                 alphaDestinationBlend = Blend.One;
                 break;
-            
+
             case BlendMode.Minimum:
                 colorBlendFunction = BlendFunction.Min;
                 colorSourceBlend = Blend.One;
@@ -244,7 +246,7 @@ public partial class RenderingService
                 alphaSourceBlend = Blend.One;
                 alphaDestinationBlend = Blend.One;
                 break;
-            
+
             case BlendMode.Subtract:
                 colorBlendFunction = BlendFunction.ReverseSubtract;
                 colorSourceBlend = Blend.One;
@@ -253,18 +255,18 @@ public partial class RenderingService
                 alphaSourceBlend = Blend.One;
                 alphaDestinationBlend = Blend.One;
                 break;
-            
+
             default:
                 throw new ArgumentOutOfRangeException(nameof(mode));
         }
-        
+
         var hash = (byte)colorBlendFunction
-                 | ((byte)colorSourceBlend << 3)
-                 | ((byte)colorDestinationBlend << 7)
-                 | ((byte)alphaBlendFunction << 11)
-                 | ((byte)alphaSourceBlend << 14)
-                 | ((byte)alphaDestinationBlend << 18)
-                 | ((byte)colorWriteChannels << 22);
+                   | ((byte)colorSourceBlend << 3)
+                   | ((byte)colorDestinationBlend << 7)
+                   | ((byte)alphaBlendFunction << 11)
+                   | ((byte)alphaSourceBlend << 14)
+                   | ((byte)alphaDestinationBlend << 18)
+                   | ((byte)colorWriteChannels << 22);
 
         if (!BlendStateCache.TryGetValue(hash, out var state))
         {

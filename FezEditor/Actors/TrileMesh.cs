@@ -11,7 +11,7 @@ namespace FezEditor.Actors;
 public class TrileMesh : ActorComponent
 {
     private const int MaxInstancesCount = 200;
-    
+
     public int VisibleCount { get; set; }
 
     private readonly OrderedDictionary<TrileEmplacement, InstanceData> _instances = new();
@@ -23,7 +23,7 @@ public class TrileMesh : ActorComponent
     private readonly Rid _multiMesh;
 
     private readonly Rid _material;
-    
+
     private Vector3 _size;
 
     internal TrileMesh(Game game, Actor actor) : base(game, actor)
@@ -56,9 +56,9 @@ public class TrileMesh : ActorComponent
         _rendering.MaterialAssignBaseTexture(_material, texture);
 
         var trile = trileSet.Triles[id];
-        var surface = RepackerExtensions.ConvertToMesh(trile.Geometry.Vertices, trile.Geometry.Indices); 
+        var surface = RepackerExtensions.ConvertToMesh(trile.Geometry.Vertices, trile.Geometry.Indices);
         _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface, _material);
-        
+
         _rendering.MultiMeshAllocate(_multiMesh, MaxInstancesCount, MultiMeshDataType.Vector4);
         _size = trileSet.Triles[id].Size.ToXna();
     }
@@ -83,7 +83,7 @@ public class TrileMesh : ActorComponent
         var rotation = _instances[emplacement].Rotation.AsQuaternion();
         return Mathz.ComputeBoundingBox(position, rotation, Vector3.One, _size);
     }
-    
+
     public override void Update(GameTime gameTime)
     {
         _rendering.MultiMeshSetVisibleInstances(_multiMesh, VisibleCount);
@@ -96,6 +96,9 @@ public class TrileMesh : ActorComponent
 
     private record struct InstanceData(Vector3 Position, TrileRotation Rotation)
     {
-        public Vector4 ToStride() => new(Position, Rotation.AsPhi());
+        public Vector4 ToStride()
+        {
+            return new Vector4(Position, Rotation.AsPhi());
+        }
     }
 }

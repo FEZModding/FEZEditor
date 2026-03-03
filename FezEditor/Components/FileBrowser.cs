@@ -23,9 +23,9 @@ public class FileBrowser : DrawableGameComponent
     private int _historyIndex = -1;
 
     private SortMode _sortMode = SortMode.NameAscending;
-    
+
     private readonly EditorService _editorService;
-    
+
     private readonly ResourceService _resourceService;
 
     private enum SortMode
@@ -115,7 +115,7 @@ public class FileBrowser : DrawableGameComponent
         {
             ImGui.SetNextItemWidth(-40);
             ImGui.InputTextWithHint("", "Filter Files", ref _filter, 255);
-            
+
             if (!string.IsNullOrEmpty(_filter))
             {
                 ImGui.SameLine();
@@ -124,7 +124,7 @@ public class FileBrowser : DrawableGameComponent
                     _filter = "";
                 }
             }
-            
+
             ImGui.SameLine();
             if (ImGui.Button(Icons.ListFilter))
             {
@@ -231,9 +231,9 @@ public class FileBrowser : DrawableGameComponent
 
                 // Choose icon based on node type
                 var icon = node.IsDirectory
-                    ? (node.IsOpen ? Icons.FolderOpened : Icons.Folder)
+                    ? node.IsOpen ? Icons.FolderOpened : Icons.Folder
                     : GetFileIcon(node.Extension);
-                
+
                 var label = $"{icon} {node.Name}";
                 var nodeOpen = ImGui.TreeNodeEx($"{node.Path}##{node.Path}", nodeFlags, label);
 
@@ -242,6 +242,7 @@ public class FileBrowser : DrawableGameComponent
                 {
                     node.IsOpen = nodeOpen;
                 }
+
                 if (ImGui.IsItemClicked())
                 {
                     _selected = node;
@@ -271,7 +272,7 @@ public class FileBrowser : DrawableGameComponent
                         _editorService.OpenEditorFor(path);
                     }
                 }
-                
+
                 // if (ImGui.BeginPopupContextItem())
                 // {
                 //     if (ImGui.MenuItem("Open"))
@@ -296,6 +297,7 @@ public class FileBrowser : DrawableGameComponent
                     }
                 }
             }
+
             ImGui.PopStyleVar(2);
         }
 
@@ -337,7 +339,7 @@ public class FileBrowser : DrawableGameComponent
             _filter = "";
             return;
         }
-        
+
         _root = new FileNode
         {
             Name = _resourceService.Root,
@@ -502,7 +504,7 @@ public class FileBrowser : DrawableGameComponent
         {
             return Icons.File;
         }
-        
+
         var parts = extension.TrimStart('.').Split('.');
         var lastExt = parts.Length > 0 ? parts[^1].ToLowerInvariant() : "";
         return lastExt switch

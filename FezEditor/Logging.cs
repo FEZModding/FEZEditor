@@ -7,7 +7,7 @@ public static class Logging
 {
     private const string LogTemplate =
         "({Timestamp:HH:mm:ss.fff}) [{SourceContext}] {Level} : {Message:lj}{NewLine}{Exception}";
-    
+
     public static void Initialize()
     {
         Log.Logger = new LoggerConfiguration()

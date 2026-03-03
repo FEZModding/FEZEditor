@@ -51,12 +51,12 @@ public class ResourceExtractor : DrawableGameComponent
         {
             throw new ArgumentException("Pak files must be specified.");
         }
-        
+
         if (string.IsNullOrEmpty(directory))
         {
             throw new ArgumentException("Target directory must be specified.");
         }
-        
+
         _pakFiles = paks.Where(p => _expectedPaks.Any(p.EndsWith)).ToList();
         _directoryPath = directory;
     }
@@ -101,72 +101,73 @@ public class ResourceExtractor : DrawableGameComponent
             switch (_state)
             {
                 case State.CanExtract:
-                {
-                    ImGui.Text("This will extract all game assets to:");
-                    ImGuiX.TextColored(new Color(0.5f, 0.8f, 1f, 1f), _directoryPath);
-                    ImGui.Spacing();
-                    ImGui.Text("Do you want to continue?");
-                    ImGui.Spacing();
-
-                    if (ImGuiX.Button("Yes", new Vector2(120, 0)))
                     {
-                        _state = State.Extracting;
-                        _ = ExtractAsync();
+                        ImGui.Text("This will extract all game assets to:");
+                        ImGuiX.TextColored(new Color(0.5f, 0.8f, 1f, 1f), _directoryPath);
+                        ImGui.Spacing();
+                        ImGui.Text("Do you want to continue?");
+                        ImGui.Spacing();
+
+                        if (ImGuiX.Button("Yes", new Vector2(120, 0)))
+                        {
+                            _state = State.Extracting;
+                            _ = ExtractAsync();
+                        }
+
+                        ImGui.SameLine();
+
+                        if (ImGuiX.Button("No", new Vector2(120, 0)))
+                        {
+                            _state = State.Disposed;
+                            ImGui.CloseCurrentPopup();
+                        }
+
+                        break;
                     }
-
-                    ImGui.SameLine();
-
-                    if (ImGuiX.Button("No", new Vector2(120, 0)))
-                    {
-                        _state = State.Disposed;
-                        ImGui.CloseCurrentPopup();
-                    }
-
-                    break;
-                }
 
                 case State.Extracting:
-                {
-                    ImGui.Text(_status);
-                    ImGui.Text($"File: {_currentFile}");
-                    ImGui.Text($"Progress: {_filesProcessed} / {_totalFiles}");
-
-                    ImGuiX.ProgressBar(_progress, new Vector2(400, 0), $"{_progress * 100:F1}%");
-                    if (ImGui.Button("Cancel"))
                     {
-                        _cts?.Cancel();
-                        ImGui.CloseCurrentPopup();
-                    }
+                        ImGui.Text(_status);
+                        ImGui.Text($"File: {_currentFile}");
+                        ImGui.Text($"Progress: {_filesProcessed} / {_totalFiles}");
 
-                    break;
-                }
+                        ImGuiX.ProgressBar(_progress, new Vector2(400, 0), $"{_progress * 100:F1}%");
+                        if (ImGui.Button("Cancel"))
+                        {
+                            _cts?.Cancel();
+                            ImGui.CloseCurrentPopup();
+                        }
+
+                        break;
+                    }
 
                 case State.Complete:
-                {
-                    ImGuiX.TextColored(
-                        _status.Contains("Error") ? Color.Red :
-                        _status.Contains("complete") ? Color.Green :
-                        Color.White,
-                        _status);
-
-                    _disposeAfter -= gameTime.ElapsedGameTime;
-                    if (_disposeAfter < TimeSpan.Zero)
                     {
-                        if (_status.Contains("complete"))
-                        {
-                            Competed?.Invoke();
-                        }
-                        _state = State.Disposed;
-                        ImGui.CloseCurrentPopup();
-                    }
+                        ImGuiX.TextColored(
+                            _status.Contains("Error") ? Color.Red :
+                            _status.Contains("complete") ? Color.Green :
+                            Color.White,
+                            _status);
 
-                    break;
-                }
+                        _disposeAfter -= gameTime.ElapsedGameTime;
+                        if (_disposeAfter < TimeSpan.Zero)
+                        {
+                            if (_status.Contains("complete"))
+                            {
+                                Competed?.Invoke();
+                            }
+
+                            _state = State.Disposed;
+                            ImGui.CloseCurrentPopup();
+                        }
+
+                        break;
+                    }
             }
 
             ImGui.EndPopup();
         }
-        
+
         if (!isOpen)
         {
             _state = State.Disposed;
@@ -212,7 +213,7 @@ public class ResourceExtractor : DrawableGameComponent
             foreach (var pakFile in pakReader.ReadFiles())
             {
                 ct.ThrowIfCancellationRequested();
-                
+
                 var path = file.EndsWith("Music.pak")
                     ? $"music\\{pakFile.Path}"
                     : pakFile.Path;
@@ -234,7 +235,7 @@ public class ResourceExtractor : DrawableGameComponent
             _status = "No files to extract";
             return;
         }
-        
+
         foreach (var file in _pakFiles)
         {
             ct.ThrowIfCancellationRequested();
@@ -281,7 +282,7 @@ public class ResourceExtractor : DrawableGameComponent
                 var pakFilePathNormalized = Path.Combine(_currentFile.Split('/', '\\'));
                 bundle.BundlePath = Path.Combine(outputDir, pakFilePathNormalized);
                 Directory.CreateDirectory(Path.GetDirectoryName(bundle.BundlePath) ?? "");
-                
+
                 foreach (var outputFile in bundle.Files)
                 {
                     var fileName = bundle.BundlePath + bundle.MainExtension + outputFile.Extension;

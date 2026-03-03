@@ -11,7 +11,7 @@ public class Actor : IDisposable
     public Transform Transform { get; private set; }
 
     public bool Active { get; set; } = true;
-    
+
     public string Name { get; set; } = "Actor";
 
     public Rid InstanceRid { get; }
@@ -19,7 +19,7 @@ public class Actor : IDisposable
     private readonly List<ActorComponent> _components = new();
 
     private readonly Game _game;
-    
+
     private readonly IContentManager _content;
 
     private readonly RenderingService _rendering;

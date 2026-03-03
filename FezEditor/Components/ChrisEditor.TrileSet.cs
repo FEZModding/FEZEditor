@@ -125,7 +125,7 @@ public partial class ChrisEditor
                 Type = Trile.Type,
                 Face = Trile.Face,
                 SurfaceType = Trile.SurfaceType,
-                Faces = new Dictionary<FaceOrientation, CollisionType>(Trile.Faces),
+                Faces = new Dictionary<FaceOrientation, CollisionType>(Trile.Faces)
             };
 
             (trile.Geometry.Vertices, trile.Geometry.Indices) = TrixelMaterializer.Dematerialize(obj);
@@ -158,12 +158,12 @@ public partial class ChrisEditor
                     // Map each face's [f/6, (f+1)/6] range into atlas space, inserting per-face borders.
                     var u = vertex.TextureCoordinate.X;
                     var faceIndex = Math.Clamp((int)(u * FaceCount), 0, FaceCount - 1);
-                    var uWithinFace = u * FaceCount - faceIndex;
+                    var uWithinFace = (u * FaceCount) - faceIndex;
 
-                    var faceAtlasX = trile1.AtlasOffset.X + (faceIndex * AtlasFaceSize + 1f) / atlasW;
-                    var mappedU = faceAtlasX + uWithinFace * FaceSize / atlasW;
-                    var mappedV = trile1.AtlasOffset.Y + 1f / atlasH +
-                                  vertex.TextureCoordinate.Y * FaceSize / atlasH;
+                    var faceAtlasX = trile1.AtlasOffset.X + (((faceIndex * AtlasFaceSize) + 1f) / atlasW);
+                    var mappedU = faceAtlasX + (uWithinFace * FaceSize / atlasW);
+                    var mappedV = trile1.AtlasOffset.Y + (1f / atlasH) +
+                                  (vertex.TextureCoordinate.Y * FaceSize / atlasH);
 
                     vertex.TextureCoordinate = new RVector2(mappedU, mappedV);
                 }
@@ -240,8 +240,8 @@ public partial class ChrisEditor
                             {
                                 var dstRow = row - 1;
                                 var dstCol = col - 1;
-                                var srcPixel = ((py + row) * atlasWidth + px + srcFace + col) * BytesPerPixel;
-                                var dstPixel = (dstRow * TrileWidth + dstFace + dstCol) * BytesPerPixel;
+                                var srcPixel = (((py + row) * atlasWidth) + px + srcFace + col) * BytesPerPixel;
+                                var dstPixel = ((dstRow * TrileWidth) + dstFace + dstCol) * BytesPerPixel;
                                 atlasData.AsSpan(srcPixel, BytesPerPixel).CopyTo(dst.AsSpan(dstPixel, BytesPerPixel));
                             }
                         }
@@ -266,8 +266,8 @@ public partial class ChrisEditor
                     {
                         var srcRow = Math.Clamp(row - 1, 0, FaceSize - 1);
                         var srcCol = Math.Clamp(col - 1, 0, FaceSize - 1);
-                        var srcPixel = (srcRow * TrileWidth + srcFace + srcCol) * BytesPerPixel;
-                        var dstPixel = ((py + row) * atlasWidth + px + dstFace + col) * BytesPerPixel;
+                        var srcPixel = ((srcRow * TrileWidth) + srcFace + srcCol) * BytesPerPixel;
+                        var dstPixel = (((py + row) * atlasWidth) + px + dstFace + col) * BytesPerPixel;
                         src.AsSpan(srcPixel, BytesPerPixel).CopyTo(atlasData.AsSpan(dstPixel, BytesPerPixel));
                     }
                 }
@@ -402,7 +402,11 @@ public partial class ChrisEditor
 
         private static bool AddCollisionType(ref string key)
         {
-            if (string.IsNullOrEmpty(key)) key = nameof(FaceOrientation.Left);
+            if (string.IsNullOrEmpty(key))
+            {
+                key = nameof(FaceOrientation.Left);
+            }
+
             var face = (int)Enum.Parse<FaceOrientation>(key);
             var faces = Enum.GetNames<FaceOrientation>();
             return ImGui.Combo("##item", ref face, faces, faces.Length);
@@ -433,12 +437,12 @@ public partial class ChrisEditor
                 // Thumbnail shows the front face (face 0) usable area, skipping the 1px border.
                 var atlasHeight = _atlasTexture?.Height ?? _set.TextureAtlas.Height;
                 var uv0 = new Vector2(
-                    trile.AtlasOffset.X + 1f / AtlasWidth,
-                    trile.AtlasOffset.Y + 1f / atlasHeight
+                    trile.AtlasOffset.X + (1f / AtlasWidth),
+                    trile.AtlasOffset.Y + (1f / atlasHeight)
                 );
                 var uv1 = new Vector2(
-                    uv0.X + (float)FaceSize / AtlasWidth,
-                    uv0.Y + (float)FaceSize / atlasHeight
+                    uv0.X + ((float)FaceSize / AtlasWidth),
+                    uv0.Y + ((float)FaceSize / atlasHeight)
                 );
 
                 yield return new Entry(id, trile.Name, _atlasTexture ?? _missing, uv0, uv1);
@@ -625,7 +629,7 @@ public partial class ChrisEditor
                     Type = trile.Type,
                     Face = trile.Face,
                     SurfaceType = trile.SurfaceType,
-                    Faces = new Dictionary<FaceOrientation, CollisionType>(trile.Faces),
+                    Faces = new Dictionary<FaceOrientation, CollisionType>(trile.Faces)
                 };
                 (copy.Geometry.Vertices, copy.Geometry.Indices) =
                     (trile.Geometry.Vertices.ToArray(), trile.Geometry.Indices.ToArray());

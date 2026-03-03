@@ -14,7 +14,7 @@ public class TrixelsMesh : ActorComponent
     private static readonly Color HoveredColor = Color.White with { A = 85 }; // 53%
 
     public Texture2D? Texture { get; set; }
-    
+
     public IReadOnlyList<TrixelFace> Faces => _faces;
 
     public bool Wireframe
@@ -79,7 +79,7 @@ public class TrixelsMesh : ActorComponent
     {
         _objSize = obj.Size;
         _faces = TrixelMaterializer.BuildVisibleFaces(obj).ToArray();
-        _transform.Position = Vector3.Zero - obj.Size / 2f;
+        _transform.Position = Vector3.Zero - (obj.Size / 2f);
         _rendering.MultiMeshAllocate(_multiMesh, _faces.Length, MultiMeshDataType.Matrix);
         _rendering.MaterialAssignBaseTexture(_material, Texture!);
         UploadInstances();
@@ -110,10 +110,10 @@ public class TrixelsMesh : ActorComponent
             var emplacement = _faces[i].Emplacement;
             var face = _faces[i].Face;
 
-            var isHovered  = _hoveredFace.HasValue && _faces[i] == _hoveredFace.Value;
+            var isHovered = _hoveredFace.HasValue && _faces[i] == _hoveredFace.Value;
             var isSelected = _selectedFaces.Contains(_faces[i]);
 
-            var worldPos = (emplacement.ToVector3() + (Vector3.One + face.AsVector()) * 0.5f) * Mathz.TrixelSize;
+            var worldPos = (emplacement.ToVector3() + ((Vector3.One + face.AsVector()) * 0.5f)) * Mathz.TrixelSize;
             var quaternion = face.AsQuaternion();
             var (colStart, uAxis, vAxis, flipU, flipV) = face switch
             {
@@ -129,16 +129,23 @@ public class TrixelsMesh : ActorComponent
             var uSize = (int)((uAxis.X != 0 ? _objSize.X : uAxis.Z != 0 ? _objSize.Z : _objSize.Y) / Mathz.TrixelSize);
             var vSize = (int)((vAxis.Y != 0 ? _objSize.Y : vAxis.Z != 0 ? _objSize.Z : _objSize.X) / Mathz.TrixelSize);
 
-            var uIndex = emplacement.X * uAxis.X + emplacement.Y * uAxis.Y + emplacement.Z * uAxis.Z;
-            var vIndex = emplacement.X * vAxis.X + emplacement.Y * vAxis.Y + emplacement.Z * vAxis.Z;
+            var uIndex = (emplacement.X * uAxis.X) + (emplacement.Y * uAxis.Y) + (emplacement.Z * uAxis.Z);
+            var vIndex = (emplacement.X * vAxis.X) + (emplacement.Y * vAxis.Y) + (emplacement.Z * vAxis.Z);
 
-            if (flipU) uIndex = uSize - 1 - uIndex;
-            if (flipV) vIndex = vSize - 1 - vIndex;
+            if (flipU)
+            {
+                uIndex = uSize - 1 - uIndex;
+            }
+
+            if (flipV)
+            {
+                vIndex = vSize - 1 - vIndex;
+            }
 
             var uStep = 1f / (6f * uSize);
             var vStep = 1f / vSize;
 
-            var u0 = colStart + uIndex * uStep;
+            var u0 = colStart + (uIndex * uStep);
             var v0 = vIndex * vStep;
 
             var uv0 = new Vector2(u0, v0 + vStep);

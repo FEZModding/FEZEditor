@@ -18,9 +18,9 @@ public class JadeEditor : EditorComponent
     private readonly Dictionary<MapNode, NodeActors> _nodeMapping = new();
 
     private readonly ConfirmWindow _confirm;
-    
+
     private Scene _scene = null!;
-    
+
     private Actor _cameraActor = null!;
 
     private State _nextState = State.MapView;
@@ -58,7 +58,7 @@ public class JadeEditor : EditorComponent
             orbit.Pitch = -MathF.PI / 8f;
             orbit.PitchClamp = new Vector2(-MathF.PI / 8f, MathF.PI / 8f * 3f);
         }
-        
+
         RebuildSceneSubTree(_mapTree, _mapTree.Root);
     }
 
@@ -85,7 +85,7 @@ public class JadeEditor : EditorComponent
             {
                 ImGuiX.Image(texture, size);
                 InputService.CaptureScroll(ImGui.IsItemHovered());
-                
+
                 var gizmo = _cameraActor.GetComponent<OrientationGizmo>();
                 {
                     var imageMin = ImGuiX.GetItemRectMin();
@@ -96,7 +96,7 @@ public class JadeEditor : EditorComponent
                 if (ImGui.IsItemHovered() && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
                 {
                     var viewportMin = ImGuiX.GetItemRectMin();
-                    _viewportCenter = viewportMin + size / 2;
+                    _viewportCenter = viewportMin + (size / 2);
                     var ray = _scene.Viewport.Unproject(ImGuiX.GetMousePos(), viewportMin);
                     var actor = _scene.Raycast(ray);
                     if (actor != null)
@@ -147,6 +147,7 @@ public class JadeEditor : EditorComponent
                     {
                         AppMapNode(face);
                     }
+
                     ImGui.EndDisabled();
                 }
 
@@ -173,7 +174,7 @@ public class JadeEditor : EditorComponent
         var updateMesh = false;
         var updateIcons = false;
 
-        const ImGuiWindowFlags flags = ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoResize | 
+        const ImGuiWindowFlags flags = ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoResize |
                                        ImGuiWindowFlags.NoCollapse;
         if (ImGui.Begin($"Properties##{Title}", ref _showProperties, flags))
         {
@@ -285,7 +286,7 @@ public class JadeEditor : EditorComponent
                     updateIcons = true;
                 }
             }
-            
+
             var scriptIds = _selectedNode.Conditions.ScriptIds;
             if (ImGuiX.EditableList("Script Ids", ref scriptIds, RenderInt, () => 0))
             {
@@ -439,7 +440,7 @@ public class JadeEditor : EditorComponent
                 var vector2 = Vector3.Zero;
                 if (multiBranchCounts[item] > 1)
                 {
-                    vector2 = ((multiBranchIds[item] - 1) - ((multiBranchCounts[item] - 1) / 2f)) *
+                    vector2 = (multiBranchIds[item] - 1 - ((multiBranchCounts[item] - 1) / 2f)) *
                               (Mathz.XzMask - item.Face.AsVector().Abs()) * num4;
                 }
 
@@ -450,23 +451,23 @@ public class JadeEditor : EditorComponent
                 {
                     // Create multi-branch link segments
                     num = Math.Max(num, sizeFactor / 2f);
-                    var scale = (faceVector * num) + Vector3.One * LinkThickness;
+                    var scale = (faceVector * num) + (Vector3.One * LinkThickness);
                     var position = (faceVector * num / 2f) + offset;
                     CreateLinkBranch(node, position, scale);
 
-                    scale = vector2 + Vector3.One * LinkThickness;
+                    scale = vector2 + (Vector3.One * LinkThickness);
                     position = (vector2 / 2f) + offset + (faceVector * num);
                     CreateLinkBranch(node, position, scale);
 
                     var num5 = sizeFactor - num;
-                    scale = (faceVector * num5) + Vector3.One * LinkThickness;
+                    scale = (faceVector * num5) + (Vector3.One * LinkThickness);
                     position = (faceVector * num5 / 2f) + offset + (faceVector * num) + vector2;
                     CreateLinkBranch(node, position, scale);
                 }
                 else
                 {
                     // Create single branch link
-                    var scale = (faceVector * sizeFactor) + Vector3.One * LinkThickness;
+                    var scale = (faceVector * sizeFactor) + (Vector3.One * LinkThickness);
                     var position = (faceVector * sizeFactor / 2f) + offset;
                     CreateLinkBranch(node, position, scale);
                 }
@@ -475,22 +476,22 @@ public class JadeEditor : EditorComponent
                 switch (item.Node.LevelName)
                 {
                     case "LIGHTHOUSE_SPIN":
-                    {
-                        const float num6 = 3.425f;
-                        var scale = (Vector3.Backward * num6) + Vector3.One * LinkThickness;
-                        var position = (Vector3.Backward * num6 / 2f) + offset + (faceVector * sizeFactor);
-                        CreateLinkBranch(node, position, scale);
-                        break;
-                    }
+                        {
+                            const float num6 = 3.425f;
+                            var scale = (Vector3.Backward * num6) + (Vector3.One * LinkThickness);
+                            var position = (Vector3.Backward * num6 / 2f) + offset + (faceVector * sizeFactor);
+                            CreateLinkBranch(node, position, scale);
+                            break;
+                        }
 
                     case "LIGHTHOUSE_HOUSE_A":
-                    {
-                        const float num7 = 5f;
-                        var scale = (Vector3.Right * num7) + Vector3.One * LinkThickness;
-                        var position = (Vector3.Right * num7 / 2f) + offset + (faceVector * sizeFactor);
-                        CreateLinkBranch(node, position, scale);
-                        break;
-                    }
+                        {
+                            const float num7 = 5f;
+                            var scale = (Vector3.Right * num7) + (Vector3.One * LinkThickness);
+                            var position = (Vector3.Right * num7 / 2f) + offset + (faceVector * sizeFactor);
+                            CreateLinkBranch(node, position, scale);
+                            break;
+                        }
                 }
             }
 
@@ -517,7 +518,7 @@ public class JadeEditor : EditorComponent
                 {
                     _scene.DestroyActor(actor);
                 }
-                
+
                 // Icons is a child of Mesh actor, it will be deleted too
                 _scene.DestroyActor(actors.Mesh);
             }

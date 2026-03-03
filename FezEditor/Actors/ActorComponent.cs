@@ -6,7 +6,7 @@ namespace FezEditor.Actors;
 public abstract class ActorComponent : IDisposable
 {
     protected Actor Actor { get; }
-    
+
     protected Game Game { get; }
 
     public bool Enabled { get; set; } = true;
@@ -16,7 +16,7 @@ public abstract class ActorComponent : IDisposable
         Game = game;
         Actor = actor;
     }
-    
+
     public virtual void LoadContent(IContentManager content)
     {
     }

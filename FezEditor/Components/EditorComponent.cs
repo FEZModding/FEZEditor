@@ -16,9 +16,9 @@ public abstract class EditorComponent
     protected Game Game { get; }
 
     protected InputService InputService { get; }
-    
+
     protected ResourceService ResourceService { get; }
-    
+
     protected IContentManager ContentManager { get; }
 
     protected EditorComponent(Game game, string title)

@@ -11,14 +11,14 @@ public struct Vector3I : IEquatable<Vector3I>, IComparable<Vector3I>
     public int Y;
 
     public int Z;
-    
+
     public Vector3I(int x, int y, int z)
     {
         X = x;
         Y = y;
         Z = z;
     }
-    
+
     public Vector3I(float x, float y, float z)
     {
         X = (int)MathF.Round(x);
@@ -32,7 +32,7 @@ public struct Vector3I : IEquatable<Vector3I>, IComparable<Vector3I>
         Y = vector.Y;
         Z = vector.Z;
     }
-    
+
     public Vector3I(Vector3 vector)
     {
         X = (int)MathF.Round(vector.X);
@@ -42,9 +42,9 @@ public struct Vector3I : IEquatable<Vector3I>, IComparable<Vector3I>
 
     public float LengthSquared()
     {
-        return X * X + Y * Y + Z * Z;
+        return (X * X) + (Y * Y) + (Z * Z);
     }
-    
+
     public readonly Vector3 ToVector3()
     {
         return new Vector3(X, Y, Z);
@@ -157,7 +157,7 @@ public struct Vector3I : IEquatable<Vector3I>, IComparable<Vector3I>
     {
         return lhs.CompareTo(new Vector3I(rhs)) > 0;
     }
-    
+
     public static Vector3I Zero { get; } = new(0, 0, 0);
 
     public static Vector3I One { get; } = new(1, 1, 1);

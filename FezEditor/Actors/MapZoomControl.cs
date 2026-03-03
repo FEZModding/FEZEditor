@@ -40,7 +40,7 @@ public class MapZoomControl : ActorComponent
         if (scroll != 0)
         {
             _sizeIndex = Math.Clamp(_sizeIndex + Math.Sign(scroll), 0, Sizes.Length - 1);
-            _targetSize = Sizes[_sizeIndex]; 
+            _targetSize = Sizes[_sizeIndex];
         }
     }
 }

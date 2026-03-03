@@ -217,6 +217,7 @@ public class PoEditor : EditorComponent
                     }
                 }
             }
+
             UpdateTableView();
         };
 
@@ -288,42 +289,42 @@ public class PoEditor : EditorComponent
             switch (_activeCell.Column)
             {
                 case 0: // Row
-                {
-                    using (History.BeginScope("Update id of text"))
                     {
-                        foreach (var storage in _textStorage.Values)
+                        using (History.BeginScope("Update id of text"))
                         {
-                            if (storage.Remove(row[_activeCell.Column], out var text))
+                            foreach (var storage in _textStorage.Values)
                             {
-                                storage.Add(_cellText, text);
+                                if (storage.Remove(row[_activeCell.Column], out var text))
+                                {
+                                    storage.Add(_cellText, text);
+                                }
                             }
                         }
-                    }
 
-                    break;
-                }
+                        break;
+                    }
 
                 case 1: // Source
-                {
-                    using (History.BeginScope("Update source of text"))
                     {
-                        var englishStorage = _textStorage[Language.English.GetId()];
-                        englishStorage[row[0]] = NormalizeLineEndings(_cellText);
-                    }
+                        using (History.BeginScope("Update source of text"))
+                        {
+                            var englishStorage = _textStorage[Language.English.GetId()];
+                            englishStorage[row[0]] = NormalizeLineEndings(_cellText);
+                        }
 
-                    break;
-                }
+                        break;
+                    }
 
                 case 2: // Translation
-                {
-                    using (History.BeginScope("Update translation of text"))
                     {
-                        var languageStorage = _textStorage[_selectedLanguage.GetId()];
-                        languageStorage[row[0]] = NormalizeLineEndings(_cellText);
-                    }
+                        using (History.BeginScope("Update translation of text"))
+                        {
+                            var languageStorage = _textStorage[_selectedLanguage.GetId()];
+                            languageStorage[row[0]] = NormalizeLineEndings(_cellText);
+                        }
 
-                    break;
-                }
+                        break;
+                    }
             }
 
             _activeCell = (-1, -1);

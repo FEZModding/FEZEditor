@@ -40,7 +40,7 @@ public class MainLayout : DrawableGameComponent
     {
         // Clear previously closed editors
         _editorService.FlushPendingCloses();
-        
+
         var viewport = ImGui.GetMainViewport();
         ImGui.SetNextWindowPos(viewport.WorkPos, ImGuiCond.Always);
         ImGui.SetNextWindowSize(viewport.WorkSize, ImGuiCond.Always);
@@ -77,12 +77,12 @@ public class MainLayout : DrawableGameComponent
                             {
                                 title = "(*) " + title;
                             }
-                            
+
                             var isOpen = true;
                             var beginTabItem = editor is WelcomeComponent
                                 ? ImGui.BeginTabItem(title)
                                 : ImGui.BeginTabItem(title, ref isOpen);
-                            
+
                             if (beginTabItem)
                             {
                                 DrawEditor(editor);
@@ -104,6 +104,7 @@ public class MainLayout : DrawableGameComponent
                     ImGuiX.SetTextCentered(text);
                     ImGui.Text(text);
                 }
+
                 ImGui.EndChild();
             }
         }
@@ -120,8 +121,8 @@ public class MainLayout : DrawableGameComponent
             editor.Draw();
             return;
         }
-        
-        var dotCount = ((int)(ImGui.GetTime() * 2) % 4);
+
+        var dotCount = (int)(ImGui.GetTime() * 2) % 4;
         var dots = new string('.', dotCount);
         var text = $"Loading{dots}";
         ImGuiX.SetTextCentered(text);

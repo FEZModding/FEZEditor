@@ -12,13 +12,13 @@ public class MenuBar : DrawableGameComponent
     private Texture2D _logoTexture = null!;
 
     private AboutWindow? _aboutWindow;
-    
+
     private readonly ConfirmWindow _confirmWindow;
-    
+
     private readonly EditorService _editorService;
-    
+
     private readonly ResourceService _resourceService;
-    
+
     private readonly InputService _inputService;
 
     public MenuBar(Game game) : base(game)
@@ -70,14 +70,14 @@ public class MenuBar : DrawableGameComponent
                 {
                     _editorService.SaveActiveEditorChanges();
                 }
-                
+
                 enabled = _editorService.Flags.HasFlag(EditorFlags.SaveFile);
                 shortcut = _inputService.GetActionBinding(InputActions.UiSaveAs);
                 if (ImGui.MenuItem("Save File As...", shortcut, false, enabled))
                 {
                     _editorService.SaveActiveEditorChangesAs();
                 }
-                
+
                 enabled = _editorService.Flags.HasFlag(EditorFlags.SaveFile);
                 shortcut = _inputService.GetActionBinding(InputActions.UiSaveAll);
                 if (ImGui.MenuItem("Save All Files", shortcut, false, enabled))
@@ -87,7 +87,7 @@ public class MenuBar : DrawableGameComponent
                         _editorService.SaveEditorChanges(editor);
                     }
                 }
-                
+
                 ImGui.Separator();
 
                 enabled = _editorService.Flags.HasFlag(EditorFlags.Undo);
@@ -96,14 +96,14 @@ public class MenuBar : DrawableGameComponent
                 {
                     _editorService.UndoActiveEditorChanges();
                 }
-                
+
                 enabled = _editorService.Flags.HasFlag(EditorFlags.Redo);
                 shortcut = _inputService.GetActionBinding(InputActions.UiRedo);
                 if (ImGui.MenuItem("Redo", shortcut, false, enabled))
                 {
                     _editorService.RedoActiveEditorChanges();
                 }
-                
+
                 ImGui.Separator();
 
                 enabled = _editorService.Flags.HasFlag(EditorFlags.CloseFile);
@@ -119,7 +119,7 @@ public class MenuBar : DrawableGameComponent
                 {
                     ShowCloseAllDialog();
                 }
-                
+
                 shortcut = _inputService.GetActionBinding(InputActions.UiQuit);
                 if (ImGui.MenuItem("Quit", shortcut))
                 {
@@ -144,7 +144,7 @@ public class MenuBar : DrawableGameComponent
             ImGui.EndMainMenuBar();
         }
     }
-    
+
     private void ShowAboutWindow()
     {
         if (_aboutWindow == null)
@@ -162,7 +162,7 @@ public class MenuBar : DrawableGameComponent
             _editorService.CloseActiveEditor();
             return;
         }
-        
+
         _confirmWindow.Text = "You have unsaved changes. Close the file?";
         _confirmWindow.Title = "Confirm Closing";
         _confirmWindow.Confirmed = () =>
@@ -170,7 +170,7 @@ public class MenuBar : DrawableGameComponent
             _editorService.CloseActiveEditor();
         };
     }
-    
+
     private void ShowCloseAllDialog()
     {
         if (!_editorService.HasAnyEditorUnsavedChanges())

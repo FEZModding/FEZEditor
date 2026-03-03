@@ -15,14 +15,14 @@ public partial class RenderingService
         public PrimitiveType PrimitiveType;
         public Rid Material;
     }
-    
+
     private class MeshData
     {
         public readonly List<SurfaceEntry> Surfaces = new();
     }
-    
+
     private readonly Dictionary<Rid, MeshData> _meshes = new();
-    
+
     public Rid MeshCreate()
     {
         var rid = AllocateRid(typeof(MeshData));
@@ -84,7 +84,7 @@ public partial class RenderingService
         ValidateSurfaceIndex(data, surfaceIdx);
         return data.Surfaces[surfaceIdx].Material;
     }
-    
+
     private void DrawMesh(RenderTargetData rt, WorldData world, Rid meshRid, InstanceMatrices matrices)
     {
         if (TryGetResource(_meshes, meshRid, out var mesh))
@@ -115,10 +115,10 @@ public partial class RenderingService
             }
         }
     }
-    
+
     private void DrawSurfaceEntry(SurfaceEntry surface, Effect effect)
     {
-        if (surface is { VertexBuffer: not null, IndexBuffer: not null }) 
+        if (surface is { VertexBuffer: not null, IndexBuffer: not null })
         {
             GraphicsDevice.SetVertexBuffer(surface.VertexBuffer);
             GraphicsDevice.Indices = surface.IndexBuffer;
@@ -126,12 +126,12 @@ public partial class RenderingService
             {
                 pass.Apply();
                 GraphicsDevice.DrawIndexedPrimitives(
-                    primitiveType: surface.PrimitiveType,
-                    baseVertex: 0, 
-                    minVertexIndex: 0,
-                    numVertices: surface.VertexCount,
-                    startIndex: 0,
-                    primitiveCount: surface.PrimitiveCount
+                    surface.PrimitiveType,
+                    0,
+                    0,
+                    surface.VertexCount,
+                    0,
+                    surface.PrimitiveCount
                 );
             }
         }
@@ -143,7 +143,7 @@ public partial class RenderingService
         {
             return;
         }
-        
+
         entry.VertexBuffer?.Dispose();
         entry.IndexBuffer?.Dispose();
         entry.VertexBuffer = null;
@@ -162,7 +162,7 @@ public partial class RenderingService
         {
             throw new ArgumentException("Invalid number of indices: " + surface.Indices.Length);
         }
-        
+
         var hasNormals = surface.Normals is { Length: > 0 };
         var hasTexCoords = surface.TexCoords is { Length: > 0 };
         var hasColors = surface.Colors is { Length: > 0 };
@@ -172,19 +172,24 @@ public partial class RenderingService
             if (hasNormals)
             {
                 var geometry = Enumerable.Range(0, surface.Vertices.Length)
-                    .Select(i => new VertexPositionNormalTexture(surface.Vertices[i], surface.Normals![i], surface.TexCoords![i]))
+                    .Select(i =>
+                        new VertexPositionNormalTexture(surface.Vertices[i], surface.Normals![i],
+                            surface.TexCoords![i]))
                     .ToArray();
-            
-                entry.VertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionNormalTexture), geometry.Length, BufferUsage.WriteOnly);
+
+                entry.VertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionNormalTexture),
+                    geometry.Length, BufferUsage.WriteOnly);
                 entry.VertexBuffer.SetData(geometry);
             }
             else if (hasColors)
             {
                 var geometry = Enumerable.Range(0, surface.Vertices.Length)
-                    .Select(i => new VertexPositionColorTexture(surface.Vertices[i], surface.Colors![i], surface.TexCoords![i]))
+                    .Select(i =>
+                        new VertexPositionColorTexture(surface.Vertices[i], surface.Colors![i], surface.TexCoords![i]))
                     .ToArray();
-            
-                entry.VertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionColorTexture), geometry.Length, BufferUsage.WriteOnly);
+
+                entry.VertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionColorTexture),
+                    geometry.Length, BufferUsage.WriteOnly);
                 entry.VertexBuffer.SetData(geometry);
             }
             else
@@ -193,7 +198,8 @@ public partial class RenderingService
                     .Select(i => new VertexPositionTexture(surface.Vertices[i], surface.TexCoords![i]))
                     .ToArray();
 
-                entry.VertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionTexture), geometry.Length, BufferUsage.WriteOnly);
+                entry.VertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionTexture), geometry.Length,
+                    BufferUsage.WriteOnly);
                 entry.VertexBuffer.SetData(geometry);
             }
         }
@@ -202,27 +208,32 @@ public partial class RenderingService
             if (hasNormals)
             {
                 var geometry = Enumerable.Range(0, surface.Vertices.Length)
-                    .Select(i => new VertexPositionNormalColor(surface.Vertices[i], surface.Normals![i], hasColors ? surface.Colors![i] : Color.White))
+                    .Select(i => new VertexPositionNormalColor(surface.Vertices[i], surface.Normals![i],
+                        hasColors ? surface.Colors![i] : Color.White))
                     .ToArray();
-                
-                entry.VertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionNormalColor), geometry.Length, BufferUsage.WriteOnly);
+
+                entry.VertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionNormalColor),
+                    geometry.Length, BufferUsage.WriteOnly);
                 entry.VertexBuffer.SetData(geometry);
             }
             else
             {
                 var geometry = Enumerable.Range(0, surface.Vertices.Length)
-                    .Select(i => new VertexPositionColor(surface.Vertices[i], hasColors ? surface.Colors![i] : Color.White))
+                    .Select(i =>
+                        new VertexPositionColor(surface.Vertices[i], hasColors ? surface.Colors![i] : Color.White))
                     .ToArray();
 
-                entry.VertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionColor), geometry.Length, BufferUsage.WriteOnly);
+                entry.VertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionColor), geometry.Length,
+                    BufferUsage.WriteOnly);
                 entry.VertexBuffer.SetData(geometry);
             }
         }
-        
-        entry.IndexBuffer = new IndexBuffer(GraphicsDevice, IndexElementSize.ThirtyTwoBits, surface.Indices.Length, BufferUsage.WriteOnly);
+
+        entry.IndexBuffer = new IndexBuffer(GraphicsDevice, IndexElementSize.ThirtyTwoBits, surface.Indices.Length,
+            BufferUsage.WriteOnly);
         entry.IndexBuffer.SetData(surface.Indices);
     }
-    
+
     private static void ValidateSurfaceIndex(MeshData mesh, int index)
     {
         if (index < 0 || index >= mesh.Surfaces.Count)
@@ -236,7 +247,11 @@ public partial class RenderingService
     {
         for (var i = 0; i < mesh.Surfaces.Count; i++)
         {
-            if (index != null && i != index) continue;
+            if (index != null && i != index)
+            {
+                continue;
+            }
+
             var surface = mesh.Surfaces[i];
             surface.VertexBuffer?.Dispose();
             surface.IndexBuffer?.Dispose();

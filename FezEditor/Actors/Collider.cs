@@ -99,7 +99,7 @@ public class Collider : ActorComponent
             _rendering.FreeRid(_debugMaterial);
             _rendering.FreeRid(_debugMesh);
             _rendering.FreeRid(_debugInstance);
-            
+
             _debugMaterial = Rid.Invalid;
             _debugMesh = Rid.Invalid;
             _debugInstance = Rid.Invalid;
@@ -136,7 +136,7 @@ public class Collider : ActorComponent
         {
             Vertices = corners,
             Indices = indices,
-            Colors = colors,
+            Colors = colors
         };
 
         _rendering.MeshClear(_debugMesh);

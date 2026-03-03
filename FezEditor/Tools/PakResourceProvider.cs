@@ -12,12 +12,12 @@ internal class PakResourceProvider : IResourceProvider
     public IEnumerable<string> Files => _records.Keys;
 
     private readonly Dictionary<string, string> _records = new(StringComparer.OrdinalIgnoreCase);
-    
+
     private readonly FileInfo _pakFile;
 
     public PakResourceProvider(FileInfo info)
     {
-        if (info is not  { Extension: ".pak", Exists: true })
+        if (info is not { Extension: ".pak", Exists: true })
         {
             throw new FileNotFoundException(info.FullName);
         }
@@ -42,20 +42,20 @@ internal class PakResourceProvider : IResourceProvider
             ? Path.Combine(_pakFile.Name, path + extension)
             : "";
     }
-    
+
     public Stream OpenStream(string path, string extension)
     {
         if (!(Exists(path) && _records.ContainsValue(extension)))
         {
             throw new FileNotFoundException(path);
         }
-        
+
         using var stream = _pakFile.OpenRead();
         using var reader = new PakReader(stream);
-        
-        var record = reader.ReadFiles().FirstOrDefault(r => 
+
+        var record = reader.ReadFiles().FirstOrDefault(r =>
             r.Path.Equals(path, StringComparison.OrdinalIgnoreCase));
-        
+
         if (record == null)
         {
             throw new FileNotFoundException(path);
@@ -70,10 +70,10 @@ internal class PakResourceProvider : IResourceProvider
         {
             throw new FileNotFoundException(path);
         }
-        
+
         using var stream = _pakFile.OpenRead();
         using var reader = new PakReader(stream);
-        
+
         var record = reader.ReadFiles().FirstOrDefault(r => r.Path.Equals(path, StringComparison.OrdinalIgnoreCase));
         if (record == null)
         {

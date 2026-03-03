@@ -15,9 +15,9 @@ public partial class RenderingService
         public Color FogColor = Color.White;
         public float FogDensity;
     }
-    
+
     private readonly Dictionary<Rid, WorldData> _worlds = new();
-    
+
     public Rid WorldCreate()
     {
         var rootRid = AllocateRid(typeof(InstanceData));

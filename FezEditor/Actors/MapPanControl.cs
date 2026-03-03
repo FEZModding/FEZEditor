@@ -9,13 +9,13 @@ public class MapPanControl : ActorComponent
     private const float PanSensitivity = 0.0008f;
 
     private const float FocusSpeed = 15f;
-    
+
     public bool Focused => !_focusTarget.HasValue;
 
     private readonly InputService _input;
 
     private readonly Transform _transform;
-    
+
     private readonly Camera _camera;
 
     private Vector3? _focusTarget;
@@ -43,6 +43,7 @@ public class MapPanControl : ActorComponent
                 _transform.Position = _focusTarget.Value;
                 _focusTarget = null;
             }
+
             return;
         }
 

@@ -6,7 +6,7 @@ namespace FezEditor.Tools;
 public static class BinaryExtensions
 {
     #region Reading
-    
+
     public static string? ReadNullableString(this BinaryReader reader)
     {
         return reader.ReadBoolean()
@@ -30,7 +30,7 @@ public static class BinaryExtensions
     {
         return DateTime.FromFileTimeUtc(reader.ReadInt64());
     }
-    
+
     public static TimeSpan ReadTimeSpan(this BinaryReader reader)
     {
         return new TimeSpan(reader.ReadInt64());
@@ -40,7 +40,7 @@ public static class BinaryExtensions
     {
         return new TrileEmplacement(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32());
     }
-    
+
     #endregion
 
     #region Writing
@@ -54,7 +54,7 @@ public static class BinaryExtensions
             writer.Write(@string ?? "");
         }
     }
-    
+
     public static void WriteNullable(this BinaryWriter writer, float? single)
     {
         writer.Write(single.HasValue);

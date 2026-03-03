@@ -7,7 +7,7 @@ namespace FezEditor.Components;
 public class NotSupportedComponent : EditorComponent
 {
     private readonly Type _type;
-    
+
     public NotSupportedComponent(Game game, string title, Type type) : base(game, title)
     {
         _type = type;

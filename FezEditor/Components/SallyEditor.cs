@@ -12,23 +12,23 @@ namespace FezEditor.Components;
 public class SallyEditor : EditorComponent
 {
     private const string Missing = "MISSING";
-    
+
     public override object Asset => _saveData;
-    
+
     private readonly EditWindow _edit;
 
     private readonly ConfirmWindow _confirm;
 
     private readonly ResourceService _resources;
-    
+
     private readonly SaveData _saveData;
-    
+
     private readonly Dictionary<string, Texture2D> _iconsPath = new(StringComparer.OrdinalIgnoreCase);
-    
+
     private Dictionary<string, string> _listing = null!;
 
     private int _levelIndex = -1;
-    
+
     private string _levelName = "";
 
     private State _nextState = State.PropertiesView;
@@ -58,9 +58,9 @@ public class SallyEditor : EditorComponent
     public override void Draw()
     {
         ImGuiX.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(8, 8));
-        
+
         DrawToolbar();
-        
+
         var availSize = ImGui.GetContentRegionAvail();
         var width = availSize.X / 3f;
 
@@ -69,17 +69,17 @@ public class SallyEditor : EditorComponent
             DrawProperties();
             ImGui.EndChild();
         }
-        
+
         ImGui.SameLine();
-        
+
         if (ImGuiX.BeginChild("##LevelList", new Vector2(width, 0), ImGuiChildFlags.Border))
         {
             DrawLevelList();
             ImGui.EndChild();
         }
-        
+
         ImGui.SameLine();
-        
+
         if (ImGuiX.BeginChild("##LevelProperties", Vector2.Zero, ImGuiChildFlags.Border))
         {
             DrawLevelProperties();
@@ -100,7 +100,7 @@ public class SallyEditor : EditorComponent
             _nextState = State.OverrideSaveSlot;
             _saveSlotOverrider = () => new SaveData();
         }
-        
+
         ImGui.SameLine();
 
         if (ImGui.Button($"{Icons.StarEmpty} 209.4% Save"))
@@ -108,9 +108,9 @@ public class SallyEditor : EditorComponent
             _nextState = State.OverrideSaveSlot;
             _saveSlotOverrider = () => _resources.LoadSaveDataFromContent("SaveSlots/209,4%");
         }
-        
+
         ImGui.SameLine();
-        
+
         if (ImGui.Button($"{Icons.StarFull} Full Completion Save"))
         {
             _nextState = State.OverrideSaveSlot;
@@ -128,7 +128,7 @@ public class SallyEditor : EditorComponent
                 _saveData.IsNew = isNew;
             }
         }
-        
+
         var creationTime = _saveData.CreationTime;
         if (ImGuiX.DateTimeInput("Creation Time:", ref creationTime))
         {
@@ -137,7 +137,7 @@ public class SallyEditor : EditorComponent
                 _saveData.CreationTime = creationTime;
             }
         }
-        
+
         var playTime = _saveData.PlayTime;
         if (ImGuiX.TimeSpanInput("Play Time:", ref playTime))
         {
@@ -146,7 +146,7 @@ public class SallyEditor : EditorComponent
                 _saveData.PlayTime = playTime;
             }
         }
-        
+
         var finished32 = _saveData.Finished32;
         if (ImGui.Checkbox("Finished 32", ref finished32))
         {
@@ -155,7 +155,7 @@ public class SallyEditor : EditorComponent
                 _saveData.Finished32 = finished32;
             }
         }
-        
+
         var finished64 = _saveData.Finished64;
         if (ImGui.Checkbox("Finished 64", ref finished64))
         {
@@ -164,7 +164,7 @@ public class SallyEditor : EditorComponent
                 _saveData.Finished64 = finished64;
             }
         }
-        
+
         var hasFpView = _saveData.HasFpView;
         if (ImGui.Checkbox("Has Fp View", ref hasFpView))
         {
@@ -173,7 +173,7 @@ public class SallyEditor : EditorComponent
                 _saveData.HasFpView = hasFpView;
             }
         }
-        
+
         var hasStereo3D = _saveData.HasStereo3D;
         if (ImGui.Checkbox("Has Stereo 3D", ref hasStereo3D))
         {
@@ -182,7 +182,7 @@ public class SallyEditor : EditorComponent
                 _saveData.HasStereo3D = hasStereo3D;
             }
         }
-        
+
         var canNewGamePlus = _saveData.CanNewGamePlus;
         if (ImGui.Checkbox("Can New Game Plus", ref canNewGamePlus))
         {
@@ -191,7 +191,7 @@ public class SallyEditor : EditorComponent
                 _saveData.CanNewGamePlus = canNewGamePlus;
             }
         }
-        
+
         var isNewGamePlus = _saveData.IsNewGamePlus;
         if (ImGui.Checkbox("Is New Game Plus", ref isNewGamePlus))
         {
@@ -200,7 +200,7 @@ public class SallyEditor : EditorComponent
                 _saveData.IsNewGamePlus = isNewGamePlus;
             }
         }
-        
+
         ImGui.Text("One Time Tutorials:");
         ImGui.SameLine();
         var count = "key" + (_saveData.OneTimeTutorials.Count > 1 ? "s" : "");
@@ -220,7 +220,7 @@ public class SallyEditor : EditorComponent
                         }
                     }
                 }
-        
+
                 ImGui.EndListBox();
             }
         }
@@ -233,7 +233,7 @@ public class SallyEditor : EditorComponent
                 _saveData.Level = level;
             }
         }
-        
+
         var view = (int)_saveData.View;
         var views = Enum.GetNames<Viewpoint>();
         if (ImGui.Combo("View", ref view, views, views.Length))
@@ -243,7 +243,7 @@ public class SallyEditor : EditorComponent
                 _saveData.View = (Viewpoint)view;
             }
         }
-        
+
         var ground = _saveData.Ground;
         if (ImGuiX.DragFloat3("Ground", ref ground))
         {
@@ -252,7 +252,7 @@ public class SallyEditor : EditorComponent
                 _saveData.Ground = ground;
             }
         }
-        
+
         var timeOfDay = _saveData.TimeOfDay;
         if (ImGuiX.TimeSpanInput("Time Of Day:", ref timeOfDay))
         {
@@ -261,7 +261,7 @@ public class SallyEditor : EditorComponent
                 _saveData.TimeOfDay = timeOfDay;
             }
         }
-        
+
         var keys = _saveData.Keys;
         if (ImGui.InputInt("Keys", ref keys))
         {
@@ -270,7 +270,7 @@ public class SallyEditor : EditorComponent
                 _saveData.Keys = keys;
             }
         }
-        
+
         var cubeShards = _saveData.CubeShards;
         if (ImGui.InputInt("Cube Shards", ref cubeShards))
         {
@@ -279,7 +279,7 @@ public class SallyEditor : EditorComponent
                 _saveData.CubeShards = cubeShards;
             }
         }
-        
+
         var secretCubes = _saveData.SecretCubes;
         if (ImGui.InputInt("Secret Cubes", ref secretCubes))
         {
@@ -288,7 +288,7 @@ public class SallyEditor : EditorComponent
                 _saveData.SecretCubes = secretCubes;
             }
         }
-        
+
         var collectedParts = _saveData.CollectedParts;
         if (ImGui.InputInt("Collected Parts", ref collectedParts))
         {
@@ -297,7 +297,7 @@ public class SallyEditor : EditorComponent
                 _saveData.CollectedParts = collectedParts;
             }
         }
-        
+
         var collectedOwls = _saveData.CollectedOwls;
         if (ImGui.InputInt("Collected Owls", ref collectedOwls))
         {
@@ -306,7 +306,7 @@ public class SallyEditor : EditorComponent
                 _saveData.CollectedOwls = collectedOwls;
             }
         }
-        
+
         var piecesOfHeart = _saveData.PiecesOfHeart;
         if (ImGui.InputInt("Pieces Of Heart", ref piecesOfHeart))
         {
@@ -315,7 +315,7 @@ public class SallyEditor : EditorComponent
                 _saveData.PiecesOfHeart = piecesOfHeart;
             }
         }
-        
+
         var maps = _saveData.Maps;
         if (ImGuiX.EditableList("Maps", ref maps, RenderString, () => string.Empty))
         {
@@ -333,7 +333,7 @@ public class SallyEditor : EditorComponent
                 _saveData.Artifacts = artifacts;
             }
         }
-        
+
         var earnedAchievements = _saveData.EarnedAchievements;
         if (ImGuiX.EditableList("Earned Achievements", ref earnedAchievements, RenderString, () => string.Empty))
         {
@@ -342,7 +342,7 @@ public class SallyEditor : EditorComponent
                 _saveData.EarnedAchievements = earnedAchievements;
             }
         }
-        
+
         var earnedGamerPictures = _saveData.EarnedGamerPictures;
         if (ImGuiX.EditableList("Earned Gamer Pictures", ref earnedGamerPictures, RenderString, () => string.Empty))
         {
@@ -351,7 +351,7 @@ public class SallyEditor : EditorComponent
                 _saveData.EarnedGamerPictures = earnedGamerPictures;
             }
         }
-        
+
         var scriptingState = _saveData.ScriptingState ?? "";
         if (ImGui.InputText("Scripting State", ref scriptingState, 255))
         {
@@ -360,7 +360,7 @@ public class SallyEditor : EditorComponent
                 _saveData.ScriptingState = scriptingState;
             }
         }
-        
+
         var fezHidden = _saveData.FezHidden;
         if (ImGui.Checkbox("Fez Hidden", ref fezHidden))
         {
@@ -369,7 +369,7 @@ public class SallyEditor : EditorComponent
                 _saveData.FezHidden = fezHidden;
             }
         }
-        
+
         var globalWaterLevelModifier = _saveData.GlobalWaterLevelModifier ?? 0f;
         ImGui.SetNextItemWidth(128);
         if (ImGui.DragFloat("Global Water Level Modifier", ref globalWaterLevelModifier))
@@ -379,7 +379,7 @@ public class SallyEditor : EditorComponent
                 _saveData.GlobalWaterLevelModifier = globalWaterLevelModifier;
             }
         }
-        
+
         var hasHadMapHelp = _saveData.HasHadMapHelp;
         if (ImGui.Checkbox("Has Had Map Help", ref hasHadMapHelp))
         {
@@ -388,7 +388,7 @@ public class SallyEditor : EditorComponent
                 _saveData.HasHadMapHelp = hasHadMapHelp;
             }
         }
-        
+
         var canOpenMap = _saveData.CanOpenMap;
         if (ImGui.Checkbox("Can Open Map", ref canOpenMap))
         {
@@ -397,7 +397,7 @@ public class SallyEditor : EditorComponent
                 _saveData.CanOpenMap = canOpenMap;
             }
         }
-        
+
         var achievementCheatCodeDone = _saveData.AchievementCheatCodeDone;
         if (ImGui.Checkbox("Achievement Cheat Code Done", ref achievementCheatCodeDone))
         {
@@ -406,7 +406,7 @@ public class SallyEditor : EditorComponent
                 _saveData.AchievementCheatCodeDone = achievementCheatCodeDone;
             }
         }
-        
+
         var anyCodeDeciphered = _saveData.AnyCodeDeciphered;
         if (ImGui.Checkbox("Any Code Deciphered", ref anyCodeDeciphered))
         {
@@ -415,7 +415,7 @@ public class SallyEditor : EditorComponent
                 _saveData.AnyCodeDeciphered = anyCodeDeciphered;
             }
         }
-        
+
         var mapCheatCodeDone = _saveData.MapCheatCodeDone;
         if (ImGui.Checkbox("Map Cheat Code Done", ref mapCheatCodeDone))
         {
@@ -424,7 +424,7 @@ public class SallyEditor : EditorComponent
                 _saveData.MapCheatCodeDone = mapCheatCodeDone;
             }
         }
-        
+
         var scoreDirty = _saveData.ScoreDirty;
         if (ImGui.Checkbox("Score Dirty", ref scoreDirty))
         {
@@ -433,7 +433,7 @@ public class SallyEditor : EditorComponent
                 _saveData.ScoreDirty = scoreDirty;
             }
         }
-        
+
         var hasDoneHeartReboot = _saveData.HasDoneHeartReboot;
         if (ImGui.Checkbox("Has Done Heart Reboot", ref hasDoneHeartReboot))
         {
@@ -442,14 +442,13 @@ public class SallyEditor : EditorComponent
                 _saveData.HasDoneHeartReboot = hasDoneHeartReboot;
             }
         }
-        
     }
 
     private void DrawLevelList()
     {
         ImGui.Text("Levels");
         ImGui.Separator();
-        
+
         if (ImGui.Button($"{Icons.Add} Add"))
         {
             using (History.BeginScope("Add New Level"))
@@ -459,25 +458,27 @@ public class SallyEditor : EditorComponent
                 _levelIndex = _saveData.World.Count - 1;
             }
         }
-        
+
         ImGui.SameLine();
         ImGui.BeginDisabled(_levelIndex == -1);
         if (ImGui.Button($"{Icons.Rename} Rename"))
         {
             _nextState = State.RenameLevel;
         }
+
         ImGui.EndDisabled();
-            
+
         ImGui.SameLine();
         ImGui.BeginDisabled(_levelIndex == -1);
         if (ImGui.Button($"{Icons.Remove} Remove"))
         {
             _nextState = State.RemoveLevel;
         }
+
         ImGui.EndDisabled();
-            
+
         ImGui.Separator();
-        
+
         if (ImGui.BeginChild("##LevelList"))
         {
             if (ImGui.IsWindowHovered() && ImGui.IsMouseClicked(ImGuiMouseButton.Left) && !ImGui.IsAnyItemHovered())
@@ -491,7 +492,7 @@ public class SallyEditor : EditorComponent
                 ImGuiX.SetTextCentered(emptyText);
                 ImGui.Text(emptyText);
             }
-            
+
             for (var i = 0; i < _saveData.World.Count; i++)
             {
                 var level = _saveData.World.GetAt(i).Key;
@@ -513,7 +514,7 @@ public class SallyEditor : EditorComponent
         {
             return icon;
         }
-        
+
         icon = ContentManager.Load<Texture2D>(path);
         _iconsPath[path] = icon;
         return icon;
@@ -528,113 +529,115 @@ public class SallyEditor : EditorComponent
             ImGui.Text(emptyText);
             return;
         }
-        
+
         ImGui.SeparatorText("Level Save data");
         var levelData = _saveData.World.GetAt(_levelIndex).Value;
-        
+
         var lastStableLiquidHeight = levelData.LastStableLiquidHeight ?? 0f;
         ImGui.SetNextItemWidth(240);
-        if (ImGui.DragFloat("Last Stable Liquid Height", ref lastStableLiquidHeight)) 
+        if (ImGui.DragFloat("Last Stable Liquid Height", ref lastStableLiquidHeight))
         {
-            using (History.BeginScope("Edit Last Stable")) 
+            using (History.BeginScope("Edit Last Stable"))
             {
                 levelData.LastStableLiquidHeight = lastStableLiquidHeight;
             }
         }
-        
+
         var scriptingState = levelData.ScriptingState ?? "";
-        if (ImGui.InputText("Scripting State", ref scriptingState, 255)) 
+        if (ImGui.InputText("Scripting State", ref scriptingState, 255))
         {
-            using (History.BeginScope("Edit Scripting State")) 
+            using (History.BeginScope("Edit Scripting State"))
             {
                 levelData.ScriptingState = scriptingState;
             }
         }
-        
+
         var firstVisit = levelData.FirstVisit;
-        if (ImGui.Checkbox("First Visit", ref firstVisit)) 
+        if (ImGui.Checkbox("First Visit", ref firstVisit))
         {
-            using (History.BeginScope("Edit First Visit")) 
+            using (History.BeginScope("Edit First Visit"))
             {
                 levelData.FirstVisit = firstVisit;
             }
         }
 
         var destroyedTriles = levelData.DestroyedTriles;
-        if (ImGuiX.EditableList("Destroyed Triles", ref destroyedTriles, RenderTrileEmplacement, () => new TrileEmplacement())) 
+        if (ImGuiX.EditableList("Destroyed Triles", ref destroyedTriles, RenderTrileEmplacement,
+                () => new TrileEmplacement()))
         {
-            using (History.BeginScope("Edit Destroyed Triles")) 
+            using (History.BeginScope("Edit Destroyed Triles"))
             {
                 levelData.DestroyedTriles = destroyedTriles;
             }
         }
-        
+
         var inactiveTriles = levelData.InactiveTriles;
-        if (ImGuiX.EditableList("Inactive Triles", ref inactiveTriles, RenderTrileEmplacement, () => new TrileEmplacement())) 
+        if (ImGuiX.EditableList("Inactive Triles", ref inactiveTriles, RenderTrileEmplacement,
+                () => new TrileEmplacement()))
         {
-            using (History.BeginScope("Edit Inactive Triles")) 
+            using (History.BeginScope("Edit Inactive Triles"))
             {
                 levelData.InactiveTriles = inactiveTriles;
             }
         }
-        
+
         var inactiveArtObjects = levelData.InactiveArtObjects;
-        if (ImGuiX.EditableList("Inactive Art Objects", ref inactiveArtObjects, RenderInt, () => 0)) 
+        if (ImGuiX.EditableList("Inactive Art Objects", ref inactiveArtObjects, RenderInt, () => 0))
         {
-            using (History.BeginScope("Edit Inactive Art")) 
+            using (History.BeginScope("Edit Inactive Art"))
             {
                 levelData.InactiveArtObjects = inactiveArtObjects;
             }
         }
-        
+
         var inactiveEvents = levelData.InactiveEvents;
-        if (ImGuiX.EditableList("Inactive Events", ref inactiveEvents, RenderInt, () => 0)) 
+        if (ImGuiX.EditableList("Inactive Events", ref inactiveEvents, RenderInt, () => 0))
         {
-            using (History.BeginScope("Edit Inactive Events")) 
+            using (History.BeginScope("Edit Inactive Events"))
             {
                 levelData.InactiveEvents = inactiveEvents;
             }
         }
-        
+
         var inactiveGroups = levelData.InactiveGroups;
-        if (ImGuiX.EditableList("Inactive Groups", ref inactiveGroups, RenderInt, () => 0)) 
+        if (ImGuiX.EditableList("Inactive Groups", ref inactiveGroups, RenderInt, () => 0))
         {
-            using (History.BeginScope("Edit Inactive Groups")) 
+            using (History.BeginScope("Edit Inactive Groups"))
             {
                 levelData.InactiveGroups = inactiveGroups;
             }
         }
-        
+
         var inactiveVolumes = levelData.InactiveVolumes;
-        if (ImGuiX.EditableList("Inactive Volumes", ref inactiveVolumes, RenderInt, () => 0)) 
+        if (ImGuiX.EditableList("Inactive Volumes", ref inactiveVolumes, RenderInt, () => 0))
         {
-            using (History.BeginScope("Edit Inactive Volumes")) 
+            using (History.BeginScope("Edit Inactive Volumes"))
             {
                 levelData.InactiveVolumes = inactiveVolumes;
             }
         }
-        
+
         var inactiveNpcs = levelData.InactiveNPCs;
-        if (ImGuiX.EditableList("Inactive NPCs", ref inactiveNpcs, RenderInt, () => 0)) 
+        if (ImGuiX.EditableList("Inactive NPCs", ref inactiveNpcs, RenderInt, () => 0))
         {
-            using (History.BeginScope("Edit Inactive NPCs")) 
+            using (History.BeginScope("Edit Inactive NPCs"))
             {
                 levelData.InactiveNPCs = inactiveNpcs;
             }
         }
-        
+
         var pivotRotations = levelData.PivotRotations;
-        if (ImGuiX.EditableDict("Pivot Rotations", ref pivotRotations, RenderIntPair, AddIntKey, () => 0)) 
+        if (ImGuiX.EditableDict("Pivot Rotations", ref pivotRotations, RenderIntPair, AddIntKey, () => 0))
         {
-            using (History.BeginScope("Edit Pivot Rotations")) 
+            using (History.BeginScope("Edit Pivot Rotations"))
             {
                 levelData.PivotRotations = pivotRotations;
             }
         }
-        
+
         ImGui.SeparatorText("Filled Win Conditions");
         var winConditions = levelData.FilledConditions;
-        
+
         var chestCount = winConditions.ChestCount;
         if (ImGui.InputInt("Chest Count", ref chestCount))
         {
@@ -642,8 +645,8 @@ public class SallyEditor : EditorComponent
             {
                 winConditions.ChestCount = chestCount;
             }
-        }    
-        
+        }
+
         var lockedDoorCount = winConditions.LockedDoorCount;
         if (ImGui.InputInt("Locked Door Count", ref lockedDoorCount))
         {
@@ -651,8 +654,8 @@ public class SallyEditor : EditorComponent
             {
                 winConditions.LockedDoorCount = lockedDoorCount;
             }
-        }    
-        
+        }
+
         var unlockedDoorCount = winConditions.UnlockedDoorCount;
         if (ImGui.InputInt("Unlocked Door Count", ref unlockedDoorCount))
         {
@@ -660,8 +663,8 @@ public class SallyEditor : EditorComponent
             {
                 winConditions.UnlockedDoorCount = unlockedDoorCount;
             }
-        }    
-        
+        }
+
         var cubeShardCount = winConditions.CubeShardCount;
         if (ImGui.InputInt("Cube Shard Count", ref cubeShardCount))
         {
@@ -669,8 +672,8 @@ public class SallyEditor : EditorComponent
             {
                 winConditions.CubeShardCount = cubeShardCount;
             }
-        }    
-        
+        }
+
         var otherCollectibleCount = winConditions.OtherCollectibleCount;
         if (ImGui.InputInt("Other Collectible Count", ref otherCollectibleCount))
         {
@@ -678,8 +681,8 @@ public class SallyEditor : EditorComponent
             {
                 winConditions.OtherCollectibleCount = otherCollectibleCount;
             }
-        }    
-        
+        }
+
         var splitUpCount = winConditions.SplitUpCount;
         if (ImGui.InputInt("Split Up Count", ref splitUpCount))
         {
@@ -687,8 +690,8 @@ public class SallyEditor : EditorComponent
             {
                 winConditions.SplitUpCount = splitUpCount;
             }
-        }    
-        
+        }
+
         var secretCount = winConditions.SecretCount;
         if (ImGui.InputInt("Secret Count", ref secretCount))
         {
@@ -697,7 +700,7 @@ public class SallyEditor : EditorComponent
                 winConditions.SecretCount = secretCount;
             }
         }
-        
+
         var scriptIds = winConditions.ScriptIds;
         if (ImGuiX.EditableList("Script Ids", ref scriptIds, RenderInt, () => 0))
         {
@@ -712,7 +715,11 @@ public class SallyEditor : EditorComponent
     {
         var values = new[] { item.X, item.Y, item.Z };
         var changed = ImGui.DragInt3("##item", ref values[0]);
-        if (changed) item = new TrileEmplacement(values[0], values[1], values[2]);
+        if (changed)
+        {
+            item = new TrileEmplacement(values[0], values[1], values[2]);
+        }
+
         return changed;
     }
 
@@ -737,7 +744,7 @@ public class SallyEditor : EditorComponent
     {
         return ImGui.InputText("##item", ref item, 256);
     }
-    
+
     private static bool RenderEnum<T>(int index, ref T item) where T : Enum
     {
         var name = (int)Enum.GetValues(typeof(T)).GetValue(index)!;
@@ -751,14 +758,14 @@ public class SallyEditor : EditorComponent
 
         return false;
     }
-    
+
     private void DrawRenameLevelModal()
     {
         if (_nextState != State.RenameLevel)
         {
             return;
         }
-        
+
         _nextState = State.PropertiesView;
         _levelName = _saveData.World.GetAt(_levelIndex).Key;
 
@@ -766,7 +773,7 @@ public class SallyEditor : EditorComponent
         _edit.EditValue = () =>
         {
             ImGui.InputText("##NewLevelName", ref _levelName, 255);
-           
+
             var levelExists = _saveData.World.ContainsKey(_levelName);
             if (levelExists)
             {
@@ -781,7 +788,7 @@ public class SallyEditor : EditorComponent
 
             return !levelExists && !levelEmpty;
         };
-        
+
         _edit.Accepted = () =>
         {
             using (History.BeginScope("Rename Level"))
@@ -801,10 +808,10 @@ public class SallyEditor : EditorComponent
         {
             return;
         }
-        
+
         _nextState = State.PropertiesView;
         _levelName = _saveData.World.GetAt(_levelIndex).Key;
-        
+
         _confirm.Text = "Are you sure you want to delete " + _levelName + "?";
         _confirm.Confirmed = () =>
         {
@@ -822,7 +829,7 @@ public class SallyEditor : EditorComponent
         {
             return;
         }
-        
+
         _nextState = State.PropertiesView;
         _confirm.Text = "Are you sure you want to override this SaveSlot?";
         _confirm.Confirmed = () =>

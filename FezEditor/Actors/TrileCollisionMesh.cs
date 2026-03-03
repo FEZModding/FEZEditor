@@ -11,7 +11,7 @@ namespace FezEditor.Actors;
 public class TrileCollisionMesh : ActorComponent
 {
     private const float ZFightingOffset = 1.01f;
-    
+
     private static readonly FaceOrientation[] Sides = new[]
     {
         FaceOrientation.Front,
@@ -25,17 +25,17 @@ public class TrileCollisionMesh : ActorComponent
         get => _rendering.InstanceIsVisible(_instance);
         set => _rendering.InstanceSetVisibility(_instance, value);
     }
-    
+
     private readonly RenderingService _rendering;
 
     private readonly Rid _instance;
-    
+
     private readonly Rid _mesh;
-    
+
     private readonly Dictionary<FaceOrientation, Rid> _materials = new();
-    
+
     private readonly Dictionary<CollisionType, Texture2D> _textures = new();
-    
+
     public TrileCollisionMesh(Game game, Actor actor) : base(game, actor)
     {
         _rendering = game.GetService<RenderingService>();
@@ -52,6 +52,7 @@ public class TrileCollisionMesh : ActorComponent
         {
             _rendering.FreeRid(material);
         }
+
         _rendering.FreeRid(_mesh);
         _rendering.FreeRid(_instance);
     }
@@ -64,10 +65,10 @@ public class TrileCollisionMesh : ActorComponent
             var material = _rendering.MaterialCreate();
             _rendering.MaterialAssignEffect(material, effect);
             _rendering.MaterialSetCullMode(material, CullMode.None);
-            _rendering.MaterialSetAlbedo(material, Color.White with { A = 204 });   // 80%
+            _rendering.MaterialSetAlbedo(material, Color.White with { A = 204 }); // 80%
             _materials[face] = material;
         }
-        
+
         foreach (var collision in Enum.GetValues<CollisionType>())
         {
             _textures[collision] = content.Load<Texture2D>($"Textures/{collision}");
@@ -78,7 +79,7 @@ public class TrileCollisionMesh : ActorComponent
     {
         _rendering.InstanceSetPosition(_instance, size / 2f);
         _rendering.MeshClear(_mesh);
-        
+
         foreach (var (face, collision) in collisionFaces)
         {
             var surface = MeshSurface.CreateFaceQuad(size * ZFightingOffset, face);

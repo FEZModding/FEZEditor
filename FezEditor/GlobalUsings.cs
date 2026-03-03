@@ -1,4 +1,5 @@
-﻿global using TextStorage = System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<string, string>>;
+﻿// @formatter:off
+global using TextStorage = System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<string, string>>;
 global using FezFont = FEZRepacker.Core.Definitions.Game.XNA.SpriteFont;
 
 global using NVector2 = System.Numerics.Vector2;

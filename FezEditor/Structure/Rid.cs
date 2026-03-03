@@ -9,8 +9,11 @@
 public readonly record struct Rid(uint Id, Type Type)
 {
     public static readonly Rid Invalid = new(0, typeof(void));
-    
+
     public bool IsValid => Id > 0 && Type != typeof(void);
 
-    public override string ToString() => $"RID({Id}, {Type.Name})";
+    public override string ToString()
+    {
+        return $"RID({Id}, {Type.Name})";
+    }
 }

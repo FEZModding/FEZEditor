@@ -45,7 +45,7 @@ public class MapIconsMesh : ActorComponent
         var effect = content.Load<Effect>("Effects/MapIconsMesh");
         var texture = content.Load<Texture2D>("MapIcons");
         var surface = MeshSurface.CreateQuad(Vector3.One);
-        
+
         _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface, _material);
         _rendering.MaterialAssignEffect(_material, effect);
         _rendering.MaterialAssignBaseTexture(_material, texture);
@@ -90,8 +90,8 @@ public class MapIconsMesh : ActorComponent
             ));
         }
 
-        _transform.Position = node.NodeType.GetSizeFactor() / 2f * new Vector3(1f, 1f, -1f) +
-                              MapIconScale * new Vector3(1f, 0f, -1f);
+        _transform.Position = (node.NodeType.GetSizeFactor() / 2f * new Vector3(1f, 1f, -1f)) +
+                              (MapIconScale * new Vector3(1f, 0f, -1f));
     }
 
     public override void Update(GameTime gameTime)

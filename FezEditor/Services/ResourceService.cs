@@ -19,7 +19,7 @@ public class ResourceService : IDisposable
     public IEnumerable<string> Files => _provider?.Files ?? Enumerable.Empty<string>();
 
     private IResourceProvider? _provider;
-    
+
     private readonly IContentManager _content;
 
     private readonly Game _game;
@@ -85,10 +85,10 @@ public class ResourceService : IDisposable
             using var stream = _provider!.OpenStream(path, string.Empty);
             return SaveData.Read(stream);
         }
-        
+
         return _provider!.Load<object>(path);
     }
-    
+
     public SaveData LoadSaveDataFromContent(string path)
     {
         using var stream = _content.LoadStream(path);
@@ -104,7 +104,7 @@ public class ResourceService : IDisposable
             stream.CopyTo(fileStream);
             return;
         }
-        
+
         _provider!.Save(path, asset);
     }
 

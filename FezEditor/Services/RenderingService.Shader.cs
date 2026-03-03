@@ -31,11 +31,15 @@ public partial class RenderingService
         [typeof(Vector4)] = (ep, _) => ep.GetValueVector4(),
         [typeof(Quaternion)] = (ep, _) => ep.GetValueQuaternion(),
         [typeof(Matrix)] = (ep, _) => ep.GetValueMatrix(),
-        [typeof(Color)] = (ep, _) => { var v = ep.GetValueVector4(); return new Color(v.X, v.Y, v.Z, v.W); },
+        [typeof(Color)] = (ep, _) =>
+        {
+            var v = ep.GetValueVector4();
+            return new Color(v.X, v.Y, v.Z, v.W);
+        },
         [typeof(Vector4[])] = (ep, i) => ep.GetValueVector4Array(i),
         [typeof(Matrix[])] = (ep, i) => ep.GetValueMatrixArray(i)
     };
-    
+
     private static readonly Dictionary<Type, Action<EffectParameter, object>> SetParameterFunctions = new()
     {
         [typeof(bool)] = (ep, v) => ep.SetValue((bool)v),
@@ -50,7 +54,7 @@ public partial class RenderingService
         [typeof(Vector4[])] = (ep, v) => ep.SetValue((Vector4[])v),
         [typeof(Matrix[])] = (ep, v) => ep.SetValue((Matrix[])v)
     };
-    
+
     public T MaterialShaderGetParam<T>(Rid material, string name, int count = 0)
     {
         var effect = GetResource(_materials, material).Effect;
@@ -99,12 +103,13 @@ public partial class RenderingService
         }
     }
 
-    private static void UpdateBaseEffect(RenderTargetData rt, WorldData world, MaterialData material, InstanceMatrices matrices)
+    private static void UpdateBaseEffect(RenderTargetData rt, WorldData world, MaterialData material,
+        InstanceMatrices matrices)
     {
         var parameters = material.Effect!.Parameters;
         var worldViewProjection = matrices.World * matrices.ViewProjection;
         var worldInverseTranspose = Matrix.Transpose(Matrix.Invert(matrices.World));
-        
+
         // Matrices
         parameters["Matrices_WorldViewProjection"].SetValue(worldViewProjection);
         parameters["Matrices_WorldInverseTranspose"].SetValue(worldInverseTranspose);

@@ -9,15 +9,15 @@ namespace FezEditor.Components;
 public class WelcomeComponent : EditorComponent
 {
     private const float ContentWidth = 250f;
-    
+
     private const float ContentHeight = 230f;
-    
+
     private ResourceExtractor? _resourceExtractor;
-    
+
     private Texture2D _logoTexture = null!;
-    
+
     private readonly EditorService _editorService;
-    
+
     private readonly ResourceService _resourceService;
 
     public WelcomeComponent(Game game) : base(game, "Welcome!")

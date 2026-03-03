@@ -10,8 +10,8 @@ namespace FezEditor.Services;
 [UsedImplicitly]
 public partial class EditorService
 {
-    private static readonly ILogger Logger = Logging.Create<EditorService>(); 
-    
+    private static readonly ILogger Logger = Logging.Create<EditorService>();
+
     public EditorFlags Flags { get; private set; }
 
     public IEnumerable<EditorComponent> Editors => _editors;
@@ -19,17 +19,17 @@ public partial class EditorService
     private readonly List<EditorComponent> _editors = new();
 
     private readonly List<EditorComponent> _pendingClose = new();
-    
+
     private readonly HashSet<EditorComponent> _loading = new();
-    
+
     private readonly Dictionary<EditorComponent, EditorTracking> _tracking = new();
 
     private readonly Game _game;
-    
+
     private readonly InputService _inputService;
-    
+
     private readonly ResourceService _resourceService;
-    
+
     private EditorComponent? _activeEditor;
 
     public EditorService(Game game)
@@ -38,16 +38,16 @@ public partial class EditorService
         _inputService = game.GetService<InputService>();
         _resourceService = game.GetService<ResourceService>();
     }
-    
+
     public void Update(GameTime gameTime)
     {
         if (_activeEditor == null || _loading.Contains(_activeEditor))
         {
             return;
         }
-        
+
         _activeEditor.Update(gameTime);
-        
+
         if (_inputService.IsActionJustPressed(InputActions.UiUndo))
         {
             UndoActiveEditorChanges();
@@ -68,14 +68,14 @@ public partial class EditorService
             }
         }
     }
-    
+
     public void OpenEditorFor(string path)
     {
         if (_tracking.Values.All(et => et.Path != path))
         {
             var asset = _resourceService.Load(path);
             var editor = CreateEditorFor(asset, path);
-        
+
             _tracking.Add(editor, new EditorTracking(path, false));
             OpenEditor(editor);
         }
@@ -130,12 +130,12 @@ public partial class EditorService
     {
         _activeEditor!.History.Redo();
     }
-    
+
     public bool HasEditorUnsavedChanges(EditorComponent editor)
     {
         return _tracking.Any(kv => kv.Key == editor && kv.Value.HasChanges) && editor.History.UndoCount > 0;
     }
-    
+
     public bool HasAnyEditorUnsavedChanges()
     {
         return _tracking.Any(kv => kv.Value.HasChanges);
@@ -155,7 +155,8 @@ public partial class EditorService
     {
         FileDialog.Show(FileDialog.Type.SaveFile, result =>
         {
-            if (result.Files.Length > 0 && _tracking.TryGetValue(_activeEditor!, out var tracking) && tracking.HasChanges)
+            if (result.Files.Length > 0 && _tracking.TryGetValue(_activeEditor!, out var tracking) &&
+                tracking.HasChanges)
             {
                 _resourceService.Save(result.Files[0], _activeEditor!.Asset);
                 tracking.HasChanges = false;
@@ -202,7 +203,7 @@ public partial class EditorService
     {
         return _loading.Contains(editor);
     }
-    
+
     private void UpdateFlags()
     {
         if (_activeEditor is WelcomeComponent)
@@ -210,15 +211,15 @@ public partial class EditorService
             Flags &= ~(EditorFlags.CloseFile | EditorFlags.QuitToWelcome);
             return;
         }
-        
+
         Flags = EditorFlags.QuitToWelcome;
         if (_activeEditor == null)
         {
             return;
         }
-        
+
         Flags |= EditorFlags.CloseFile;
-        
+
         if (_activeEditor.History.CanUndo)
         {
             Flags |= EditorFlags.Undo;
@@ -227,7 +228,7 @@ public partial class EditorService
         {
             Flags &= ~EditorFlags.Undo;
         }
-    
+
         if (_activeEditor.History.CanRedo)
         {
             Flags |= EditorFlags.Redo;

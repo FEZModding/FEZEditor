@@ -10,7 +10,7 @@ namespace FezEditor.Services;
 public class InputService
 {
     private Point MouseCenter => new(_game.Window.ClientBounds.Width / 2, _game.Window.ClientBounds.Height / 2);
-    
+
     private readonly Game _game;
 
     private readonly Dictionary<string, List<Binding>> _bindings;
@@ -60,12 +60,24 @@ public class InputService
     {
         var binding = _bindings[action][index];
         var strings = new List<string>();
-        
-        if (binding.Ctrl) strings.Add("Ctrl");
-        if (binding.Shift) strings.Add("Shift");
-        if (binding.Alt) strings.Add("Alt");
+
+        if (binding.Ctrl)
+        {
+            strings.Add("Ctrl");
+        }
+
+        if (binding.Shift)
+        {
+            strings.Add("Shift");
+        }
+
+        if (binding.Alt)
+        {
+            strings.Add("Alt");
+        }
+
         strings.Add(binding.Key.ToString());
-        
+
         return string.Join("+", strings);
     }
 
@@ -97,7 +109,11 @@ public class InputService
     public Vector2 GetActionsVector(string negativeX, string positiveX, string negativeY, string positiveY)
     {
         var vector = new Vector2(GetActionAxis(negativeX, positiveX), GetActionAxis(negativeY, positiveY));
-        if (!Mathz.IsZeroApprox(vector.X) || !Mathz.IsZeroApprox(vector.Y)) vector.Normalize();
+        if (!Mathz.IsZeroApprox(vector.X) || !Mathz.IsZeroApprox(vector.Y))
+        {
+            vector.Normalize();
+        }
+
         return vector;
     }
 
@@ -105,7 +121,7 @@ public class InputService
     {
         return _currentMouseState.RightButton == ButtonState.Pressed;
     }
-    
+
     public bool IsMiddleMousePressed()
     {
         return _currentMouseState.MiddleButton == ButtonState.Pressed;
@@ -130,7 +146,11 @@ public class InputService
 
     public int GetScrollWheelDelta()
     {
-        if (!_scrollCaptured) return 0;
+        if (!_scrollCaptured)
+        {
+            return 0;
+        }
+
         return _currentMouseState.ScrollWheelValue - _previousMouseState.ScrollWheelValue;
     }
 
@@ -177,8 +197,10 @@ public class InputService
                     _currentMouseState.XButton2
                 );
             }
+
             Mouse.SetPosition(MouseCenter.X, MouseCenter.Y);
         }
+
         _mouseWasCaptured = _mouseCaptured;
         _mouseCaptured = false;
     }
@@ -203,10 +225,26 @@ public class InputService
 
         foreach (var b in list)
         {
-            if (!check(b.Key)) continue;
-            if (b.Ctrl && !IsCtrlDown()) continue;
-            if (b.Shift && !IsShiftDown()) continue;
-            if (b.Alt && !IsAltDown()) continue;
+            if (!check(b.Key))
+            {
+                continue;
+            }
+
+            if (b.Ctrl && !IsCtrlDown())
+            {
+                continue;
+            }
+
+            if (b.Shift && !IsShiftDown())
+            {
+                continue;
+            }
+
+            if (b.Alt && !IsAltDown())
+            {
+                continue;
+            }
+
             return true;
         }
 

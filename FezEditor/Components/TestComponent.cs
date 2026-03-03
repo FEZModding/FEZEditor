@@ -7,7 +7,7 @@ namespace FezEditor.Components;
 public class TestComponent : EditorComponent
 {
     private readonly Scene _test;
-    
+
     public TestComponent(Game game, string title) : base(game, title)
     {
         _test = new Scene(game);
@@ -40,7 +40,7 @@ public class TestComponent : EditorComponent
         var size = ImGuiX.GetContentRegionAvail();
         var w = (int)size.X;
         var h = (int)size.Y;
-            
+
         if (w > 0 && h > 0)
         {
             var texture = _test.Viewport.GetTexture();

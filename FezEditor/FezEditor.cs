@@ -16,19 +16,19 @@ public class FezEditor : Game
 #else
     public const bool IsDebugBuild = false;
 #endif
-    
+
     private readonly GraphicsDeviceManager _deviceManager;
-    
+
     private ContentService _content = null!;
-    
+
     private ImGuiService _imGui = null!;
-    
+
     private RenderingService _rendering = null!;
 
     private ResourceService _resources = null!;
-    
+
     private InputService _input = null!;
-    
+
     private EditorService _editor = null!;
 
     [STAThread]
@@ -46,7 +46,7 @@ public class FezEditor : Game
             Logger.Fatal(e, "Unhandled Exception");
         }
     }
-    
+
     private FezEditor()
     {
         _deviceManager = new GraphicsDeviceManager(this)

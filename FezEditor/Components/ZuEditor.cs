@@ -13,9 +13,9 @@ public class ZuEditor : EditorComponent
     private readonly FezFont _font;
 
     private Texture2D _fontTexture = null!;
-    
+
     private IntPtr _fontTexturePtr;
-    
+
     private ImFontPtr _charactersFont;
 
     private int _selectedIndex = -1;
@@ -45,7 +45,7 @@ public class ZuEditor : EditorComponent
 
     private bool _showKerning = true;
 
-    private bool _showGlyphBounds = true; 
+    private bool _showGlyphBounds = true;
 
     public ZuEditor(Game game, string title, FezFont font) : base(game, title)
     {
@@ -57,7 +57,7 @@ public class ZuEditor : EditorComponent
     {
         _fontTexture = RepackerExtensions.ConvertToTexture2D(_font.Texture);
         _fontTexturePtr = ImGuiX.Bind(_fontTexture);
-        
+
         if (Title.Contains("japanese", StringComparison.OrdinalIgnoreCase))
         {
             _charactersFont = ImGuiX.Fonts.NotoSansJp;
@@ -101,7 +101,7 @@ public class ZuEditor : EditorComponent
             DrawPreviewWindow();
         }
     }
-    
+
     #region Left Pane
 
     private void DrawLeftPane()
@@ -178,6 +178,7 @@ public class ZuEditor : EditorComponent
                 {
                     _selectedIndex = i;
                 }
+
                 ImGui.PopFont();
 
                 if (selected)
@@ -238,6 +239,7 @@ public class ZuEditor : EditorComponent
         {
             SetCharacter(_selectedIndex, str[0]);
         }
+
         ImGui.PopFont();
 
         ImGui.SameLine();
@@ -325,7 +327,7 @@ public class ZuEditor : EditorComponent
         var scale = totalUnits > 0 ? MathF.Min(4f, maxBarWidth / totalUnits) : 4f;
 
         var leftPad = MathF.Max(0, -left * scale);
-        var totalW = Math.Max(leftPad + MathF.Max(0, left * scale) + adv * scale + MathF.Max(0, right * scale), 80f);
+        var totalW = Math.Max(leftPad + MathF.Max(0, left * scale) + (adv * scale) + MathF.Max(0, right * scale), 80f);
 
         ImGui.Spacing();
         ImGui.TextDisabled("Preview:");
@@ -340,20 +342,21 @@ public class ZuEditor : EditorComponent
         if (left != 0f)
         {
             var col = left > 0 ? Color.DarkOrange : Color.DarkBlue;
-            var x0 = left > 0 ? cx : cx + left * scale;
-            var x1 = left > 0 ? cx + left * scale : cx;
+            var x0 = left > 0 ? cx : cx + (left * scale);
+            var x1 = left > 0 ? cx + (left * scale) : cx;
             dl.AddRectFilled(new NVector2(x0, pos.Y), new NVector2(x1, pos.Y + barH), col.PackedValue);
             cx += left * scale;
         }
 
-        dl.AddRectFilled(new NVector2(cx, pos.Y), new NVector2(cx + adv * scale, pos.Y + barH), Color.Green.PackedValue);
+        dl.AddRectFilled(new NVector2(cx, pos.Y), new NVector2(cx + (adv * scale), pos.Y + barH),
+            Color.Green.PackedValue);
         cx += adv * scale;
 
         if (right != 0f)
         {
             var col = right > 0 ? Color.LightBlue : Color.Orange;
-            var x0 = right > 0 ? cx : cx + right * scale;
-            var x1 = right > 0 ? cx + right * scale : cx;
+            var x0 = right > 0 ? cx : cx + (right * scale);
+            var x1 = right > 0 ? cx + (right * scale) : cx;
             dl.AddRectFilled(new NVector2(x0, pos.Y), new NVector2(x1, pos.Y + barH), col.PackedValue);
         }
 
@@ -362,9 +365,9 @@ public class ZuEditor : EditorComponent
         ImGui.Dummy(new NVector2(totalW, barH));
         ImGui.TextDisabled($"L:{left:F0}  Adv:{adv:F0}  R:{right:F0}");
     }
-    
+
     #endregion
-    
+
     #region Texture Pane
 
     private void DrawTexturePane()
@@ -413,7 +416,7 @@ public class ZuEditor : EditorComponent
             _needsFit = true;
             _fitFrameDelay = 0;
         }
-        
+
         ImGui.SameLine();
         if (ImGui.Button(_showPreview ? "Hide Preview" : "Show Preview"))
         {
@@ -432,7 +435,10 @@ public class ZuEditor : EditorComponent
 
     private void HandleAutoFit(NVector2 canvasSize)
     {
-        if (!_needsFit) return;
+        if (!_needsFit)
+        {
+            return;
+        }
 
         if (_fitFrameDelay > 0)
         {
@@ -450,7 +456,10 @@ public class ZuEditor : EditorComponent
         ImGui.InvisibleButton("##Canvas", canvasSize,
             ImGuiButtonFlags.MouseButtonLeft | ImGuiButtonFlags.MouseButtonRight);
 
-        if (!ImGui.IsItemHovered()) return;
+        if (!ImGui.IsItemHovered())
+        {
+            return;
+        }
 
         var io = ImGui.GetIO();
 
@@ -466,7 +475,7 @@ public class ZuEditor : EditorComponent
             _zoomPercent = Math.Clamp(_zoomPercent * MathF.Pow(1.1f, io.MouseWheel), 10f, 800f);
             _zoom = _baseZoom * (_zoomPercent / 100f);
             var rel = io.MousePos - canvasPos;
-            _pan = rel - (rel - _pan) * (_zoom / before);
+            _pan = rel - ((rel - _pan) * (_zoom / before));
             ClampPan(canvasSize);
         }
 
@@ -515,8 +524,8 @@ public class ZuEditor : EditorComponent
         var gb = _font.GlyphBounds[index];
         var sel = index == _selectedIndex;
 
-        var rMin = imgPos + new NVector2(gb.X, gb.Y) * _zoom;
-        var rMax = rMin + new NVector2(gb.Width, gb.Height) * _zoom;
+        var rMin = imgPos + (new NVector2(gb.X, gb.Y) * _zoom);
+        var rMax = rMin + (new NVector2(gb.Width, gb.Height) * _zoom);
 
         var fill = sel ? 0x3300FFFFu : 0x22FF8800u;
         var border = sel ? 0xFF00FFFFu : 0xAAFF8800u;
@@ -531,8 +540,8 @@ public class ZuEditor : EditorComponent
             var crop = _font.Cropping[index];
 
             // The cropping offset from origin
-            var cropMin = rMin + new NVector2(crop.X, crop.Y) * _zoom;
-            var cropMax = cropMin + new NVector2(crop.Width, crop.Height) * _zoom;
+            var cropMin = rMin + (new NVector2(crop.X, crop.Y) * _zoom);
+            var cropMax = cropMin + (new NVector2(crop.Width, crop.Height) * _zoom);
 
             // Draw cropping rectangle in bright green
             dl.AddRect(cropMin, cropMax, Color.Lime.PackedValue, 0f, ImDrawFlags.None, 1.5f);
@@ -569,7 +578,9 @@ public class ZuEditor : EditorComponent
         var visibleMax = NVector2.Min(pos + size, clipMax);
 
         if (visibleMin.X >= visibleMax.X || visibleMin.Y >= visibleMax.Y)
+        {
             return;
+        }
 
         var startCol = (int)MathF.Floor((visibleMin.X - pos.X) / cellSize);
         var endCol = (int)MathF.Ceiling((visibleMax.X - pos.X) / cellSize);
@@ -588,7 +599,7 @@ public class ZuEditor : EditorComponent
             for (var c = startCol; c < endCol; c++)
             {
                 var color = (r + c) % 2 == 0 ? Color.DarkGray : Color.LightGray;
-                var cellMin = pos + new NVector2(c, r) * cellSize;
+                var cellMin = pos + (new NVector2(c, r) * cellSize);
                 var cellMax = NVector2.Min(cellMin + new NVector2(cellSize), pos + size);
                 cellMin = NVector2.Max(cellMin, pos);
 
@@ -596,7 +607,7 @@ public class ZuEditor : EditorComponent
             }
         }
     }
-    
+
     private void FitToView(NVector2 canvasSize)
     {
         var texW = _fontTexture.Width;
@@ -608,7 +619,7 @@ public class ZuEditor : EditorComponent
         _baseZoom = Math.Min(scaleX, scaleY) * 0.95f;
         _zoomPercent = 100f;
         _zoom = _baseZoom;
-        _pan = (canvasSize - new NVector2(texW, texH) * _zoom) * 0.5f;
+        _pan = (canvasSize - (new NVector2(texW, texH) * _zoom)) * 0.5f;
     }
 
     private int HitTest(NVector2 atlasPixel)
@@ -625,9 +636,9 @@ public class ZuEditor : EditorComponent
 
         return -1;
     }
-    
+
     #endregion
-    
+
     #region Preview Window
 
     private void DrawPreviewWindow()
@@ -643,7 +654,7 @@ public class ZuEditor : EditorComponent
         ImGui.PushFont(_charactersFont);
         ImGui.InputTextMultiline("##PreviewText", ref _previewText, 1024, new NVector2(-1, 0));
         ImGui.PopFont();
-        
+
         ImGui.Text("Scale:");
         ImGui.SameLine();
         ImGui.SetNextItemWidth(200f);
@@ -689,7 +700,7 @@ public class ZuEditor : EditorComponent
                     pos.X = startPos.X;
                     pos.Y += lineHeight;
                     continue;
-                
+
                 case '\r':
                     continue;
             }
@@ -728,14 +739,15 @@ public class ZuEditor : EditorComponent
             var charStartX = pos.X;
 
             // Calculate render position with kerning
-            var renderX = pos.X + (kerning.X + cropping.X) * _previewScale;
-            var renderY = pos.Y + cropping.Y * _previewScale;
+            var renderX = pos.X + ((kerning.X + cropping.X) * _previewScale);
+            var renderY = pos.Y + (cropping.Y * _previewScale);
 
             // Calculate UV coordinates from atlas
             var texW = (float)_fontTexture.Width;
             var texH = (float)_fontTexture.Height;
             var uv0 = new NVector2(glyphBounds.X / texW, glyphBounds.Y / texH);
-            var uv1 = new NVector2((glyphBounds.X + glyphBounds.Width) / texW, (glyphBounds.Y + glyphBounds.Height) / texH);
+            var uv1 = new NVector2((glyphBounds.X + glyphBounds.Width) / texW,
+                (glyphBounds.Y + glyphBounds.Height) / texH);
 
             // Draw glyph from atlas
             var renderPos = new NVector2(renderX, renderY);
@@ -775,9 +787,9 @@ public class ZuEditor : EditorComponent
     }
 
     #endregion
-    
+
     #region Updates
-    
+
     private void AddCharacter(char character)
     {
         using (History.BeginScope("Add New Character"))
@@ -804,7 +816,7 @@ public class ZuEditor : EditorComponent
         {
             return;
         }
-        
+
         using (History.BeginScope("Duplicate Selected Characters"))
         {
             _font.Characters.Add(_font.Characters[_selectedIndex]);
@@ -815,12 +827,12 @@ public class ZuEditor : EditorComponent
             );
 
             _font.Cropping.Add(_selectedIndex < _font.Cropping.Count
-                ? _font.Cropping[_selectedIndex] 
+                ? _font.Cropping[_selectedIndex]
                 : new RRectangle(0, 0, 0, 0)
             );
 
             _font.KerningData.Add(_selectedIndex < _font.KerningData.Count
-                ? _font.KerningData[_selectedIndex] 
+                ? _font.KerningData[_selectedIndex]
                 : RVector3.Zero
             );
 
@@ -834,7 +846,7 @@ public class ZuEditor : EditorComponent
         {
             return;
         }
-        
+
         using (History.BeginScope("Delete Selected Characters"))
         {
             RemoveAt(_font.Characters, _selectedIndex);
@@ -847,7 +859,10 @@ public class ZuEditor : EditorComponent
 
     private static void RemoveAt<T>(List<T> list, int i)
     {
-        if (i < list.Count) list.RemoveAt(i);
+        if (i < list.Count)
+        {
+            list.RemoveAt(i);
+        }
     }
 
     #endregion

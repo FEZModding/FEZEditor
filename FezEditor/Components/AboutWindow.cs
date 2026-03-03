@@ -36,7 +36,7 @@ public class AboutWindow : DrawableGameComponent
         ImGui.SetNextWindowCollapsed(!_isOpen, ImGuiCond.FirstUseEver);
         ImGuiX.SetNextWindowCentered();
 
-        const ImGuiWindowFlags flags = ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoCollapse | 
+        const ImGuiWindowFlags flags = ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoCollapse |
                                        ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove;
 
         if (ImGui.Begin(nameof(AboutWindow), ref _isOpen, flags))

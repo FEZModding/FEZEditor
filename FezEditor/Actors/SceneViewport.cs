@@ -22,7 +22,7 @@ public class SceneViewport : IDisposable
         _rendering.RenderTargetSetWorld(_rt, worldRid);
         _rendering.RenderTargetSetClearColor(_rt, Color.Black);
     }
-    
+
     public Texture2D? GetTexture()
     {
         return _rendering.RenderTargetGetTexture(_rt);
@@ -43,7 +43,7 @@ public class SceneViewport : IDisposable
         var local = mousePos - viewportMin;
         var invViewProj = Matrix.Invert(view * projection);
         var nearPoint = UnprojectPoint(new Vector3(local.X, local.Y, 0f), width, height, invViewProj);
-        var farPoint  = UnprojectPoint(new Vector3(local.X, local.Y, 1f), width, height, invViewProj);
+        var farPoint = UnprojectPoint(new Vector3(local.X, local.Y, 1f), width, height, invViewProj);
         var direction = Vector3.Normalize(farPoint - nearPoint);
 
         return new Ray(nearPoint, direction);
@@ -51,13 +51,13 @@ public class SceneViewport : IDisposable
 
     private static Vector3 UnprojectPoint(Vector3 source, int width, int height, Matrix invViewProj)
     {
-        source.X = (source.X / width)  * 2f - 1f;
-        source.Y = -((source.Y / height) * 2f - 1f);
+        source.X = (source.X / width * 2f) - 1f;
+        source.Y = -((source.Y / height * 2f) - 1f);
 
         var result = Vector3.Transform(source, invViewProj);
-        var w = source.X * invViewProj.M14 + 
-                source.Y * invViewProj.M24 + 
-                source.Z * invViewProj.M34 + 
+        var w = (source.X * invViewProj.M14) +
+                (source.Y * invViewProj.M24) +
+                (source.Z * invViewProj.M34) +
                 invViewProj.M44;
 
         if (MathF.Abs(w - 1f) >= float.Epsilon)

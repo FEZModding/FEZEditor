@@ -21,7 +21,7 @@ public class MapNodeMesh : ActorComponent
         AddressV = TextureAddressMode.Clamp,
         Filter = TextureFilter.MinLinearMagPointMipLinear
     };
-    
+
     public Camera? Camera { private get; set; }
 
     private readonly RenderingService _rendering;
@@ -60,7 +60,7 @@ public class MapNodeMesh : ActorComponent
         _rendering.MaterialAssignEffect(_outlineMaterial, basicEffect);
         _rendering.MaterialSetAlbedo(_outlineMaterial, Color.White);
         _rendering.MaterialSetCullMode(_outlineMaterial, CullMode.CullClockwiseFace);
-        
+
         var effect = content.Load<Effect>("Effects/MapNodeMesh");
         _rendering.MaterialAssignEffect(_textureMaterial, effect);
 
@@ -77,6 +77,7 @@ public class MapNodeMesh : ActorComponent
         {
             _nodeTexture?.Dispose();
         }
+
         _nodeTexture = _defaultTexture!;
 
         if (!string.IsNullOrEmpty(textureFile))
@@ -87,7 +88,8 @@ public class MapNodeMesh : ActorComponent
 
         _rendering.MaterialAssignBaseTexture(_textureMaterial, _nodeTexture);
         _rendering.MaterialSetSamplerState(_textureMaterial, PointMipClamp);
-        _rendering.MaterialShaderSetParam(_textureMaterial, "TextureSize", new Vector2(_nodeTexture.Width, _nodeTexture.Height));
+        _rendering.MaterialShaderSetParam(_textureMaterial, "TextureSize",
+            new Vector2(_nodeTexture.Width, _nodeTexture.Height));
         _rendering.MaterialShaderSetParam(_textureMaterial, "CubeOffset", _transform.Position);
 
         var size = Vector3.One * node.NodeType.GetSizeFactor();
@@ -114,6 +116,7 @@ public class MapNodeMesh : ActorComponent
         {
             _nodeTexture?.Dispose();
         }
+
         _rendering.FreeRid(_textureMaterial);
         _rendering.FreeRid(_outlineMaterial);
         _rendering.FreeRid(_mesh);
