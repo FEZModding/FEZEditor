@@ -50,15 +50,13 @@ The build requires `fxc.exe` to compile HLSL shaders. You can provide it in one 
 - Place `fxc.exe` in the `FXC/` directory and install Wine with `winetricks d3dcompiler_43`, **or**
 - Install the DirectX SDK under Wine with `winetricks dxsdk_jun2010`
 
-### Building
-
-#### Build and run locally
+### Build and run locally
 
 ```bash
 dotnet build -c Debug
 ```
 
-#### Build a self-contained release binary
+### Build a self-contained release binary
 
 ```bash
 dotnet publish -c Release -r win-x64    # Windows
@@ -92,16 +90,16 @@ dotnet publish -c Release -r osx-arm64  # macOS
 * `ZuEditor`: SpriteFonts
 * `ChrisEditor`: ArtObjects and TrileSets
 
-### Documentation
+## Documentation
 
 Refer to [FEZModding Wiki](https://fezmodding.github.io/wiki/game/) for FEZ assets specifications (incomplete).
 
-### Contributing
+## Contributing
 
 **Contributions are welcome!**
 Whether it's bug fixes, implementation improvements or suggestions, your help will be greatly appreciated.
 
-### Credits
+## Credits
 
 This project uses:
 
