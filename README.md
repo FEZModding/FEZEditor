@@ -52,19 +52,28 @@ The build requires `fxc.exe` to compile HLSL shaders. You can provide it in one 
 
 ### Building
 
+#### Build and run locally
+
 ```bash
-dotnet build FezEditor.sln
+dotnet build -c Debug
 ```
 
-To build a release binary:
+#### Build a self-contained release binary
 
 ```bash
-dotnet publish FezEditor/FezEditor.csproj -c Release
+dotnet publish -c Release -r win-x64    # Windows
+dotnet publish -c Release -r linux-x64  # Linux
+dotnet publish -c Release -r osx-arm64  # macOS
 ```
 
 > [!NOTE]
-> In JetBrains Rider, ReSharper Build must be disabled to ensure content is always up to date on every project build.
+> In JetBrains Rider, ReSharper Build must be disabled to ensure assets are always up to date on every project build.
 > Go to `Settings > Build, Execution, Deployment > Toolset and Build` and uncheck `Use ReSharper Build`.
+
+### Content Packaging
+
+- **Debug**: assets are copied to `Content/` next to the executable.
+- **Release**: assets are bundled into `Content.pkz`, copied to the publishing directory on `dotnet publish`.
 
 ## Features
 
