@@ -113,8 +113,11 @@ public class ZipContentManager : ContentManager, IContentManager
             versionStr = rule;
         }
 
-        var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
+        var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version!;
+        assemblyVersion = new Version(assemblyVersion.Major, assemblyVersion.Minor, Math.Max(assemblyVersion.Build, 0));
+
         var contentsVersion = Version.Parse(versionStr);
+        contentsVersion = new Version(contentsVersion.Major, contentsVersion.Minor, Math.Max(contentsVersion.Build, 0));
 
         var compatible = op switch
         {

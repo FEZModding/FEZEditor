@@ -11,6 +11,8 @@ public class FezEditor : Game
 {
     private static readonly ILogger Logger = Logging.Create<FezEditor>();
 
+    public static readonly string Version = GetAssemblyVersion();
+
 #if DEBUG
     public const bool IsDebugBuild = true;
 #else
@@ -62,6 +64,7 @@ public class FezEditor : Game
 
     protected override void Initialize()
     {
+        Logger.Information("Version: {0}", Version);
         RepackerExtensions.Gd = GraphicsDevice;
 
         _content = this.CreateService<ContentService>();
@@ -98,5 +101,12 @@ public class FezEditor : Game
     {
         base.Dispose(disposing);
         this.RemoveServices();
+    }
+
+    private static string GetAssemblyVersion()
+    {
+        var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version!;
+        var patch = (version.Build > 0) ? $".{version.Build}" : string.Empty;
+        return $"{version.Major}.{version.Minor:D2}{patch}";
     }
 }
