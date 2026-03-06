@@ -1,7 +1,6 @@
 ﻿using FezEditor.Structure;
 using FEZRepacker.Core.Definitions.Game.ArtObject;
 using FEZRepacker.Core.Definitions.Game.Common;
-using FEZRepacker.Core.Definitions.Game.TrileSet;
 using Microsoft.Xna.Framework;
 
 namespace FezEditor.Tools;
@@ -110,26 +109,13 @@ public static class TrixelMaterializer
         {
             for (var y = 0; y < h; y++)
             {
-                TrySeed(x, y, 0);
-                TrySeed(x, y, d - 1);
-            }
-        }
-
-        for (var y = 0; y < h; y++)
-        {
-            for (var z = 0; z < d; z++)
-            {
-                TrySeed(0, y, z);
-                TrySeed(w - 1, y, z);
-            }
-        }
-
-        for (var x = 0; x < w; x++)
-        {
-            for (var z = 0; z < d; z++)
-            {
-                TrySeed(x, 0, z);
-                TrySeed(x, h - 1, z);
+                for (var z = 0; z < d; z++)
+                {
+                    if (x == 0 || x == w - 1 || y == 0 || y == h - 1 || z == 0 || z == d - 1)
+                    {
+                        TrySeed(x, y, z);
+                    }
+                }
             }
         }
 
