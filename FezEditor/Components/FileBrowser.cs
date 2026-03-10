@@ -14,7 +14,9 @@ public class FileBrowser : DrawableGameComponent
 
     private string _path = "";
 
-    private string _filter = "";
+    private Dirty<string> _filter = new("");
+
+    private readonly HashSet<FileNode> _openDirs = new();
 
     private readonly Stack<(FileNode node, bool shouldPop)> _tree = new();
 
@@ -114,7 +116,11 @@ public class FileBrowser : DrawableGameComponent
         ImGuiX.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(8, 4));
         {
             ImGui.SetNextItemWidth(-40);
-            ImGui.InputTextWithHint("", "Filter Files", ref _filter, 255);
+            var filter = _filter.Value;
+            if (ImGui.InputTextWithHint("", "Filter Files", ref filter, 255))
+            {
+                _filter = filter;
+            }
 
             if (!string.IsNullOrEmpty(_filter))
             {
@@ -223,10 +229,9 @@ public class FileBrowser : DrawableGameComponent
                     nodeFlags |= ImGuiTreeNodeFlags.Selected;
                 }
 
-                // Force open directories when filtering so matched children are visible
-                if (filtering && node.IsDirectory)
+                if (node.IsDirectory && _filter.IsDirty)
                 {
-                    ImGui.SetNextItemOpen(true);
+                    ImGui.SetNextItemOpen(filtering ? node.MatchesFilter : _openDirs.Contains(node), ImGuiCond.Always);
                 }
 
                 // Choose icon based on node type
@@ -241,6 +246,17 @@ public class FileBrowser : DrawableGameComponent
                 if (node.IsDirectory)
                 {
                     node.IsOpen = nodeOpen;
+                    if (!filtering)
+                    {
+                        if (nodeOpen)
+                        {
+                            _openDirs.Add(node);
+                        }
+                        else
+                        {
+                            _openDirs.Remove(node);
+                        }
+                    }
                 }
 
                 if (ImGui.IsItemClicked())
@@ -299,6 +315,7 @@ public class FileBrowser : DrawableGameComponent
             }
 
             ImGui.PopStyleVar(2);
+            _filter = _filter.Clean();
         }
 
         ImGui.EndChild();
@@ -333,6 +350,7 @@ public class FileBrowser : DrawableGameComponent
 
     private void BuildNodeTree()
     {
+        _openDirs.Clear();
         if (_resourceService.HasNoProvider)
         {
             _root = null;
@@ -345,8 +363,10 @@ public class FileBrowser : DrawableGameComponent
             Name = _resourceService.Root,
             Path = _resourceService.Root,
             IsDirectory = true,
-            Depth = 0
+            Depth = 0,
+            IsOpen = true
         };
+        _openDirs.Add(_root);
 
         var lookup = new Dictionary<string, FileNode>
         {
@@ -524,6 +544,6 @@ public class FileBrowser : DrawableGameComponent
         public int Depth { get; init; } // Track depth for indentation
         public string Extension { get; init; } = "";
         public bool MatchesFilter { get; set; }
-        public bool IsOpen { get; set; } // Track if directory is open
+        public bool IsOpen { get; set; }
     }
 }
