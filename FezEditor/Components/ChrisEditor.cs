@@ -297,15 +297,12 @@ public partial class ChrisEditor : EditorComponent
                 }
             };
 
-            FileDialog.Show(FileDialog.Type.OpenFile, result =>
+            FileDialog.Show(FileDialog.Type.OpenFile, files =>
             {
-                if (result.Files.Length > 0)
-                {
-                    var path = result.Files[0];
-                    var targetSet = (TrileSet)ResourceService.Load(path);
-                    setSubject.AppendTriles(_selectedTriles, targetSet);
-                    ResourceService.Save(path, targetSet);
-                }
+                var path = files[0];
+                var targetSet = (TrileSet)ResourceService.Load(path);
+                setSubject.AppendTriles(_selectedTriles, targetSet);
+                ResourceService.Save(path, targetSet);
             }, options);
         }
 

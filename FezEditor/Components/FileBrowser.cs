@@ -470,14 +470,11 @@ public class FileBrowser : DrawableGameComponent
             Filters = [new FileDialog.Filter(assetType.Name, extension)]
         };
 
-        FileDialog.Show(FileDialog.Type.SaveFile, result =>
+        FileDialog.Show(FileDialog.Type.SaveFile, files =>
         {
-            if (result.Files.Length != 0)
-            {
-                var relativePath = _resourceService.GetRelativePath(result.Files[0]);
-                var asset = EditorService.CreateAssetOfType(assetType, defaultName);
-                _resourceService.Save(relativePath, asset);
-            }
+            var relativePath = _resourceService.GetRelativePath(files[0]);
+            var asset = EditorService.CreateAssetOfType(assetType, defaultName);
+            _resourceService.Save(relativePath, asset);
         }, options);
     }
 
@@ -507,15 +504,12 @@ public class FileBrowser : DrawableGameComponent
             Title = "Move to folder"
         };
 
-        FileDialog.Show(FileDialog.Type.OpenFolder, result =>
+        FileDialog.Show(FileDialog.Type.OpenFolder, files =>
         {
-            if (result.Files.Length != 0)
-            {
-                var targetDir = _resourceService.GetRelativePath(result.Files[0]);
-                var fileName = path.Contains('/') ? path[(path.LastIndexOf('/') + 1)..] : path;
-                var newPath = string.IsNullOrEmpty(targetDir) ? fileName : $"{targetDir}/{fileName}";
-                _resourceService.Move(path, newPath);
-            }
+            var targetDir = _resourceService.GetRelativePath(files[0]);
+            var fileName = path.Contains('/') ? path[(path.LastIndexOf('/') + 1)..] : path;
+            var newPath = string.IsNullOrEmpty(targetDir) ? fileName : $"{targetDir}/{fileName}";
+            _resourceService.Move(path, newPath);
         }, options);
     }
 

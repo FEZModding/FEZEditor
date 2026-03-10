@@ -160,12 +160,11 @@ public partial class EditorService
 
     public void SaveActiveEditorChangesAs()
     {
-        FileDialog.Show(FileDialog.Type.SaveFile, result =>
+        FileDialog.Show(FileDialog.Type.SaveFile, files =>
         {
-            if (result.Files.Length > 0 && _tracking.TryGetValue(_activeEditor!, out var tracking) &&
-                tracking.HasChanges)
+            if (_tracking.TryGetValue(_activeEditor!, out var tracking) && tracking.HasChanges)
             {
-                _resourceService.Save(result.Files[0], _activeEditor!.Asset);
+                _resourceService.Save(files[0], _activeEditor!.Asset);
                 tracking.HasChanges = false;
                 _tracking[_activeEditor] = tracking;
                 Logger.Information("Saving {0} as...", _activeEditor);

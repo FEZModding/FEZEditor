@@ -79,14 +79,11 @@ public class WelcomeComponent : EditorComponent
 
             FileDialog.Show(FileDialog.Type.OpenFile, source =>
                 {
-                    if (source.Files.Length > 0)
-                    {
-                        FileDialog.Show(FileDialog.Type.OpenFolder,
-                            target => ExtractPaksAndOpenDirectory(source, target), new FileDialog.Options
-                            {
-                                Title = "Choose a directory to save assets..."
-                            });
-                    }
+                    FileDialog.Show(FileDialog.Type.OpenFolder,
+                        target => ExtractPaksAndOpenDirectory(source, target), new FileDialog.Options
+                        {
+                            Title = "Choose a directory to save assets..."
+                        });
                 },
                 selectOptions);
         }
@@ -109,20 +106,20 @@ public class WelcomeComponent : EditorComponent
         ImGui.EndGroup();
     }
 
-    private void ExtractPaksAndOpenDirectory(FileDialog.Result source, FileDialog.Result target)
+    private void ExtractPaksAndOpenDirectory(string[] sources, string[] targets)
     {
         if (_resourceExtractor == null)
         {
-            _resourceExtractor = new ResourceExtractor(Game, source.Files, target.Files[0]);
+            _resourceExtractor = new ResourceExtractor(Game, sources, targets[0]);
             _resourceExtractor.Disposed += (_, _) => _resourceExtractor = null;
-            _resourceExtractor.Competed += () => OpenDirectory(target);
+            _resourceExtractor.Competed += () => OpenDirectory(targets);
             Game.AddComponent(_resourceExtractor);
         }
     }
 
-    private void OpenPakFile(FileDialog.Result result)
+    private void OpenPakFile(string[] files)
     {
-        var pakPath = result.Files.FirstOrDefault();
+        var pakPath = files.FirstOrDefault();
         if (!string.IsNullOrEmpty(pakPath))
         {
             _resourceService.OpenProvider(new FileInfo(pakPath));
@@ -130,9 +127,9 @@ public class WelcomeComponent : EditorComponent
         }
     }
 
-    private void OpenDirectory(FileDialog.Result result)
+    private void OpenDirectory(string[] files)
     {
-        var dirPath = result.Files.FirstOrDefault();
+        var dirPath = files.FirstOrDefault();
         if (!string.IsNullOrEmpty(dirPath))
         {
             _resourceService.OpenProvider(new DirectoryInfo(dirPath));

@@ -11,8 +11,6 @@ public static class FileDialog
         public string Pattern { get; init; } = pattern;
     }
 
-    public record Result(string[] Files, int SelectedFilterIndex);
-
     public class Options
     {
         public Filter[] Filters { get; init; } = [];
@@ -32,7 +30,7 @@ public static class FileDialog
 
     public static void Show(
         Type type,
-        Action<Result> callback,
+        Action<string[]> callback,
         Options? options = null)
     {
         options ??= new Options();
@@ -141,9 +139,9 @@ public static class FileDialog
 
         public SDL.SDL_DialogFileCallback Callback { get; }
 
-        private readonly Action<Result> _userCallback;
+        private readonly Action<string[]> _userCallback;
 
-        public DialogContext(Action<Result> userCallback)
+        public DialogContext(Action<string[]> userCallback)
         {
             _userCallback = userCallback;
             Callback = OnDialogComplete;
@@ -154,8 +152,11 @@ public static class FileDialog
         {
             try
             {
-                var result = ParseResult(filelist, filter);
-                _userCallback(result);
+                var result = ParseResult(filelist);
+                if (result.Length > 0)
+                {
+                    _userCallback(result);
+                }
             }
             finally
             {
@@ -167,12 +168,12 @@ public static class FileDialog
             }
         }
 
-        private static Result ParseResult(IntPtr filelist, int filterIndex)
+        private static string[] ParseResult(IntPtr filelist)
         {
             // Check if user cancelled (filelist will be null)
             if (filelist == IntPtr.Zero)
             {
-                return new Result([], -1);
+                return Array.Empty<string>();
             }
 
             // Read the array of C strings
@@ -200,7 +201,7 @@ public static class FileDialog
                 i++;
             }
 
-            return new Result(files.ToArray(), filterIndex);
+            return files.ToArray();
         }
     }
 }
