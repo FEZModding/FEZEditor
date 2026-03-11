@@ -1,4 +1,5 @@
 ﻿using FezEditor.Services;
+using FezEditor.Structure;
 using FezEditor.Tools;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
@@ -45,7 +46,7 @@ public class WelcomeComponent : EditorComponent
         ImGui.Text("Welcome to FEZEDITOR!");
         ImGui.NewLine();
 
-        if (ImGui.Button("Open PAK file"))
+        if (ImGui.Button($"{Icons.Package} Open PAK file"))
         {
             FileDialog.Show(FileDialog.Type.OpenFile, OpenPakFile, new FileDialog.Options
             {
@@ -57,7 +58,7 @@ public class WelcomeComponent : EditorComponent
             });
         }
 
-        if (ImGui.Button("Open assets directory"))
+        if (ImGui.Button($"{Icons.Folder} Open assets directory"))
         {
             FileDialog.Show(FileDialog.Type.OpenFolder, OpenDirectory, new FileDialog.Options
             {
@@ -65,7 +66,7 @@ public class WelcomeComponent : EditorComponent
             });
         }
 
-        if (ImGui.Button("Extract assets and open them..."))
+        if (ImGui.Button($"{Icons.Export} Extract assets and open them..."))
         {
             var selectOptions = new FileDialog.Options
             {
@@ -88,7 +89,7 @@ public class WelcomeComponent : EditorComponent
                 selectOptions);
         }
 
-        if (ImGui.Button("Open SaveSlot file to edit"))
+        if (ImGui.Button($"{Icons.SaveAs} Open SaveSlot file to edit"))
         {
             var path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             FileDialog.Show(FileDialog.Type.OpenFolder, OpenDirectory, new FileDialog.Options
@@ -98,7 +99,7 @@ public class WelcomeComponent : EditorComponent
             });
         }
 
-        if (ImGui.Button("Quit"))
+        if (ImGui.Button($"{Icons.CloseAll} Quit"))
         {
             Game.Exit();
         }
