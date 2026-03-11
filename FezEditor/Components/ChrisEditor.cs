@@ -103,6 +103,12 @@ public partial class ChrisEditor : EditorComponent
 
     public override void Update(GameTime gameTime)
     {
+        StatusService.AddHints(_editMode switch
+        {
+            EditMode.Select => [("LMB Drag", "Select Faces")],
+            EditMode.Add => [("LMB", "Add Trixels")],
+            EditMode.Remove => [("LMB", "Remove Trixels")]
+        });
         _nowTime = gameTime.TotalGameTime;
         _scene.Update(gameTime);
     }

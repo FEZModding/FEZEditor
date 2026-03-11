@@ -23,6 +23,8 @@ public abstract class EditorComponent
 
     protected IContentManager ContentManager { get; }
 
+    protected StatusService StatusService { get; }
+
     protected EditorComponent(Game game, string title)
     {
         Game = game;
@@ -31,6 +33,7 @@ public abstract class EditorComponent
         InputService = game.GetService<InputService>();
         RenderingService = game.GetService<RenderingService>();
         ResourceService = game.GetService<ResourceService>();
+        StatusService = game.GetService<StatusService>();
         ContentManager = game.GetService<ContentService>().Get(this);
     }
 

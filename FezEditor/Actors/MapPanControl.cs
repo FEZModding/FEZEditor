@@ -14,6 +14,8 @@ public class MapPanControl : ActorComponent
 
     private readonly InputService _input;
 
+    private readonly StatusService _status;
+
     private readonly Transform _transform;
 
     private readonly Camera _camera;
@@ -23,6 +25,7 @@ public class MapPanControl : ActorComponent
     internal MapPanControl(Game game, Actor actor) : base(game, actor)
     {
         _input = game.GetService<InputService>();
+        _status = game.GetService<StatusService>();
         _transform = actor.GetComponent<Transform>();
         _camera = actor.GetComponent<Camera>();
     }
@@ -34,6 +37,7 @@ public class MapPanControl : ActorComponent
 
     public override void Update(GameTime gameTime)
     {
+        _status.AddHints(("RMB", "Pan"));
         if (_focusTarget.HasValue)
         {
             var delta = (float)gameTime.ElapsedGameTime.TotalSeconds;

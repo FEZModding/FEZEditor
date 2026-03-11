@@ -17,16 +17,32 @@ public class FirstPersonControl : ActorComponent
 
     private readonly InputService _input;
 
+    private readonly StatusService _status;
+
     private readonly Transform _transform;
 
     internal FirstPersonControl(Game game, Actor actor) : base(game, actor)
     {
         _input = game.GetService<InputService>();
+        _status = game.GetService<StatusService>();
         _transform = actor.GetComponent<Transform>();
     }
 
     public override void Update(GameTime gameTime)
     {
+        #region Update Input Hints
+
+        var f = _input.GetActionBinding(InputActions.MoveForward);
+        var l = _input.GetActionBinding(InputActions.MoveLeft);
+        var b = _input.GetActionBinding(InputActions.MoveBackward);
+        var r = _input.GetActionBinding(InputActions.MoveRight);
+        _status.AddHints(
+            (f+l+b+r, "Movement"),
+            ("RMB", "Look around")
+        );
+
+        #endregion
+
         #region Handle mouse input
 
         _input.CaptureMouse(false);

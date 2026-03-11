@@ -64,6 +64,7 @@ public class JadeEditor : EditorComponent
 
     public override void Update(GameTime gameTime)
     {
+        StatusService.AddHints(("LMB", "Select Node"));
         _scene.Update(gameTime);
     }
 

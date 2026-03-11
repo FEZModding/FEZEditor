@@ -32,6 +32,8 @@ public class FezEditor : Game
 
     private InputService _input = null!;
 
+    private StatusService _status = null!;
+
     private EditorService _editor = null!;
 
     private static void Main(string[] args)
@@ -74,6 +76,7 @@ public class FezEditor : Game
         _rendering = this.CreateService<RenderingService>();
         _resources = this.CreateService<ResourceService>();
         _input = this.CreateService<InputService>();
+        _status = this.CreateService<StatusService>();
         _editor = this.CreateService<EditorService>();
         Content = (ContentManager)_content.Global;
 

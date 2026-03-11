@@ -12,6 +12,8 @@ public class MainLayout : DrawableGameComponent
 
     private readonly EditorService _editorService;
 
+    private readonly StatusService _statusService;
+
     private readonly FileBrowser _fileBrowser;
 
     private readonly ConfirmWindow _confirm;
@@ -19,6 +21,7 @@ public class MainLayout : DrawableGameComponent
     public MainLayout(Game game) : base(game)
     {
         _editorService = Game.GetService<EditorService>();
+        _statusService = Game.GetService<StatusService>();
         _fileBrowser = Game.GetComponent<FileBrowser>();
         Game.AddComponent(_confirm = new ConfirmWindow(game));
         DrawOrder = -1;
@@ -64,45 +67,56 @@ public class MainLayout : DrawableGameComponent
                     ImGui.SameLine();
                 }
 
-                // Right pane - Editor tabs
+                // Right pane - Editor tabs + Status bar
                 ImGuiX.BeginChild("RightPane", Vector2.Zero);
-                if (_editorService.Editors.Any())
                 {
-                    if (ImGui.BeginTabBar("##EditorTabs"))
+                    var hasHints = _statusService.Hints.Count > 0;
+                    var statusBarHeight = hasHints
+                        ? ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.Y + 1
+                        : 0f;
+
+                    ImGuiX.BeginChild("EditorArea", new Vector2(0, -statusBarHeight));
+                    if (_editorService.Editors.Any())
                     {
-                        foreach (var editor in _editorService.Editors)
+                        if (ImGui.BeginTabBar("##EditorTabs"))
                         {
-                            var title = editor.Title;
-                            if (_editorService.HasEditorUnsavedChanges(editor))
+                            foreach (var editor in _editorService.Editors)
                             {
-                                title = "(*) " + title;
+                                var title = editor.Title;
+                                if (_editorService.HasEditorUnsavedChanges(editor))
+                                {
+                                    title = "(*) " + title;
+                                }
+
+                                var isOpen = true;
+                                var beginTabItem = editor is WelcomeComponent
+                                    ? ImGui.BeginTabItem(title)
+                                    : ImGui.BeginTabItem(title, ref isOpen);
+
+                                if (beginTabItem)
+                                {
+                                    DrawEditor(editor);
+                                    ImGui.EndTabItem();
+                                }
+
+                                if (!isOpen)
+                                {
+                                    SaveAndCloseEditor(editor);
+                                }
                             }
 
-                            var isOpen = true;
-                            var beginTabItem = editor is WelcomeComponent
-                                ? ImGui.BeginTabItem(title)
-                                : ImGui.BeginTabItem(title, ref isOpen);
-
-                            if (beginTabItem)
-                            {
-                                DrawEditor(editor);
-                                ImGui.EndTabItem();
-                            }
-
-                            if (!isOpen)
-                            {
-                                SaveAndCloseEditor(editor);
-                            }
+                            ImGui.EndTabBar();
                         }
-
-                        ImGui.EndTabBar();
                     }
-                }
-                else
-                {
-                    const string text = $"{Icons.ArrowLeft} Open a file from File Browser";
-                    ImGuiX.SetTextCentered(text);
-                    ImGui.Text(text);
+                    else
+                    {
+                        const string text = $"{Icons.ArrowLeft} Open a file from File Browser";
+                        ImGuiX.SetTextCentered(text);
+                        ImGui.Text(text);
+                    }
+                    ImGui.EndChild();
+
+                    DrawStatusBar();
                 }
 
                 ImGui.EndChild();
@@ -127,6 +141,33 @@ public class MainLayout : DrawableGameComponent
         var text = $"Loading{dots}";
         ImGuiX.SetTextCentered(text);
         ImGui.Text(text);
+    }
+
+    private void DrawStatusBar()
+    {
+        var hints = _statusService.Hints;
+        if (hints.Count == 0)
+        {
+            return;
+        }
+
+        ImGui.Separator();
+        if (ImGuiX.BeginChild("StatusBar", Vector2.Zero, ImGuiChildFlags.None, ImGuiWindowFlags.NoScrollbar))
+        {
+            for (var i = 0; i < hints.Count; i++)
+            {
+                var (binding, label) = hints[i];
+                ImGui.Text(binding + " - " + label);
+                if (i < hints.Count - 1)
+                {
+                    ImGui.SameLine(0, 32);
+                    ImGui.TextDisabled("|");
+                    ImGui.SameLine(0, 8);
+                }
+            }
+        }
+
+        ImGui.EndChild();
     }
 
     private void SaveAndCloseEditor(EditorComponent editor)

@@ -20,6 +20,8 @@ public class OrbitControl : ActorComponent
 
     private readonly InputService _input;
 
+    private readonly StatusService _status;
+
     private readonly Transform _transform;
 
     private float _pitch;
@@ -27,11 +29,13 @@ public class OrbitControl : ActorComponent
     internal OrbitControl(Game game, Actor actor) : base(game, actor)
     {
         _input = game.GetService<InputService>();
+        _status = game.GetService<StatusService>();
         _transform = actor.GetComponent<Transform>();
     }
 
     public override void Update(GameTime gameTime)
     {
+        _status.AddHints(("MMB", "Orbit"));
         _input.CaptureMouse(false);
         if (_input.IsMiddleMousePressed())
         {

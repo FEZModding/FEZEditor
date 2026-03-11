@@ -30,6 +30,8 @@ public partial class EditorService
 
     private readonly ResourceService _resourceService;
 
+    private readonly StatusService _statusService;
+
     private EditorComponent? _activeEditor;
 
     public EditorService(Game game)
@@ -37,10 +39,13 @@ public partial class EditorService
         _game = game;
         _inputService = game.GetService<InputService>();
         _resourceService = game.GetService<ResourceService>();
+        _statusService = game.GetService<StatusService>();
     }
 
     public void Update(GameTime gameTime)
     {
+        _statusService.ClearHints();
+
         if (_activeEditor == null || _loading.Contains(_activeEditor))
         {
             return;
