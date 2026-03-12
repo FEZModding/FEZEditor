@@ -52,7 +52,7 @@ VS_OUTPUT VS(VS_INPUT input)
 
 float4 PS(VS_OUTPUT input) : COLOR0
 {
-    int type = (int)input.CollisionType;
+    int type = (int)(input.CollisionType + 0.5); // to ensure proper integer rounding for comparison
     float4 color;
 
     if (type == COLLISION_ALL_SIDES)
