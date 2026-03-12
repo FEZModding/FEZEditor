@@ -37,10 +37,12 @@ public class MapZoomControl : ActorComponent
         {
             var delta = (float)gameTime.ElapsedGameTime.TotalSeconds;
             _camera.Size = MathHelper.Lerp(_camera.Size, _targetSize, LerpSpeed * delta);
-            return;
+        }
+        else
+        {
+            _camera.Size = _targetSize;
         }
 
-        _camera.Size = _targetSize;
         var scroll = _input.GetScrollWheelDelta();
         if (scroll != 0)
         {
