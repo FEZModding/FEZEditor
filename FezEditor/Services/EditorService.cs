@@ -22,7 +22,7 @@ public partial class EditorService
 
     private readonly List<EditorComponent> _pendingClose = new();
 
-    private readonly HashSet<EditorComponent> _loading = new();
+    private readonly List<EditorComponent> _pendingLoad = new();
 
     private readonly Dictionary<EditorComponent, EditorTracking> _tracking = new();
 
@@ -48,7 +48,7 @@ public partial class EditorService
     {
         _statusService.ClearHints();
 
-        if (_activeEditor == null || _loading.Contains(_activeEditor))
+        if (_activeEditor == null || _pendingLoad.Contains(_activeEditor))
         {
             return;
         }
@@ -110,7 +110,7 @@ public partial class EditorService
                 }
                 UpdateFlags();
             };
-            editor.LoadContent();
+            _pendingLoad.Add(editor);
             UpdateFlags();
             Logger.Information("Opened the {0}", editor);
         }
@@ -207,6 +207,23 @@ public partial class EditorService
         }
     }
 
+    public void FlushPendingLoads()
+    {
+        if (_pendingLoad.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var editor in _pendingLoad)
+        {
+            editor.LoadContent();
+            Logger.Debug("Loaded {0}", editor);
+        }
+
+        _pendingLoad.Clear();
+        UpdateFlags();
+    }
+
     public void FlushPendingCloses()
     {
         if (_pendingClose.Count == 0)
@@ -232,7 +249,7 @@ public partial class EditorService
 
     public bool IsEditorLoading(EditorComponent editor)
     {
-        return _loading.Contains(editor);
+        return _pendingLoad.Contains(editor);
     }
 
     private void UpdateFlags()

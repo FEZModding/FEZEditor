@@ -18,6 +18,8 @@ public class MainLayout : DrawableGameComponent
 
     private readonly ConfirmWindow _confirm;
 
+    private bool _loadNextUpdate;
+
     public MainLayout(Game game) : base(game)
     {
         _editorService = Game.GetService<EditorService>();
@@ -41,6 +43,13 @@ public class MainLayout : DrawableGameComponent
 
     public override void Draw(GameTime gameTime)
     {
+        // Flush loading editors on next frame
+        if (_loadNextUpdate)
+        {
+            _loadNextUpdate = false;
+            _editorService.FlushPendingLoads();
+        }
+
         // Clear previously closed editors
         _editorService.FlushPendingCloses();
 
@@ -141,11 +150,10 @@ public class MainLayout : DrawableGameComponent
             return;
         }
 
-        var dotCount = (int)(ImGui.GetTime() * 2) % 4;
-        var dots = new string('.', dotCount);
-        var text = $"Loading{dots}";
+        const string text = "Loading...";
         ImGuiX.SetTextCentered(text);
         ImGui.Text(text);
+        _loadNextUpdate = true;
     }
 
     private void DrawStatusBar()
