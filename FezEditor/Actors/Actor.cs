@@ -12,6 +12,8 @@ public class Actor : IDisposable
 
     public bool Active { get; set; } = true;
 
+    public bool Visible { get; set; } = true;
+
     public string Name { get; set; } = "Actor";
 
     public Rid InstanceRid { get; }
@@ -86,6 +88,7 @@ public class Actor : IDisposable
 
     public void Update(GameTime gameTime)
     {
+        _rendering.InstanceSetVisibility(InstanceRid, Visible);
         foreach (var component in _components.Where(c => c.Enabled))
         {
             component.Update(gameTime);

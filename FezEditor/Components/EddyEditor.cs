@@ -3,6 +3,7 @@ using FezEditor.Structure;
 using FezEditor.Tools;
 using FEZRepacker.Core.Definitions.Game.ArtObject;
 using FEZRepacker.Core.Definitions.Game.Level;
+using FEZRepacker.Core.Definitions.Game.Sky;
 using FEZRepacker.Core.Definitions.Game.TrileSet;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
@@ -21,6 +22,8 @@ public class EddyEditor : EditorComponent
 
     private Actor _cameraActor = null!;
 
+    private Actor _skyActor = null!;
+
     private readonly Clock _clock = new();
 
     private readonly Dictionary<int, Actor> _trileActors = new();
@@ -37,17 +40,38 @@ public class EddyEditor : EditorComponent
     {
         _clock.Tick(gameTime);
         _scene.Update(gameTime);
+        UpdateLighting();
+    }
+
+    private void UpdateLighting()
+    {
+        var visualizer = _skyActor.GetComponent<SkyVisualizer>();
+        var actualAmbient = new Color(_level.BaseAmbient, _level.BaseAmbient, _level.BaseAmbient);
+        var actualDiffuse = new Color(_level.BaseDiffuse, _level.BaseDiffuse, _level.BaseDiffuse);
+
+        if (_clock.NightContribution != 0f)
+        {
+            actualDiffuse = Color.Lerp(actualDiffuse, visualizer.FogColor, _clock.NightContribution * 0.4f);
+            actualAmbient = Color.Lerp(actualAmbient, visualizer.FoliageShadows
+                ? Color.Lerp(visualizer.FogColor, Color.White, 0.5f)
+                : Color.White, _clock.NightContribution * 0.5f);
+        }
+
+        actualAmbient = Color.Lerp(actualAmbient, visualizer.FogColor, 23f / 160f);
+
+        _scene.Lighting.Ambient = actualAmbient;
+        _scene.Lighting.Diffuse = actualDiffuse;
     }
 
     public override void LoadContent()
     {
         _scene = new Scene(Game, ContentManager);
-        _scene.Lighting.Ambient = Color.Gray;
+        Camera camera;
         {
             _cameraActor = _scene.CreateActor();
             _cameraActor.Name = "Camera";
 
-            var camera = _cameraActor.AddComponent<Camera>();
+            camera = _cameraActor.AddComponent<Camera>();
             var gizmo = _cameraActor.AddComponent<OrientationGizmo>();
             _cameraActor.AddComponent<FirstPersonControl>();
 
@@ -55,6 +79,12 @@ public class EddyEditor : EditorComponent
             camera.FieldOfView = 90f;
             camera.Far = 5000f;
             gizmo.UseFaceLabels = false;
+        }
+        {
+            _skyActor = _scene.CreateActor();
+            _skyActor.Name = "Sky";
+            var visualizer = _skyActor.AddComponent<SkyVisualizer>();
+            visualizer.Initialize(_scene, camera, _clock);
         }
 
         RevisualizeLevel();
@@ -102,9 +132,17 @@ public class EddyEditor : EditorComponent
 
     private void RevisualizeLevel()
     {
+        var sky = (Sky)ResourceService.Load($"Skies/{_level.SkyName}");
+        _scene.Lighting.Ambient = Color.White * _level.BaseAmbient;
+        _scene.Lighting.Diffuse = Color.White * _level.BaseDiffuse;
+
         #region Sky
 
-        // TODO: Implement Sky rendering
+        {
+            var visualizer = _skyActor.GetComponent<SkyVisualizer>();
+            visualizer.LevelSize = _level.Size.ToXna();
+            visualizer.Visualize(sky);
+        }
 
         #endregion
 
@@ -266,6 +304,15 @@ public class EddyEditor : EditorComponent
             var bounds = actor.AddComponent<BoundsMesh>();
             bounds.Size = Vector3.One;
             bounds.WireColor = Color.Red;
+        }
+
+        #endregion
+
+        #region Cloud Shadows
+
+        {
+            var visualizer = _skyActor.GetComponent<SkyVisualizer>();
+            visualizer.VisualizeShadows(sky.Name, sky.Shadows);
         }
 
         #endregion

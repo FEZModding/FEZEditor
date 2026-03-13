@@ -4,9 +4,9 @@ namespace FezEditor.Tools;
 
 public static class Mathz
 {
-    public const float TrixelSize = 1f / 16f;
+    public static readonly Vector3 XzMask = Vector3.UnitX + Vector3.UnitZ;
 
-    public static Vector3 XzMask { get; set; } = new(1f, 0f, 1f);
+    public const float TrixelSize = 1f / 16f;
 
     public static bool IsEqualApprox(float lhs, float rhs)
     {
@@ -18,11 +18,9 @@ public static class Mathz
         return MathF.Abs(value) < float.Epsilon;
     }
 
-    public static int Clamp(int value, int min, int max)
+    public static float Frac(float value)
     {
-        value = value > max ? max : value;
-        value = value < min ? min : value;
-        return value;
+        return value - (int)value;
     }
 
     public static Matrix CreateTextureTransform(Rectangle rectangle, Vector2 size)
@@ -96,5 +94,10 @@ public static class Mathz
             MathF.Round(vector.Y, decimals),
             MathF.Round(vector.Z, decimals)
         );
+    }
+
+    public static float Between(this Random random, float min, float max)
+    {
+        return min + (float)random.NextDouble() * (max - min);
     }
 }

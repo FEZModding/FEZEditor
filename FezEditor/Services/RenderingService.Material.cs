@@ -120,6 +120,12 @@ public partial class RenderingService
         dss.DepthBufferEnable = dss.DepthBufferWriteEnable || dss.DepthBufferFunction != CompareFunction.Never;
     }
 
+    public void MaterialSetStencilWrite(Rid material, bool enabled)
+    {
+        var dss = GetResource(_materials, material).DepthStencilState;
+        dss.StencilPass = enabled ? StencilOperation.Replace : StencilOperation.Keep;
+    }
+
     public void MaterialSetStencilTest(Rid material, CompareFunction func, int referenceValue)
     {
         var dss = GetResource(_materials, material).DepthStencilState;
@@ -248,7 +254,7 @@ public partial class RenderingService
                 colorBlendFunction = BlendFunction.Max;
                 colorSourceBlend = Blend.One;
                 colorDestinationBlend = Blend.One;
-                alphaBlendFunction = BlendFunction.Max;
+                alphaBlendFunction = BlendFunction.Add;
                 alphaSourceBlend = Blend.One;
                 alphaDestinationBlend = Blend.One;
                 break;
@@ -257,7 +263,7 @@ public partial class RenderingService
                 colorBlendFunction = BlendFunction.Min;
                 colorSourceBlend = Blend.One;
                 colorDestinationBlend = Blend.One;
-                alphaBlendFunction = BlendFunction.Min;
+                alphaBlendFunction = BlendFunction.Add;
                 alphaSourceBlend = Blend.One;
                 alphaDestinationBlend = Blend.One;
                 break;
@@ -266,7 +272,25 @@ public partial class RenderingService
                 colorBlendFunction = BlendFunction.ReverseSubtract;
                 colorSourceBlend = Blend.One;
                 colorDestinationBlend = Blend.One;
-                alphaBlendFunction = BlendFunction.ReverseSubtract;
+                alphaBlendFunction = BlendFunction.Add;
+                alphaSourceBlend = Blend.One;
+                alphaDestinationBlend = Blend.One;
+                break;
+
+            case BlendMode.StarsOverClouds:
+                colorBlendFunction = BlendFunction.Add;
+                colorSourceBlend = Blend.One;
+                colorDestinationBlend = Blend.InverseSourceColor;
+                alphaBlendFunction = BlendFunction.Add;
+                alphaSourceBlend = Blend.One;
+                alphaDestinationBlend = Blend.InverseSourceColor;
+                break;
+
+            case BlendMode.NonPremultiplied:
+                colorBlendFunction = BlendState.NonPremultiplied.ColorBlendFunction;
+                colorSourceBlend = BlendState.NonPremultiplied.ColorSourceBlend;
+                colorDestinationBlend = BlendState.NonPremultiplied.ColorDestinationBlend;
+                alphaBlendFunction = BlendFunction.Add;
                 alphaSourceBlend = Blend.One;
                 alphaDestinationBlend = Blend.One;
                 break;

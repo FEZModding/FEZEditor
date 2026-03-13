@@ -209,6 +209,41 @@ public class MeshSurface
         };
     }
 
+    public static MeshSurface CreateFaceQuad(Vector3 size, Vector3 origin, FaceOrientation face)
+    {
+        var normal = face.AsVector();
+        var right = face.RightVector();
+        var up = face.UpVector();
+
+        // Half-extents along each axis
+        var hr = right * size / 2f;
+        var hu = up * size / 2f;
+
+        return new MeshSurface
+        {
+            Vertices = new[]
+            {
+                origin - hr - hu, // bottom-left
+                origin + hr - hu, // bottom-right
+                origin - hr + hu, // top-left
+                origin + hr + hu // top-right
+            },
+            Normals = new[] { normal, normal, normal, normal },
+            TexCoords = new[]
+            {
+                new Vector2(0, 1),
+                new Vector2(1, 1),
+                new Vector2(0, 0),
+                new Vector2(1, 0)
+            },
+            Indices = new[]
+            {
+                0, 1, 2,
+                2, 1, 3
+            }
+        };
+    }
+
     public static MeshSurface CreateFaceQuad(Vector3 size, FaceOrientation face)
     {
         var normal = face.AsVector();

@@ -40,6 +40,7 @@ public partial class EditorService
             Level level => new EddyEditor(_game, path, level),
             SoundEffect soundEffect => new RickViewer(_game, path, soundEffect),
             VorbisSoundContainer oggContainer => new RickViewer(_game, path, oggContainer),
+            Sky sky => new LukeEditor(_game, path, sky),
             _ => new NotSupportedComponent(_game, path, asset.GetType())
         };
     }
@@ -71,6 +72,7 @@ public partial class EditorService
         if (assetType == typeof(ArtObject)) return ChrisEditor.CreateAo(name);
         if (assetType == typeof(TrileSet)) return ChrisEditor.CreateTs(name);
         if (assetType == typeof(MapTree)) return JadeEditor.Create(name);
+        if (assetType == typeof(Sky)) return LukeEditor.Create(name);
         throw new InvalidOperationException();
     }
 }

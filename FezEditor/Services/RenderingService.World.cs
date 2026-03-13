@@ -43,6 +43,11 @@ public partial class RenderingService
         return _renderTargets.FirstOrDefault(kv => kv.Value.World == world).Key;
     }
 
+    public Color WorldGetFogColor(Rid world)
+    {
+        return GetResource(_worlds, world).FogColor;
+    }
+
     public void WorldSetCamera(Rid world, Rid camera)
     {
         GetResource(_worlds, world).Camera = camera;

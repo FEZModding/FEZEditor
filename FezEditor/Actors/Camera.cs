@@ -49,6 +49,10 @@ public class Camera : ActorComponent
 
     public Matrix ViewProjection => View * ProjectionMatrix;
 
+    public Matrix InverseView { get; private set; } = Matrix.Identity;
+
+    public Vector3 Position { get; private set; }
+
     public Vector3 Offset { get; set; } = Vector3.Zero;
 
     public float Near { get; set; } = 0.05f;
@@ -82,8 +86,9 @@ public class Camera : ActorComponent
     public override void Update(GameTime gameTime)
     {
         var world = _rendering.InstanceGetWorldMatrix(Actor.InstanceRid);
-        var position = Vector3.Transform(Offset, world);
-        var viewMatrix = Matrix.CreateLookAt(position, position + world.Forward, world.Up);
+        Position = Vector3.Transform(Offset, world);
+        var viewMatrix = Matrix.CreateLookAt(Position, Position + world.Forward, world.Up);
+        InverseView = Matrix.Invert(viewMatrix);
 
         var (width, height) = _rendering.RenderTargetGetSize(_rt);
         var aspectRatio = (float)width / height;
