@@ -38,43 +38,32 @@ public static class TrixelMaterializer
                 }
             }
 
-            var orientation1 = FaceExtensions.OrientationFromDirection(normal);
-            var tangentVec1 = orientation1.GetTangent().AsVector();
-            var bitangentVec1 = orientation1.GetBitangent().AsVector();
-
-            var v1 = unique.OrderBy(v => Vector3.Dot(v, tangentVec1))
-                .ThenBy(v => Vector3.Dot(v, bitangentVec1))
-                .First();
-
-            var v3 = unique.OrderByDescending(v => Vector3.Dot(v, tangentVec1))
-                .ThenByDescending(v => Vector3.Dot(v, bitangentVec1))
-                .First();
-
-            var (v0, v2, orientation) = (v0: v1, v2: v3, orientation: orientation1);
+            var orientation = FaceExtensions.OrientationFromDirection(normal);
             var tangentVec = orientation.GetTangent().AsVector();
             var bitangentVec = orientation.GetBitangent().AsVector();
+
+            var v0 = unique.OrderBy(v => Vector3.Dot(v, tangentVec))
+                .ThenBy(v => Vector3.Dot(v, bitangentVec))
+                .First();
+
+            var v2 = unique.OrderByDescending(v => Vector3.Dot(v, tangentVec))
+                .ThenByDescending(v => Vector3.Dot(v, bitangentVec))
+                .First();
+
             var normalVec = orientation.AsVector();
-            var isPositive = orientation.IsPositive();
+            var positive = orientation.IsPositive() ? 1f : 0f;
 
-            var startF = (v0 + offset - ((isPositive ? 1 : 0) * normalVec / 16f)) * 16f;
-            var start = new Vector3I(
-                (int)MathF.Round(startF.X),
-                (int)MathF.Round(startF.Y),
-                (int)MathF.Round(startF.Z)
-            );
-
+            var start = new Vector3I((v0 + offset - (positive * normalVec / 16f)) * 16f);
             var tw = (int)MathF.Round(MathF.Abs(Vector3.Dot(v2 - v0, tangentVec)) * 16f);
             var bh = (int)MathF.Round(MathF.Abs(Vector3.Dot(v2 - v0, bitangentVec)) * 16f);
 
             for (var t = 0; t < tw; t++)
-            for (var b = 0; b < bh; b++)
             {
-                var pos = start.ToVector3() + (tangentVec * t) + (bitangentVec * b);
-                surface.Add(new Vector3I(
-                    (int)MathF.Round(pos.X),
-                    (int)MathF.Round(pos.Y),
-                    (int)MathF.Round(pos.Z)
-                ));
+                for (var b = 0; b < bh; b++)
+                {
+                    var pos = start.ToVector3() + (tangentVec * t) + (bitangentVec * b);
+                    surface.Add(new Vector3I(pos));
+                }
             }
         }
 
