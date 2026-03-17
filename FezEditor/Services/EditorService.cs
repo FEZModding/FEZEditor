@@ -14,8 +14,6 @@ public partial class EditorService
 
     public EditorFlags Flags { get; private set; }
 
-    public EditorComponent? PendingActiveEditor { get; private set; }
-
     public IEnumerable<EditorComponent> Editors => _editors;
 
     private readonly List<EditorComponent> _editors = new();
@@ -23,6 +21,8 @@ public partial class EditorService
     private readonly List<EditorComponent> _pendingClose = new();
 
     private readonly List<EditorComponent> _pendingLoad = new();
+
+    private EditorComponent? _pendingActiveEditor;
 
     private readonly Dictionary<EditorComponent, EditorTracking> _tracking = new();
 
@@ -82,7 +82,7 @@ public partial class EditorService
         {
             if (tracking.Path == path)
             {
-                RequestEditorFocus(editor);
+                _pendingActiveEditor = editor;
                 return;
             }
         }
@@ -100,7 +100,7 @@ public partial class EditorService
         {
             _editors.Add(editor);
             _activeEditor = editor;
-            PendingActiveEditor = editor;
+            _pendingActiveEditor = editor;
             _activeEditor.History.StateChanged += () =>
             {
                 if (_tracking.TryGetValue(editor, out var tracking))
@@ -108,6 +108,7 @@ public partial class EditorService
                     tracking.HasChanges = true;
                     _tracking[editor] = tracking;
                 }
+
                 UpdateFlags();
             };
             _pendingLoad.Add(editor);
@@ -134,16 +135,20 @@ public partial class EditorService
         Logger.Debug("Closing {0} editor(s)...", _editors.Count);
     }
 
+    public bool ShouldFocusEditor(EditorComponent editor)
+    {
+        return _pendingActiveEditor == editor;
+    }
+
     public void MarkEditorActive(EditorComponent editor)
     {
         _activeEditor = editor;
-        PendingActiveEditor = null;
-        UpdateFlags();
-    }
+        if (_pendingActiveEditor == editor)
+        {
+            _pendingActiveEditor = null;
+        }
 
-    public void RequestEditorFocus(EditorComponent editor)
-    {
-        PendingActiveEditor = editor;
+        UpdateFlags();
     }
 
     public void UndoActiveEditorChanges()
@@ -240,6 +245,7 @@ public partial class EditorService
             if (editor == _activeEditor)
             {
                 _activeEditor = _editors.Count > 0 ? _editors[^1] : null;
+                _pendingActiveEditor = _activeEditor;
             }
         }
 

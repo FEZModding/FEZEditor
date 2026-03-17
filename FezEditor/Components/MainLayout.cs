@@ -97,7 +97,7 @@ public class MainLayout : DrawableGameComponent
                                     title = "(*) " + title;
                                 }
 
-                                var tabFlags = _editorService.PendingActiveEditor == editor
+                                var tabFlags = _editorService.ShouldFocusEditor(editor)
                                     ? ImGuiTabItemFlags.SetSelected
                                     : ImGuiTabItemFlags.None;
 
