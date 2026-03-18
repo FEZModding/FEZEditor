@@ -11,7 +11,7 @@ public class VorbisSoundContainer : IDisposable
     public bool Loaded => _sampleBuffer != null;
 
 
-    public VorbisSoundContainer(Stream oggStream, bool leaveOpen = true)
+    public VorbisSoundContainer(Stream oggStream, bool leaveOpen)
     {
         _vorbisReader = new VorbisReader(oggStream, leaveOpen);
     }

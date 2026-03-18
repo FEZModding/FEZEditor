@@ -103,7 +103,7 @@ public class ResourceService : IDisposable
         if (_provider!.GetExtension(path) == ".ogg")
         {
             var stream = _provider.OpenStream(path, ".ogg");
-            var oggContainer = new VorbisSoundContainer(stream, leaveOpen: true);
+            var oggContainer = new VorbisSoundContainer(stream, leaveOpen: false);
             Logger.Information("Loaded *.ogg file as SoundEffect - {0}", path);
             return oggContainer;
         }
