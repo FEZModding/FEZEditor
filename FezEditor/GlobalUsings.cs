@@ -14,3 +14,4 @@ global using RColor = FEZRepacker.Core.Definitions.Game.XNA.Color;
 global using RTexture2D = FEZRepacker.Core.Definitions.Game.XNA.Texture2D;
 global using RAnimatedTexture = FEZRepacker.Core.Definitions.Game.Graphics.AnimatedTexture;
 global using RRectangle = FEZRepacker.Core.Definitions.Game.XNA.Rectangle;
+global using RSoundEffect = FEZRepacker.Core.Definitions.Game.XNA.SoundEffect;

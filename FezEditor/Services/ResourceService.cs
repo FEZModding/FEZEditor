@@ -100,6 +100,14 @@ public class ResourceService : IDisposable
             return saveData;
         }
 
+        if (_provider!.GetExtension(path) == ".ogg")
+        {
+            var stream = _provider.OpenStream(path, ".ogg");
+            var oggContainer = new VorbisSoundContainer(stream, leaveOpen: true);
+            Logger.Information("Loaded *.ogg file as SoundEffect - {0}", path);
+            return oggContainer;
+        }
+
         path = path.Replace('\\', '/');
         var @object = _provider!.Load<object>(path);
         Logger.Information("Loaded - {0} ({1})", path, @object.GetType().Name);

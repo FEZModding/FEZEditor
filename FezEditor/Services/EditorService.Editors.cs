@@ -39,6 +39,7 @@ public partial class EditorService
             MapTree tree => new JadeEditor(_game, path, tree),
             Level level => new EddyEditor(_game, path, level),
             SoundEffect soundEffect => new RichardEditor(_game, path, soundEffect),
+            VorbisSoundContainer oggContainer => new RichardEditor(_game, path, oggContainer),
             _ => new NotSupportedComponent(_game, path, asset.GetType())
         };
     }

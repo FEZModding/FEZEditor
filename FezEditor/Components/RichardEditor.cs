@@ -3,7 +3,6 @@ using FezEditor.Structure;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
-using RSoundEffect = FEZRepacker.Core.Definitions.Game.XNA.SoundEffect;
 using Vector2 = Microsoft.Xna.Framework.Vector2;
 
 namespace FezEditor.Components;
@@ -14,7 +13,8 @@ public class RichardEditor : EditorComponent
     private const float PlayerHeight = 100f;
     private const float PlayerButtonSize = 32f;
 
-    private readonly RSoundEffect _soundEffectAsset;
+    private RSoundEffect _soundEffectAsset;
+    private VorbisSoundContainer? _oggSoundContainer;
 
     private SoundEffect? _soundEffect;
     private SoundEffectInstance? _soundEffectInstance;
@@ -23,9 +23,27 @@ public class RichardEditor : EditorComponent
 
     private float? _currentSeekRequest = null;
 
-    public RichardEditor(Game game, string title, RSoundEffect soundEffect) : base(game, title)
+    public RichardEditor(Game game, string title, RSoundEffect soundEffectAsset) : base(game, title)
     {
-        _soundEffectAsset = soundEffect;
+        _soundEffectAsset = soundEffectAsset;
+        _oggSoundContainer = null;
+    }
+
+    public RichardEditor(Game game, string title, VorbisSoundContainer soundContainer) : base(game, title)
+    {
+        _soundEffectAsset = new RSoundEffect();
+        _oggSoundContainer = soundContainer;
+    }
+
+    public override void LoadContent()
+    {
+        if (_oggSoundContainer != null)
+        {
+            _oggSoundContainer.Load();
+            _soundEffectAsset = _oggSoundContainer.CreateSoundEffectAsset();
+            _oggSoundContainer.Dispose();
+            _oggSoundContainer = null;
+        }
         CreateInitialSoundEffectInstance();
     }
 
@@ -82,7 +100,7 @@ public class RichardEditor : EditorComponent
             sliderValue = _currentSeekRequest.Value;
             totalPlaybackElapsed = TimeSpan.FromSeconds(_duration.TotalSeconds * sliderValue);
         }
-        var format = $"{totalPlaybackElapsed:ss\\.ff} / {_duration:ss\\.ff}";
+        var format = $"{totalPlaybackElapsed:mm\\:ss\\.ff} / {_duration:mm\\:ss\\.ff}";
         ImGui.SliderFloat("##playbackSlider", ref sliderValue, 0f, 1f, format);
 
         if (ImGui.IsItemActivated())
@@ -159,6 +177,11 @@ public class RichardEditor : EditorComponent
     {
         _soundEffectInstance?.Dispose();
         _soundEffect?.Dispose();
+
+        if (_soundEffectAsset.DataChunk.Length == 0)
+        {
+            return;
+        }
 
         var byteOffset = Math.Clamp(
             (int)(_soundEffectAsset.DataChunk.Length * skipPercentage),
