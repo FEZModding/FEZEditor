@@ -41,6 +41,8 @@ public partial class EditorService
             SoundEffect soundEffect => new RickViewer(_game, path, soundEffect),
             VorbisSoundContainer oggContainer => new RickViewer(_game, path, oggContainer),
             Sky sky => new LukeEditor(_game, path, sky),
+            RTexture2D texture => new TexViewer(_game, path, texture),
+            RAnimatedTexture animatedTexture => new TexViewer(_game, path, animatedTexture),
             _ => new NotSupportedComponent(_game, path, asset.GetType())
         };
     }
