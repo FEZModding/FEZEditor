@@ -72,7 +72,6 @@ public class SkyShadowsMesh : SkyBaseMesh
         Texture = RepackerExtensions.ConvertToTexture2D(rTexture);
         _rendering.MaterialAssignBaseTexture(_material, Texture);
 
-        Actor.Visible = true;
         _sineAccumulator = 0f;
         _sineSpeed = 0f;
         _scrollOffset = 0f;
