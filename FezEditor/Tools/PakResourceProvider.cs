@@ -38,8 +38,13 @@ internal class PakResourceProvider : IResourceProvider
 
     public string GetFullPath(string path)
     {
+        if (string.IsNullOrEmpty(path))
+        {
+            return _pakFile.FullName;
+        }
+
         return _records.TryGetValue(path, out var extension)
-            ? Path.Combine(_pakFile.Name, path + extension)
+            ? Path.Combine(_pakFile.FullName, path + extension)
             : "";
     }
 
