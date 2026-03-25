@@ -11,6 +11,8 @@ public class AppStorageService : IDisposable
 {
     public static readonly string BaseDir = Path.Combine(AppContext.BaseDirectory, "EditorData");
 
+    private static readonly string CacheDir = Path.Combine(BaseDir, "Cache");
+
     private static readonly ILogger Logger = Logging.Create<AppStorageService>();
 
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
@@ -28,6 +30,7 @@ public class AppStorageService : IDisposable
     public AppStorageService(Game game)
     {
         _game = game;
+        Directory.CreateDirectory(CacheDir);
         Load();
     }
 
@@ -83,6 +86,52 @@ public class AppStorageService : IDisposable
     {
         gdm.PreferredBackBufferWidth = _data.Window.Width;
         gdm.PreferredBackBufferHeight = _data.Window.Height;
+    }
+
+    public static bool HasCacheFile(string filename)
+    {
+        return File.Exists(Path.Combine(CacheDir, filename));
+    }
+
+    public static void DeleteCacheFile(string filename)
+    {
+        var path = Path.Combine(CacheDir, filename);
+        if (File.Exists(path))
+        {
+            File.Delete(path);
+        }
+    }
+
+    public static void SaveToCache(string filename, Stream stream)
+    {
+        try
+        {
+            using var file = new FileStream(Path.Combine(CacheDir, filename), FileMode.OpenOrCreate, FileAccess.Write);
+            stream.Seek(0, SeekOrigin.Begin);
+            stream.CopyTo(file);
+        }
+        catch (Exception e)
+        {
+            Logger.Error(e, "Unable to save cache binary data.");
+        }
+    }
+
+    public static Stream LoadFromCache(string filename)
+    {
+        var memory = new MemoryStream();
+        try
+        {
+            using var stream = new FileStream(Path.Combine(CacheDir, filename), FileMode.Open, FileAccess.Read);
+            stream.Seek(0, SeekOrigin.Begin);
+            stream.CopyTo(memory);
+        }
+        catch (Exception e)
+        {
+            Logger.Error(e, "Unable to read cache binary data.");
+        }
+
+        memory.Seek(0, SeekOrigin.Begin);
+        return memory;
     }
 
     public void Save()
