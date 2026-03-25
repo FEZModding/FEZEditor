@@ -70,7 +70,7 @@ public class MenuBar : DrawableGameComponent
                     _storageService.RecentFiles.TryGetValue(_resourceService.Root, out var recentFiles);
                     if (ImGui.BeginMenu("Open Recent", recentFiles?.Count > 0))
                     {
-                        foreach (var path in recentFiles!)
+                        foreach (var path in recentFiles!.ToArray())
                         {
                             var name = path.Contains('/') ? path[(path.LastIndexOf('/') + 1)..] : path;
                             if (ImGui.MenuItem(name))
