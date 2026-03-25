@@ -1,6 +1,7 @@
 ﻿using FezEditor.Structure;
 using FEZRepacker.Core.Definitions.Game.ArtObject;
 using FEZRepacker.Core.Definitions.Game.Level;
+using FEZRepacker.Core.Definitions.Game.TrileSet;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -50,6 +51,19 @@ public static class RepackerExtensions
         }
 
         texture.SetData(rgba);
+    }
+
+    public static Trile FindByName(this TrileSet set, string name)
+    {
+        foreach (var (id, trile) in set.Triles)
+        {
+            if (string.Equals(trile.Name, name, StringComparison.OrdinalIgnoreCase))
+            {
+                return set.Triles[id];
+            }
+        }
+
+        throw new IndexOutOfRangeException($"Trile with name '{name}' not found!");
     }
 
     public static Vector2 ToXna(this RVector2 v)

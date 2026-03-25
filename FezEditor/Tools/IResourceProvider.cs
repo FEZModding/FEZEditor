@@ -26,5 +26,7 @@ internal interface IResourceProvider : IDisposable
 
     void Remove(string path);
 
+    DateTime GetLastWriteTimeUtc(string path);
+
     void Refresh();
 }

@@ -113,6 +113,11 @@ internal class PakResourceProvider : IResourceProvider
         throw new NotSupportedException();
     }
 
+    public DateTime GetLastWriteTimeUtc(string path)
+    {
+        return _pakFile.LastWriteTimeUtc;
+    }
+
     public void Refresh()
     {
         using var stream = _pakFile.OpenRead();

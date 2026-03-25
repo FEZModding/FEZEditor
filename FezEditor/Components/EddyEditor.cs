@@ -30,9 +30,14 @@ public class EddyEditor : EditorComponent
 
     private readonly Dictionary<int, HashSet<TrileEmplacement>> _groups = new();
 
+    private readonly AssetBrowser _assetBrowser;
+
+    private bool _showAssetBrowser;
+
     public EddyEditor(Game game, string title, Level level) : base(game, title)
     {
         _level = level;
+        _assetBrowser = new AssetBrowser(game, title);
         History.Track(level);
     }
 
@@ -65,6 +70,8 @@ public class EddyEditor : EditorComponent
 
     public override void LoadContent()
     {
+        _assetBrowser.LoadContent(ContentManager);
+
         _scene = new Scene(Game, ContentManager);
         Camera camera;
         {
@@ -124,6 +131,8 @@ public class EddyEditor : EditorComponent
                 ImGuiX.DrawClock(topCenter, _clock);
             }
         }
+
+        _assetBrowser.Draw(ref _showAssetBrowser);
     }
 
     private void DrawToolbar()
@@ -146,10 +155,22 @@ public class EddyEditor : EditorComponent
         {
             ImGui.SetTooltip("Export as diorama");
         }
+
+        ImGui.SameLine();
+        if (ImGui.Button($"{Icons.Library}"))
+        {
+            _showAssetBrowser = !_showAssetBrowser;
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip("Asset Browser");
+        }
     }
 
     public override void Dispose()
     {
+        _assetBrowser.Dispose();
         _scene.Dispose();
         base.Dispose();
     }
@@ -197,7 +218,10 @@ public class EddyEditor : EditorComponent
 
         #region Triles
 
-        var trileSet = (TrileSet)ResourceService.Load($"Trile Sets/{_level.TrileSetName}");
+        var trileSetPath = $"Trile Sets/{_level.TrileSetName}";
+        var trileSet = (TrileSet)ResourceService.Load(trileSetPath);
+        _assetBrowser.SetTrileSet(trileSetPath, trileSet);
+
         foreach (var id in _level.Triles.Values.Select(ti => ti.TrileId).Where(id => id != InvalidId).Distinct())
         {
             var actor = _scene.CreateActor();

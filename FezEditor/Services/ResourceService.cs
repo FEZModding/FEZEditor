@@ -94,6 +94,11 @@ public class ResourceService : IDisposable
         return _provider?.GetFullPath(path) ?? string.Empty;
     }
 
+    public DateTime GetLastWriteTimeUtc(string path)
+    {
+        return _provider?.GetLastWriteTimeUtc(path) ?? DateTime.MinValue;
+    }
+
     public string GetRelativePath(string absolutePath)
     {
         var root = GetFullPath(string.Empty);
