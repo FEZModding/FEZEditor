@@ -2,7 +2,6 @@
 using FezEditor.Structure;
 using FezEditor.Tools;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
 
 namespace FezEditor.Actors;
 
@@ -11,6 +10,8 @@ public class Scene : IDisposable
     public SceneViewport Viewport { get; }
 
     public SceneLighting Lighting { get; }
+
+    public Actor Root { get; }
 
     private readonly Game _game;
 
@@ -23,8 +24,6 @@ public class Scene : IDisposable
     private readonly HashSet<Actor> _actors = new();
 
     private readonly Dictionary<Actor, HierarchyNode> _hierarchy = new();
-
-    private readonly Actor _root;
 
     private bool _disposed;
 
@@ -39,14 +38,14 @@ public class Scene : IDisposable
         Lighting = new SceneLighting(game, _worldRid);
 
         var rootRid = _rendering.WorldGetRoot(_worldRid);
-        _root = new Actor(_game, rootRid, _content);
-        _actors.Add(_root);
-        _hierarchy[_root] = new HierarchyNode(null, new List<Actor>());
+        Root = new Actor(_game, rootRid, _content);
+        _actors.Add(Root);
+        _hierarchy[Root] = new HierarchyNode(null, new List<Actor>());
     }
 
     public Actor CreateActor(Actor? parent = null)
     {
-        var parentActor = parent ?? _root;
+        var parentActor = parent ?? Root;
         var actor = new Actor(_game, parentActor.InstanceRid, _content);
         _actors.Add(actor);
         _hierarchy[parentActor].Children.Add(actor);
@@ -56,7 +55,7 @@ public class Scene : IDisposable
 
     public void DestroyActor(Actor actor)
     {
-        if (actor == _root)
+        if (actor == Root)
         {
             throw new InvalidOperationException("Cannot destroy the root actor.");
         }
@@ -83,23 +82,21 @@ public class Scene : IDisposable
         }
     }
 
-    public Actor? Raycast(Ray ray)
+    public (Actor Actor, PickHit Hit)? Raycast(Ray ray)
     {
-        Actor? nearest = null;
+        (Actor Actor, PickHit Hit)? nearest = null;
         var nearestDist = float.MaxValue;
 
         foreach (var actor in _actors)
         {
-            if (!actor.TryGetComponent<Collider>(out var collider))
+            if (actor.TryGetComponent<IPickable>(out var pickable))
             {
-                continue;
-            }
-
-            var dist = ray.Intersects(collider!.BoundingBox);
-            if (dist < nearestDist)
-            {
-                nearestDist = dist.Value;
-                nearest = actor;
+                var hit = pickable?.Pick(ray);
+                if (hit?.Distance < nearestDist)
+                {
+                    nearestDist = hit.Value.Distance;
+                    nearest = (actor, hit.Value);
+                }
             }
         }
 

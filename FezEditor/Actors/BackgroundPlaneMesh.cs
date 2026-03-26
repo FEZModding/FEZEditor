@@ -8,7 +8,7 @@ using PrimitiveType = Microsoft.Xna.Framework.Graphics.PrimitiveType;
 
 namespace FezEditor.Actors;
 
-public class BackgroundPlaneMesh : ActorComponent
+public class BackgroundPlaneMesh : ActorComponent, IPickable
 {
     private const float ZFightingOffset = 0.001f;
 
@@ -96,6 +96,18 @@ public class BackgroundPlaneMesh : ActorComponent
         _texture?.Dispose();
         _rendering.FreeRid(_mesh);
         _rendering.FreeRid(_material);
+    }
+
+    public IEnumerable<BoundingBox> GetBounds()
+    {
+        yield return Mathz.ComputeBoundingBox(_transform.Position, _transform.Rotation, _transform.Scale, PlaneSize);
+    }
+
+    public PickHit? Pick(Ray ray)
+    {
+        var box = GetBounds().First();
+        var dist = ray.Intersects(box);
+        return dist.HasValue ? new PickHit(dist.Value, 0) : null;
     }
 
     public override void Update(GameTime gameTime)

@@ -18,7 +18,7 @@ public class Actor : IDisposable
 
     public Rid InstanceRid { get; }
 
-    private readonly List<ActorComponent> _components = new();
+    private readonly List<IComponent> _components = new();
 
     private readonly Game _game;
 
@@ -37,12 +37,12 @@ public class Actor : IDisposable
         Transform = AddComponent<Transform>();
     }
 
-    public bool HasComponent<T>() where T : ActorComponent
+    public bool HasComponent<T>() where T : IComponent
     {
         return _components.OfType<T>().Any();
     }
 
-    public T AddComponent<T>() where T : ActorComponent
+    public T AddComponent<T>() where T : IComponent
     {
         if (HasComponent<T>())
         {
@@ -56,20 +56,25 @@ public class Actor : IDisposable
         return component;
     }
 
-    public T GetComponent<T>() where T : ActorComponent
+    public T GetComponent<T>() where T : IComponent
     {
         return TryGetComponent<T>(out var component)
             ? component!
             : throw new InvalidOperationException($"Actor has no component {typeof(T).Name}");
     }
 
-    public bool TryGetComponent<T>(out T? component) where T : ActorComponent
+    public bool TryGetComponent<T>(out T? component) where T : IComponent
     {
         component = _components.OfType<T>().FirstOrDefault();
         return component is not null;
     }
 
-    public bool RemoveComponent<T>() where T : ActorComponent
+    public T? FindComponent<T>()
+    {
+        return _components.OfType<T>().FirstOrDefault();
+    }
+
+    public bool RemoveComponent<T>() where T : IComponent
     {
         if (typeof(T) == typeof(Transform))
         {

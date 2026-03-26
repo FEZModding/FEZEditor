@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework;
 
 namespace FezEditor.Actors;
 
-public abstract class ActorComponent : IDisposable
+public abstract class ActorComponent : IComponent
 {
     protected Actor Actor { get; }
 

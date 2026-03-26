@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace FezEditor.Actors;
 
-public class ArtObjectMesh : ActorComponent
+public class ArtObjectMesh : ActorComponent, IPickable
 {
     private readonly RenderingService _rendering;
 
@@ -16,6 +16,8 @@ public class ArtObjectMesh : ActorComponent
     private readonly Rid _material;
 
     private Texture2D? _texture;
+
+    private Vector3 _size;
 
     internal ArtObjectMesh(Game game, Actor actor) : base(game, actor)
     {
@@ -36,10 +38,24 @@ public class ArtObjectMesh : ActorComponent
         _texture?.Dispose();
         _texture = RepackerExtensions.ConvertToTexture2D(ao.Cubemap);
         _rendering.MaterialAssignBaseTexture(_material, _texture);
+        _size = ao.Size.ToXna();
 
         var surface = RepackerExtensions.ConvertToMesh(ao.Geometry.Vertices, ao.Geometry.Indices);
         _rendering.MeshClear(_mesh);
         _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface, _material);
+    }
+
+    public IEnumerable<BoundingBox> GetBounds()
+    {
+        yield return Mathz.ComputeBoundingBox(
+            Actor.Transform.Position, Actor.Transform.Rotation, Actor.Transform.Scale, _size);
+    }
+
+    public PickHit? Pick(Ray ray)
+    {
+        var box = GetBounds().First();
+        var dist = ray.Intersects(box);
+        return dist.HasValue ? new PickHit(dist.Value, 0) : null;
     }
 
     public override void Dispose()

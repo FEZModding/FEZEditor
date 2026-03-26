@@ -8,7 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace FezEditor.Actors;
 
-public class TrilesMesh : ActorComponent
+public class TrilesMesh : ActorComponent, IPickable
 {
     private static readonly Quaternion[] PhiAngles = new[]
     {
@@ -21,6 +21,10 @@ public class TrilesMesh : ActorComponent
     private static readonly Color SelectedColor = Color.Red with { A = 85 }; // 33%
 
     private static readonly Color HoveredColor = Color.White with { A = 85 }; // 53%
+
+    private static readonly Vector3 EmplacementCenter = new(0.5f);
+
+    public int InstanceCount => _instances.Count;
 
     private readonly OrderedDictionary<TrileEmplacement, InstanceData> _instances = new();
 
@@ -39,6 +43,8 @@ public class TrilesMesh : ActorComponent
     private HashSet<TrileEmplacement> _selectedInstances = new();
 
     private bool _instancesDirty;
+
+    private Vector3 _size;
 
     internal TrilesMesh(Game game, Actor actor) : base(game, actor)
     {
@@ -74,8 +80,15 @@ public class TrilesMesh : ActorComponent
         _rendering.MaterialAssignBaseTexture(_material, _texture);
 
         var trile = trileSet.Triles[id];
+        _size = trile.Size.ToXna();
+
         var surface = RepackerExtensions.ConvertToMesh(trile.Geometry.Vertices, trile.Geometry.Indices);
         _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface, _material);
+    }
+
+    public TrileEmplacement GetEmplacement(int index)
+    {
+        return _instances.GetAt(index).Key;
     }
 
     public void SetInstanceData(TrileEmplacement emplacement, Vector3 position, byte phi)
@@ -94,6 +107,43 @@ public class TrilesMesh : ActorComponent
     {
         _selectedInstances = emplacements;
         _instancesDirty = true;
+    }
+
+    public IEnumerable<BoundingBox> GetBounds()
+    {
+        for (var i = 0; i < _instances.Count; i++)
+        {
+            var (_, instance) = _instances.GetAt(i);
+            var position = instance.Position + EmplacementCenter;
+            var rotation = PhiAngles[instance.Phi];
+            yield return Mathz.ComputeBoundingBox(position, rotation, Vector3.One, _size);
+        }
+    }
+
+    public PickHit? Pick(Ray ray)
+    {
+        float? nearestDist = null;
+        var nearestIndex = -1;
+        var index = 0;
+
+        foreach (var box in GetBounds())
+        {
+            var dist = ray.Intersects(box);
+            if (dist.HasValue && (!nearestDist.HasValue || dist.Value < nearestDist.Value))
+            {
+                nearestDist = dist.Value;
+                nearestIndex = index;
+            }
+
+            index++;
+        }
+
+        if (nearestDist.HasValue)
+        {
+            return new PickHit(nearestDist.Value, nearestIndex);
+        }
+
+        return null;
     }
 
     public void ClearInstances()

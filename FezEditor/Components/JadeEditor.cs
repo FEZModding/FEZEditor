@@ -103,7 +103,7 @@ public class JadeEditor : EditorComponent
                     var viewportMin = ImGuiX.GetItemRectMin();
                     _viewportCenter = viewportMin + (size / 2);
                     var ray = _scene.Viewport.Unproject(ImGuiX.GetMousePos(), viewportMin);
-                    var actor = _scene.Raycast(ray);
+                    var actor = _scene.Raycast(ray)?.Actor;
                     if (actor != null)
                     {
                         _nextState = State.MenuPopup;
@@ -539,9 +539,6 @@ public class JadeEditor : EditorComponent
         var visual = mesh.AddComponent<MapNodeMesh>();
         visual.Camera = _cameraActor.GetComponent<Camera>();
         visual.Visualize(node);
-
-        var collider = mesh.AddComponent<Collider>();
-        collider.Size = Vector3.One * node.NodeType.GetSizeFactor();
 
         var icons = _scene.CreateActor(mesh);
         icons.Name = $"{node.LevelName} ^ Icons";

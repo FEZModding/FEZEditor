@@ -24,6 +24,10 @@ public class EddyEditor : EditorComponent
 
     private Actor _skyActor = null!;
 
+    private Actor _debugActor = null!;
+
+    private Actor _collisionActor = null!;
+
     private readonly Clock _clock = new();
 
     private readonly Dictionary<int, Actor> _trileActors = new();
@@ -33,6 +37,10 @@ public class EddyEditor : EditorComponent
     private readonly AssetBrowser _assetBrowser;
 
     private bool _showAssetBrowser;
+
+    private bool _showPickableBounds;
+
+    private bool _showCollisionMap;
 
     public EddyEditor(Game game, string title, Level level) : base(game, title)
     {
@@ -166,6 +174,35 @@ public class EddyEditor : EditorComponent
         {
             ImGui.SetTooltip("Asset Browser");
         }
+
+        ImGui.SameLine();
+        if (ImGui.Button($"{Icons.KebabVertical} Perspective"))
+        {
+            ImGui.OpenPopup("ViewOptions");
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip("View Options");
+        }
+
+        if (ImGui.BeginPopup("ViewOptions"))
+        {
+            if (ImGui.Checkbox("Collision Map", ref _showCollisionMap))
+            {
+                _collisionActor.GetComponent<TrileCollisionMesh>().Visible = _showCollisionMap;
+            }
+
+            if (ImGui.Checkbox("Pickable Bounds", ref _showPickableBounds))
+            {
+                var bounds = _debugActor.GetComponent<PickableBounds>();
+                bounds.Visualize(_showPickableBounds
+                    ? _scene.GetChildren(_scene.Root)
+                    : Enumerable.Empty<Actor>());
+            }
+
+            ImGui.EndPopup();
+        }
     }
 
     public override void Dispose()
@@ -244,8 +281,8 @@ public class EddyEditor : EditorComponent
         #region Collision Map
 
         {
-            var actor = _scene.CreateActor();
-            var collision = actor.AddComponent<TrileCollisionMesh>();
+            _collisionActor = _scene.CreateActor();
+            var collision = _collisionActor.AddComponent<TrileCollisionMesh>();
             foreach (var instance in _level.Triles.Values.Where(ti => ti.TrileId != InvalidId))
             {
                 var trile = trileSet.Triles[instance.TrileId];
@@ -388,6 +425,18 @@ public class EddyEditor : EditorComponent
             var segments = path.Segments.Select(ps => ps.Destination.ToXna()).ToArray();
             var mesh = actor.AddComponent<PathMesh>();
             mesh.Visualize(segments);
+        }
+
+        #endregion
+
+        #region Pickable Bounds
+
+        {
+            _debugActor = _scene.CreateActor();
+            _debugActor.Name = "Debug";
+
+            var bounds = _debugActor.AddComponent<PickableBounds>();
+            bounds.WireColor = Color.Purple;
         }
 
         #endregion

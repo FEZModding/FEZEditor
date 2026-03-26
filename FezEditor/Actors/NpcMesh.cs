@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace FezEditor.Actors;
 
-public class NpcMesh : ActorComponent
+public class NpcMesh : ActorComponent, IPickable
 {
     public Dirty<string> CurrentAnimation { get; set; } = new("");
 
@@ -60,6 +60,20 @@ public class NpcMesh : ActorComponent
         }
     }
 
+    public IEnumerable<BoundingBox> GetBounds()
+    {
+        var scale = _animations.TryGetValue(CurrentAnimation.Value, out var data) ? data.Scale : Vector3.One;
+        var offset = Vector3.Transform(Vector3.UnitY * scale.Y / 2f, _transform.Rotation);
+        yield return Mathz.ComputeBoundingBox(_transform.Position + offset, _transform.Rotation, scale, Vector3.One);
+    }
+
+    public PickHit? Pick(Ray ray)
+    {
+        var box = GetBounds().First();
+        var dist = ray.Intersects(box);
+        return dist.HasValue ? new PickHit(dist.Value, 0) : null;
+    }
+
     public override void Update(GameTime gameTime)
     {
         if (!_animations.TryGetValue(CurrentAnimation.Value, out var data))
@@ -104,6 +118,7 @@ public class NpcMesh : ActorComponent
         {
             data.Texture.Dispose();
         }
+
         _rendering.FreeRid(_mesh);
         _rendering.FreeRid(_material);
     }

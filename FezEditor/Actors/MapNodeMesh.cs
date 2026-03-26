@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace FezEditor.Actors;
 
-public class MapNodeMesh : ActorComponent
+public class MapNodeMesh : ActorComponent, IPickable
 {
     private const float OutlineSize = 1.25f;
 
@@ -41,6 +41,8 @@ public class MapNodeMesh : ActorComponent
     private Texture2D? _defaultTexture;
 
     private Texture2D? _nodeTexture;
+
+    private Vector3 _nodeSize;
 
     public MapNodeMesh(Game game, Actor actor) : base(game, actor)
     {
@@ -91,13 +93,27 @@ public class MapNodeMesh : ActorComponent
             new Vector2(_nodeTexture.Width, _nodeTexture.Height));
         _rendering.MaterialShaderSetParam(_textureMaterial, "CubeOffset", _transform.Position);
 
-        var size = Vector3.One * node.NodeType.GetSizeFactor();
-        var outlineBox = MeshSurface.CreateBox(size * OutlineSize);
-        var textureBox = MeshSurface.CreateBox(size);
+        _nodeSize = Vector3.One * node.NodeType.GetSizeFactor();
+        var outlineBox = MeshSurface.CreateBox(_nodeSize * OutlineSize);
+        var textureBox = MeshSurface.CreateBox(_nodeSize);
 
         _rendering.MeshClear(_mesh);
         _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, outlineBox, _outlineMaterial);
         _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, textureBox, _textureMaterial);
+    }
+
+    public IEnumerable<BoundingBox> GetBounds()
+    {
+        var half = _nodeSize / 2f;
+        var pos = _transform.Position;
+        yield return new BoundingBox(pos - half, pos + half);
+    }
+
+    public PickHit? Pick(Ray ray)
+    {
+        var box = GetBounds().First();
+        var dist = ray.Intersects(box);
+        return dist.HasValue ? new PickHit(dist.Value, 0) : null;
     }
 
     public override void Update(GameTime gameTime)
