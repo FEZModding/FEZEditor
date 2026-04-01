@@ -16,8 +16,6 @@ internal class TrileContext : EddyContext
 
     private static readonly Color SelectionColor = Color.Red with { A = 85 }; // 33%
 
-    public Dirty<bool> ShowCollisionMap { get; set; } = new(false);
-
     private readonly Dictionary<int, Actor> _trileActors = new();
 
     private Actor? _collisionMapActor;
@@ -111,6 +109,15 @@ internal class TrileContext : EddyContext
         _hoveredEmplacement = emplacement;
         _hoveredFace = face;
         return true;
+    }
+
+    public void ShowCollisionMap(bool visible)
+    {
+        if (_collisionMapActor != null)
+        {
+            var mesh = _collisionMapActor.GetComponent<TrileCollisionMesh>();
+            mesh.Visible = visible;
+        }
     }
 
     public override void Update()

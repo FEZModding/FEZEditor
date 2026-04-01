@@ -12,8 +12,6 @@ internal class DefaultEddyContext : EddyContext
 {
     public Clock Clock { get; set; } = null!;
 
-    public Dirty<bool> ShowPickableBounds { get; set; } = new(false);
-
     private Sky? _sky;
 
     private Actor? _skyActor;
@@ -29,19 +27,18 @@ internal class DefaultEddyContext : EddyContext
         throw new InvalidOperationException("Pickable is invalid in default context");
     }
 
+    public void ShowPickableBounds(bool visible)
+    {
+        var bounds = _pickablesActor?.GetComponent<PickableBounds>();
+        var actors = visible
+            ? Scene.GetChildren(Scene.Root)
+            : Enumerable.Empty<Actor>();
+
+        bounds?.Visualize(actors);
+    }
+
     public override void Update()
     {
-        if (ShowPickableBounds.IsDirty)
-        {
-            var bounds = _pickablesActor?.GetComponent<PickableBounds>();
-            var actors = ShowPickableBounds.Value
-                ? Scene.GetChildren(Scene.Root)
-                : Enumerable.Empty<Actor>();
-
-            bounds?.Visualize(actors);
-            ShowPickableBounds = ShowPickableBounds.Clean();
-        }
-
         Cursor.ClearHover();
     }
 

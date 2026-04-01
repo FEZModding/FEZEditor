@@ -40,6 +40,10 @@ public class EddyEditor : EditorComponent
 
     private bool _showProperties;
 
+    private bool _showCollisionMap;
+
+    private bool _showPickableBounds;
+
     private bool _queueRevisualization;
 
     public EddyEditor(Game game, string title, Level level) : base(game, title)
@@ -295,16 +299,14 @@ public class EddyEditor : EditorComponent
 
         if (ImGui.BeginPopup("ViewOptions"))
         {
-            var collisionMap = _trileContext.ShowCollisionMap.Value;
-            if (ImGui.Checkbox("Collision Map", ref collisionMap))
+            if (ImGui.Checkbox("Collision Map", ref _showCollisionMap))
             {
-                _trileContext.ShowCollisionMap = collisionMap;
+                _trileContext.ShowCollisionMap(_showCollisionMap);
             }
 
-            var pickableBounds = _defaultContext.ShowPickableBounds.Value;
-            if (ImGui.Checkbox("Pickable Bounds", ref pickableBounds))
+            if (ImGui.Checkbox("Pickable Bounds", ref _showPickableBounds))
             {
-                _defaultContext.ShowPickableBounds = pickableBounds;
+                _defaultContext.ShowPickableBounds(_showPickableBounds);
             }
 
             ImGui.EndPopup();
