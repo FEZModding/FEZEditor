@@ -259,7 +259,7 @@ public class EddyEditor : EditorComponent
         ImGui.TextDisabled("|");
 
         ImGui.SameLine();
-        if (ImGui.Button($"{Icons.Export}"))
+        if (ImGui.Button($"{Icons.Export} Diorama"))
         {
             FileDialog.Show(FileDialog.Type.SaveFile, files =>
             {
