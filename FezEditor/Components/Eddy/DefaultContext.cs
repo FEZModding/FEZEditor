@@ -72,7 +72,7 @@ internal class DefaultContext : BaseContext
         Eddy.Scene.Lighting.Diffuse = Color.White * Level.BaseDiffuse;
 
         {
-            _skyActor = Eddy.Scene.CreateActor();
+            _skyActor = CreateSubActor();
             _skyActor.Name = "Sky";
             var visualizer = _skyActor.AddComponent<SkyVisualizer>();
             visualizer.Initialize(Eddy.Scene, Eddy.Camera, Eddy.Clock);
@@ -86,7 +86,7 @@ internal class DefaultContext : BaseContext
         #region Level bounds
 
         {
-            _boundsActor = Eddy.Scene.CreateActor();
+            _boundsActor = CreateSubActor();
             _boundsActor.Name = "Level Bounds";
 
             var mesh = _boundsActor.AddComponent<BoundsMesh>();
@@ -99,7 +99,7 @@ internal class DefaultContext : BaseContext
 
         if (Level.WaterType != LiquidType.None)
         {
-            _liquidActor = Eddy.Scene.CreateActor();
+            _liquidActor = CreateSubActor();
             _liquidActor.Name = $"Water: {Level.WaterType}";
 
             var mesh = _liquidActor.AddComponent<LiquidMesh>();
@@ -110,7 +110,7 @@ internal class DefaultContext : BaseContext
 
         #region Pickable Bounds
 
-        _pickablesActor = Eddy.Scene.CreateActor();
+        _pickablesActor = CreateSubActor();
         _pickablesActor.Name = "Debug";
 
         var bounds = _pickablesActor.AddComponent<PickableBounds>();
@@ -134,7 +134,7 @@ internal class DefaultContext : BaseContext
 
         if (_pickablesActor?.HasComponent<PickableBounds>() ?? false)
         {
-            _pickablesActor = Eddy.Scene.CreateActor();
+            _pickablesActor = CreateSubActor();
             _pickablesActor.Name = "Debug";
 
             var bounds = _pickablesActor.AddComponent<PickableBounds>();
@@ -152,6 +152,7 @@ internal class DefaultContext : BaseContext
     public override void Dispose()
     {
         TeardownVisualization();
+        base.Dispose();
     }
 
     private void TeardownVisualization()

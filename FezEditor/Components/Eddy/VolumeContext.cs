@@ -26,7 +26,7 @@ internal class VolumeContext : BaseContext
 
         foreach (var (id, volume) in Level.Volumes.Where(kv => kv.Key != InvalidId))
         {
-            var actor = Eddy.Scene.CreateActor();
+            var actor = CreateSubActor();
             actor.Name = $"{id}: Volume";
             _volumeActors[id] = actor;
 
@@ -45,6 +45,7 @@ internal class VolumeContext : BaseContext
     public override void Dispose()
     {
         TeardownVisualization();
+        base.Dispose();
     }
 
     private void TeardownVisualization()

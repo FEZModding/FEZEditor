@@ -569,7 +569,7 @@ internal class ArtObjectContext : BaseContext
                 }
                 else
                 {
-                    actor = Eddy.Scene.CreateActor();
+                    actor = CreateSubActor();
                     actor.Name = $"{id}: {instance.Name}";
                     actor.Transform.Position = instance.Position.ToXna();
                     actor.Transform.Rotation = instance.Rotation.ToXna();
@@ -599,7 +599,7 @@ internal class ArtObjectContext : BaseContext
 
         foreach (var (id, instance) in Level.ArtObjects.Where(kv => kv.Key != InvalidId))
         {
-            var actor = Eddy.Scene.CreateActor();
+            var actor = CreateSubActor();
             actor.Name = $"{id}: {instance.Name}";
             actor.Transform.Position = instance.Position.ToXna();
             actor.Transform.Rotation = instance.Rotation.ToXna();
@@ -659,7 +659,7 @@ internal class ArtObjectContext : BaseContext
             var id = NextAvailableId();
             Level.ArtObjects[id] = instance;
 
-            var actor = Eddy.Scene.CreateActor();
+            var actor = CreateSubActor();
             actor.Name = $"{id}: {instance.Name}";
             actor.Transform.Position = instance.Position.ToXna();
             actor.Transform.Rotation = instance.Rotation.ToXna();
@@ -689,6 +689,7 @@ internal class ArtObjectContext : BaseContext
         _translateScope?.Dispose();
         _scaleScope?.Dispose();
         TeardownVisualization();
+        base.Dispose();
     }
 
     private void TeardownVisualization()

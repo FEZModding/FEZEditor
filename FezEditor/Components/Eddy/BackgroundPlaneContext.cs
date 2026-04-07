@@ -26,7 +26,7 @@ internal class BackgroundPlaneContext : BaseContext
 
         foreach (var (id, bgPlane) in Level.BackgroundPlanes.Where(kv => kv.Key != InvalidId))
         {
-            var actor = Eddy.Scene.CreateActor();
+            var actor = CreateSubActor();
             actor.Name = $"{id}: {bgPlane.TextureName}";
             actor.Transform.Position = bgPlane.Position.ToXna();
             actor.Transform.Rotation = bgPlane.Rotation.ToXna();
@@ -54,6 +54,7 @@ internal class BackgroundPlaneContext : BaseContext
     public override void Dispose()
     {
         TeardownVisualization();
+        base.Dispose();
     }
 
     private void TeardownVisualization()

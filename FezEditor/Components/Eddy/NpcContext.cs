@@ -26,7 +26,7 @@ internal class NpcContext : BaseContext
 
         foreach (var (id, instance) in Level.NonPlayerCharacters.Where(kv => kv.Key != InvalidId))
         {
-            var actor = Eddy.Scene.CreateActor();
+            var actor = CreateSubActor();
             actor.Name = $"{id}: {instance.Name}";
             actor.Transform.Position = instance.Position.ToXna();
             _npcActors[id] = actor;
@@ -47,6 +47,7 @@ internal class NpcContext : BaseContext
     public override void Dispose()
     {
         TeardownVisualization();
+        base.Dispose();
     }
 
     private void TeardownVisualization()

@@ -1,4 +1,5 @@
-﻿using FezEditor.Services;
+﻿using FezEditor.Actors;
+using FezEditor.Services;
 using FezEditor.Tools;
 using FEZRepacker.Core.Definitions.Game.Level;
 using Microsoft.Xna.Framework;
@@ -21,6 +22,8 @@ internal abstract class BaseContext : IDisposable
 
     protected StatusService StatusService { get; }
 
+    private readonly Actor _subRoot;
+
     private bool _wasActive;
 
     protected BaseContext(Game game, Level level, IEddyEditor eddy)
@@ -29,6 +32,13 @@ internal abstract class BaseContext : IDisposable
         Eddy = eddy;
         ResourceService = game.GetService<ResourceService>();
         StatusService = game.GetService<StatusService>();
+        _subRoot = eddy.Scene.CreateActor();
+        _subRoot.Name = GetType().Name;
+    }
+
+    protected Actor CreateSubActor()
+    {
+        return Eddy.Scene.CreateActor(_subRoot);
     }
 
     public virtual void Revisualize(bool partial = false)
@@ -89,5 +99,6 @@ internal abstract class BaseContext : IDisposable
 
     public virtual void Dispose()
     {
+        Eddy.Scene.DestroyActor(_subRoot);
     }
 }

@@ -107,7 +107,9 @@ public class EddyEditor : EditorComponent, IEddyEditor
             orientation.UseFaceLabels = false;
         }
         {
-            DefaultContext defaultCtx;
+            // DefaultContext is instantiated first so its subroot is first in the scene (draws before level geometry).
+            // It is added to _contexts last so it has the lowest update priority.
+            var defaultCtx = new DefaultContext(Game, _level, this);
             _contexts.Add(new TrileContext(Game, _level, this));
             _contexts.Add(new ArtObjectContext(Game, _level, this));
             _contexts.Add(new BackgroundPlaneContext(Game, _level, this));
@@ -116,7 +118,7 @@ public class EddyEditor : EditorComponent, IEddyEditor
             _contexts.Add(new VolumeContext(Game, _level, this));
             _contexts.Add(new PathContext(Game, _level, this));
             _contexts.Add(new ScriptContext(Game, _level, this));
-            _contexts.Add(defaultCtx = new DefaultContext(Game, _level, this));
+            _contexts.Add(defaultCtx);
 
             defaultCtx.Revisualize();
             foreach (var ctx in _contexts.Where(c => c != defaultCtx))
@@ -151,9 +153,6 @@ public class EddyEditor : EditorComponent, IEddyEditor
             {
                 ctx.Revisualize(partial: true);
             }
-
-            Scene.MoveActorLast(_cursorActor);
-            Scene.MoveActorLast(_gizmoActor);
         }
 
         DrawToolbar();

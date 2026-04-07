@@ -737,7 +737,7 @@ internal sealed class TrileContext : BaseContext
 
             foreach (var id in trileIds)
             {
-                var actor = Eddy.Scene.CreateActor();
+                var actor = CreateSubActor();
                 actor.Name = _set.Triles.TryGetValue(id, out var trile) ? $"{id}: {trile.Name}" : $"{id}";
                 _trileActors[id] = actor;
 
@@ -1102,6 +1102,7 @@ internal sealed class TrileContext : BaseContext
         _scaleScope?.Dispose();
         _paintScope?.Dispose();
         TeardownVisualization(force: true);
+        base.Dispose();
     }
 
     private void TeardownVisualization(bool force)
@@ -1281,7 +1282,7 @@ internal sealed class TrileContext : BaseContext
             return existing;
         }
 
-        var actor = Eddy.Scene.CreateActor();
+        var actor = CreateSubActor();
         actor.Name = $"{trileId}: {_set!.Triles[trileId].Name}";
         _trileActors[trileId] = actor;
 
@@ -1295,7 +1296,7 @@ internal sealed class TrileContext : BaseContext
     {
         if (_collisionMapActor == null)
         {
-            _collisionMapActor = Eddy.Scene.CreateActor();
+            _collisionMapActor = CreateSubActor();
             _collisionMapActor.Name = $"Collision Map: {Level.TrileSetName}";
             _collisionMapActor.AddComponent<TrileCollisionMesh>();
         }
@@ -1350,7 +1351,7 @@ internal sealed class TrileContext : BaseContext
         TrilesMesh mesh;
         if (!_trileActors.TryGetValue(InvalidId, out var actor))
         {
-            actor = Eddy.Scene.CreateActor();
+            actor = CreateSubActor();
             actor.Name = "Placeholder";
             _trileActors[InvalidId] = actor;
 

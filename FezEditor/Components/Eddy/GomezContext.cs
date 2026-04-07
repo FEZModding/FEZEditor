@@ -25,7 +25,7 @@ internal class GomezContext : BaseContext
         #region Gomez
 
         {
-            _gomezActor = Eddy.Scene.CreateActor();
+            _gomezActor = CreateSubActor();
             _gomezActor.Name = "Gomez";
             _gomezActor.Transform.Position = Level.StartingFace.Id.ToXna().ToVector3() + Vector3.Up;
             _gomezActor.Transform.Rotation = Level.StartingFace.Face.AsQuaternion();
@@ -50,6 +50,7 @@ internal class GomezContext : BaseContext
     public override void Dispose()
     {
         TeardownVisualization();
+        base.Dispose();
     }
 
     private void TeardownVisualization()

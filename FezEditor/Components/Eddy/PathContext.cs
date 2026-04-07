@@ -26,7 +26,7 @@ internal class PathContext : BaseContext
 
         foreach (var (id, path) in Level.Paths.Where(kv => kv.Key != InvalidId))
         {
-            var actor = Eddy.Scene.CreateActor();
+            var actor = CreateSubActor();
             actor.Name = $"{id}: Path";
             _pathActors[id] = actor;
 
@@ -46,6 +46,7 @@ internal class PathContext : BaseContext
     public override void Dispose()
     {
         TeardownVisualization();
+        base.Dispose();
     }
 
     private void TeardownVisualization()
