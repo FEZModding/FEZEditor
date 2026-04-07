@@ -31,6 +31,19 @@ internal class ArtObjectContext : BaseContext
     protected override void TestConditions()
     {
         _hoveredId = null;
+        if (Eddy.ShowArtObjects.IsDirty)
+        {
+            var visible = Eddy.ShowArtObjects.Value;
+            foreach (var actor in _artObjectActors.Values)
+            {
+                actor.Visible = visible;
+                var mesh = actor.GetComponent<ArtObjectMesh>();
+                mesh.Pickable = visible;
+            }
+
+            Eddy.ShowArtObjects = Eddy.ShowArtObjects.Clean();
+        }
+
         if (Eddy.Hit.HasValue && Eddy.Hit.Value.Actor.HasComponent<ArtObjectMesh>())
         {
             var actor = Eddy.Hit.Value.Actor;

@@ -35,4 +35,6 @@ internal interface IEddyEditor
     Dirty<bool> ShowPickableBounds { get; set; }
 
     Dirty<bool> ShowCollisionMap { get; set; }
+
+    Dirty<bool> ShowArtObjects { get; set; }
 }

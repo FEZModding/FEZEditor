@@ -40,6 +40,8 @@ public class EddyEditor : EditorComponent, IEddyEditor
 
     public Dirty<bool> ShowCollisionMap { get; set; } = new(false);
 
+    public Dirty<bool> ShowArtObjects { get; set; } = new(true);
+
     private readonly Level _level;
 
     private Actor _cameraActor = null!;
@@ -328,6 +330,12 @@ public class EddyEditor : EditorComponent, IEddyEditor
             if (ImGui.Checkbox("Pickable Bounds", ref showPickableBounds))
             {
                 ShowPickableBounds = showPickableBounds;
+            }
+
+            var showArtObjects = ShowArtObjects.Value;
+            if (ImGui.Checkbox("Art Objects", ref showArtObjects))
+            {
+                ShowArtObjects = showArtObjects;
             }
 
             ImGui.EndPopup();

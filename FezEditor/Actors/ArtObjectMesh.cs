@@ -9,6 +9,8 @@ namespace FezEditor.Actors;
 
 public class ArtObjectMesh : ActorComponent, IPickable
 {
+    public bool Pickable { get; set; } = true;
+
     private readonly RenderingService _rendering;
 
     private readonly Rid _mesh;
@@ -53,6 +55,11 @@ public class ArtObjectMesh : ActorComponent, IPickable
 
     public PickHit? Pick(Ray ray)
     {
+        if (!Pickable)
+        {
+            return null;
+        }
+
         var box = GetBounds().First();
         var dist = ray.Intersects(box);
         return dist.HasValue ? new PickHit(dist.Value, 0) : null;
