@@ -103,6 +103,21 @@ public class Scene : IDisposable
         return nearest;
     }
 
+    public void MoveActorLast(Actor actor)
+    {
+        var parent = _hierarchy[actor].Parent;
+        if (parent == null)
+        {
+            return;
+        }
+
+        var siblings = _hierarchy[parent].Children;
+        if (siblings.Remove(actor))
+        {
+            siblings.Add(actor);
+        }
+    }
+
     public Actor? GetParent(Actor actor)
     {
         return _hierarchy.TryGetValue(actor, out var node) ? node.Parent : null;

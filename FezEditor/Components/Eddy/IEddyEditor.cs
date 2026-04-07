@@ -28,7 +28,9 @@ internal interface IEddyEditor
 
     EddyTool Tool { get; set; }
 
-    EddyContext Context { get; set; }
+    EddyContext HoveredContext { get; set; }
+
+    EddyContext SelectedContext { get; set; }
 
     Dirty<bool> ShowPickableBounds { get; set; }
 

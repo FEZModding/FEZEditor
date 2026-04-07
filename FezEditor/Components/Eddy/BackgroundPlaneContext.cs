@@ -15,7 +15,7 @@ internal class BackgroundPlaneContext : BaseContext
 
     public override void Revisualize(bool partial = false)
     {
-        if (Eddy.Context != EddyContext.BackgroundPlane && partial)
+        if (Eddy.SelectedContext != EddyContext.BackgroundPlane && partial)
         {
             return;
         }

@@ -15,7 +15,7 @@ internal class GomezContext : BaseContext
 
     public override void Revisualize(bool partial = false)
     {
-        if (Eddy.Context != EddyContext.Gomez && partial)
+        if (Eddy.SelectedContext != EddyContext.Gomez && partial)
         {
             return;
         }

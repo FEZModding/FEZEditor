@@ -35,7 +35,9 @@ public class AssetBrowser : IDisposable
 
     private const int MaxRecentEntries = 10;
 
-    public Entry SelectedEntry { get; private set; }
+    private Entry _selectedEntry;
+
+    private AssetType? _selectionDirtyType;
 
     private readonly List<Entry> _recentEntries = new();
 
@@ -101,9 +103,39 @@ public class AssetBrowser : IDisposable
         }
     }
 
+    public string GetSelectedEntry(AssetType type)
+    {
+        return _selectedEntry.Type == type ? _selectedEntry.Name : string.Empty;
+    }
+
+    public Texture2D? GetThumbnail(AssetType type, string name)
+    {
+        var entries = _entries.GetValueOrDefault(type) ?? [];
+        var entry = entries.FirstOrDefault(e => e.Name == name);
+        if (entry == default)
+        {
+            return null;
+        }
+
+        var thumb = SharedThumbnails.GetValueOrDefault(entry.CachePath);
+        return thumb == _placeholder ? null : thumb;
+    }
+
+    public bool WasSelected(AssetType type)
+    {
+        if (_selectionDirtyType == type)
+        {
+            _selectionDirtyType = null;
+            return true;
+        }
+
+        return false;
+    }
+
     private void Select(Entry entry)
     {
-        SelectedEntry = entry;
+        _selectedEntry = entry;
+        _selectionDirtyType = entry.Type;
         if (entry == default)
         {
             return;
@@ -119,9 +151,6 @@ public class AssetBrowser : IDisposable
 
     public void Draw()
     {
-        ProcessQueue();
-        TryBuildEntries();
-
         DrawSelectionBar();
         ImGui.Separator();
 
@@ -172,7 +201,8 @@ public class AssetBrowser : IDisposable
 
     private void DrawSelectionBar()
     {
-        var selected = SelectedEntry;
+        // Show the most recently selected entry across all types
+        var selected = _recentEntries.Count > 0 ? _recentEntries[0] : default;
         var isAnySelected = selected != default;
 
         // Header line: "Selected: Name (Type)"
@@ -273,6 +303,12 @@ public class AssetBrowser : IDisposable
             ImGui.SameLine();
             ImGui.TextDisabled($"{spinner} Generating thumbnails... ({_pendingQueue.Count} remaining)");
         }
+    }
+
+    public void Update()
+    {
+        ProcessQueue();
+        TryBuildEntries();
     }
 
     private void ProcessQueue()
@@ -478,7 +514,12 @@ public class AssetBrowser : IDisposable
         _entries[AssetType.NonPlayableCharacter] = npcs;
         _entries[AssetType.Trile] = triles;
 
-        SelectedEntry = triles.FirstOrDefault();
+        if (triles.Count > 0)
+        {
+            Select(triles[0]);
+        }
+
+        _selectionDirtyType = null;
 
         // Pre-fill thumbnails with placeholder and enqueue for generation
         foreach (var entry in _entries.Values.SelectMany(e => e))
@@ -509,7 +550,7 @@ public class AssetBrowser : IDisposable
         var selectedIndex = -1;
         for (var k = 0; k < entries.Count; k++)
         {
-            if (entries[k] == SelectedEntry)
+            if (entries[k] == _selectedEntry)
             {
                 selectedIndex = k;
                 break;
@@ -542,7 +583,7 @@ public class AssetBrowser : IDisposable
                     ImGui.TableSetColumnIndex(col);
 
                     var entry = entries[i];
-                    var isSelected = SelectedEntry == entry;
+                    var isSelected = _selectedEntry == entry;
                     var texture = SharedThumbnails.GetValueOrDefault(entry.CachePath, _placeholder);
                     var cellWidth = ImGui.GetColumnWidth();
 
@@ -618,7 +659,8 @@ public class AssetBrowser : IDisposable
         _entries.Clear();
         _pendingQueue.Clear();
         _recentEntries.Clear();
-        SelectedEntry = default;
+        _selectedEntry = default;
+        _selectionDirtyType = null;
     }
 
     private static void ClearSharedThumbnails(Texture2D? placeholder = null)
@@ -634,7 +676,7 @@ public class AssetBrowser : IDisposable
         SharedThumbnails.Clear();
     }
 
-    public readonly record struct Entry(string Name, string Path, AssetType Type)
+    private readonly record struct Entry(string Name, string Path, AssetType Type)
     {
         public string CachePath => Type == AssetType.Trile ? $"{Path}/{Name}" : Path;
     }

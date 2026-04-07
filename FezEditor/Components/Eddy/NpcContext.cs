@@ -15,7 +15,7 @@ internal class NpcContext : BaseContext
 
     public override void Revisualize(bool partial = false)
     {
-        if (Eddy.Context != EddyContext.NonPlayableCharacter && partial)
+        if (Eddy.SelectedContext != EddyContext.NonPlayableCharacter && partial)
         {
             return;
         }

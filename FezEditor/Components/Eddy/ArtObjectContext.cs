@@ -38,21 +38,28 @@ internal class ArtObjectContext : BaseContext
             if (_artObjectActors.ContainsKey(foundId) && Eddy.Tool is EddyTool.Select or EddyTool.Pick)
             {
                 _hoveredId = foundId;
-                Eddy.Context = EddyContext.ArtObject;
+                Eddy.HoveredContext = EddyContext.ArtObject;
                 return;
             }
         }
 
-        if (!_hoveredId.HasValue && !Eddy.Gizmo.IsActive &&
+        if (!_hoveredId.HasValue && !Eddy.Gizmo.IsActive && Eddy.Tool != EddyTool.Paint &&
             ImGui.IsMouseClicked(ImGuiMouseButton.Left) && Eddy.IsViewportHovered)
         {
             _selectedIds.Clear();
+            Eddy.SelectedContext = EddyContext.Default;
             Eddy.Tool = EddyTool.Select;
         }
 
         if (_selectedIds.Count > 0)
         {
-            Eddy.Context = EddyContext.ArtObject;
+            Eddy.SelectedContext = EddyContext.ArtObject;
+        }
+
+        if (Eddy.AssetBrowser.WasSelected(AssetType.ArtObject))
+        {
+            Eddy.Tool = EddyTool.Paint;
+            Eddy.SelectedContext = EddyContext.ArtObject;
         }
     }
 
@@ -61,6 +68,7 @@ internal class ArtObjectContext : BaseContext
         if (ImGui.IsKeyPressed(ImGuiKey.Escape))
         {
             _selectedIds.Clear();
+            Eddy.SelectedContext = EddyContext.Default;
             Eddy.Tool = EddyTool.Select;
         }
 
@@ -304,15 +312,68 @@ internal class ArtObjectContext : BaseContext
         }
     }
 
+    public override void DrawOverlay()
+    {
+        if (Eddy.Tool != EddyTool.Paint || !Eddy.IsViewportHovered || Eddy.SelectedContext != EddyContext.ArtObject)
+        {
+            return;
+        }
+
+        var entry = Eddy.AssetBrowser.GetSelectedEntry(AssetType.ArtObject);
+        if (string.IsNullOrEmpty(entry))
+        {
+            return;
+        }
+
+        var thumb = Eddy.AssetBrowser.GetThumbnail(AssetType.ArtObject, entry);
+        if (thumb != null)
+        {
+            var mousePos = ImGui.GetMousePos();
+            var drawMin = mousePos + new NVector2(12f, 12f);
+            var drawMax = drawMin + new NVector2(32f, 32f);
+            ImGui.GetForegroundDrawList(ImGui.GetMainViewport()).AddImage(ImGuiX.Bind(thumb), drawMin, drawMax);
+        }
+    }
+
     private void UpdatePaint()
     {
         StatusService.AddHints(
             ("LMB", "Place")
         );
 
-        if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
+        var entry = Eddy.AssetBrowser.GetSelectedEntry(AssetType.ArtObject);
+
+        // Highlight hovered emplacement for placement preview
+        TrileEmplacement? hoveredEmp = null;
+        if (Eddy.Hit.HasValue && Eddy.Hit.Value.Actor.TryGetComponent<TrilesMesh>(out var mesh) && mesh != null)
         {
-            // TODO: Implement this again =/
+            var index = Eddy.Hit.Value.Index;
+            hoveredEmp = mesh.GetEmplacement(index);
+            if (Level.Triles.TryGetValue(hoveredEmp, out var hoveredInstance))
+            {
+                var box = mesh.GetBounds().ElementAt(index);
+                var face = Mathz.DetermineFace(box, Eddy.Ray, Eddy.Hit.Value.Distance);
+                var trileCenter = hoveredInstance.Position.ToXna() + new Vector3(0.5f);
+                var origin = trileCenter + face.AsVector() * (0.5f + CursorMesh.OverlayOffset);
+                var surface = MeshSurface.CreateFaceQuad(Vector3.One, origin, face);
+                Eddy.Cursor.SetHoverSurfaces([(surface, PrimitiveType.TriangleList)], HoverColor);
+            }
+        }
+
+        if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && hoveredEmp != null && !string.IsNullOrEmpty(entry))
+        {
+            using (Eddy.History.BeginScope("Place Art Object"))
+            {
+                var id = NextAvailableId();
+                var position = new Vector3(hoveredEmp.X, hoveredEmp.Y, hoveredEmp.Z);
+                Level.ArtObjects[id] = new ArtObjectInstance
+                {
+                    Name = entry,
+                    Position = position.ToRepacker(),
+                    Rotation = RQuaternion.Identity,
+                    Scale = RVector3.One
+                };
+            }
         }
     }
 
@@ -364,7 +425,7 @@ internal class ArtObjectContext : BaseContext
 
     public override void DrawProperties()
     {
-        if (Eddy.Context != EddyContext.ArtObject || _selectedIds.Count == 0)
+        if (Eddy.SelectedContext != EddyContext.ArtObject || _selectedIds.Count == 0)
         {
             return;
         }
@@ -391,12 +452,12 @@ internal class ArtObjectContext : BaseContext
         }
 
         var rotation = instance.Rotation.ToXna();
-        var euler = QuaternionToEuler(rotation);
+        var euler = rotation.ToEuler();
         if (ImGuiX.DragFloat3("Rotation (Euler)", ref euler, 1f))
         {
             using (Eddy.History.BeginScope("Edit AO Rotation"))
             {
-                var newRotation = EulerToQuaternion(euler);
+                var newRotation = euler.FromEuler();
                 instance.Rotation = newRotation.ToRepacker();
                 if (_artObjectActors.TryGetValue(id, out var actor))
                 {
@@ -478,38 +539,11 @@ internal class ArtObjectContext : BaseContext
         }
     }
 
-    private static Vector3 QuaternionToEuler(Quaternion q)
-    {
-        var sinRCosP = 2f * (q.W * q.X + q.Y * q.Z);
-        var cosRCosP = 1f - 2f * (q.X * q.X + q.Y * q.Y);
-        var roll = MathF.Atan2(sinRCosP, cosRCosP);
-
-        var sinP = 2f * (q.W * q.Y - q.Z * q.X);
-        var pitch = MathF.Abs(sinP) >= 1f ? MathF.CopySign(MathHelper.PiOver2, sinP) : MathF.Asin(sinP);
-
-        var sinYCosP = 2f * (q.W * q.Z + q.X * q.Y);
-        var cosYCosP = 1f - 2f * (q.Y * q.Y + q.Z * q.Z);
-        var yaw = MathF.Atan2(sinYCosP, cosYCosP);
-
-        return new Vector3(
-            MathHelper.ToDegrees(roll),
-            MathHelper.ToDegrees(pitch),
-            MathHelper.ToDegrees(yaw));
-    }
-
-    private static Quaternion EulerToQuaternion(Vector3 euler)
-    {
-        return Quaternion.CreateFromYawPitchRoll(
-            MathHelper.ToRadians(euler.Y),
-            MathHelper.ToRadians(euler.X),
-            MathHelper.ToRadians(euler.Z));
-    }
-
     public override void Revisualize(bool partial = false)
     {
         if (partial)
         {
-            if (Eddy.Context != EddyContext.ArtObject)
+            if (Eddy.SelectedContext != EddyContext.ArtObject)
             {
                 return;
             }

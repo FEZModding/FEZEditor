@@ -15,7 +15,7 @@ internal class PathContext : BaseContext
 
     public override void Revisualize(bool partial = false)
     {
-        if (Eddy.Context != EddyContext.Path && partial)
+        if (Eddy.SelectedContext != EddyContext.Path && partial)
         {
             return;
         }

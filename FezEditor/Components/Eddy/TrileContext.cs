@@ -65,7 +65,7 @@ internal sealed class TrileContext : BaseContext
         {
             var index = Eddy.Hit.Value.Index;
             var emplacement = mesh.GetEmplacement(index);
-            if (Level.Triles.ContainsKey(emplacement) && Eddy.Tool is EddyTool.Select or EddyTool.Pick)
+            if (Level.Triles.ContainsKey(emplacement) && Eddy.Tool is EddyTool.Select or EddyTool.Pick or EddyTool.Paint)
             {
                 var box = mesh.GetBounds().ElementAt(index);
                 var distance = Eddy.Hit.Value.Distance;
@@ -73,21 +73,28 @@ internal sealed class TrileContext : BaseContext
                 _hoveredCursor.Emplacements.Add(emplacement);
                 _hoveredCursor.Face = Mathz.DetermineFace(box, Eddy.Ray, distance);
                 _hoveredCursor.GroupId = _emplacementGroups.TryGetValue(emplacement, out var gid) ? gid : null;
-                Eddy.Context = EddyContext.Trile;
+                Eddy.HoveredContext = EddyContext.Trile;
                 return;
             }
         }
 
-        if (_hoveredCursor.Emplacement == null && !Eddy.Gizmo.IsActive &&
+        if (_hoveredCursor.Emplacement == null && !Eddy.Gizmo.IsActive && Eddy.Tool != EddyTool.Paint &&
             ImGui.IsMouseClicked(ImGuiMouseButton.Left) && Eddy.IsViewportHovered)
         {
             _selectedCursor.Reset();
+            Eddy.SelectedContext = EddyContext.Default;
             Eddy.Tool = EddyTool.Select;
         }
 
         if (_selectedCursor.Emplacements.Count > 0)
         {
-            Eddy.Context = EddyContext.Trile;
+            Eddy.SelectedContext = EddyContext.Trile;
+        }
+
+        if (Eddy.AssetBrowser.WasSelected(AssetType.Trile))
+        {
+            Eddy.Tool = EddyTool.Paint;
+            Eddy.SelectedContext = EddyContext.Trile;
         }
     }
 
@@ -96,6 +103,7 @@ internal sealed class TrileContext : BaseContext
         if (ImGui.IsKeyPressed(ImGuiKey.Escape))
         {
             _selectedCursor.Reset();
+            Eddy.SelectedContext = EddyContext.Default;
             Eddy.Tool = EddyTool.Select;
         }
 
@@ -537,6 +545,30 @@ internal sealed class TrileContext : BaseContext
         }
     }
 
+    public override void DrawOverlay()
+    {
+        if (Eddy.Tool != EddyTool.Paint || !Eddy.IsViewportHovered || Eddy.SelectedContext != EddyContext.Trile)
+        {
+            return;
+        }
+
+        var entry = Eddy.AssetBrowser.GetSelectedEntry(AssetType.Trile);
+        if (string.IsNullOrEmpty(entry))
+        {
+            return;
+        }
+
+        var thumb = Eddy.AssetBrowser.GetThumbnail(AssetType.Trile, entry);
+        if (thumb != null)
+        {
+            var mousePos = ImGui.GetMousePos();
+            var drawMin = mousePos + new NVector2(12f, 12f);
+            var drawMax = drawMin + new NVector2(32f, 32f);
+            ImGui.GetForegroundDrawList(ImGui.GetMainViewport())
+                .AddImage(ImGuiX.Bind(thumb), drawMin, drawMax);
+        }
+    }
+
     private void UpdatePaint()
     {
         StatusService.AddHints(
@@ -557,12 +589,24 @@ internal sealed class TrileContext : BaseContext
 
         if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) || ImGui.IsMouseDragging(ImGuiMouseButton.Left))
         {
-            var entry = Eddy.AssetBrowser.SelectedEntry;
-            var trileId = entry.Type == AssetType.Trile ? _set!.FindByName(entry.Name).Id : InvalidId;
+            var entry = Eddy.AssetBrowser.GetSelectedEntry(AssetType.Trile);
+            var trileId = !string.IsNullOrEmpty(entry)
+                ? _set!.FindByName(entry).Id
+                : InvalidId;
 
-            if (_selectedCursor.Emplacements.Count > 0 && trileId != InvalidId)
+            var targetEmplacements = new List<TrileEmplacement>();
+            if (_selectedCursor.Emplacements.Count > 0)
             {
-                foreach (var emp in _selectedCursor.Emplacements)
+                targetEmplacements.AddRange(_selectedCursor.Emplacements);
+            }
+            else if (_hoveredCursor.Emplacement != null)
+            {
+                targetEmplacements.Add(_hoveredCursor.Emplacement);
+            }
+
+            if (trileId != InvalidId)
+            {
+                foreach (var emp in targetEmplacements)
                 {
                     if (!Level.Triles.TryGetValue(emp, out var instance))
                     {
@@ -613,7 +657,7 @@ internal sealed class TrileContext : BaseContext
     {
         if (partial)
         {
-            if (Eddy.Context != EddyContext.Trile)
+            if (Eddy.SelectedContext != EddyContext.Trile)
             {
                 return;
             }
@@ -754,7 +798,7 @@ internal sealed class TrileContext : BaseContext
 
     public override void DrawProperties()
     {
-        if (Eddy.Context != EddyContext.Trile || _selectedCursor.Emplacements.Count == 0)
+        if (Eddy.SelectedContext != EddyContext.Trile || _selectedCursor.Emplacements.Count == 0)
         {
             return;
         }

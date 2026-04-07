@@ -15,7 +15,7 @@ internal class VolumeContext : BaseContext
 
     public override void Revisualize(bool partial = false)
     {
-        if (Eddy.Context != EddyContext.Volume && partial)
+        if (Eddy.SelectedContext != EddyContext.Volume && partial)
         {
             return;
         }

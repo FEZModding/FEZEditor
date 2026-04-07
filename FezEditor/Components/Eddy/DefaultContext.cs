@@ -24,11 +24,6 @@ internal class DefaultContext : BaseContext
 
     protected override void TestConditions()
     {
-        if (Eddy.Context == EddyContext.Default)
-        {
-            // Nobody claimed it, stay default
-        }
-
         if (Eddy.ShowPickableBounds.IsDirty)
         {
             var bounds = _pickablesActor?.GetComponent<PickableBounds>();
@@ -63,7 +58,7 @@ internal class DefaultContext : BaseContext
 
     public override void Revisualize(bool partial = false)
     {
-        if (Eddy.Context != EddyContext.Default && partial)
+        if (Eddy.SelectedContext != EddyContext.Default && partial)
         {
             return;
         }

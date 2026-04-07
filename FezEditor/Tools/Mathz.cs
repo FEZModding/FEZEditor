@@ -132,4 +132,31 @@ public static class Mathz
     {
         return min + (float)random.NextDouble() * (max - min);
     }
+
+    public static Vector3 ToEuler(this Quaternion q)
+    {
+        var sinRCosP = 2f * (q.W * q.X + q.Y * q.Z);
+        var cosRCosP = 1f - 2f * (q.X * q.X + q.Y * q.Y);
+        var roll = MathF.Atan2(sinRCosP, cosRCosP);
+
+        var sinP = 2f * (q.W * q.Y - q.Z * q.X);
+        var pitch = MathF.Abs(sinP) >= 1f ? MathF.CopySign(MathHelper.PiOver2, sinP) : MathF.Asin(sinP);
+
+        var sinYCosP = 2f * (q.W * q.Z + q.X * q.Y);
+        var cosYCosP = 1f - 2f * (q.Y * q.Y + q.Z * q.Z);
+        var yaw = MathF.Atan2(sinYCosP, cosYCosP);
+
+        return new Vector3(
+            MathHelper.ToDegrees(roll),
+            MathHelper.ToDegrees(pitch),
+            MathHelper.ToDegrees(yaw));
+    }
+
+    public static Quaternion FromEuler(this Vector3 euler)
+    {
+        return Quaternion.CreateFromYawPitchRoll(
+            MathHelper.ToRadians(euler.Y),
+            MathHelper.ToRadians(euler.X),
+            MathHelper.ToRadians(euler.Z));
+    }
 }

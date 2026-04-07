@@ -39,11 +39,19 @@ internal abstract class BaseContext : IDisposable
     {
     }
 
+    public virtual void DrawOverlay()
+    {
+    }
+
     public void Update()
     {
         TestConditions();
 
-        var isActive = IsContextAllowed(Eddy.Context);
+        var activeContext = Eddy.SelectedContext != EddyContext.Default
+            ? Eddy.SelectedContext
+            : Eddy.HoveredContext;
+
+        var isActive = IsContextAllowed(activeContext);
         if (isActive)
         {
             if (!_wasActive)

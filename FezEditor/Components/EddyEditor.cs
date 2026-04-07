@@ -32,7 +32,9 @@ public class EddyEditor : EditorComponent, IEddyEditor
 
     public EddyTool Tool { get; set; } = EddyTool.Select;
 
-    public EddyContext Context { get; set; } = EddyContext.Default;
+    public EddyContext HoveredContext { get; set; } = EddyContext.Default;
+
+    public EddyContext SelectedContext { get; set; } = EddyContext.Default;
 
     public Dirty<bool> ShowPickableBounds { get; set; } = new(false);
 
@@ -69,13 +71,19 @@ public class EddyEditor : EditorComponent, IEddyEditor
         Cursor.ClearHover();
         Cursor.ClearSelection();
         StatusService.ClearHints();
-        Context = EddyContext.Default;
+        HoveredContext = EddyContext.Default;
 
+        AssetBrowser.Update();
         Clock.Tick(gameTime);
 
         foreach (var context in _contexts)
         {
             context.Update();
+        }
+
+        if (SelectedContext == EddyContext.Default && Tool == EddyTool.Paint)
+        {
+            Tool = EddyTool.Select;
         }
 
         Scene.Update(gameTime);
@@ -99,8 +107,7 @@ public class EddyEditor : EditorComponent, IEddyEditor
             orientation.UseFaceLabels = false;
         }
         {
-            var defaultCtx = new DefaultContext(Game, _level, this);
-            _contexts.Add(defaultCtx);
+            DefaultContext defaultCtx;
             _contexts.Add(new TrileContext(Game, _level, this));
             _contexts.Add(new ArtObjectContext(Game, _level, this));
             _contexts.Add(new BackgroundPlaneContext(Game, _level, this));
@@ -109,12 +116,13 @@ public class EddyEditor : EditorComponent, IEddyEditor
             _contexts.Add(new VolumeContext(Game, _level, this));
             _contexts.Add(new PathContext(Game, _level, this));
             _contexts.Add(new ScriptContext(Game, _level, this));
+            _contexts.Add(defaultCtx = new DefaultContext(Game, _level, this));
 
-            foreach (var ctx in _contexts)
+            defaultCtx.Revisualize();
+            foreach (var ctx in _contexts.Where(c => c != defaultCtx))
             {
                 ctx.Revisualize();
             }
-
             defaultCtx.PostRevisualize();
         }
         {
@@ -143,6 +151,9 @@ public class EddyEditor : EditorComponent, IEddyEditor
             {
                 ctx.Revisualize(partial: true);
             }
+
+            Scene.MoveActorLast(_cursorActor);
+            Scene.MoveActorLast(_gizmoActor);
         }
 
         DrawToolbar();
@@ -173,6 +184,11 @@ public class EddyEditor : EditorComponent, IEddyEditor
                 {
                     Ray = Scene.Viewport.Unproject(ImGuiX.GetMousePos(), viewportMin);
                     Hit = Scene.Raycast(Ray);
+                }
+
+                foreach (var ctx in _contexts)
+                {
+                    ctx.DrawOverlay();
                 }
 
                 var orientation = _cameraActor.GetComponent<OrientationGizmo>();
@@ -337,7 +353,12 @@ public class EddyEditor : EditorComponent, IEddyEditor
 
     private void DrawRaycastDebug(Vector2 position)
     {
-        var stats = new Dictionary<string, string>();
+        var stats = new Dictionary<string, string>
+        {
+            ["Hovered"] = HoveredContext.ToString(),
+            ["Selected"] = SelectedContext.ToString()
+        };
+
         if (Hit.HasValue)
         {
             var actor = Hit.Value.Actor;
