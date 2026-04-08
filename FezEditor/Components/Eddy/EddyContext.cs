@@ -12,3 +12,23 @@ public enum EddyContext
     Path,
     Script
 }
+
+public static class EddyContextExtensions
+{
+    public static string GetLabel(this EddyContext context)
+    {
+        return context switch
+        {
+            EddyContext.Default => "Level",
+            EddyContext.Trile => "Trile",
+            EddyContext.ArtObject => "Art Object",
+            EddyContext.BackgroundPlane => "Background Plane",
+            EddyContext.NonPlayableCharacter => "NPC",
+            EddyContext.Gomez => "Gomez",
+            EddyContext.Volume => "Volume",
+            EddyContext.Path => "Path",
+            EddyContext.Script => "Script",
+            _ => throw new ArgumentOutOfRangeException(nameof(context), context, null)
+        };
+    }
+}

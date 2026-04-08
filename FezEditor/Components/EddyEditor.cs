@@ -204,7 +204,9 @@ public class EddyEditor : EditorComponent, IEddyEditor
         {
             const ImGuiWindowFlags flags = ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoResize |
                                            ImGuiWindowFlags.NoCollapse;
-            if (ImGui.Begin("Properties", ref _showProperties, flags))
+
+            var context = SelectedContext.GetLabel();
+            if (ImGui.Begin($"{context} Properties##Properties", ref _showProperties, flags))
             {
                 foreach (var ctx in _contexts)
                 {
