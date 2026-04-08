@@ -38,6 +38,13 @@ internal class PathContext : BaseContext
         #endregion
     }
 
+    protected override void Act()
+    {
+        Eddy.AllowedTools.Add(EddyTool.Select);
+        Eddy.AllowedTools.Add(EddyTool.Translate);
+        Eddy.AllowedTools.Add(EddyTool.Paint);
+    }
+
     protected override bool IsContextAllowed(EddyContext context)
     {
         return context == EddyContext.Path;

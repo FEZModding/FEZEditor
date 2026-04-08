@@ -32,6 +32,8 @@ public class EddyEditor : EditorComponent, IEddyEditor
 
     public EddyTool Tool { get; set; } = EddyTool.Select;
 
+    public HashSet<EddyTool> AllowedTools { get; } = new(Enum.GetValues<EddyTool>());
+
     public EddyContext HoveredContext { get; set; } = EddyContext.Default;
 
     public EddyContext SelectedContext { get; set; } = EddyContext.Default;
@@ -73,6 +75,7 @@ public class EddyEditor : EditorComponent, IEddyEditor
         Cursor.ClearHover();
         Cursor.ClearSelection();
         StatusService.ClearHints();
+        AllowedTools.Clear();
         HoveredContext = EddyContext.Default;
 
         AssetBrowser.Update();
@@ -81,11 +84,6 @@ public class EddyEditor : EditorComponent, IEddyEditor
         foreach (var context in _contexts)
         {
             context.Update();
-        }
-
-        if (SelectedContext == EddyContext.Default && Tool == EddyTool.Paint)
-        {
-            Tool = EddyTool.Select;
         }
 
         Scene.Update(gameTime);
@@ -127,6 +125,7 @@ public class EddyEditor : EditorComponent, IEddyEditor
             {
                 ctx.Revisualize();
             }
+
             defaultCtx.PostRevisualize();
         }
         {
@@ -281,6 +280,30 @@ public class EddyEditor : EditorComponent, IEddyEditor
         }
 
         ImGui.SameLine();
+        if (ImGui.Button($"{Lucide.SquareDashed}##PlaceVolume"))
+        {
+            Tool = EddyTool.Paint;
+            SelectedContext = EddyContext.Volume;
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip("Place Volume");
+        }
+
+        ImGui.SameLine();
+        if (ImGui.Button($"{Lucide.Route}##PlacePath"))
+        {
+            Tool = EddyTool.Paint;
+            SelectedContext = EddyContext.Path;
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip("Place Path");
+        }
+
+        ImGui.SameLine();
         ImGui.TextDisabled("|");
 
         ImGui.SameLine();
@@ -344,7 +367,7 @@ public class EddyEditor : EditorComponent, IEddyEditor
 
     private void DrawToolButton(string icon, EddyTool tool)
     {
-        ImGui.BeginDisabled(Tool == tool);
+        ImGui.BeginDisabled(Tool == tool || !AllowedTools.Contains(tool));
         if (ImGui.Button($"{icon}##{tool}"))
         {
             Tool = tool;

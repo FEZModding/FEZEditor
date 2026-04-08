@@ -62,6 +62,11 @@ internal class NpcContext : BaseContext
 
     protected override void Act()
     {
+        Eddy.AllowedTools.Add(EddyTool.Select);
+        Eddy.AllowedTools.Add(EddyTool.Translate);
+        Eddy.AllowedTools.Add(EddyTool.Paint);
+        Eddy.AllowedTools.Add(EddyTool.Pick);
+
         if (ImGui.IsKeyPressed(ImGuiKey.Escape))
         {
             _selectedIds.Clear();

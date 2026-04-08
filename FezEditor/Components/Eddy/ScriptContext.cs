@@ -9,6 +9,11 @@ internal class ScriptContext : BaseContext
     {
     }
 
+    protected override void Act()
+    {
+        Eddy.AllowedTools.Add(EddyTool.Select);
+    }
+
     protected override bool IsContextAllowed(EddyContext context)
     {
         return context == EddyContext.Script;

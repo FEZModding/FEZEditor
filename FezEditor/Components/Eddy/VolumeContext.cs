@@ -6,6 +6,7 @@ using FEZRepacker.Core.Definitions.Game.Common;
 using FEZRepacker.Core.Definitions.Game.Level;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace FezEditor.Components.Eddy;
 
@@ -66,6 +67,11 @@ internal class VolumeContext : BaseContext
 
     protected override void Act()
     {
+        Eddy.AllowedTools.Add(EddyTool.Select);
+        Eddy.AllowedTools.Add(EddyTool.Translate);
+        Eddy.AllowedTools.Add(EddyTool.Scale);
+        Eddy.AllowedTools.Add(EddyTool.Paint);
+
         if (ImGui.IsKeyPressed(ImGuiKey.Escape))
         {
             _selectedIds.Clear();
@@ -78,8 +84,8 @@ internal class VolumeContext : BaseContext
             case EddyTool.Select: UpdateSelect(); break;
             case EddyTool.Translate: UpdateTranslate(); break;
             case EddyTool.Scale: UpdateScale(); break;
+            case EddyTool.Paint: UpdatePaint(); break;
             case EddyTool.Rotate:
-            case EddyTool.Paint:
             case EddyTool.Pick: break;
             default: throw new ArgumentOutOfRangeException();
         }
@@ -268,6 +274,66 @@ internal class VolumeContext : BaseContext
             _scaleScope?.Dispose();
             _scaleScope = null;
         }
+    }
+
+    private void UpdatePaint()
+    {
+        StatusService.AddHints(
+            ("LMB", "Place Volume")
+        );
+
+        TrileEmplacement? hoveredEmp = null;
+        FaceOrientation? hoveredFace = null;
+
+        if (Eddy.Hit.HasValue && Eddy.Hit.Value.Actor.TryGetComponent<TrilesMesh>(out var mesh) && mesh != null)
+        {
+            var index = Eddy.Hit.Value.Index;
+            hoveredEmp = mesh.GetEmplacement(index);
+
+            if (Level.Triles.TryGetValue(hoveredEmp, out var hoveredInstance))
+            {
+                var box = mesh.GetBounds().ElementAt(index);
+                hoveredFace = Mathz.DetermineFace(box, Eddy.Ray, Eddy.Hit.Value.Distance);
+
+                var trileCenter = hoveredInstance.Position.ToXna() + new Vector3(0.5f);
+                var origin = trileCenter + hoveredFace.Value.AsVector() * (0.5f + CursorMesh.OverlayOffset);
+                var surface = MeshSurface.CreateFaceQuad(Vector3.One, origin, hoveredFace.Value);
+                Eddy.Cursor.SetHoverSurfaces([(surface, PrimitiveType.TriangleList)], HoverColor);
+            }
+        }
+
+        if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && hoveredEmp != null && hoveredFace != null)
+        {
+            using (Eddy.History.BeginScope("Place Volume"))
+            {
+                var id = NextAvailableId();
+                var position = new Vector3(hoveredEmp.X, hoveredEmp.Y, hoveredEmp.Z) + hoveredFace.Value.AsVector();
+                Level.Volumes[id] = new Volume
+                {
+                    From = position.ToRepacker(),
+                    To = (position + Vector3.One).ToRepacker(),
+                    Orientations = [],
+                    ActorSettings = new VolumeActorSettings()
+                };
+            }
+        }
+    }
+
+    public override void DrawOverlay()
+    {
+        if (Eddy.Tool != EddyTool.Paint || !Eddy.IsViewportHovered || Eddy.SelectedContext != EddyContext.Volume)
+        {
+            return;
+        }
+
+        var mousePos = ImGui.GetMousePos();
+        var drawPos = mousePos + new NVector2(12f, 12f);
+
+        const string text = $"{Lucide.SquareDashed} Volume";
+        var padding = new NVector2(4f, 2f);
+        var dl = ImGui.GetForegroundDrawList(ImGui.GetMainViewport());
+        dl.AddRectFilled(drawPos - padding, drawPos + ImGui.CalcTextSize(text) + padding, ImGui.GetColorU32(ImGuiCol.PopupBg));
+        dl.AddText(drawPos, ImGui.GetColorU32(ImGuiCol.Text), text);
     }
 
     public override void DrawProperties()

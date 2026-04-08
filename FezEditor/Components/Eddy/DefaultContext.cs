@@ -144,6 +144,11 @@ internal class DefaultContext : BaseContext
         #endregion
     }
 
+    protected override void Act()
+    {
+        Eddy.AllowedTools.UnionWith(Enum.GetValues<EddyTool>());
+    }
+
     protected override bool IsContextAllowed(EddyContext context)
     {
         return context == EddyContext.Default;

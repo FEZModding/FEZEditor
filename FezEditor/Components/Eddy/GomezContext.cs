@@ -52,6 +52,10 @@ internal class GomezContext : BaseContext
 
     protected override void Act()
     {
+        Eddy.AllowedTools.Add(EddyTool.Select);
+        Eddy.AllowedTools.Add(EddyTool.Translate);
+        Eddy.AllowedTools.Add(EddyTool.Rotate);
+
         if (ImGui.IsKeyPressed(ImGuiKey.Escape))
         {
             _selected = false;

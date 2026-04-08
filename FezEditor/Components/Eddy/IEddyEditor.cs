@@ -28,6 +28,8 @@ internal interface IEddyEditor
 
     EddyTool Tool { get; set; }
 
+    HashSet<EddyTool> AllowedTools { get; }
+
     EddyContext HoveredContext { get; set; }
 
     EddyContext SelectedContext { get; set; }

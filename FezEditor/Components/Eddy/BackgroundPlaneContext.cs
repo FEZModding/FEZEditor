@@ -64,6 +64,8 @@ internal class BackgroundPlaneContext : BaseContext
 
     protected override void Act()
     {
+        Eddy.AllowedTools.UnionWith(Enum.GetValues<EddyTool>());
+
         if (ImGui.IsKeyPressed(ImGuiKey.Escape))
         {
             _selectedIds.Clear();
