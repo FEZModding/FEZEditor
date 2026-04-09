@@ -88,6 +88,7 @@ internal sealed class TrileContext : BaseContext
         }
 
         if (_hoveredCursor.Emplacement == null && !Eddy.Gizmo.IsActive && Eddy.Tool != EddyTool.Paint &&
+            Eddy.SelectedContext == EddyContext.Trile &&
             ImGui.IsMouseClicked(ImGuiMouseButton.Left) && Eddy.IsViewportHovered)
         {
             _selectedCursor.Reset();

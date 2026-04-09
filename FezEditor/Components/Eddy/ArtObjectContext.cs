@@ -55,6 +55,7 @@ internal class ArtObjectContext : BaseContext
         }
 
         if (!_hoveredId.HasValue && !Eddy.Gizmo.IsActive && Eddy.Tool != EddyTool.Paint &&
+            Eddy.SelectedContext == EddyContext.ArtObject &&
             ImGui.IsMouseClicked(ImGuiMouseButton.Left) && Eddy.IsViewportHovered)
         {
             _selectedIds.Clear();

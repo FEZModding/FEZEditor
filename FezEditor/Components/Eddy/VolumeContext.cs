@@ -63,6 +63,7 @@ internal class VolumeContext : BaseContext
         }
 
         if (!_hoveredId.HasValue && !Eddy.Gizmo.IsActive && Eddy.Tool != EddyTool.Paint &&
+            Eddy.SelectedContext == EddyContext.Volume &&
             ImGui.IsMouseClicked(ImGuiMouseButton.Left) && Eddy.IsViewportHovered)
         {
             _selectedIds.Clear();

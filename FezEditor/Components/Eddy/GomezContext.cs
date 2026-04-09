@@ -48,6 +48,7 @@ internal class GomezContext : BaseContext
         }
 
         if (!_hovered && !Eddy.Gizmo.IsActive && Eddy.Tool != EddyTool.Paint &&
+            Eddy.SelectedContext == EddyContext.Gomez &&
             ImGui.IsMouseClicked(ImGuiMouseButton.Left) && Eddy.IsViewportHovered)
         {
             _selected = false;

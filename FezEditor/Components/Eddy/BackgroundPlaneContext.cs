@@ -54,6 +54,7 @@ internal class BackgroundPlaneContext : BaseContext
         }
 
         if (!_hoveredId.HasValue && !Eddy.Gizmo.IsActive && Eddy.Tool != EddyTool.Paint &&
+            Eddy.SelectedContext == EddyContext.BackgroundPlane &&
             ImGui.IsMouseClicked(ImGuiMouseButton.Left) && Eddy.IsViewportHovered)
         {
             _selectedIds.Clear();
