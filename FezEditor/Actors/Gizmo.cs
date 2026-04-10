@@ -336,7 +336,7 @@ public class Gizmo : ActorComponent
                 if (HitTestSphere(ray, tipPos, PickRadius * gizmoScale))
                 {
                     _activeHandle = Handle.Face;
-                    _dragPlaneNormal = Vector3.Normalize(Camera.Position - origin);
+                    _dragPlaneNormal = GetCameraDirection(origin);
                     _dragPlaneOrigin = tipPos;
                     _dragStartHitPoint = RayPlaneIntersect(ray, _dragPlaneOrigin, _dragPlaneNormal) ?? tipPos;
                     DragStarted = true;
@@ -610,13 +610,19 @@ public class Gizmo : ActorComponent
             Handle.ScaleX => GetCameraFacingPlaneNormal(origin, Vector3.UnitX),
             Handle.ScaleY => GetCameraFacingPlaneNormal(origin, Vector3.UnitY),
             Handle.ScaleZ => GetCameraFacingPlaneNormal(origin, Vector3.UnitZ),
-            _ => Vector3.Normalize(Camera.Position - origin)
+            _ => GetCameraDirection(origin)
         };
+    }
+
+    private Vector3 GetCameraDirection(Vector3 origin)
+    {
+        var raw = Camera.Position - origin;
+        return raw.LengthSquared() > 0.001f ? Vector3.Normalize(raw) : Vector3.UnitY;
     }
 
     private Vector3 GetCameraFacingPlaneNormal(Vector3 origin, Vector3 axis)
     {
-        var camDir = Vector3.Normalize(Camera.Position - origin);
+        var camDir = GetCameraDirection(origin);
         var perp = camDir - Vector3.Dot(camDir, axis) * axis;
         if (perp.LengthSquared() < 0.001f)
         {
