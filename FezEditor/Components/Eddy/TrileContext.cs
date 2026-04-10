@@ -191,6 +191,7 @@ internal sealed class TrileContext : BaseContext
     {
         StatusService.AddHints(
             ("LMB", "Select"),
+            ("Shift+LMB", "Add to Selection"),
             ("LMB Drag", "Select Multiple")
         );
 
@@ -350,8 +351,12 @@ internal sealed class TrileContext : BaseContext
 
             if (!wasDrag)
             {
-                _selectedCursor.Emplacements.Clear();
-                _selectedCursor.GroupId = null;
+                var shift = ImGui.GetIO().KeyShift;
+                if (!shift)
+                {
+                    _selectedCursor.Emplacements.Clear();
+                    _selectedCursor.GroupId = null;
+                }
 
                 if (_hoveredCursor.Emplacement != null)
                 {
@@ -359,12 +364,32 @@ internal sealed class TrileContext : BaseContext
                     if (_hoveredCursor.GroupId != null &&
                         _groupEmplacements.TryGetValue(_hoveredCursor.GroupId.Value, out var groupSet))
                     {
-                        _selectedCursor.Emplacements.UnionWith(groupSet);
-                        _selectedCursor.GroupId = _hoveredCursor.GroupId;
+                        if (shift && _selectedCursor.Emplacements.IsSupersetOf(groupSet))
+                        {
+                            _selectedCursor.Emplacements.ExceptWith(groupSet);
+                        }
+                        else
+                        {
+                            _selectedCursor.Emplacements.UnionWith(groupSet);
+                        }
+
+                        _selectedCursor.GroupId = _selectedCursor.Emplacements.Count > 0 ? _hoveredCursor.GroupId : null;
                     }
                     else
                     {
-                        _selectedCursor.Emplacements.Add(_hoveredCursor.Emplacement);
+                        if (shift && _selectedCursor.Emplacements.Contains(_hoveredCursor.Emplacement))
+                        {
+                            _selectedCursor.Emplacements.Remove(_hoveredCursor.Emplacement);
+                        }
+                        else
+                        {
+                            _selectedCursor.Emplacements.Add(_hoveredCursor.Emplacement);
+                        }
+
+                        if (shift)
+                        {
+                            _selectedCursor.GroupId = null;
+                        }
                     }
                 }
             }
