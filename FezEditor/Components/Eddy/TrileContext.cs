@@ -671,7 +671,8 @@ internal sealed class TrileContext : BaseContext
     private void UpdatePaint()
     {
         StatusService.AddHints(
-            ("LMB", "Paint")
+            ("LMB", "Paint"),
+            ("Shift+LMB", "Append")
         );
 
         if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
@@ -693,44 +694,71 @@ internal sealed class TrileContext : BaseContext
                 ? _set!.FindByName(entry).Id
                 : InvalidId;
 
-            var targetEmplacements = new List<TrileEmplacement>();
-            if (_selectedCursor.Emplacements.Count > 0)
-            {
-                targetEmplacements.AddRange(_selectedCursor.Emplacements);
-            }
-            else if (_hoveredCursor.Emplacement != null)
-            {
-                targetEmplacements.Add(_hoveredCursor.Emplacement);
-            }
-
             if (trileId != InvalidId)
             {
-                foreach (var emp in targetEmplacements)
+                if (ImGui.GetIO().KeyShift && _hoveredCursor.Emplacement != null && _hoveredCursor.Face.HasValue)
                 {
-                    if (!Level.Triles.TryGetValue(emp, out var instance))
-                    {
-                        continue;
-                    }
+                    var faceNormal = _hoveredCursor.Face.Value.AsVector();
+                    var hovered = _hoveredCursor.Emplacement;
+                    var emp = new TrileEmplacement(
+                        hovered.X + (int)faceNormal.X,
+                        hovered.Y + (int)faceNormal.Y,
+                        hovered.Z + (int)faceNormal.Z);
 
-                    var oldTrileId = instance.TrileId;
-                    if (oldTrileId == trileId)
+                    if (!Level.Triles.ContainsKey(emp))
                     {
-                        continue;
-                    }
+                        var instance = new TrileInstance
+                        {
+                            TrileId = trileId,
+                            PhiLight = 0,
+                            Position = new Vector3(emp.X, emp.Y, emp.Z).ToRepacker()
+                        };
 
-                    if (_trileActors.TryGetValue(oldTrileId, out var oldActor))
-                    {
-                        var oldMesh = oldActor.GetComponent<TrilesMesh>();
-                        oldMesh.RemoveInstance(emp);
-                        CleanupEmptyActor(oldTrileId, oldMesh);
+                        Level.Triles[emp] = instance;
+                        EnsureTrileActor(trileId).GetComponent<TrilesMesh>()
+                            .SetInstanceData(emp, instance.Position.ToXna(), instance.PhiLight);
+                        UpdateCollisionMesh();
                     }
-
-                    instance.TrileId = trileId;
-                    EnsureTrileActor(trileId).GetComponent<TrilesMesh>()
-                        .SetInstanceData(emp, instance.Position.ToXna(), instance.PhiLight);
                 }
+                else
+                {
+                    var targetEmplacements = new List<TrileEmplacement>();
+                    if (_selectedCursor.Emplacements.Count > 0)
+                    {
+                        targetEmplacements.AddRange(_selectedCursor.Emplacements);
+                    }
+                    else if (_hoveredCursor.Emplacement != null)
+                    {
+                        targetEmplacements.Add(_hoveredCursor.Emplacement);
+                    }
 
-                UpdateCollisionMesh();
+                    foreach (var emp in targetEmplacements)
+                    {
+                        if (!Level.Triles.TryGetValue(emp, out var instance))
+                        {
+                            continue;
+                        }
+
+                        var oldTrileId = instance.TrileId;
+                        if (oldTrileId == trileId)
+                        {
+                            continue;
+                        }
+
+                        if (_trileActors.TryGetValue(oldTrileId, out var oldActor))
+                        {
+                            var oldMesh = oldActor.GetComponent<TrilesMesh>();
+                            oldMesh.RemoveInstance(emp);
+                            CleanupEmptyActor(oldTrileId, oldMesh);
+                        }
+
+                        instance.TrileId = trileId;
+                        EnsureTrileActor(trileId).GetComponent<TrilesMesh>()
+                            .SetInstanceData(emp, instance.Position.ToXna(), instance.PhiLight);
+                    }
+
+                    UpdateCollisionMesh();
+                }
             }
         }
     }
