@@ -1,4 +1,6 @@
-﻿using FezEditor.Actors;
+﻿using System.Runtime.InteropServices;
+using FezEditor.Actors;
+using FezEditor.Components.Chris;
 using FezEditor.Structure;
 using FezEditor.Tools;
 using FEZRepacker.Core.Definitions.Game.ArtObject;
@@ -10,13 +12,13 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace FezEditor.Components;
 
-public partial class ChrisEditor : EditorComponent
+public class ChrisEditor : EditorComponent
 {
     private static readonly TimeSpan EditStep = TimeSpan.FromMilliseconds(100);
 
-    public override object Asset => _subject.GetAsset(_obj);
+    public override object Asset => _context.GetAsset(_obj);
 
-    private readonly ISubject _subject;
+    private readonly IContext _context;
 
     private readonly ConfirmWindow _confirm;
 
@@ -54,19 +56,19 @@ public partial class ChrisEditor : EditorComponent
 
     private TimeSpan _lastEditTime;
 
-    public ChrisEditor(Game game, string title, ArtObject ao) : this(game, title, new ArtObjectSubject(ao))
+    public ChrisEditor(Game game, string title, ArtObject ao) : this(game, title, new ArtObjectContext(ao))
     {
         History.Track(ao);
     }
 
-    public ChrisEditor(Game game, string title, TrileSet set) : this(game, title, new TrileSetSubject(set, game))
+    public ChrisEditor(Game game, string title, TrileSet set) : this(game, title, new TrileSetContext(set, game))
     {
         History.Track(set);
     }
 
-    private ChrisEditor(Game game, string title, ISubject subject) : base(game, title)
+    private ChrisEditor(Game game, string title, IContext context) : base(game, title)
     {
-        _subject = subject;
+        _context = context;
         History.StateChanged += () => RevisualizeSubject(false);
         Game.AddComponent(_confirm = new ConfirmWindow(game));
     }
@@ -120,7 +122,7 @@ public partial class ChrisEditor : EditorComponent
 
         DrawToolbar();
 
-        if (_subject is TrileSetSubject subject)
+        if (_context is TrileSetContext subject)
         {
             var width = ImGui.GetContentRegionAvail().X;
             if (ImGuiX.BeginChild("##SceneViewport", new Vector2(width - 300, 0)))
@@ -138,7 +140,7 @@ public partial class ChrisEditor : EditorComponent
                 ImGui.EndChild();
             }
         }
-        else if (_subject is ArtObjectSubject)
+        else if (_context is ArtObjectContext)
         {
             DrawSceneViewport();
             EditTrixelObject();
@@ -209,7 +211,7 @@ public partial class ChrisEditor : EditorComponent
 
         ImGui.EndDisabled();
 
-        if (_subject is TrileSetSubject)
+        if (_context is TrileSetContext)
         {
             var collision = _meshActor.GetComponent<TrileCollisionMesh>();
             var icon = collision.Visible ? Icons.EyeClosed : Icons.Eye;
@@ -223,15 +225,15 @@ public partial class ChrisEditor : EditorComponent
         ImGui.Separator();
     }
 
-    private void DrawTrileList(TrileSetSubject setSubject)
+    private void DrawTrileList(TrileSetContext setContext)
     {
-        var name = setSubject.Name;
+        var name = setContext.Name;
         ImGui.SetNextItemWidth(150f);
         if (ImGui.InputText("Trile Set Name", ref name, 255))
         {
             using (History.BeginScope("Rename Trile Set"))
             {
-                setSubject.Name = name;
+                setContext.Name = name;
             }
         }
 
@@ -240,11 +242,11 @@ public partial class ChrisEditor : EditorComponent
         {
             using (History.BeginScope("Add Trile"))
             {
-                var newId = setSubject.AddTrile();
+                var newId = setContext.AddTrile();
                 _selectedTriles.Clear();
                 _selectedTriles.Add(newId);
                 _currentTrile = newId;
-                setSubject.Id = newId;
+                setContext.Id = newId;
                 RevisualizeSubject();
             }
         }
@@ -255,11 +257,11 @@ public partial class ChrisEditor : EditorComponent
         {
             using (History.BeginScope("Remove Trile"))
             {
-                var nextId = setSubject.RemoveTriles(_selectedTriles);
+                var nextId = setContext.RemoveTriles(_selectedTriles);
                 _selectedTriles.Clear();
                 _selectedTriles.Add(nextId);
                 _currentTrile = nextId;
-                setSubject.Id = nextId;
+                setContext.Id = nextId;
                 RevisualizeSubject();
             }
         }
@@ -272,11 +274,11 @@ public partial class ChrisEditor : EditorComponent
         {
             using (History.BeginScope("Copy Triles"))
             {
-                var newId = setSubject.CopyTriles(_selectedTriles);
+                var newId = setContext.CopyTriles(_selectedTriles);
                 _selectedTriles.Clear();
                 _selectedTriles.Add(newId);
                 _currentTrile = newId;
-                setSubject.Id = newId;
+                setContext.Id = newId;
                 RevisualizeSubject();
             }
         }
@@ -308,7 +310,7 @@ public partial class ChrisEditor : EditorComponent
             {
                 var path = files[0];
                 var targetSet = (TrileSet)ResourceService.Load(path);
-                setSubject.AppendTriles(_selectedTriles, targetSet);
+                setContext.AppendTriles(_selectedTriles, targetSet);
                 ResourceService.Save(path, targetSet);
             }, options);
         }
@@ -331,7 +333,7 @@ public partial class ChrisEditor : EditorComponent
 
         if (ImGuiX.BeginChild("##TrileSetList", Vector2.Zero))
         {
-            foreach (var entry in setSubject.EnumerateTriles(_filterTriles))
+            foreach (var entry in setContext.EnumerateTriles(_filterTriles))
             {
                 var toggled = _selectedTriles.Contains(entry.Id);
                 if (ImGui.Checkbox($"##chk_{entry.Id}", ref toggled))
@@ -355,7 +357,7 @@ public partial class ChrisEditor : EditorComponent
                 if (ImGuiX.SelectableWithImage(entry.Texture, size, entry.Uv0, entry.Uv1, text, sel))
                 {
                     _currentTrile = entry.Id;
-                    setSubject.Id = _currentTrile;
+                    setContext.Id = _currentTrile;
                     RevisualizeSubject();
                 }
             }
@@ -504,7 +506,7 @@ public partial class ChrisEditor : EditorComponent
                                            ImGuiWindowFlags.NoCollapse;
             if (ImGui.Begin($"Properties##{Title}", ref _showProperties, flags))
             {
-                if (_subject.DrawProperties(History))
+                if (_context.DrawProperties(History))
                 {
                     RevisualizeSubject();
                 }
@@ -526,7 +528,7 @@ public partial class ChrisEditor : EditorComponent
             {
                 if (!ResourceService.IsReadonly)
                 {
-                    var exportPath = ResourceService.GetFullPath(_subject.TextureExportKey);
+                    var exportPath = ResourceService.GetFullPath(_context.TextureExportKey);
                     if (ImGui.Button("Edit Externally"))
                     {
                         _texture = new TempTextureTracker(Game, texture, exportPath);
@@ -587,7 +589,7 @@ public partial class ChrisEditor : EditorComponent
         Game.RemoveComponent(_confirm);
         _texture?.Dispose();
         _scene.Dispose();
-        _subject.Dispose();
+        _context.Dispose();
         base.Dispose();
     }
 
@@ -596,15 +598,15 @@ public partial class ChrisEditor : EditorComponent
         if (materialize)
         {
             History.Untrack(_obj);
-            _obj = _subject.Materialize();
+            _obj = _context.Materialize();
             History.Track(_obj);
         }
 
         var mesh = _meshActor.GetComponent<TrixelsMesh>();
-        mesh.Texture = _subject.LoadTexture();
+        mesh.Texture = _context.LoadTexture();
         mesh.Visualize(_obj);
 
-        if (_subject is TrileSetSubject subject)
+        if (_context is TrileSetContext subject)
         {
             var collision = _meshActor.GetComponent<TrileCollisionMesh>();
             collision.ClearInstanceData();
@@ -617,7 +619,7 @@ public partial class ChrisEditor : EditorComponent
 
     private void OnTextureReload(Texture2D newTexture)
     {
-        _subject.UpdateTexture(newTexture);
+        _context.UpdateTexture(newTexture);
 
         var mesh = _meshActor.GetComponent<TrixelsMesh>();
         mesh.Texture = newTexture;
@@ -627,7 +629,7 @@ public partial class ChrisEditor : EditorComponent
         _confirm.Text = $"The texture has been changed externally. Save it to the bundle '{Title}'?";
         _confirm.ConfirmButtonText = "Yes";
         _confirm.CancelButtonText = "No";
-        _confirm.Confirmed = () => ResourceService.Save(Title, _subject.GetAsset(_obj));
+        _confirm.Confirmed = () => ResourceService.Save(Title, _context.GetAsset(_obj));
         _confirm.Canceled = null;
     }
 
@@ -773,25 +775,83 @@ public partial class ChrisEditor : EditorComponent
         }
     }
 
+    public static object CreateAo(string name)
+    {
+        const int trileWidth = (int)(1 / Mathz.TrixelSize);
+        const int trileHeight = (int)(1 / Mathz.TrixelSize);
+
+        var ao = new ArtObject
+        {
+            Name = name,
+            Size = new RVector3(1, 1, 1),
+            Cubemap = new RTexture2D
+            {
+                Width = trileWidth,
+                Height = trileHeight
+            }
+        };
+
+        var colors = new Color[trileWidth * trileHeight];
+        Array.Fill(colors, Color.White);
+        ao.Cubemap.TextureData = MemoryMarshal.AsBytes(colors.AsSpan()).ToArray();
+
+        var obj = new TrixelObject(Vector3.One);
+        (ao.Geometry.Vertices, ao.Geometry.Indices) = TrixelMaterializer.Dematerialize(obj);
+
+        return ao;
+    }
+
+    public static object CreateTs(string name)
+    {
+        var colors = new Color[TrileSetContext.AtlasWidth * TrileSetContext.AtlasStartingHeight];
+        Array.Fill(colors, Color.Black);
+        for (var row = 0; row < TrileSetContext.AtlasTrileHeight; row++)
+        {
+            for (var col = 0; col < TrileSetContext.AtlasTrileWidth; col++)
+            {
+                colors[(row * TrileSetContext.AtlasWidth) + col] = Color.White;
+            }
+        }
+
+        var trileSet = new TrileSet
+        {
+            Name = name,
+            Triles = new Dictionary<int, Trile>(),
+            TextureAtlas = new RTexture2D
+            {
+                Width = TrileSetContext.AtlasWidth,
+                Height = TrileSetContext.AtlasStartingHeight,
+                TextureData = MemoryMarshal.AsBytes(colors.AsSpan()).ToArray()
+            }
+        };
+
+        var trile = new Trile
+        {
+            Name = "Trile",
+            CubemapPath = name,
+            AtlasOffset = new RVector2(0, 0),
+            Size = new RVector3(1, 1, 1),
+            Faces = new Dictionary<FaceOrientation, CollisionType>
+            {
+                [FaceOrientation.Front] = CollisionType.None,
+                [FaceOrientation.Right] = CollisionType.None,
+                [FaceOrientation.Back] = CollisionType.None,
+                [FaceOrientation.Left] = CollisionType.None
+            }
+        };
+
+        var obj = new TrixelObject(Vector3.One);
+        (trile.Geometry.Vertices, trile.Geometry.Indices) = TrixelMaterializer.Dematerialize(obj);
+        TrileSetContext.ApplyAtlasOffsets(trileSet);
+        trileSet.Triles.Add(0, trile);
+
+        return trileSet;
+    }
+
     private enum EditMode
     {
         Select,
         Remove,
         Add
-    }
-
-    private interface ISubject : IDisposable
-    {
-        string TextureExportKey { get; }
-
-        TrixelObject Materialize();
-
-        object GetAsset(TrixelObject obj);
-
-        Texture2D LoadTexture();
-
-        void UpdateTexture(Texture2D texture);
-
-        bool DrawProperties(History history);
     }
 }
