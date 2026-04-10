@@ -318,8 +318,6 @@ public class AssetBrowser : IDisposable
 
     private void ProcessQueue()
     {
-        #region Process Queue
-
         var generated = 0;
         while (_pendingQueue.Count > 0)
         {
@@ -341,7 +339,7 @@ public class AssetBrowser : IDisposable
                 // Cache miss - limit expensive generation to avoid stalling
                 if (generated >= MaxThumbnailsPerFrame)
                 {
-                    _pendingQueue.Enqueue(entry);
+                    AddToPending(entry);
                     break;
                 }
 
@@ -449,8 +447,17 @@ public class AssetBrowser : IDisposable
                 Logger.Warning(e, "Failed to generate thumbnail for {0}", entry.Path);
             }
         }
+    }
 
-        #endregion
+    private void AddToPending(Entry entry)
+    {
+        var extension = _resources.GetExtension(entry.Path);
+        if (entry.Path.StartsWith("Art Object", StringComparison.OrdinalIgnoreCase) && extension.EndsWith(".png"))
+        {
+            return;
+        }
+
+        _pendingQueue.Enqueue(entry);
     }
 
     public void Dispose()
@@ -532,7 +539,7 @@ public class AssetBrowser : IDisposable
             if (SharedThumbnails.TryAdd(entry.CachePath, _placeholder) ||
                 SharedThumbnails[entry.CachePath] == _placeholder)
             {
-                _pendingQueue.Enqueue(entry);
+                AddToPending(entry);
             }
         }
 
