@@ -50,6 +50,8 @@ public class AppStorageService : IDisposable
         {
             _data.RecentProviders.RemoveRange(MaxRecentPaths, _data.RecentProviders.Count - MaxRecentPaths);
         }
+
+        Save();
     }
 
     public void AddRecentFile(string provider, string path)
@@ -67,6 +69,8 @@ public class AppStorageService : IDisposable
         {
             list.RemoveRange(MaxRecentPaths, list.Count - MaxRecentPaths);
         }
+
+        Save();
     }
 
     public void PruneRecentFiles(string provider, Func<string, bool> exists)
@@ -74,12 +78,14 @@ public class AppStorageService : IDisposable
         if (_data.RecentFiles.TryGetValue(provider, out var list))
         {
             list.RemoveAll(p => !exists(p));
+            Save();
         }
     }
 
     public void ClearRecentPaths()
     {
         _data.RecentProviders.Clear();
+        Save();
     }
 
     public void SaveWindowState()
@@ -142,7 +148,7 @@ public class AppStorageService : IDisposable
         return memory;
     }
 
-    public void Save()
+    private void Save()
     {
         try
         {

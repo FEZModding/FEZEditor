@@ -92,7 +92,6 @@ public class WelcomeComponent : EditorComponent
                     if (ImGuiX.Button($"{Icons.Trash} Clear recent files", new Vector2(-1, 0)))
                     {
                         _appStorageService.ClearRecentPaths();
-                        _appStorageService.Save();
                     }
                 }
             }
@@ -178,7 +177,6 @@ public class WelcomeComponent : EditorComponent
         if (!string.IsNullOrEmpty(pakPath))
         {
             _appStorageService.AddRecentProvider(pakPath, "File");
-            _appStorageService.Save(); // persist immediately in case of crash
             _resourceService.OpenProvider(new FileInfo(pakPath));
             _editorService.CloseEditor(this);
         }
@@ -190,7 +188,6 @@ public class WelcomeComponent : EditorComponent
         if (!string.IsNullOrEmpty(dirPath))
         {
             _appStorageService.AddRecentProvider(dirPath, "Directory");
-            _appStorageService.Save(); // ditto
             _resourceService.OpenProvider(new DirectoryInfo(dirPath));
             _editorService.CloseEditor(this);
         }
