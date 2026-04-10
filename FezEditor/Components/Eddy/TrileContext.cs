@@ -299,6 +299,7 @@ internal sealed class TrileContext : BaseContext
         {
             _select.RectOrigin = _hoveredCursor.Emplacement;
             _select.WasDrag = false;
+            _select.PressedOnViewport = Eddy.IsViewportHovered;
         }
 
         if (ImGui.IsMouseDragging(ImGuiMouseButton.Left) && _select.RectOrigin != null &&
@@ -339,12 +340,13 @@ internal sealed class TrileContext : BaseContext
             _select.WasDrag = true;
         }
 
-        if (ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+        if (ImGui.IsMouseReleased(ImGuiMouseButton.Left) && _select.PressedOnViewport)
         {
             var wasDrag = _select.WasDrag;
             _select.SelectionAnchor = _select.RectOrigin;
             _select.RectOrigin = null;
             _select.WasDrag = false;
+            _select.PressedOnViewport = false;
 
             if (!wasDrag)
             {
@@ -1506,6 +1508,7 @@ internal sealed class TrileContext : BaseContext
         public TrileEmplacement? RectOrigin;
         public TrileEmplacement? SelectionAnchor;
         public bool WasDrag;
+        public bool PressedOnViewport;
         public readonly List<ClipboardEntry> Clipboard = new();
     }
 
