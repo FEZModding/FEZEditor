@@ -116,13 +116,6 @@ public class FileBrowser : DrawableGameComponent
 
     private void DrawToolbar()
     {
-        ImGuiX.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(4, 4));
-        {
-            ImGui.TextDisabled(_resourceService.GetFullPath(string.Empty));
-            ImGui.Separator();
-        }
-        ImGui.PopStyleVar();
-
         ImGuiX.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(8, 4));
         {
             ImGui.BeginDisabled(_historyIndex <= 0);
