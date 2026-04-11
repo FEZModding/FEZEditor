@@ -117,7 +117,7 @@ public class AssetBrowser : IDisposable
     public Texture2D? GetThumbnail(AssetType type, string name)
     {
         var entries = _entries.GetValueOrDefault(type) ?? [];
-        var entry = entries.FirstOrDefault(e => e.Name == name);
+        var entry = entries.FirstOrDefault(e => string.Equals(e.Name, name, StringComparison.OrdinalIgnoreCase));
         if (entry == default)
         {
             return null;
