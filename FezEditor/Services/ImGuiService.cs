@@ -6,6 +6,7 @@ using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using SDL3;
 using Serilog;
 
 namespace FezEditor.Services;
@@ -48,6 +49,8 @@ public partial class ImGuiService : IDisposable
 
     private bool _gameWindowFocused = true;
 
+    private readonly float _displayScale;
+
     public unsafe ImGuiService(Game game)
     {
         _game = game;
@@ -71,10 +74,16 @@ public partial class ImGuiService : IDisposable
             _game.Activated += (_, _) => _gameWindowFocused = true;
         }
 
+        // Setup HiDPI support for fonts
+        {
+            _displayScale = GetDisplayScale(_game.Window.Handle);
+            Logger.Information("Display scale - {0:F2}", _displayScale);
+        }
+
         // Load fonts
         {
             var io = ImGui.GetIO();
-            io.Fonts.AddFontDefault();
+            LoadFont("Fonts/ProggyForever", io.Fonts.GetGlyphRangesDefault(), 13f); // default font
             LoadIconsFont("Fonts/Codicon", Icons.IconMin, Icons.IconMax);
             LoadIconsFont("Fonts/Lucide", Lucide.IconMin, Lucide.IconMax);
             ImGuiX.Fonts.NotoSans = LoadFont("Fonts/NotoSans", io.Fonts.GetGlyphRangesDefault());
@@ -361,7 +370,7 @@ public partial class ImGuiService : IDisposable
         var nativeData = CopyToNative(data);
         var config = ImGuiNative.ImFontConfig_ImFontConfig();
         config->MergeMode = 0;
-        return io.Fonts.AddFontFromMemoryTTF(nativeData, data.Length, size, config, glyphRanges);
+        return io.Fonts.AddFontFromMemoryTTF(nativeData, data.Length, size * _displayScale, config, glyphRanges);
     }
 
     /// <summary>
@@ -379,13 +388,13 @@ public partial class ImGuiService : IDisposable
         var nativeData = CopyToNative(data);
         var config = ImGuiNative.ImFontConfig_ImFontConfig();
         config->MergeMode = 1;
-        config->GlyphMinAdvanceX = size;
+        config->GlyphMinAdvanceX = size * _displayScale;
         config->GlyphOffset = new NVector2(0, size > 16 ? 7 : 5);
 
         var ranges = new ushort[] { min, max, 0 };
         fixed (ushort* rangesPtr = ranges)
         {
-            io.Fonts.AddFontFromMemoryTTF(nativeData, data.Length, size, config, (nint)rangesPtr);
+            io.Fonts.AddFontFromMemoryTTF(nativeData, data.Length, size * _displayScale, config, (nint)rangesPtr);
         }
 
         ImGuiNative.ImFontConfig_destroy(config);
@@ -396,6 +405,15 @@ public partial class ImGuiService : IDisposable
         var ptr = Marshal.AllocHGlobal(data.Length);
         Marshal.Copy(data, 0, ptr, data.Length);
         return ptr;
+    }
+
+    private static float GetDisplayScale(IntPtr windowHandle)
+    {
+#if __MACOS__
+        return SDL.SDL_GetWindowDisplayScale(windowHandle);
+#else
+        return SDL.SDL_GetDisplayContentScale(SDL.SDL_GetDisplayForWindow(windowHandle));
+#endif
     }
 
     private static class DrawVertDeclaration
