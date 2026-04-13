@@ -12,7 +12,9 @@ public class InputService
 {
     private static readonly ILogger Logger = Logging.Create<InputService>();
 
-    private Point MouseCenter => new(_game.Window.ClientBounds.Width / 2, _game.Window.ClientBounds.Height / 2);
+    private Point MouseCenter => new(
+        _game.GraphicsDevice.PresentationParameters.BackBufferWidth / 2,
+        _game.GraphicsDevice.PresentationParameters.BackBufferHeight / 2);
 
     private readonly Game _game;
 

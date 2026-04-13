@@ -92,7 +92,9 @@ public class AppStorageService : IDisposable
     {
         _data = _data with
         {
-            Window = new Settings.WindowSize(_game.Window.ClientBounds.Width, _game.Window.ClientBounds.Height)
+            Window = new Settings.WindowSize(
+                _game.GraphicsDevice.PresentationParameters.BackBufferWidth,
+                _game.GraphicsDevice.PresentationParameters.BackBufferHeight)
         };
     }
 

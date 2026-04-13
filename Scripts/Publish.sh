@@ -16,8 +16,25 @@ for RID in "${TARGETS[@]}"; do
 
     dotnet publish "$PROJECT" -c Release -r "$RID" -o "$PUBLISH_DIR"
 
-    ARCHIVE="$DIST/FEZEditor-$VERSION-$RID.tar.gz"
-    tar -czf "$ARCHIVE" --exclude='*.pdb' -C "$PUBLISH_DIR" .
+    if [[ "$RID" == osx-* ]]; then
+        APP_DIR="$PUBLISH_DIR/FEZEditor.app"
+        CONTENTS="$APP_DIR/Contents"
+        mkdir -p "$CONTENTS/MacOS"
+        mkdir -p "$CONTENTS/Resources"
+
+        # Move all published files into the bundle
+        find "$PUBLISH_DIR" -maxdepth 1 -mindepth 1 ! -name "FEZEditor.app" -exec mv {} "$CONTENTS/MacOS/" \;
+
+        # Copy Info.plist with version substituted
+        sed "s/\$(Version)/$VERSION/g" "$ROOT/FezEditor/Info.plist" > "$CONTENTS/Info.plist"
+
+        ARCHIVE="$DIST/FEZEditor-$VERSION-$RID.tar.gz"
+        tar -czf "$ARCHIVE" --exclude='*.pdb' -C "$PUBLISH_DIR" FEZEditor.app
+    else
+        ARCHIVE="$DIST/FEZEditor-$VERSION-$RID.tar.gz"
+        tar -czf "$ARCHIVE" --exclude='*.pdb' -C "$PUBLISH_DIR" .
+    fi
+
     echo "Created $ARCHIVE"
 done
 
