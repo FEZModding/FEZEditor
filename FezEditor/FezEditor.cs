@@ -112,8 +112,8 @@ public class FezEditor : Game
     protected override void Dispose(bool disposing)
     {
         _appStorage.SaveWindowState();
-        base.Dispose(disposing);
         this.RemoveServices();
+        base.Dispose(disposing);
     }
 
     private static string GetAssemblyVersion()
