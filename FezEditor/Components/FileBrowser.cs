@@ -503,51 +503,74 @@ public class FileBrowser : DrawableGameComponent
             Filters = [new FileDialog.Filter(assetType.Name, extension)]
         };
 
-        if (assetType == typeof(Level))
+        FileDialog.Show(FileDialog.Type.SaveFile, files =>
         {
-            var options2 = new FileDialog.Options
+            if (assetType == typeof(Level))
             {
-                Title = "Select Trile Set...",
-                Filters = [new FileDialog.Filter("Trile Set", "fezts.glb")]
-            };
+                ShowTrileSetSelectDialog(trileSetPath =>
+                {
+                    var trileSet = (TrileSet)_resourceService.Load(trileSetPath);
+                    var path = _resourceService.GetRelativePath(files[0]);
+                    var asset = EddyEditor.Create(defaultName, trileSet);
+                    _resourceService.Save(path, asset);
+                });
+                return;
+            }
 
-            FileDialog.Show(FileDialog.Type.OpenFile, files =>
+            if (assetType == typeof(MapTree))
             {
                 FileDialog.Show(FileDialog.Type.SaveFile, files2 =>
                 {
-                    var path = _resourceService.GetRelativePath(files[0].Replace(".fezts.glb", ""));
-                    var trileSet = (TrileSet)_resourceService.Load(path);
-
-                    var path2 = _resourceService.GetRelativePath(files2[0]);
-                    var asset = EddyEditor.Create(defaultName, trileSet);
-
-                    _resourceService.Save(path2, asset);
+                    var relativePath = _resourceService.GetRelativePath(files2[0]);
+                    var mapTree = new MapTree();
+                    var generator = new MapTreeGenerator(Game, mapTree);
+                    generator.Disposed += (_, _) => _resourceService.Save(relativePath, mapTree);
+                    Game.AddComponent(generator);
                 }, options);
-            }, options2);
 
-            return;
-        }
+                return;
+            }
 
-        if (assetType == typeof(MapTree))
-        {
-            FileDialog.Show(FileDialog.Type.SaveFile, files =>
-            {
-                var relativePath = _resourceService.GetRelativePath(files[0]);
-                var mapTree = new MapTree();
-                var generator = new MapTreeGenerator(Game, mapTree);
-                generator.Disposed += (_, _) => _resourceService.Save(relativePath, mapTree);
-                Game.AddComponent(generator);
-            }, options);
-
-            return;
-        }
-
-        FileDialog.Show(FileDialog.Type.SaveFile, files =>
-        {
             var relativePath = _resourceService.GetRelativePath(files[0]);
             var asset = EditorService.CreateAssetOfType(assetType, defaultName);
             _resourceService.Save(relativePath, asset);
         }, options);
+    }
+
+    private void ShowTrileSetSelectDialog(Action<string> onSelected)
+    {
+        var trileSetsNames = _resourceService.Files
+            .Where(path => path.StartsWith("Trile Sets/", StringComparison.OrdinalIgnoreCase))
+            .Select(path => path["Trile Sets/".Length..])
+            .ToArray();
+        var selectedTrileSetIndex = -1;
+
+        _editWindow.Title = "Select Trile Set";
+        _editWindow.Text = "Pick trile set for a level:";
+
+        _editWindow.EditValue = () =>
+        {
+            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+
+            if (trileSetsNames.Length == 0)
+            {
+                ImGui.BeginDisabled();
+                ImGui.ListBox("##PickTrileSetList", ref selectedTrileSetIndex,
+                    ["no trilesets in current workspace"], 1);
+                ImGui.EndDisabled();
+                return false;
+            }
+
+            ImGui.ListBox("##PickTrileSetList", ref selectedTrileSetIndex,
+                trileSetsNames, trileSetsNames.Length, Math.Min(trileSetsNames.Length, 16));
+            return selectedTrileSetIndex >= 0;
+        };
+
+        _editWindow.Accepted = () =>
+        {
+            var selectedTrileSetName = trileSetsNames[selectedTrileSetIndex];
+            onSelected.Invoke($"Trile Sets/{selectedTrileSetName}");
+        };
     }
 
     private void ShowRenameDialog(string path)
