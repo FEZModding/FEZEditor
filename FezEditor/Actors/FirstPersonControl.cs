@@ -7,9 +7,11 @@ namespace FezEditor.Actors;
 
 public class FirstPersonControl : ActorComponent
 {
-    public float MovementSpeed { get; set; } = 8.0f;
+    private static readonly float[] SpeedSteps = [0.5f, 1f, 2f, 4f, 8f, 16f, 32f];
 
-    public float MouseSensitivity { get; set; } = 0.002f;
+    private const float MouseSensitivity = 0.002f;
+
+    private int _speedIndex = 4;
 
     private float _yaw;
 
@@ -49,18 +51,30 @@ public class FirstPersonControl : ActorComponent
         var r = _input.GetActionBinding(InputActions.MoveRight);
         _status.AddHints(
             (f+l+b+r, "Movement"),
-            ("RMB", "Look around")
+            ("RMB", "Look around"),
+            ("Scroll", $"Speed: {SpeedSteps[_speedIndex]}"),
+            ("Shift", "Speed boost")
         );
 
         #endregion
 
         #region Handle mouse input
 
-        if (_input.CaptureRightMouseDelta(out var delta))
+        var isLooking = _input.CaptureRightMouseDelta(out var delta);
+        if (isLooking)
         {
             _yaw -= delta.X * MouseSensitivity;
             _pitch -= delta.Y * MouseSensitivity;
             _pitch = MathHelper.Clamp(_pitch, -MathHelper.PiOver2 + 0.01f, MathHelper.PiOver2 - 0.01f);
+        }
+
+        #endregion
+
+        #region Handle speed scroll
+
+        if (isLooking && _input.CaptureScrollWheelDelta(out var scroll))
+        {
+            _speedIndex = Math.Clamp(_speedIndex + Math.Sign(scroll), 0, SpeedSteps.Length - 1);
         }
 
         #endregion
@@ -104,8 +118,9 @@ public class FirstPersonControl : ActorComponent
 
         #region Apply movement
 
+        var shiftBoost = _input.IsShiftDown() ? 2f : 1f;
         var deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-        _transform.Position += direction * MovementSpeed * deltaTime;
+        _transform.Position += direction * SpeedSteps[_speedIndex] * shiftBoost * deltaTime;
 
         #endregion
 

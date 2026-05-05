@@ -231,7 +231,7 @@ public class InputService
         return _currentKeyboardState.IsKeyDown(Keys.LeftControl) || _currentKeyboardState.IsKeyDown(Keys.RightControl);
     }
 
-    private bool IsShiftDown()
+    public bool IsShiftDown()
     {
         return _currentKeyboardState.IsKeyDown(Keys.LeftShift) || _currentKeyboardState.IsKeyDown(Keys.RightShift);
     }

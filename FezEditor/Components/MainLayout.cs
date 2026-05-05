@@ -183,9 +183,9 @@ public class MainLayout : DrawableGameComponent
                 ImGui.Text(binding + " - " + label);
                 if (i < hints.Count - 1)
                 {
-                    ImGui.SameLine(0, 32);
+                    ImGui.SameLine(0, 16);
                     ImGui.TextDisabled("|");
-                    ImGui.SameLine(0, 8);
+                    ImGui.SameLine(0, 4);
                 }
             }
         }
