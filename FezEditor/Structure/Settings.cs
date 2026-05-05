@@ -19,6 +19,8 @@ public record Settings
 
     public Color[] PaintPalette { get; init; } = Array.Empty<Color>();
 
+    public float? DisplayScale { get; init; } = 1f;
+
     public record RecentProvider(string Path, string Kind);
 
     public record WindowSize(int Width, int Height, bool IsMaximized = false);

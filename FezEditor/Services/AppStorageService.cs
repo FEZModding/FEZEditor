@@ -26,6 +26,16 @@ public class AppStorageService : IDisposable
 
     public Color[] PaintPalette => _data.PaintPalette;
 
+    public float? DisplayScale
+    {
+        get => _data.DisplayScale;
+        set
+        {
+            _data = _data with { DisplayScale = value };
+            Save();
+        }
+    }
+
     private Settings _data = new();
 
     private readonly Game _game;

@@ -9,6 +9,8 @@ namespace FezEditor.Components;
 
 public class MenuBar : DrawableGameComponent
 {
+    private static readonly float[] ScalePresets = new[] { 1.00f, 1.25f, 1.50f, 1.75f, 2.00f };
+
     private Texture2D _logoTexture = null!;
 
     private AboutWindow? _aboutWindow;
@@ -25,6 +27,8 @@ public class MenuBar : DrawableGameComponent
 
     private readonly AppStorageService _storageService;
 
+    private readonly ImGuiService _imguiService;
+
     private MainLayout _mainLayout = null!;
 
     private FileBrowser _fileBrowser = null!;
@@ -37,6 +41,7 @@ public class MenuBar : DrawableGameComponent
         _resourceService = game.GetService<ResourceService>();
         _inputService = game.GetService<InputService>();
         _storageService = game.GetService<AppStorageService>();
+        _imguiService = game.GetService<ImGuiService>();
         _resourceService.ProviderChanged += OnProviderChanged;
         _resourceService.ModOpenedFirstTime += OnModOpenedFirstTime;
     }
@@ -223,6 +228,41 @@ public class MenuBar : DrawableGameComponent
 
             if (ImGui.BeginMenu("View"))
             {
+                if (ImGui.BeginMenu("Display Scale"))
+                {
+                    var current = _storageService.DisplayScale;
+                    var autoScale = _imguiService.AutoDisplayScale;
+
+                    if (ImGui.MenuItem($"Auto ({autoScale * 100f:F0}%)", null, current == null))
+                    {
+                        if (current != null)
+                        {
+                            _storageService.DisplayScale = null;
+                            _imguiService.RebuildFonts(autoScale);
+                        }
+                    }
+
+                    ImGui.Separator();
+
+                    foreach (var preset in ScalePresets)
+                    {
+                        var label = $"{preset * 100f:F0}%";
+                        var selected = current.HasValue && MathF.Abs(current.Value - preset) < 0.01f;
+                        if (ImGui.MenuItem(label, null, selected))
+                        {
+                            if (!selected)
+                            {
+                                _storageService.DisplayScale = preset;
+                                _imguiService.RebuildFonts(preset);
+                            }
+                        }
+                    }
+
+                    ImGui.EndMenu();
+                }
+
+                ImGui.Separator();
+
                 if (ImGui.MenuItem("File Browser", null, _mainLayout.ShowFileBrowser))
                 {
                     _mainLayout.ShowFileBrowser = !_mainLayout.ShowFileBrowser;

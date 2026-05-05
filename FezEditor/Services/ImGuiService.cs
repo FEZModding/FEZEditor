@@ -21,6 +21,8 @@ public partial class ImGuiService : IDisposable
 
     private static readonly Color ClearColor = new(0.2f, 0.2f, 0.294f);
 
+    public float AutoDisplayScale { get; }
+
     private const float FallbackFrameTime = 1f / 60f;
 
     private const float WheelDelta = 120f;
@@ -29,7 +31,7 @@ public partial class ImGuiService : IDisposable
 
     private readonly InputService _input;
 
-    private readonly Texture2D _fontTexture;
+    private Texture2D _fontTexture = null!;
 
     private readonly BasicEffect _basicEffect;
 
@@ -51,9 +53,11 @@ public partial class ImGuiService : IDisposable
 
     private bool _gameWindowFocused = true;
 
-    private readonly float _displayScale;
+    private float _displayScale;
 
-    public unsafe ImGuiService(Game game)
+    private float? _pendingFontScale;
+
+    public ImGuiService(Game game)
     {
         _game = game;
         _input = game.GetService<InputService>();
@@ -77,40 +81,16 @@ public partial class ImGuiService : IDisposable
             _game.Activated += (_, _) => _gameWindowFocused = true;
         }
 
-        // Setup HiDPI support for fonts
+        // Resolve display scale: user override takes priority over auto-detection
         {
-            _displayScale = GetDisplayScale(_game.Window.Handle);
-            Logger.Information("Display scale - {0:F2}", _displayScale);
+            var storage = game.GetService<AppStorageService>();
+            AutoDisplayScale = GetDisplayScale(_game.Window.Handle);
+            _displayScale = storage.DisplayScale ?? AutoDisplayScale;
+            Logger.Information("Display scale - {0:F2} (auto={1:F2}, override={2})",
+                _displayScale, AutoDisplayScale, storage.DisplayScale.HasValue ? storage.DisplayScale.Value.ToString("F2") : "none");
         }
 
-        // Load fonts
-        {
-            var io = ImGui.GetIO();
-            LoadFont("Fonts/ProggyForever", io.Fonts.GetGlyphRangesDefault(), size: 13f); // default font
-            LoadIconsFont("Fonts/Lucide", Lucide.IconMin, Lucide.IconMax, size: 16f, yOffset: 4f);
-            ImGuiX.Fonts.NotoSans = LoadFont("Fonts/NotoSans", io.Fonts.GetGlyphRangesDefault(), size: 24f);
-            ImGuiX.Fonts.NotoSansJp = LoadFont("Fonts/NotoSansJP", io.Fonts.GetGlyphRangesJapanese(), size: 24f);
-            ImGuiX.Fonts.NotoSansKr = LoadFont("Fonts/NotoSansKR", io.Fonts.GetGlyphRangesKorean(), size: 24f);
-            ImGuiX.Fonts.NotoSansTc = LoadFont("Fonts/NotoSansTC", io.Fonts.GetGlyphRangesChineseFull(), size: 24f);
-        }
-
-        // Rebuild Font atlas
-        {
-            var io = ImGui.GetIO();
-            io.Fonts.GetTexDataAsRGBA32(
-                out byte* pixelData,
-                out var width,
-                out var height,
-                out var bytesPerPixel);
-
-            var pixels = new byte[width * height * bytesPerPixel];
-            Marshal.Copy(new IntPtr(pixelData), pixels, 0, pixels.Length);
-
-            _fontTexture = new Texture2D(_game.GraphicsDevice, width, height, false, SurfaceFormat.Color);
-            _fontTexture.SetData(pixels);
-            io.Fonts.SetTexID(BindTexture(_fontTexture));
-            io.Fonts.ClearTexData();
-        }
+        BuildFontAtlas();
 
         // Initialize rendering
         {
@@ -145,6 +125,19 @@ public partial class ImGuiService : IDisposable
     /// <param name="gameTime">Current game timing information.</param>
     public void BeforeLayout(GameTime gameTime)
     {
+        if (_pendingFontScale.HasValue)
+        {
+            _displayScale = _pendingFontScale.Value;
+            _pendingFontScale = null;
+            if (UnbindTexture(_fontTexture))
+            {
+                _fontTexture.Dispose();
+            }
+
+            ImGui.GetIO().Fonts.Clear();
+            BuildFontAtlas();
+        }
+
         var io = ImGui.GetIO();
         var delta = (float)gameTime.ElapsedGameTime.TotalSeconds;
         io.DeltaTime = delta > 0f ? delta : FallbackFrameTime;
@@ -358,6 +351,36 @@ public partial class ImGuiService : IDisposable
         {
             _fontTexture.Dispose();
         }
+    }
+
+    public void RebuildFonts(float scale)
+    {
+        _pendingFontScale = scale;
+    }
+
+    private unsafe void BuildFontAtlas()
+    {
+        var io = ImGui.GetIO();
+        LoadFont("Fonts/ProggyForever", io.Fonts.GetGlyphRangesDefault(), size: 13f);
+        LoadIconsFont("Fonts/Lucide", Lucide.IconMin, Lucide.IconMax, size: 16f, yOffset: 4f);
+        ImGuiX.Fonts.NotoSans = LoadFont("Fonts/NotoSans", io.Fonts.GetGlyphRangesDefault(), size: 24f);
+        ImGuiX.Fonts.NotoSansJp = LoadFont("Fonts/NotoSansJP", io.Fonts.GetGlyphRangesJapanese(), size: 24f);
+        ImGuiX.Fonts.NotoSansKr = LoadFont("Fonts/NotoSansKR", io.Fonts.GetGlyphRangesKorean(), size: 24f);
+        ImGuiX.Fonts.NotoSansTc = LoadFont("Fonts/NotoSansTC", io.Fonts.GetGlyphRangesChineseFull(), size: 24f);
+
+        io.Fonts.GetTexDataAsRGBA32(
+            out byte* pixelData,
+            out var width,
+            out var height,
+            out var bytesPerPixel);
+
+        var pixels = new byte[width * height * bytesPerPixel];
+        Marshal.Copy(new IntPtr(pixelData), pixels, 0, pixels.Length);
+
+        _fontTexture = new Texture2D(_game.GraphicsDevice, width, height, false, SurfaceFormat.Color);
+        _fontTexture.SetData(pixels);
+        io.Fonts.SetTexID(BindTexture(_fontTexture));
+        io.Fonts.ClearTexData();
     }
 
     /// <summary>
