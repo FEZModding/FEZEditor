@@ -81,9 +81,9 @@ public class EddyEditor : EditorComponent, IEddyEditor
 
     private RaycastHit[] _hits = Array.Empty<RaycastHit>();
 
-    private RaycastHit[] _prevHits = Array.Empty<RaycastHit>();
-
     private int _hitIndex;
+
+    private Actor? _previouslySelectedActor;
 
     public EddyEditor(Game game, string title, Level level) : base(game, title)
     {
@@ -221,16 +221,15 @@ public class EddyEditor : EditorComponent, IEddyEditor
                     Ray = Scene.Viewport.Unproject(ImGuiX.GetMousePos(), viewportMin);
                     _hits = Scene.RaycastAll(Ray);
 
-                    var hitsChanged = _hits.Length != _prevHits.Length ||
-                                      _hits.Zip(_prevHits).Any(p => p.First.Actor != p.Second.Actor);
-                    if (hitsChanged)
+                    if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && _hits.Length > 0)
                     {
-                        _hitIndex = 0;
-                        _prevHits = _hits;
+                        var selectedInList = Array.FindIndex(_hits, hit => hit.Actor == _previouslySelectedActor);
+                        _hitIndex = selectedInList >= 0 ? (selectedInList + 1) % _hits.Length : 0;
+                        _previouslySelectedActor = _hits[_hitIndex].Actor;
                     }
-                    else if (_hits.Length > 1 && ImGui.GetIO().KeyAlt && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
+                    else
                     {
-                        _hitIndex = (_hitIndex + 1) % _hits.Length;
+                        _hitIndex = Math.Clamp(_hitIndex, 0, Math.Max(0, _hits.Length - 1));
                     }
                 }
 
