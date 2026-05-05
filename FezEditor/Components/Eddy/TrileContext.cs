@@ -2082,6 +2082,10 @@ internal sealed class TrileContext : BaseContext
             if (_set!.Triles.TryGetValue(instance.TrileId, out var trile))
             {
                 collisionMap.AddInstanceData(instance.Position.ToXna(), trile.Faces, trile.Size.ToXna());
+                foreach (var overlapped in instance.OverlappedTriles)
+                {
+                    collisionMap.AddInstanceData(overlapped.Position.ToXna(), trile.Faces, trile.Size.ToXna());
+                }
             }
         }
     }
