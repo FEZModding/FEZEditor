@@ -35,8 +35,10 @@ internal class VolumeContext : BaseContext
         _hoveredId = null;
         foreach (var actor in _volumeActors.Values)
         {
-            var mesh = actor.GetComponent<VolumeMesh>();
-            mesh.Color = DefaultColor;
+            if (actor.TryGetComponent<VolumeMesh>(out var volumeMesh))
+            {
+                volumeMesh!.Color = DefaultColor;
+            }
         }
 
         if (Eddy.Visuals.IsDirty)
@@ -45,12 +47,15 @@ internal class VolumeContext : BaseContext
             foreach (var actor in _volumeActors.Values)
             {
                 actor.Visible = visible;
-                var mesh = actor.GetComponent<VolumeMesh>();
-                mesh.Pickable = visible;
+                if (actor.TryGetComponent<VolumeMesh>(out var volumeMesh))
+                {
+                    volumeMesh!.Pickable = visible;
+                }
             }
         }
 
-        if (Eddy.Hit.HasValue && Eddy.Hit.Value.Actor.HasComponent<VolumeMesh>())
+        if (Eddy.Hit.HasValue &&
+            Eddy.Hit.Value.Actor.HasComponent<VolumeMesh>())
         {
             var actor = Eddy.Hit.Value.Actor;
             var foundId = _volumeActors.FirstOrDefault(kv => kv.Value == actor).Key;
@@ -117,14 +122,20 @@ internal class VolumeContext : BaseContext
 
         foreach (var (id, actor) in _volumeActors)
         {
-            var mesh = actor.GetComponent<VolumeMesh>();
             if (id == _hoveredId)
             {
-                mesh.Color = HoverColor;
+                if (actor.TryGetComponent<VolumeMesh>(out var volumeMesh))
+                {
+                    volumeMesh!.Color = HoverColor;
+                }
             }
+
             if (_selectedIds.Contains(id))
             {
-                mesh.Color = SelectionColor;
+                if (actor.TryGetComponent<VolumeMesh>(out var volumeMesh))
+                {
+                    volumeMesh!.Color = SelectionColor;
+                }
             }
         }
     }
@@ -281,8 +292,10 @@ internal class VolumeContext : BaseContext
                     if (_volumeActors.TryGetValue(id, out var actor))
                     {
                         actor.Transform.Position = center;
-                        var mesh = actor.GetComponent<VolumeMesh>();
-                        mesh.Size = newSize;
+                        if (actor.TryGetComponent<VolumeMesh>(out var volumeMesh))
+                        {
+                            volumeMesh!.Size = newSize;
+                        }
                     }
                 }
             }
@@ -557,7 +570,11 @@ internal class VolumeContext : BaseContext
             if (_volumeActors.TryGetValue(id, out var actor))
             {
                 actor.Transform.Position = center;
-                actor.GetComponent<VolumeMesh>().Size = size;
+                if (actor.TryGetComponent<VolumeMesh>(out var volumeMesh))
+                {
+                    volumeMesh!.Size = size;
+                    volumeMesh.IsBlackHole = instance.ActorSettings.IsBlackHole;
+                }
             }
             else
             {
@@ -565,10 +582,7 @@ internal class VolumeContext : BaseContext
                 actor.Name = $"{id}: Volume";
                 actor.Transform.Position = center;
                 _volumeActors[id] = actor;
-
-                var mesh = actor.AddComponent<VolumeMesh>();
-                mesh.Size = size;
-                mesh.Color = DefaultColor;
+                SetupVolumeActor(actor, instance);
             }
         }
 
@@ -589,11 +603,17 @@ internal class VolumeContext : BaseContext
             actor.Name = $"{id}: Volume";
             actor.Transform.Position = (instance.From + (instance.To - instance.From) / 2f).ToXna();
             _volumeActors[id] = actor;
-
-            var mesh = actor.AddComponent<VolumeMesh>();
-            mesh.Size = (instance.To - instance.From).ToXna();
-            mesh.Color = DefaultColor;
+            SetupVolumeActor(actor, instance);
         }
+    }
+
+    private static void SetupVolumeActor(Actor actor, Volume instance)
+    {
+        var size = (instance.To - instance.From).ToXna();
+        var mesh = actor.AddComponent<VolumeMesh>();
+        mesh.Size = size;
+        mesh.Color = DefaultColor;
+        mesh.IsBlackHole = instance.ActorSettings.IsBlackHole;
     }
 
     private void RemoveSelected()

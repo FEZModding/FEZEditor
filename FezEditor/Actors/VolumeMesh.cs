@@ -16,6 +16,8 @@ public class VolumeMesh : ActorComponent, IPickable
 
     public bool Pickable { get; set; } = true;
 
+    public bool IsBlackHole { get; set; }
+
     private readonly RenderingService _rendering;
 
     private readonly Rid _mesh;
@@ -23,6 +25,10 @@ public class VolumeMesh : ActorComponent, IPickable
     private readonly Rid _material;
 
     private readonly Rid _overlay;
+
+    private Texture2D _volumeTexture = null!;
+
+    private Texture2D _starsTexture = null!;
 
     internal VolumeMesh(Game game, Actor actor) : base(game, actor)
     {
@@ -35,12 +41,13 @@ public class VolumeMesh : ActorComponent, IPickable
 
     public override void LoadContent(IContentManager content)
     {
+        _volumeTexture = content.Load<Texture2D>("Textures/Volume");
+        _starsTexture = content.Load<Texture2D>("Textures/Stars");
+
         _rendering.MaterialAssignEffect(_material, _rendering.BasicEffectVertexColor);
         _rendering.MaterialSetCullMode(_material, CullMode.None);
 
-        var texture = content.Load<Texture2D>("Textures/Volume");
         _rendering.MaterialAssignEffect(_overlay, _rendering.BasicEffect);
-        _rendering.MaterialAssignBaseTexture(_overlay, texture);
         _rendering.MaterialSetCullMode(_overlay, CullMode.None);
         _rendering.MaterialSetSamplerState(_overlay, SamplerState.PointWrap);
         _rendering.MaterialSetDepthWrite(_overlay, false);
@@ -48,13 +55,27 @@ public class VolumeMesh : ActorComponent, IPickable
 
     public override void Update(GameTime gameTime)
     {
-        var surface2 = MeshSurface.CreateTexturedBox(Size * OverlayOversize);
-        var surface1 = MeshSurface.CreateWireframeBox(Size * OverlayOversize, Color);
-
-        _rendering.MeshClear(_mesh);
-        _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface2, _overlay);
-        _rendering.MeshAddSurface(_mesh, PrimitiveType.LineList, surface1, _material);
-        _rendering.MaterialSetAlbedo(_overlay, Color with { A = 102 }); // 40%
+        if (IsBlackHole)
+        {
+            var surface = MeshSurface.CreateTexturedBox(Size);
+            var wire = MeshSurface.CreateWireframeBox(Size, Color);
+            _rendering.MeshClear(_mesh);
+            _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface, _overlay);
+            _rendering.MeshAddSurface(_mesh, PrimitiveType.LineList, wire, _material);
+            _rendering.MaterialAssignBaseTexture(_overlay, _starsTexture);
+            _rendering.MaterialSetAlbedo(_overlay, Color.White);
+        }
+        else
+        {
+            var surface = MeshSurface.CreateTexturedBox(Size * OverlayOversize);
+            var wire = MeshSurface.CreateWireframeBox(Size * OverlayOversize, Color);
+            _rendering.MeshClear(_mesh);
+            _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface, _overlay);
+            _rendering.MeshAddSurface(_mesh, PrimitiveType.LineList, wire, _material);
+            _rendering.MaterialAssignBaseTexture(_overlay, _volumeTexture);
+            _rendering.MaterialSetBlendMode(_overlay, BlendMode.AlphaBlend);
+            _rendering.MaterialSetAlbedo(_overlay, Color with { A = 102 }); // 40%
+        }
     }
 
     public IEnumerable<BoundingBox> GetBounds()
@@ -71,6 +92,7 @@ public class VolumeMesh : ActorComponent, IPickable
         {
             return null;
         }
+
         var dist = ray.Intersects(box);
         return dist.HasValue ? new PickHit(dist.Value, 0) : null;
     }
