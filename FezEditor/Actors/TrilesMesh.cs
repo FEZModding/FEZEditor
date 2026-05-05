@@ -26,6 +26,8 @@ public class TrilesMesh : ActorComponent, IPickable
 
     public int InstanceCount => _instances.Count;
 
+    public int OverlapCount => _overlaps.Count;
+
     public bool HasGeometry { get; private set; }
 
     public bool Pickable { get; set; } = true;
@@ -44,6 +46,8 @@ public class TrilesMesh : ActorComponent, IPickable
     private readonly OrderedDictionary<TrileEmplacement, InstanceData> _instances = new();
 
     private readonly Dictionary<TrileEmplacement, Rid> _displacements = new();
+
+    private readonly Dictionary<(TrileEmplacement, int), InstanceData> _overlaps = new();
 
     private readonly RenderingService _rendering;
 
@@ -138,7 +142,7 @@ public class TrilesMesh : ActorComponent, IPickable
 
     public void SetInstanceData(TrileEmplacement emplacement, Vector3 position, byte phi)
     {
-        _instances[emplacement] = new InstanceData(position, phi);
+        _instances[emplacement] = new InstanceData(position, phi, Mathz.TransparentBlack);
         _instancesDirty = true;
 
         FreeDisplacement(emplacement);
@@ -151,6 +155,27 @@ public class TrilesMesh : ActorComponent, IPickable
             _rendering.InstanceSetPosition(instance, pos);
             _rendering.InstanceSetRotation(instance, rot);
             _displacements[emplacement] = instance;
+        }
+    }
+
+    public void SetOverlapInstanceData(TrileEmplacement emplacement, int index, Vector3 position, byte phi, Color tint)
+    {
+        _overlaps[(emplacement, index)] = new InstanceData(position, phi, tint);
+        _instancesDirty = true;
+    }
+
+    public void RemoveOverlapInstance(TrileEmplacement emplacement, int index)
+    {
+        _overlaps.Remove((emplacement, index));
+        _instancesDirty = true;
+    }
+
+    public void ClearOverlapInstancesAt(TrileEmplacement emplacement)
+    {
+        foreach (var key in _overlaps.Keys.Where(k => k.Item1.Equals(emplacement)).ToList())
+        {
+            _overlaps.Remove(key);
+            _instancesDirty = true;
         }
     }
 
@@ -199,6 +224,7 @@ public class TrilesMesh : ActorComponent, IPickable
 
     public void ClearInstances()
     {
+        _overlaps.Clear();
         _instances.Clear();
         _instancesDirty = true;
         foreach (var emplacement in _displacements.Keys.ToList())
@@ -219,27 +245,36 @@ public class TrilesMesh : ActorComponent, IPickable
     {
         if (_instancesDirty)
         {
-            _rendering.MultiMeshAllocate(_multiMesh, _instances.Count, MultiMeshDataType.Matrix);
+            var total = _instances.Count + _overlaps.Count;
+            _rendering.MultiMeshAllocate(_multiMesh, total, MultiMeshDataType.Matrix);
             _instancesDirty = false;
 
+            // Upload normal triles
             for (var i = 0; i < _instances.Count; i++)
             {
-                var (_, instance) = _instances.GetAt(i);
-                var data = instance.ToStride();
-                _rendering.MultiMeshSetInstanceMatrix(_multiMesh, i, data);
+                var (_, inst) = _instances.GetAt(i);
+                _rendering.MultiMeshSetInstanceMatrix(_multiMesh, i, inst.ToStride());
+            }
+
+            // Upload overlapped triles
+            var j = _instances.Count;
+            foreach (var instance in _overlaps.Values)
+            {
+                _rendering.MultiMeshSetInstanceMatrix(_multiMesh, j++, instance.ToStride());
             }
         }
     }
 
-    private readonly record struct InstanceData(Vector3 Position, int Phi)
+    private readonly record struct InstanceData(Vector3 Position, int Phi, Color Tint)
     {
         public Matrix ToStride()
         {
             var quaternion = (Phi is >= 0 and <= 3) ? PhiAngles[Phi] : Quaternion.Identity;
+            var tint = Tint.ToVector4();
             return new Matrix(
                 Position.X, Position.Y, Position.Z, 0f,
                 quaternion.X, quaternion.Y, quaternion.Z, quaternion.W,
-                0f, 0f, 0f, 0f,
+                tint.X, tint.Y, tint.Z, tint.W,
                 0f, 0f, 0f, 0f
             );
         }

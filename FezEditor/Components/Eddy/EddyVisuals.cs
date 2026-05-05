@@ -5,33 +5,34 @@ public enum EddyVisuals
 {
     #region Instances
 
-    Triles = 1,
-    EmptyTriles = 2,
-    DisplacedTriles = 4,
-    ArtObjects = 8,
-    BackgroundPlanes = 16,
-    NonPlayableCharacters = 32,
-    Gomez = 64,
-    Liquid = 128,
-    Sky = 256,
-    Rain = 512,
+    Triles = 1 << 0,
+    EmptyTriles = 1 << 1,
+    DisplacedTriles = 1 << 2,
+    OverlappedTriles = 1 << 3,
+    ArtObjects = 1 << 4,
+    BackgroundPlanes = 1 << 5,
+    NonPlayableCharacters = 1 << 6,
+    Gomez = 1 << 7,
+    Liquid = 1 << 8,
+    Sky = 1 << 9,
+    Rain = 1 << 10,
 
     #endregion
 
     #region Overlays
 
-    Volumes = 1024,
-    Paths = 2048,
-    LevelBounds = 4096,
-    CollisionMap = 8192,
-    PickableBounds = 16384,
+    Volumes = 1 << 11,
+    Paths = 1 << 12,
+    LevelBounds = 1 << 13,
+    CollisionMap = 1 << 14,
+    PickableBounds = 1 << 15,
 
     #endregion
 
     #region Presets
 
-    Default = Triles | EmptyTriles | DisplacedTriles | ArtObjects | BackgroundPlanes |
-              NonPlayableCharacters | Gomez | Liquid | Sky | Rain |
+    Default = Triles | EmptyTriles | DisplacedTriles | OverlappedTriles | ArtObjects |
+              BackgroundPlanes | NonPlayableCharacters | Gomez | Liquid | Sky | Rain |
               Volumes | Paths | LevelBounds,
     Preview = Triles | ArtObjects | BackgroundPlanes | Liquid | Sky
 

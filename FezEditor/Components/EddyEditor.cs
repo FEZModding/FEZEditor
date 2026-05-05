@@ -49,6 +49,8 @@ public class EddyEditor : EditorComponent, IEddyEditor
 
     public object? Pending { get; set; }
 
+    public int OverlapIndex { get; set; }
+
     private readonly Level _level;
 
     private Actor _cameraActor = null!;
@@ -477,6 +479,27 @@ public class EddyEditor : EditorComponent, IEddyEditor
             }
         }
 
+        ImGui.SameLine();
+        ImGui.TextDisabled("|");
+
+        ImGui.SameLine();
+        {
+            ImGui.Text("Overlap Layer:");
+            if (ImGui.IsItemHovered() && OverlapIndex == 0)
+            {
+                ImGui.SetTooltip("This is main layer");
+            }
+
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(60f);
+
+            var overlapIndex = OverlapIndex;
+            if (ImGui.InputInt("##Layer", ref overlapIndex))
+            {
+                OverlapIndex = Math.Max(0, overlapIndex);
+            }
+        }
+
         DrawViewOptions();
     }
 
@@ -528,6 +551,7 @@ public class EddyEditor : EditorComponent, IEddyEditor
                 edited |= ImGui.CheckboxFlags("Triles", ref visuals, (int)EddyVisuals.Triles);
                 edited |= ImGui.CheckboxFlags("Empty Triles", ref visuals, (int)EddyVisuals.EmptyTriles);
                 edited |= ImGui.CheckboxFlags("Displaced Triles", ref visuals, (int)EddyVisuals.DisplacedTriles);
+                edited |= ImGui.CheckboxFlags("Overlapped Triles", ref visuals, (int)EddyVisuals.OverlappedTriles);
                 edited |= ImGui.CheckboxFlags("Art Objects", ref visuals, (int)EddyVisuals.ArtObjects);
                 edited |= ImGui.CheckboxFlags("Background Planes", ref visuals, (int)EddyVisuals.BackgroundPlanes);
                 edited |= ImGui.CheckboxFlags("Non-Playable Characters", ref visuals, (int)EddyVisuals.NonPlayableCharacters);

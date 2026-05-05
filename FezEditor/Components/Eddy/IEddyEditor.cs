@@ -40,5 +40,7 @@ internal interface IEddyEditor
 
     object? Pending { get; set; }
 
+    int OverlapIndex { get; set; }
+
     void FocusOn(Vector3 target);
 }

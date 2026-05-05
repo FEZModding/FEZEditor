@@ -56,6 +56,8 @@ internal sealed class TrileContext : BaseContext
 
     private int _hologramTrileId = InvalidId;
 
+    private int _lastOverlapIndex; // 0
+
     private readonly InputService _input;
 
     public TrileContext(Game game, Level level, IEddyEditor eddy) : base(game, level, eddy)
@@ -86,6 +88,26 @@ internal sealed class TrileContext : BaseContext
                 actor.Visible = visible;
                 trilesMesh.Pickable = visible;
                 trilesMesh.Displacements = displacements;
+            }
+        }
+
+        var overlapIndexChanged = Eddy.OverlapIndex != _lastOverlapIndex;
+        var overlappedVisualsChanged = Eddy.Visuals.IsDirty;
+        if (overlapIndexChanged || overlappedVisualsChanged)
+        {
+            _lastOverlapIndex = Eddy.OverlapIndex;
+            foreach (var (emplacement, instance) in Level.Triles.Where(kv => kv.Value.TrileId != InvalidId))
+            {
+                for (var i = 0; i < instance.OverlappedTriles.Count; i++)
+                {
+                    var overlap = instance.OverlappedTriles[i];
+                    if (overlap.TrileId != InvalidId && _trileActors.TryGetValue(overlap.TrileId, out var overlapActor))
+                    {
+                        var tint = ActiveLayerTint(i);
+                        var mesh1 = overlapActor.GetComponent<TrilesMesh>();
+                        mesh1.SetOverlapInstanceData(emplacement, i, overlap.Position.ToXna(), overlap.PhiLight, tint);
+                    }
+                }
             }
         }
 
@@ -346,7 +368,45 @@ internal sealed class TrileContext : BaseContext
             }
         }
 
-        if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
+        if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.GetIO().KeyAlt &&
+            _hoveredCursor.Emplacement != null &&
+            Level.Triles.TryGetValue(_hoveredCursor.Emplacement, out var stackInstance))
+        {
+            var count = stackInstance.OverlappedTriles.Count;
+            _selectedCursor.Emplacements.Clear();
+            _selectedCursor.Emplacements.Add(_hoveredCursor.Emplacement);
+            _selectedCursor.Face = _hoveredCursor.Face;
+            _selectedCursor.GroupId = null;
+
+            // Cycle: null -> 0 -> 1 -> ... -> count-1 -> null
+            if (count == 0)
+            {
+                _selectedCursor.OverlappedIndex = null;
+            }
+            else
+            {
+                if (_selectedCursor.OverlappedIndex == null)
+                {
+                    _selectedCursor.OverlappedIndex = 0;
+                }
+                else
+                {
+                    if (_selectedCursor.OverlappedIndex >= count - 1)
+                    {
+                        _selectedCursor.OverlappedIndex = null;
+                    }
+                    else
+                    {
+                        _selectedCursor.OverlappedIndex++;
+                    }
+                }
+            }
+
+            Eddy.SelectedContext = EddyContext.Trile;
+            return;
+        }
+
+        if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && !ImGui.GetIO().KeyAlt)
         {
             _select.RectOrigin = _hoveredCursor.Emplacement;
             _select.WasDrag = false;
@@ -445,6 +505,7 @@ internal sealed class TrileContext : BaseContext
                 }
             }
 
+            _selectedCursor.OverlappedIndex = null;
             _selectedCursor.Face = _hoveredCursor.Face;
             if (_selectedCursor.Emplacements.Count > 0)
             {
@@ -470,16 +531,10 @@ internal sealed class TrileContext : BaseContext
             var delta = centroid - ComputeSelectionCentroid();
             foreach (var emplacement in _selectedCursor.Emplacements.ToList())
             {
-                if (Level.Triles.TryGetValue(emplacement, out var instance))
-                {
-                    var position = instance.Position.ToXna() + delta;
-                    instance.Position = position.ToRepacker();
-                    if (_trileActors.TryGetValue(instance.TrileId, out var actor))
-                    {
-                        var mesh = actor.GetComponent<TrilesMesh>();
-                        mesh.SetInstanceData(emplacement, position, instance.PhiLight);
-                    }
-                }
+                var active = GetActiveInstance(emplacement);
+                if (active == null) continue;
+                active.Position = (active.Position.ToXna() + delta).ToRepacker();
+                ApplyActiveInstance(emplacement, active);
             }
         }
 
@@ -501,16 +556,10 @@ internal sealed class TrileContext : BaseContext
             {
                 foreach (var emplacement in _selectedCursor.Emplacements)
                 {
-                    if (Level.Triles.TryGetValue(emplacement, out var instance))
-                    {
-                        var position = new Vector3(emplacement.X, emplacement.Y, emplacement.Z);
-                        instance.Position = position.ToRepacker();
-                        if (_trileActors.TryGetValue(instance.TrileId, out var actor))
-                        {
-                            var mesh = actor.GetComponent<TrilesMesh>();
-                            mesh.SetInstanceData(emplacement, position, instance.PhiLight);
-                        }
-                    }
+                    var active = GetActiveInstance(emplacement);
+                    if (active == null) continue;
+                    active.Position = new Vector3(emplacement.X, emplacement.Y, emplacement.Z).ToRepacker();
+                    ApplyActiveInstance(emplacement, active);
                 }
             }
         }
@@ -524,9 +573,9 @@ internal sealed class TrileContext : BaseContext
         }
 
         var sum = _selectedCursor.Emplacements
-            .Select(emplacement => Level.Triles[emplacement])
-            .Select(instance => instance.Position.ToXna())
-            .Aggregate(Vector3.Zero, (current, position) => current + position);
+            .Select(GetActiveInstance)
+            .Where(inst => inst != null)
+            .Aggregate(Vector3.Zero, (current, inst) => current + inst!.Position.ToXna());
 
         return sum / _selectedCursor.Emplacements.Count;
     }
@@ -546,13 +595,10 @@ internal sealed class TrileContext : BaseContext
             {
                 foreach (var emplacement in _selectedCursor.Emplacements)
                 {
-                    var instance = Level.Triles[emplacement];
-                    instance.PhiLight = (byte)((instance.PhiLight + 1) % 4);
-                    if (_trileActors.TryGetValue(instance.TrileId, out var actor))
-                    {
-                        var mesh = actor.GetComponent<TrilesMesh>();
-                        mesh.SetInstanceData(emplacement, instance.Position.ToXna(), instance.PhiLight);
-                    }
+                    var active = GetActiveInstance(emplacement);
+                    if (active == null) continue;
+                    active.PhiLight = (byte)((active.PhiLight + 1) % 4);
+                    ApplyActiveInstance(emplacement, active);
                 }
             }
         }
@@ -789,12 +835,23 @@ internal sealed class TrileContext : BaseContext
             _ => $"{Rotations[_paintingPhi]} (Scroll)"
         };
 
-        StatusService.AddHints(
-            ("LMB", "Paint"),
-            ("Shift+LMB", "Append"),
-            ("Ctrl+LMB", "Erase"),
-            ("R", $"Rotate: {rotation}")
-        );
+        if (Eddy.OverlapIndex == 0)
+        {
+            StatusService.AddHints(
+                ("LMB", "Paint"),
+                ("Shift+LMB", "Append"),
+                ("Ctrl+LMB", "Erase"),
+                ("R", $"Rotate: {rotation}")
+            );
+        }
+        else
+        {
+            StatusService.AddHints(
+                ("LMB", $"Paint Layer {Eddy.OverlapIndex}"),
+                ("Ctrl+LMB", $"Erase Layer {Eddy.OverlapIndex}"),
+                ("R", $"Rotate: {rotation}")
+            );
+        }
 
         #endregion
 
@@ -805,7 +862,23 @@ internal sealed class TrileContext : BaseContext
             ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {
             var emplacements = _selectedCursor.Emplacements.ToList();
-            if (ImGui.GetIO().KeyShift)
+            if (Eddy.OverlapIndex > 0)
+            {
+                foreach (var emplacement in emplacements)
+                {
+                    if (ImGui.GetIO().KeyCtrl)
+                    {
+                        EraseOverlapAt(emplacement);
+                    }
+                    else
+                    {
+                        PaintOverlapAt(emplacement);
+                    }
+                }
+
+                UpdateCollisionMesh();
+            }
+            else if (ImGui.GetIO().KeyShift)
             {
                 foreach (var emplacement in emplacements)
                 {
@@ -845,7 +918,20 @@ internal sealed class TrileContext : BaseContext
              ImGui.IsMouseDragging(ImGuiMouseButton.Left)))
         {
             Eddy.SelectedContext = EddyContext.Trile;
-            if (ImGui.GetIO().KeyShift)
+            if (Eddy.OverlapIndex > 0)
+            {
+                if (ImGui.GetIO().KeyCtrl)
+                {
+                    EraseOverlapAt(_hoveredCursor.Emplacement!);
+                }
+                else
+                {
+                    PaintOverlapAt(_hoveredCursor.Emplacement!);
+                }
+
+                UpdateCollisionMesh();
+            }
+            else if (ImGui.GetIO().KeyShift)
             {
                 AppendNewTrile(_hoveredCursor.Emplacement!);
                 UpdateCollisionMesh();
@@ -861,6 +947,7 @@ internal sealed class TrileContext : BaseContext
                 ChangeTrile(_hoveredCursor.Emplacement!);
                 UpdateCollisionMesh();
             }
+
             _paintParkingSpotRequested = true;
         }
 
@@ -899,6 +986,41 @@ internal sealed class TrileContext : BaseContext
                         case PaintOp.Erased(var emplacement):
                             {
                                 Level.Triles.Remove(emplacement);
+                                break;
+                            }
+
+                        case PaintOp.OverlapAdded(var emplacement, var slot, var id, var phi):
+                            {
+                                if (Level.Triles.TryGetValue(emplacement, out var instance))
+                                {
+                                    var overlap = new TrileInstance
+                                    {
+                                        TrileId = id,
+                                        PhiLight = phi,
+                                        Position = instance.Position
+                                    };
+
+                                    if (slot < instance.OverlappedTriles.Count)
+                                    {
+                                        instance.OverlappedTriles[slot] = overlap;
+                                    }
+                                    else
+                                    {
+                                        instance.OverlappedTriles.Add(overlap);
+                                    }
+                                }
+
+                                break;
+                            }
+
+                        case PaintOp.OverlapErased(var emplacement, var slot):
+                            {
+                                if (Level.Triles.TryGetValue(emplacement, out var instance) &&
+                                    slot < instance.OverlappedTriles.Count)
+                                {
+                                    instance.OverlappedTriles.RemoveAt(slot);
+                                }
+
                                 break;
                             }
                     }
@@ -995,6 +1117,40 @@ internal sealed class TrileContext : BaseContext
 
             return _paintingPhi;
         }
+
+        void PaintOverlapAt(TrileEmplacement emplacement)
+        {
+            if (trileId != InvalidId && Level.Triles.TryGetValue(emplacement, out var mainInstance))
+            {
+                var slot = Eddy.OverlapIndex - 1;
+                var phi = ResolvePaintPhi(emplacement, true);
+                _paintOps.Add(new PaintOp.OverlapAdded(emplacement, slot, trileId, phi));
+
+                var actor = EnsureTrileActor(trileId);
+                var mesh = actor.GetComponent<TrilesMesh>();
+                mesh.SetOverlapInstanceData(emplacement, slot,
+                    mainInstance.Position.ToXna(), phi, ActiveLayerTint(slot));
+            }
+        }
+
+        void EraseOverlapAt(TrileEmplacement emplacement)
+        {
+            if (Level.Triles.TryGetValue(emplacement, out var mainInstance))
+            {
+                var slot = Eddy.OverlapIndex - 1;
+                if (slot < mainInstance.OverlappedTriles.Count)
+                {
+                    var overlapId = mainInstance.OverlappedTriles[slot].TrileId;
+                    _paintOps.Add(new PaintOp.OverlapErased(emplacement, slot));
+
+                    if (_trileActors.TryGetValue(overlapId, out var actor))
+                    {
+                        var mesh = actor.GetComponent<TrilesMesh>();
+                        mesh.RemoveOverlapInstance(emplacement, slot);
+                    }
+                }
+            }
+        }
     }
 
     private void UpdatePick()
@@ -1064,7 +1220,8 @@ internal sealed class TrileContext : BaseContext
 
         var presentIds = Level.Triles.Values
             .Where(ti => ti.TrileId != InvalidId)
-            .Select(ti => ti.TrileId)
+            .SelectMany(ti => Enumerable.Repeat(ti.TrileId, 1)
+                .Concat(ti.OverlappedTriles.Where(o => o.TrileId != InvalidId).Select(o => o.TrileId)))
             .ToHashSet();
 
         foreach (var id in _trileActors.Keys.ToList())
@@ -1114,7 +1271,8 @@ internal sealed class TrileContext : BaseContext
 
         var trileIds = Level.Triles.Values
             .Where(ti => ti.TrileId != InvalidId)
-            .Select(ti => ti.TrileId)
+            .SelectMany(ti => Enumerable.Repeat(ti.TrileId, 1)
+                .Concat(ti.OverlappedTriles.Where(o => o.TrileId != InvalidId).Select(o => o.TrileId)))
             .Distinct();
 
         foreach (var id in trileIds)
@@ -1172,14 +1330,41 @@ internal sealed class TrileContext : BaseContext
         {
             if (_trileActors.TryGetValue(instance.TrileId, out var actor))
             {
-                var mesh = actor.GetComponent<TrilesMesh>();
-                mesh.SetInstanceData(emplacement, instance.Position.ToXna(), instance.PhiLight);
+                actor.GetComponent<TrilesMesh>()
+                    .SetInstanceData(emplacement, instance.Position.ToXna(), instance.PhiLight);
+            }
+
+            for (var i = 0; i < instance.OverlappedTriles.Count; i++)
+            {
+                var overlap = instance.OverlappedTriles[i];
+                if (overlap.TrileId != InvalidId && _trileActors.TryGetValue(overlap.TrileId, out var overlapActor))
+                {
+                    var tint = ActiveLayerTint(i);
+                    var mesh = overlapActor.GetComponent<TrilesMesh>();
+                    mesh.SetOverlapInstanceData(emplacement, i, overlap.Position.ToXna(), overlap.PhiLight, tint);
+                }
             }
         }
 
         EnsurePlaceholder();
         UpdateCollisionMesh();
     }
+
+    private Color ActiveLayerTint(int slot)
+    {
+        if (!Eddy.Visuals.Value.HasFlag(EddyVisuals.OverlappedTriles))
+        {
+            return Mathz.TransparentBlack;
+        }
+
+        if (Eddy.OverlapIndex > 0 && slot == Eddy.OverlapIndex - 1)
+        {
+            return new Color(64, 160, 255, 160);
+        }
+
+        return new Color(0, 0, 0, 96);
+    }
+
 
     public override void DrawProperties()
     {
@@ -1694,19 +1879,58 @@ internal sealed class TrileContext : BaseContext
             return;
         }
 
-        foreach (var emplacement in _selectedCursor.Emplacements.ToList())
+        if (Eddy.OverlapIndex > 0)
         {
-            if (!Level.Triles.Remove(emplacement, out var instance))
+            var slot = Eddy.OverlapIndex - 1;
+            foreach (var emplacement in _selectedCursor.Emplacements)
             {
-                continue;
-            }
+                if (!Level.Triles.TryGetValue(emplacement, out var main))
+                {
+                    continue;
+                }
 
-            _selectedCursor.Emplacements.Remove(emplacement);
-            if (_trileActors.TryGetValue(instance.TrileId, out var actor))
+                if (slot >= main.OverlappedTriles.Count)
+                {
+                    continue;
+                }
+
+                var overlapId = main.OverlappedTriles[slot].TrileId;
+                main.OverlappedTriles.RemoveAt(slot);
+
+                if (_trileActors.TryGetValue(overlapId, out var actor))
+                {
+                    var mesh = actor.GetComponent<TrilesMesh>();
+                    mesh.RemoveOverlapInstance(emplacement, slot);
+                    CleanupEmptyActor(overlapId, mesh);
+                }
+            }
+        }
+        else
+        {
+            foreach (var emplacement in _selectedCursor.Emplacements.ToList())
             {
-                var mesh = actor.GetComponent<TrilesMesh>();
-                mesh.RemoveInstance(emplacement);
-                CleanupEmptyActor(instance.TrileId, mesh);
+                if (!Level.Triles.Remove(emplacement, out var instance))
+                {
+                    continue;
+                }
+
+                _selectedCursor.Emplacements.Remove(emplacement);
+                if (_trileActors.TryGetValue(instance.TrileId, out var actor))
+                {
+                    var mesh = actor.GetComponent<TrilesMesh>();
+                    mesh.RemoveInstance(emplacement);
+                    CleanupEmptyActor(instance.TrileId, mesh);
+                }
+
+                foreach (var overlap in instance.OverlappedTriles)
+                {
+                    if (_trileActors.TryGetValue(overlap.TrileId, out var ovActor))
+                    {
+                        var ovMesh = ovActor.GetComponent<TrilesMesh>();
+                        ovMesh.ClearOverlapInstancesAt(emplacement);
+                        CleanupEmptyActor(overlap.TrileId, ovMesh);
+                    }
+                }
             }
         }
 
@@ -1748,9 +1972,58 @@ internal sealed class TrileContext : BaseContext
         }
     }
 
+    private TrileInstance? GetActiveInstance(TrileEmplacement emplacement)
+    {
+        if (!Level.Triles.TryGetValue(emplacement, out var main))
+        {
+            return null;
+        }
+
+        if (Eddy.OverlapIndex == 0)
+        {
+            return main;
+        }
+
+        var slot = Eddy.OverlapIndex - 1;
+        return slot < main.OverlappedTriles.Count
+            ? main.OverlappedTriles[slot]
+            : null;
+    }
+
+    private void ApplyActiveInstance(TrileEmplacement emplacement, TrileInstance active)
+    {
+        if (!Level.Triles.TryGetValue(emplacement, out var main))
+        {
+            return;
+        }
+
+        if (Eddy.OverlapIndex == 0)
+        {
+            if (_trileActors.TryGetValue(active.TrileId, out var actor))
+            {
+                var mesh = actor.GetComponent<TrilesMesh>();
+                mesh.SetInstanceData(emplacement, active.Position.ToXna(), active.PhiLight);
+            }
+        }
+        else
+        {
+            var slot = Eddy.OverlapIndex - 1;
+            if (slot >= main.OverlappedTriles.Count)
+            {
+                return;
+            }
+
+            if (_trileActors.TryGetValue(active.TrileId, out var actor))
+            {
+                var mesh = actor.GetComponent<TrilesMesh>();
+                mesh.SetOverlapInstanceData(emplacement, slot, active.Position.ToXna(), active.PhiLight, ActiveLayerTint(slot));
+            }
+        }
+    }
+
     private void CleanupEmptyActor(int trileId, TrilesMesh mesh)
     {
-        if (mesh.InstanceCount == 0)
+        if (mesh is { InstanceCount: 0, OverlapCount: 0 })
         {
             Eddy.Scene.DestroyActor(_trileActors[trileId]);
             _trileActors.Remove(trileId);
@@ -1877,6 +2150,7 @@ internal sealed class TrileContext : BaseContext
         public readonly HashSet<TrileEmplacement> Emplacements = new();
         public FaceOrientation? Face = null;
         public int? GroupId = null;
+        public int? OverlappedIndex = null;
 
         public readonly TrileEmplacement? Emplacement =>
             Emplacements.Count == 1 ? Emplacements.First() : null;
@@ -1886,6 +2160,7 @@ internal sealed class TrileContext : BaseContext
             Emplacements.Clear();
             Face = null;
             GroupId = null;
+            OverlappedIndex = null;
         }
     }
 
@@ -1905,6 +2180,10 @@ internal sealed class TrileContext : BaseContext
         public record Erased(TrileEmplacement Emp) : PaintOp(Emp);
 
         public record Changed(TrileEmplacement Emp, int NewId, byte NewPhi) : PaintOp(Emp);
+
+        public record OverlapAdded(TrileEmplacement Emp, int Slot, int Id, byte Phi) : PaintOp(Emp);
+
+        public record OverlapErased(TrileEmplacement Emp, int Slot) : PaintOp(Emp);
     }
 
     private record struct TrileEntry(TrileEmplacement Emp, int TrileId, byte PhiLight);

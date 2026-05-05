@@ -10,6 +10,7 @@ struct VS_INPUT
     float InstanceIndex : TEXCOORD1;
     float3 InstancePosition : TEXCOORD2;
     float4 InstanceQuaternion : TEXCOORD3;
+    float4 InstanceTint : TEXCOORD4;
 };
 
 struct VS_OUTPUT
@@ -18,6 +19,7 @@ struct VS_OUTPUT
     float3 Normal : TEXCOORD0;
     float Fog : TEXCOORD1;
     float2 TexCoord : TEXCOORD2;
+    float4 Tint : TEXCOORD3;
 };
 
 VS_OUTPUT VS(VS_INPUT input)
@@ -32,6 +34,7 @@ VS_OUTPUT VS(VS_INPUT input)
     output.Normal = mul(input.Normal, (float3x3)instanceMatrix);
     output.TexCoord = input.TexCoord;
     output.Fog = saturate(1.0 - ApplyFog(output.Position.w));
+    output.Tint = input.InstanceTint;
 
     return output;
 }
@@ -41,6 +44,7 @@ float4 PS(VS_OUTPUT input) : COLOR0
     float4 texColor = SAMPLE_TEXTURE(BaseTexture, input.TexCoord);
 
     float3 color = texColor.rgb;
+    color = lerp(color, input.Tint.rgb, input.Tint.a);
     color *= ComputeLight(input.Normal, 0.0);
     color = lerp(color, Fog_Color, input.Fog);
 

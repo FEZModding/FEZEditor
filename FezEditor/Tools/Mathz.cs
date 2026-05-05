@@ -7,6 +7,8 @@ public static class Mathz
 {
     public static readonly Vector3 XzMask = Vector3.UnitX + Vector3.UnitZ;
 
+    public static readonly Color TransparentBlack = Color.Black with { A = 0 };
+
     public const float TrixelSize = 1f / 16f;
 
     public static bool IsEqualApprox(float lhs, float rhs)
