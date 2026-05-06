@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using FezEditor.Components;
 using FezEditor.Structure;
 using FezEditor.Tools;
 using FEZRepacker.Core.Definitions.Game.TrileSet;
@@ -29,6 +30,8 @@ public class ResourceService : IDisposable
 
     public IEnumerable<string> Files => _provider?.Files ?? Enumerable.Empty<string>();
     public IEnumerable<string> VirtualFiles => _provider is ModResourceProvider mod ? mod.VirtualFiles : Files;
+
+    private AssetPickWindow? _assetPickWindow;
 
     private IResourceProvider? _provider;
 
@@ -300,12 +303,32 @@ public class ResourceService : IDisposable
         }
     }
 
+    public void RequestAssetPathFromUser(string title, string text, string rootPath, Action<string> onProvided)
+    {
+        if (_assetPickWindow == null)
+        {
+            _game.Components.Add(_assetPickWindow = new AssetPickWindow(_game));
+        }
+
+        _assetPickWindow.Title = title;
+        _assetPickWindow.Text = text;
+        _assetPickWindow.RootPath = rootPath;
+        _assetPickWindow.MissingAssetsText = "(no assets found)";
+        _assetPickWindow.Accepted = onProvided;
+    }
+
     public void Dispose()
     {
         GC.SuppressFinalize(this);
         _cache.Clear();
         _provider?.Dispose();
         _game.Activated -= OnGameActivated;
+
+        if (_assetPickWindow != null)
+        {
+            _game.Components.Remove(_assetPickWindow);
+            _assetPickWindow = null;
+        }
     }
 
     public static string GetProviderDisplayName(string path)

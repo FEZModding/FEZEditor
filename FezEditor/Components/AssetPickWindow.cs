@@ -118,7 +118,7 @@ public class AssetPickWindow : DrawableGameComponent
 
             if (ImGui.Button(AcceptButtonText))
             {
-                if (_cachedAssetPaths.Length > 0 && _selectedAssetIndex > 0)
+                if (_cachedAssetPaths.Length > 0 && _selectedAssetIndex >= 0)
                 {
                     var assetPath = $"{RootPath.Value}{_cachedAssetPaths[_selectedAssetIndex]}";
                     Accepted?.Invoke(assetPath);
@@ -149,6 +149,7 @@ public class AssetPickWindow : DrawableGameComponent
         _cachedAssetPaths = _resourceService.Files
             .Where(path => path.StartsWith(RootPath, StringComparison.OrdinalIgnoreCase))
             .Select(path => path[RootPath.Value.Length..])
+            .Where(path => !path.Contains('/') && !path.Contains('\\'))
             .ToArray();
         _selectedAssetIndex = -1;
     }

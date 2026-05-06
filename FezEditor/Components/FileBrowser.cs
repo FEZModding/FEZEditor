@@ -39,8 +39,6 @@ public class FileBrowser : DrawableGameComponent
 
     private readonly EditWindow _editWindow;
 
-    private readonly AssetPickWindow _assetPickWindow;
-
     private readonly ConfirmWindow _confirmWindow;
 
     private ThumbnailGenerator? _thumbnailGenerator;
@@ -63,14 +61,12 @@ public class FileBrowser : DrawableGameComponent
         _resourceService.ProviderChanged += UpdateNodeTree;
         game.AddComponent(_editWindow = new EditWindow(game));
         game.AddComponent(_confirmWindow = new ConfirmWindow(game));
-        game.AddComponent(_assetPickWindow = new AssetPickWindow(game));
     }
 
     protected override void Dispose(bool disposing)
     {
         Game.RemoveComponent(_confirmWindow);
         Game.RemoveComponent(_editWindow);
-        Game.RemoveComponent(_assetPickWindow);
         base.Dispose(disposing);
     }
 
@@ -511,18 +507,16 @@ public class FileBrowser : DrawableGameComponent
         {
             if (assetType == typeof(Level))
             {
-                _assetPickWindow.Title = "Select Trile Set";
-                _assetPickWindow.Text = "Pick trile set for a level:";
-                _assetPickWindow.RootPath = "Trile Sets/";
-                _assetPickWindow.MissingAssetsText = "no trilesets in current workspace";
-
-                _assetPickWindow.Accepted = trileSetPath =>
-                {
-                    var trileSet = (TrileSet)_resourceService.Load(trileSetPath);
-                    var path = _resourceService.GetRelativePath(files[0]);
-                    var asset = EddyEditor.Create(defaultName, trileSet);
-                    _resourceService.Save(path, asset);
-                };
+                _resourceService.RequestAssetPathFromUser(
+                    "Select Trile Set", "Pick trile set to use by a new level:",
+                    "Trile Sets/", trileSetPath =>
+                    {
+                        var trileSet = (TrileSet)_resourceService.Load(trileSetPath);
+                        var path = _resourceService.GetRelativePath(files[0]);
+                        var asset = EddyEditor.Create(defaultName, (TrileSet)trileSet);
+                        _resourceService.Save(path, asset);
+                    }
+                );
                 return;
             }
 
