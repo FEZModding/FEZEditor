@@ -606,7 +606,7 @@ public static class ImGuiX
 
     public delegate bool RenderItem<T>(int index, ref T item);
 
-    public static bool EditableList<T>(string label, ref List<T> items, RenderItem<T> renderItem, Func<T> createNew)
+    public static bool EditableList<T>(string label, List<T> items, RenderItem<T> renderItem, Func<T> createNew)
     {
         const ImGuiChildFlags flags = ImGuiChildFlags.Border | ImGuiChildFlags.AutoResizeY;
         var hash = label.GetHashCode();
@@ -662,7 +662,7 @@ public static class ImGuiX
         return changed;
     }
 
-    public static bool EditableArray<T>(string label, ref T[] items, RenderItem<T> renderItem)
+    public static bool EditableArray<T>(string label, T[] items, RenderItem<T> renderItem)
     {
         const ImGuiChildFlags flags = ImGuiChildFlags.Border | ImGuiChildFlags.AutoResizeY;
         var hash = label.GetHashCode();
@@ -717,7 +717,7 @@ public static class ImGuiX
 
     public delegate bool RenderNewKey<K>(ref K key) where K : IEquatable<K>;
 
-    public static bool EditableDict<K, V>(string label, ref Dictionary<K, V> items,
+    public static bool EditableDict<K, V>(string label, Dictionary<K, V> items,
         RenderKeyValuePair<K, V> renderItem,
         RenderNewKey<K> renderNewKey,
         Func<V> createDefaultValue) where K : IEquatable<K>

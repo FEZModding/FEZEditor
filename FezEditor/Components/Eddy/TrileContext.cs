@@ -1465,8 +1465,8 @@ internal sealed class TrileContext : BaseContext
                 }
             }
 
-            var sequence = instance.ActorSettings.Sequence;
-            if (ImGuiX.EditableArray("Sequence", ref sequence, RenderItem))
+            var sequence = instance.ActorSettings.Sequence.ToArray();
+            if (ImGuiX.EditableArray("Sequence", sequence, RenderItem))
             {
                 using (Eddy.History.BeginScope("Edit Sequence", EddyContext.Trile))
                 {

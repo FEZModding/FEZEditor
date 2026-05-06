@@ -316,8 +316,8 @@ public class SallyEditor : EditorComponent
             }
         }
 
-        var maps = _saveData.Maps;
-        if (ImGuiX.EditableList("Maps", ref maps, RenderString, () => string.Empty))
+        var maps = _saveData.Maps.ToList();
+        if (ImGuiX.EditableList("Maps", maps, RenderString, () => string.Empty))
         {
             using (History.BeginScope("Edit Maps"))
             {
@@ -325,8 +325,8 @@ public class SallyEditor : EditorComponent
             }
         }
 
-        var artifacts = _saveData.Artifacts;
-        if (ImGuiX.EditableList("Artifacts", ref artifacts, RenderEnum, () => ActorType.None))
+        var artifacts = _saveData.Artifacts.ToList();
+        if (ImGuiX.EditableList("Artifacts", artifacts, RenderEnum, () => ActorType.None))
         {
             using (History.BeginScope("Edit Artifacts"))
             {
@@ -334,8 +334,8 @@ public class SallyEditor : EditorComponent
             }
         }
 
-        var earnedAchievements = _saveData.EarnedAchievements;
-        if (ImGuiX.EditableList("Earned Achievements", ref earnedAchievements, RenderString, () => string.Empty))
+        var earnedAchievements = _saveData.EarnedAchievements.ToList();
+        if (ImGuiX.EditableList("Earned Achievements", earnedAchievements, RenderString, () => string.Empty))
         {
             using (History.BeginScope("Edit Earned Achievements"))
             {
@@ -343,8 +343,8 @@ public class SallyEditor : EditorComponent
             }
         }
 
-        var earnedGamerPictures = _saveData.EarnedGamerPictures;
-        if (ImGuiX.EditableList("Earned Gamer Pictures", ref earnedGamerPictures, RenderString, () => string.Empty))
+        var earnedGamerPictures = _saveData.EarnedGamerPictures.ToList();
+        if (ImGuiX.EditableList("Earned Gamer Pictures", earnedGamerPictures, RenderString, () => string.Empty))
         {
             using (History.BeginScope("Edit Earned Gamer Pictures"))
             {
@@ -561,8 +561,8 @@ public class SallyEditor : EditorComponent
             }
         }
 
-        var destroyedTriles = levelData.DestroyedTriles;
-        if (ImGuiX.EditableList("Destroyed Triles", ref destroyedTriles, RenderTrileEmplacement,
+        var destroyedTriles = levelData.DestroyedTriles.ToList();
+        if (ImGuiX.EditableList("Destroyed Triles", destroyedTriles, RenderTrileEmplacement,
                 () => new TrileEmplacement()))
         {
             using (History.BeginScope("Edit Destroyed Triles"))
@@ -571,8 +571,8 @@ public class SallyEditor : EditorComponent
             }
         }
 
-        var inactiveTriles = levelData.InactiveTriles;
-        if (ImGuiX.EditableList("Inactive Triles", ref inactiveTriles, RenderTrileEmplacement,
+        var inactiveTriles = levelData.InactiveTriles.ToList();
+        if (ImGuiX.EditableList("Inactive Triles", inactiveTriles, RenderTrileEmplacement,
                 () => new TrileEmplacement()))
         {
             using (History.BeginScope("Edit Inactive Triles"))
@@ -581,8 +581,8 @@ public class SallyEditor : EditorComponent
             }
         }
 
-        var inactiveArtObjects = levelData.InactiveArtObjects;
-        if (ImGuiX.EditableList("Inactive Art Objects", ref inactiveArtObjects, RenderInt, () => 0))
+        var inactiveArtObjects = levelData.InactiveArtObjects.ToList();
+        if (ImGuiX.EditableList("Inactive Art Objects", inactiveArtObjects, RenderInt, () => 0))
         {
             using (History.BeginScope("Edit Inactive Art"))
             {
@@ -590,8 +590,8 @@ public class SallyEditor : EditorComponent
             }
         }
 
-        var inactiveEvents = levelData.InactiveEvents;
-        if (ImGuiX.EditableList("Inactive Events", ref inactiveEvents, RenderInt, () => 0))
+        var inactiveEvents = levelData.InactiveEvents.ToList();
+        if (ImGuiX.EditableList("Inactive Events", inactiveEvents, RenderInt, () => 0))
         {
             using (History.BeginScope("Edit Inactive Events"))
             {
@@ -599,8 +599,8 @@ public class SallyEditor : EditorComponent
             }
         }
 
-        var inactiveGroups = levelData.InactiveGroups;
-        if (ImGuiX.EditableList("Inactive Groups", ref inactiveGroups, RenderInt, () => 0))
+        var inactiveGroups = levelData.InactiveGroups.ToList();
+        if (ImGuiX.EditableList("Inactive Groups", inactiveGroups, RenderInt, () => 0))
         {
             using (History.BeginScope("Edit Inactive Groups"))
             {
@@ -608,8 +608,8 @@ public class SallyEditor : EditorComponent
             }
         }
 
-        var inactiveVolumes = levelData.InactiveVolumes;
-        if (ImGuiX.EditableList("Inactive Volumes", ref inactiveVolumes, RenderInt, () => 0))
+        var inactiveVolumes = levelData.InactiveVolumes.ToList();
+        if (ImGuiX.EditableList("Inactive Volumes", inactiveVolumes, RenderInt, () => 0))
         {
             using (History.BeginScope("Edit Inactive Volumes"))
             {
@@ -617,8 +617,8 @@ public class SallyEditor : EditorComponent
             }
         }
 
-        var inactiveNpcs = levelData.InactiveNPCs;
-        if (ImGuiX.EditableList("Inactive NPCs", ref inactiveNpcs, RenderInt, () => 0))
+        var inactiveNpcs = levelData.InactiveNPCs.ToList();
+        if (ImGuiX.EditableList("Inactive NPCs", inactiveNpcs, RenderInt, () => 0))
         {
             using (History.BeginScope("Edit Inactive NPCs"))
             {
@@ -626,8 +626,8 @@ public class SallyEditor : EditorComponent
             }
         }
 
-        var pivotRotations = levelData.PivotRotations;
-        if (ImGuiX.EditableDict("Pivot Rotations", ref pivotRotations, RenderIntPair, AddIntKey, () => 0))
+        var pivotRotations = new Dictionary<int, int>(levelData.PivotRotations);
+        if (ImGuiX.EditableDict("Pivot Rotations", pivotRotations, RenderIntPair, AddIntKey, () => 0))
         {
             using (History.BeginScope("Edit Pivot Rotations"))
             {
@@ -701,8 +701,8 @@ public class SallyEditor : EditorComponent
             }
         }
 
-        var scriptIds = winConditions.ScriptIds;
-        if (ImGuiX.EditableList("Script Ids", ref scriptIds, RenderInt, () => 0))
+        var scriptIds = winConditions.ScriptIds.ToList();
+        if (ImGuiX.EditableList("Script Ids", scriptIds, RenderInt, () => 0))
         {
             using (History.BeginScope("Edit Script Ids"))
             {

@@ -74,8 +74,8 @@ public class MuEditor : EditorComponent
 
             ImGui.EndDisabled();
 
-            var soundActions = _npcMetadata.SoundActions;
-            if (ImGuiX.EditableList("Sound Actions", ref soundActions, RenderNpcAction, () => NpcAction.None))
+            var soundActions = _npcMetadata.SoundActions.ToList();
+            if (ImGuiX.EditableList("Sound Actions", soundActions, RenderNpcAction, () => NpcAction.None))
             {
                 using (History.BeginScope("Edit Sound Actions"))
                 {

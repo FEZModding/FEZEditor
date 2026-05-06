@@ -404,8 +404,8 @@ internal class VolumeContext : BaseContext
             }
         }
 
-        var orientations = instance.Orientations;
-        if (ImGuiX.EditableArray("Orientations", ref orientations, RenderFace))
+        var orientations = instance.Orientations.ToArray();
+        if (ImGuiX.EditableArray("Orientations", orientations, RenderFace))
         {
             using (Eddy.History.BeginScope("Edit Orientations", EddyContext.Volume))
             {
@@ -435,8 +435,8 @@ internal class VolumeContext : BaseContext
             }
         }
 
-        var dotDialogue = settings.DotDialogue;
-        if (ImGuiX.EditableList("Dot Dialogue", ref dotDialogue, RenderDotDialog, () => new DotDialogueLine()))
+        var dotDialogue = settings.DotDialogue.ToList();
+        if (ImGuiX.EditableList("Dot Dialogue", dotDialogue, RenderDotDialog, () => new DotDialogueLine()))
         {
             using (Eddy.History.BeginScope("Edit Dot Dialogue", EddyContext.Volume))
             {
@@ -453,8 +453,8 @@ internal class VolumeContext : BaseContext
             }
         }
 
-        var codePattern = settings.CodePattern;
-        if (ImGuiX.EditableArray("Code Pattern", ref codePattern, RenderCodePattern))
+        var codePattern = settings.CodePattern.ToArray();
+        if (ImGuiX.EditableArray("Code Pattern", codePattern, RenderCodePattern))
         {
             using (Eddy.History.BeginScope("Edit Code Pattern", EddyContext.Volume))
             {

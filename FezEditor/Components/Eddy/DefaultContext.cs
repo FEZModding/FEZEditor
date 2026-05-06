@@ -290,8 +290,8 @@ internal class DefaultContext : BaseContext
             }
         }
 
-        var mutedLoops = Level.MutedLoops;
-        if (ImGuiX.EditableList("Muted Loops", ref mutedLoops, RenderLoops, () => ""))
+        var mutedLoops = Level.MutedLoops.ToList();
+        if (ImGuiX.EditableList("Muted Loops", mutedLoops, RenderLoops, () => ""))
         {
             using (Eddy.History.BeginScope("Edit Level Muted Loops", EddyContext.Default))
             {
@@ -299,8 +299,8 @@ internal class DefaultContext : BaseContext
             }
         }
 
-        var ambienceTracks = Level.AmbienceTracks;
-        if (ImGuiX.EditableList("Ambience Tracks", ref ambienceTracks, RenderTracks, () => new AmbienceTrack()))
+        var ambienceTracks = Level.AmbienceTracks.ToList();
+        if (ImGuiX.EditableList("Ambience Tracks", ambienceTracks, RenderTracks, () => new AmbienceTrack()))
         {
             using (Eddy.History.BeginScope("Edit Level Ambience Tracks", EddyContext.Default))
             {

@@ -463,8 +463,8 @@ internal class NpcContext : BaseContext
             }
         }
 
-        var speech = instance.Speech;
-        if (ImGuiX.EditableList("Speech", ref speech, RenderSpeechLine, () => new SpeechLine()))
+        var speech = instance.Speech.ToList();
+        if (ImGuiX.EditableList("Speech", speech, RenderSpeechLine, () => new SpeechLine()))
         {
             using (Eddy.History.BeginScope("Edit NPC Speech", EddyContext.NonPlayableCharacter))
             {
@@ -473,7 +473,7 @@ internal class NpcContext : BaseContext
         }
 
         var actions = instance.Actions.ToDictionary(a => (int)a.Key, a => a.Value);
-        if (ImGuiX.EditableDict("Actions", ref actions, RenderNpcActionContent, RenderNewContent, () => new NpcActionContent()))
+        if (ImGuiX.EditableDict("Actions", actions, RenderNpcActionContent, RenderNewContent, () => new NpcActionContent()))
         {
             using (Eddy.History.BeginScope("Edit NPC Actions", EddyContext.NonPlayableCharacter))
             {

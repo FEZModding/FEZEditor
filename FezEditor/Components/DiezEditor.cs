@@ -255,7 +255,7 @@ public class DiezEditor : EditorComponent
             }
 
             var customOrdering = _trackedSong.CustomOrdering.ToList();
-            if (ImGuiX.EditableList("Custom Ordering:", ref customOrdering, RenderInt, () => 0))
+            if (ImGuiX.EditableList("Custom Ordering:", customOrdering, RenderInt, () => 0))
             {
                 using (History.BeginScope("Change Custom Ordering"))
                 {

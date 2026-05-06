@@ -631,7 +631,7 @@ internal class ArtObjectContext : BaseContext
         }
 
         var vibrationPattern = settings.VibrationPattern.ToList();
-        if (ImGuiX.EditableList("Vibration Pattern", ref vibrationPattern, RenderVibrationMotorItem,
+        if (ImGuiX.EditableList("Vibration Pattern", vibrationPattern, RenderVibrationMotorItem,
                 () => VibrationMotor.None))
         {
             using (Eddy.History.BeginScope("Edit AO Vibration Pattern", EddyContext.ArtObject))
@@ -642,7 +642,7 @@ internal class ArtObjectContext : BaseContext
         }
 
         var codePattern = settings.CodePattern.ToList();
-        if (ImGuiX.EditableList("Code Pattern", ref codePattern, RenderCodeInputItem, () => CodeInput.None))
+        if (ImGuiX.EditableList("Code Pattern", codePattern, RenderCodeInputItem, () => CodeInput.None))
         {
             using (Eddy.History.BeginScope("Edit AO Code Pattern", EddyContext.ArtObject))
             {
@@ -651,7 +651,7 @@ internal class ArtObjectContext : BaseContext
         }
 
         var invisibleSides = settings.InvisibleSides.ToList();
-        if (ImGuiX.EditableList("Invisible Sides", ref invisibleSides, RenderFaceOrientationItem,
+        if (ImGuiX.EditableList("Invisible Sides", invisibleSides, RenderFaceOrientationItem,
                 () => FaceOrientation.Front))
         {
             using (Eddy.History.BeginScope("Edit AO Invisible Sides", EddyContext.ArtObject))

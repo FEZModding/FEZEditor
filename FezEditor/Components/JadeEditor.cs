@@ -292,8 +292,8 @@ public class JadeEditor : EditorComponent
                 }
             }
 
-            var scriptIds = _selectedNode.Conditions.ScriptIds;
-            if (ImGuiX.EditableList("Script Ids", ref scriptIds, RenderInt, () => 0))
+            var scriptIds = _selectedNode.Conditions.ScriptIds.ToList();
+            if (ImGuiX.EditableList("Script Ids", scriptIds, RenderInt, () => 0))
             {
                 using (History.BeginScope("Edit Script Ids"))
                 {
