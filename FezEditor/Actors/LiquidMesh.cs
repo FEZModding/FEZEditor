@@ -42,6 +42,8 @@ public class LiquidMesh : ActorComponent
 
     private readonly Rid _overlay;
 
+    private readonly Rid _silhouette;
+
     private readonly Rid _camera;
 
     private readonly Rid _world;
@@ -59,6 +61,7 @@ public class LiquidMesh : ActorComponent
         _mesh = _rendering.MeshCreate();
         _material = _rendering.MaterialCreate();
         _overlay = _rendering.MaterialCreate();
+        _silhouette = _rendering.MaterialCreate();
         _world = _rendering.InstanceGetWorld(actor.InstanceRid);
         _camera = _rendering.WorldGetCamera(_world);
         _rendering.InstanceSetMesh(_instance, _mesh);
@@ -72,6 +75,7 @@ public class LiquidMesh : ActorComponent
         _rendering.FreeRid(_mesh);
         _rendering.FreeRid(_material);
         _rendering.FreeRid(_overlay);
+        _rendering.FreeRid(_silhouette);
         _rendering.FreeRid(_instance);
     }
 
@@ -89,6 +93,13 @@ public class LiquidMesh : ActorComponent
         _rendering.MaterialSetDepthWrite(_overlay, false);
         _rendering.MaterialSetDepthTest(_overlay, CompareFunction.Less);
         _rendering.MaterialSetStencilTest(_overlay, CompareFunction.Equal, 1);
+
+        _rendering.MaterialAssignEffect(_silhouette, effect);
+        _rendering.MaterialSetCullMode(_silhouette, CullMode.None);
+        _rendering.MaterialSetDepthWrite(_silhouette, false);
+        _rendering.MaterialSetDepthTest(_silhouette, CompareFunction.LessEqual);
+        _rendering.MaterialSetBlendMode(_silhouette, BlendMode.Opaque);
+        _rendering.MaterialSetStencilWrite(_silhouette, false);
     }
 
     public void Visualize(LiquidType type, float level, Vector3 bounds)
@@ -108,6 +119,7 @@ public class LiquidMesh : ActorComponent
         }
 
         _rendering.MeshClear(_mesh);
+        _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface, _silhouette);
         _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface, _overlay);
         _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface, _material);
     }
@@ -126,6 +138,10 @@ public class LiquidMesh : ActorComponent
             ? SurfaceColor.GetValueOrDefault(_type, Color.White)
             : UnderwaterColor.GetValueOrDefault(_type, Color.White);
         _rendering.MaterialSetAlbedo(_overlay, overlayColor);
+
+        var silhouetteColor = UnderwaterColor.GetValueOrDefault(_type, Color.White) with { A = 255 };
+        _rendering.MaterialSetAlbedo(_silhouette, silhouetteColor);
+        _rendering.MaterialSetColorWriteChannels(_silhouette, underwater ? ColorWriteChannels.None : ColorWriteChannels.All);
 
         if (!underwater)
         {
