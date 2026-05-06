@@ -30,6 +30,8 @@ public class BackgroundPlaneMesh : ActorComponent, IPickable
 
     public bool AllowOverbrightness { get; set; }
 
+    public bool Fullbright { get; set; }
+
     public bool PixelatedLightmap { get; set; }
 
     public bool ClampTexture { get; set; }
@@ -100,10 +102,7 @@ public class BackgroundPlaneMesh : ActorComponent, IPickable
             default:
                 throw new NotSupportedException("Unsupported asset type: " + asset.GetType());
         }
-
         _rendering.MaterialAssignBaseTexture(_material, _texture);
-        _rendering.MaterialSetBlendMode(_material, ResolveBlendMode());
-        _rendering.MaterialSetSamplerState(_material, ResolveSamplerState());
 
         var surface = MeshSurface.CreateQuad(PlaneSize);
         _rendering.MeshClear(_mesh);
@@ -185,8 +184,11 @@ public class BackgroundPlaneMesh : ActorComponent, IPickable
 
         _rendering.MaterialSetDepthBias(_material, depthBias, SlopeScaleDepthBias);
         _rendering.MaterialSetAlbedo(_material, Color * Opacity);
-        _rendering.MaterialShaderSetParam<Vector4>(_material, "Tint", Tint.ToVector4());
+        _rendering.MaterialShaderSetParam(_material, "Tint", Tint.ToVector4());
         _rendering.MaterialShaderSetParam(_material, "DoubleSided", DoubleSided ? 1f : 0f);
+        _rendering.MaterialShaderSetParam(_material, "Fullbright", Fullbright ? 1f : 0f);
         _rendering.MaterialSetCullMode(_material, DoubleSided ? CullMode.None : CullMode.CullClockwiseFace);
+        _rendering.MaterialSetBlendMode(_material, ResolveBlendMode());
+        _rendering.MaterialSetSamplerState(_material, ResolveSamplerState());
     }
 }

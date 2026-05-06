@@ -487,6 +487,7 @@ internal class BackgroundPlaneContext : BaseContext
         }
 
         ImGui.Text($"Background Plane: {instance.TextureName} (ID={id})");
+        var backgroundPlaneMesh = _bgPlaneActors[id].GetComponent<BackgroundPlaneMesh>();
 
         var position = instance.Position.ToXna();
         if (ImGuiX.InputFloat3("Position", ref position))
@@ -494,10 +495,6 @@ internal class BackgroundPlaneContext : BaseContext
             using (Eddy.History.BeginScope("Edit BG Position", EddyContext.BackgroundPlane))
             {
                 instance.Position = position.ToRepacker();
-                if (_bgPlaneActors.TryGetValue(id, out var actor))
-                {
-                    actor.Transform.Position = position;
-                }
             }
         }
 
@@ -509,10 +506,6 @@ internal class BackgroundPlaneContext : BaseContext
             {
                 var newRotation = euler.FromEuler();
                 instance.Rotation = newRotation.ToRepacker();
-                if (_bgPlaneActors.TryGetValue(id, out var actor))
-                {
-                    actor.Transform.Rotation = newRotation;
-                }
             }
         }
 
@@ -522,10 +515,6 @@ internal class BackgroundPlaneContext : BaseContext
             using (Eddy.History.BeginScope("Edit BG Scale", EddyContext.BackgroundPlane))
             {
                 instance.Scale = scale.ToRepacker();
-                if (_bgPlaneActors.TryGetValue(id, out var actor))
-                {
-                    actor.Transform.Scale = scale;
-                }
             }
         }
 
@@ -565,7 +554,7 @@ internal class BackgroundPlaneContext : BaseContext
             }
         }
 
-        var animated = instance.Animated;
+        var animated = backgroundPlaneMesh.Animated;
         ImGui.BeginDisabled();
         ImGui.Checkbox("Animated", ref animated);
         ImGui.EndDisabled();
@@ -730,6 +719,19 @@ internal class BackgroundPlaneContext : BaseContext
                     actor.Transform.Position = instance.Position.ToXna();
                     actor.Transform.Rotation = instance.Rotation.ToXna();
                     actor.Transform.Scale = instance.Scale.ToXna();
+
+                    var mesh = actor.GetComponent<BackgroundPlaneMesh>();
+                    mesh.Billboard = instance.Billboard;
+                    mesh.DoubleSided = instance.Doublesided;
+                    mesh.Color = instance.Filter.ToXna();
+                    mesh.Opacity = instance.Opacity;
+                    mesh.LightMap = instance.LightMap;
+                    mesh.AllowOverbrightness = instance.AllowOverbrightness;
+                    mesh.Fullbright = instance.Fullbright;
+                    mesh.PixelatedLightmap = instance.PixelatedLightmap;
+                    mesh.ClampTexture = instance.ClampTexture;
+                    mesh.XTextureRepeat = instance.XTextureRepeat;
+                    mesh.YTextureRepeat = instance.YTextureRepeat;
                 }
                 else
                 {
@@ -857,6 +859,7 @@ internal class BackgroundPlaneContext : BaseContext
         mesh.Opacity = bgPlane.Opacity;
         mesh.LightMap = bgPlane.LightMap;
         mesh.AllowOverbrightness = bgPlane.AllowOverbrightness;
+        mesh.Fullbright = bgPlane.Fullbright;
         mesh.PixelatedLightmap = bgPlane.PixelatedLightmap;
         mesh.ClampTexture = bgPlane.ClampTexture;
         mesh.XTextureRepeat = bgPlane.XTextureRepeat;

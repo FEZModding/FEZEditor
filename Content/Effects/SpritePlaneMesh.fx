@@ -1,6 +1,7 @@
 #include "BaseEffect.fxh"
 
 float DoubleSided;      // boolean
+float Fullbright;       // boolean
 float4 Tint;
 
 struct VS_INPUT
@@ -41,7 +42,7 @@ float4 PS(VS_OUTPUT input, float vface : VFACE) : COLOR0
 
     float3 color = lerp(texColor.rgb * Material_Diffuse, Tint.rgb, Tint.a);
     float3 normal = (DoubleSided != 0.0 && vface < 0.0) ? -input.Normal : input.Normal;
-    color *= ComputeLight(normal, 0.0);
+    color *= ComputeLight(normal, Fullbright);
     color = lerp(color, Fog_Color, input.Fog);
 
     return float4(color, alpha);
