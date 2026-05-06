@@ -214,27 +214,16 @@ internal class DefaultContext : BaseContext
         ImGui.SameLine();
         if (ImGui.Button("...##SkyPick"))
         {
-            var skiesDir = ResourceService.GetFullPath("Skies");
-            var options = new FileDialog.Options
-            {
-                Title = "Select Sky",
-                DefaultLocation = skiesDir,
-                Filters = [new FileDialog.Filter("Sky", "fezsky.json")]
-            };
-
-            FileDialog.Show(FileDialog.Type.OpenFile, files =>
-            {
-                if (files.Length == 0)
+            ResourceService.RequestAssetPathFromUser(
+                "Select Level Sky", "Pick sky name to use by current level:",
+                "Skies/", picked =>
                 {
-                    return;
+                    using (Eddy.History.BeginScope("Edit Level Sky Name", EddyContext.Default))
+                    {
+                        Level.SkyName = picked["Skies/".Length..];
+                    }
                 }
-
-                var picked = Path.GetFileName(files[0]).Replace(".fezsky.json", "");
-                using (Eddy.History.BeginScope("Edit Level Sky Name", EddyContext.Default))
-                {
-                    Level.SkyName = picked;
-                }
-            }, options);
+            );
         }
 
         var songName = Level.SongName.EmptyIfNull();
