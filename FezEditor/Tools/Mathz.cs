@@ -1,4 +1,5 @@
-﻿using FEZRepacker.Core.Definitions.Game.Common;
+﻿using System.Runtime.CompilerServices;
+using FEZRepacker.Core.Definitions.Game.Common;
 using Microsoft.Xna.Framework;
 
 namespace FezEditor.Tools;
@@ -10,6 +11,10 @@ public static class Mathz
     public static readonly Color TransparentBlack = Color.Black with { A = 0 };
 
     public const float TrixelSize = 1f / 16f;
+
+    private const float Deg2Rad = MathF.PI / 180f;
+
+    private const float Rad2Deg = 180f / MathF.PI;
 
     public static bool IsEqualApprox(float lhs, float rhs)
     {
@@ -135,31 +140,34 @@ public static class Mathz
         return min + (float)random.NextDouble() * (max - min);
     }
 
-    public static Vector3 ToEuler(this Quaternion q)
+    // Decomposes to yaw/pitch/roll matching CreateFromYawPitchRoll (intrinsic Y-X-Z).
+    public static Vector3 ToYawPitchRollDegrees(this Quaternion q)
     {
-        var sinRCosP = 2f * (q.W * q.X + q.Y * q.Z);
-        var cosRCosP = 1f - 2f * (q.X * q.X + q.Y * q.Y);
-        var roll = MathF.Atan2(sinRCosP, cosRCosP);
+        // Yaw (Y-axis)
+        var sinyCosp = 2 * (q.W * q.Y + q.Z * q.X);
+        var cosyCosp = 1 - 2 * (q.Y * q.Y + q.X * q.X);
+        var yaw = MathF.Atan2(sinyCosp, cosyCosp);
 
-        var sinP = 2f * (q.W * q.Y - q.Z * q.X);
-        var pitch = MathF.Abs(sinP) >= 1f ? MathF.CopySign(MathHelper.PiOver2, sinP) : MathF.Asin(sinP);
+        // Pitch (X-axis)
+        var sinp = 2 * (q.W * q.X - q.Y * q.Z);
+        var pitch = MathF.Abs(sinp) >= 1
+            ? MathF.CopySign(MathF.PI / 2, sinp)
+            : MathF.Asin(sinp);
 
-        var sinYCosP = 2f * (q.W * q.Z + q.X * q.Y);
-        var cosYCosP = 1f - 2f * (q.Y * q.Y + q.Z * q.Z);
-        var yaw = MathF.Atan2(sinYCosP, cosYCosP);
+        // Roll (Z-axis)
+        var sinrCosp = 2 * (q.W * q.Z + q.Y * q.X);
+        var cosrCosp = 1 - 2 * (q.Z * q.Z + q.X * q.X);
+        var roll = MathF.Atan2(sinrCosp, cosrCosp);
 
-        return new Vector3(
-            MathHelper.ToDegrees(roll),
-            MathHelper.ToDegrees(pitch),
-            MathHelper.ToDegrees(yaw));
+        return new Vector3(yaw, pitch, roll) * Rad2Deg;
     }
 
-    public static Quaternion FromEuler(this Vector3 euler)
+    public static Quaternion FromYawPitchRollDegrees(Vector3 degrees)
     {
-        return Quaternion.CreateFromYawPitchRoll(
-            MathHelper.ToRadians(euler.Y),
-            MathHelper.ToRadians(euler.X),
-            MathHelper.ToRadians(euler.Z));
+        var yawPitchRoll = degrees * Deg2Rad;
+        var quaternion = Quaternion.CreateFromYawPitchRoll(yawPitchRoll.X, yawPitchRoll.Y, yawPitchRoll.Z);
+        quaternion.Normalize();
+        return quaternion;
     }
 
     public static Quaternion LookRotation(Vector3 forward, Vector3? up = null)

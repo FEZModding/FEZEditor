@@ -163,6 +163,14 @@ public static class ImGuiX
         return result;
     }
 
+    public static bool DragFloat3(string label, ref Vector3 v, float vSpeed, float vMin, float vMax, string format)
+    {
+        var nv = v.ToNumerics();
+        var result = ImGui.DragFloat3(label, ref nv, vSpeed, vMin, vMax, format);
+        if (result) v = nv.ToXna();
+        return result;
+    }
+
     public static bool DragFloat4(string label, ref Vector4 v)
     {
         var nv = v.ToNumerics();

@@ -25,6 +25,8 @@ internal class ArtObjectContext : BaseContext
 
     private readonly List<ArtObjectInstance> _clipboard = new();
 
+    private readonly Dictionary<int, Vector3> _rotationAngles = new();
+
     public ArtObjectContext(Game game, Level level, IEddyEditor eddy) : base(game, level, eddy)
     {
     }
@@ -294,6 +296,7 @@ internal class ArtObjectContext : BaseContext
                     if (_artObjectActors.TryGetValue(id, out var actor))
                     {
                         actor.Transform.Rotation = newRotation;
+                        _rotationAngles[id] = newRotation.ToYawPitchRollDegrees();
                     }
                 }
             }
@@ -489,30 +492,21 @@ internal class ArtObjectContext : BaseContext
         ImGui.Text($"Art Object: {instance.Name} (ID={id})");
 
         var position = instance.Position.ToXna();
-        if (ImGuiX.InputFloat3("Position", ref position))
+        if (ImGuiX.DragFloat3("Position", ref position))
         {
             using (Eddy.History.BeginScope("Edit AO Position", EddyContext.ArtObject))
             {
                 instance.Position = position.ToRepacker();
-                if (_artObjectActors.TryGetValue(id, out var actor))
-                {
-                    actor.Transform.Position = position;
-                }
             }
         }
 
-        var rotation = instance.Rotation.ToXna();
-        var euler = rotation.ToEuler();
-        if (ImGuiX.DragFloat3("Rotation (Euler)", ref euler, 1f))
+        var angles = _rotationAngles[id];
+        if (ImGuiX.DragFloat3("Rotation (Yaw, Pitch, Roll)", ref angles, 1f, -180f, 180f, "%.1f"))
         {
+            _rotationAngles[id] = angles;
             using (Eddy.History.BeginScope("Edit AO Rotation", EddyContext.ArtObject))
             {
-                var newRotation = euler.FromEuler();
-                instance.Rotation = newRotation.ToRepacker();
-                if (_artObjectActors.TryGetValue(id, out var actor))
-                {
-                    actor.Transform.Rotation = newRotation;
-                }
+                instance.Rotation = Mathz.FromYawPitchRollDegrees(angles).ToRepacker();
             }
         }
 
@@ -522,10 +516,6 @@ internal class ArtObjectContext : BaseContext
             using (Eddy.History.BeginScope("Edit AO Scale", EddyContext.ArtObject))
             {
                 instance.Scale = scale.ToRepacker();
-                if (_artObjectActors.TryGetValue(id, out var actor))
-                {
-                    actor.Transform.Scale = scale;
-                }
             }
         }
 
@@ -839,6 +829,7 @@ internal class ArtObjectContext : BaseContext
                 {
                     Eddy.Scene.DestroyActor(_artObjectActors[id]);
                     _artObjectActors.Remove(id);
+                    _rotationAngles.Remove(id);
                 }
             }
 
@@ -858,6 +849,7 @@ internal class ArtObjectContext : BaseContext
                     actor.Transform.Rotation = instance.Rotation.ToXna();
                     actor.Transform.Scale = instance.Scale.ToXna();
                     _artObjectActors[id] = actor;
+                    _rotationAngles[id] = instance.Rotation.ToXna().ToYawPitchRollDegrees();
 
                     var mesh = actor.AddComponent<ArtObjectMesh>();
                     var ao = (ArtObject)ResourceService.Load($"Art Objects/{instance.Name}");
@@ -878,6 +870,7 @@ internal class ArtObjectContext : BaseContext
         TeardownVisualization();
         _selectedIds.Clear();
         _hoveredId = null;
+        _rotationAngles.Clear();
 
         foreach (var (id, instance) in Level.ArtObjects.Where(kv => kv.Key != InvalidId))
         {
@@ -887,6 +880,7 @@ internal class ArtObjectContext : BaseContext
             actor.Transform.Rotation = instance.Rotation.ToXna();
             actor.Transform.Scale = instance.Scale.ToXna();
             _artObjectActors[id] = actor;
+            _rotationAngles[id] = actor.Transform.Rotation.ToYawPitchRollDegrees();
 
             var mesh = actor.AddComponent<ArtObjectMesh>();
             var ao = (ArtObject)ResourceService.Load($"Art Objects/{instance.Name}");
@@ -903,6 +897,7 @@ internal class ArtObjectContext : BaseContext
             {
                 Eddy.Scene.DestroyActor(actor);
                 _artObjectActors.Remove(id);
+                _rotationAngles.Remove(id);
             }
         }
 
@@ -945,6 +940,7 @@ internal class ArtObjectContext : BaseContext
             actor.Transform.Rotation = instance.Rotation.ToXna();
             actor.Transform.Scale = instance.Scale.ToXna();
             _artObjectActors[id] = actor;
+            _rotationAngles[id] = actor.Transform.Rotation.ToYawPitchRollDegrees();
 
             var mesh = actor.AddComponent<ArtObjectMesh>();
             var ao = (ArtObject)ResourceService.Load($"Art Objects/{instance.Name}");
@@ -980,5 +976,6 @@ internal class ArtObjectContext : BaseContext
         }
 
         _artObjectActors.Clear();
+        _rotationAngles.Clear();
     }
 }

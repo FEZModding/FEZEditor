@@ -23,6 +23,8 @@ internal class BackgroundPlaneContext : BaseContext
 
     private readonly List<BackgroundPlane> _clipboard = new();
 
+    private readonly Dictionary<int, Vector3> _rotationAngles = new();
+
     public BackgroundPlaneContext(Game game, Level level, IEddyEditor eddy) : base(game, level, eddy)
     {
     }
@@ -294,6 +296,7 @@ internal class BackgroundPlaneContext : BaseContext
                     {
                         actor.Transform.Rotation = newRotation;
                     }
+                    _rotationAngles.Remove(id);
                 }
             }
         }
@@ -490,7 +493,7 @@ internal class BackgroundPlaneContext : BaseContext
         var backgroundPlaneMesh = _bgPlaneActors[id].GetComponent<BackgroundPlaneMesh>();
 
         var position = instance.Position.ToXna();
-        if (ImGuiX.InputFloat3("Position", ref position))
+        if (ImGuiX.DragFloat3("Position", ref position))
         {
             using (Eddy.History.BeginScope("Edit BG Position", EddyContext.BackgroundPlane))
             {
@@ -498,14 +501,17 @@ internal class BackgroundPlaneContext : BaseContext
             }
         }
 
-        var rotation = instance.Rotation.ToXna();
-        var euler = rotation.ToEuler();
-        if (ImGuiX.DragFloat3("Rotation (Euler)", ref euler, 1f))
+        if (!_rotationAngles.TryGetValue(id, out var angles))
         {
+            angles = instance.Rotation.ToXna().ToYawPitchRollDegrees();
+            _rotationAngles[id] = angles;
+        }
+        if (ImGuiX.DragFloat3("Rotation (Yaw, Pitch, Roll)", ref angles, 1f, -180f, 180f, "%.1f"))
+        {
+            _rotationAngles[id] = angles;
             using (Eddy.History.BeginScope("Edit BG Rotation", EddyContext.BackgroundPlane))
             {
-                var newRotation = euler.FromEuler();
-                instance.Rotation = newRotation.ToRepacker();
+                instance.Rotation = Mathz.FromYawPitchRollDegrees(angles).ToRepacker();
             }
         }
 
@@ -709,6 +715,7 @@ internal class BackgroundPlaneContext : BaseContext
                 {
                     Eddy.Scene.DestroyActor(_bgPlaneActors[id]);
                     _bgPlaneActors.Remove(id);
+                    _rotationAngles.Remove(id);
                 }
             }
 
@@ -760,6 +767,7 @@ internal class BackgroundPlaneContext : BaseContext
         TeardownVisualization();
         _selectedIds.Clear();
         _hoveredId = null;
+        _rotationAngles.Clear();
 
         foreach (var (id, bgPlane) in Level.BackgroundPlanes.Where(kv => kv.Key != InvalidId))
         {
@@ -785,6 +793,7 @@ internal class BackgroundPlaneContext : BaseContext
                 Eddy.Scene.DestroyActor(actor);
                 _bgPlaneActors.Remove(id);
             }
+            _rotationAngles.Remove(id);
         }
 
         _selectedIds.Clear();
