@@ -49,15 +49,12 @@ internal class DefaultContext : BaseContext
                 _skyActor.Visible = Eddy.Visuals.Value.HasFlag(EddyVisuals.Sky);
             }
 
-            if (_liquidActor?.HasComponent<LiquidMesh>() ?? false)
+            if (_liquidActor != null)
             {
                 _liquidActor.Visible = Eddy.Visuals.Value.HasFlag(EddyVisuals.Liquid);
             }
 
-            if (_rainActor != null)
-            {
-                _rainActor.Visible = Eddy.Visuals.Value.HasFlag(EddyVisuals.Rain);
-            }
+            if (_rainActor != null) _rainActor.Visible = Eddy.Visuals.Value.HasFlag(EddyVisuals.Rain);
 
             if (_boundsActor?.HasComponent<BoundsMesh>() ?? false)
             {
@@ -208,7 +205,7 @@ internal class DefaultContext : BaseContext
         {
             using (Eddy.History.BeginScope("Edit Level Water Height", EddyContext.Default))
             {
-                Level.WaterHeight = waterHeight;
+                Level.WaterHeight = Math.Max(0, waterHeight);
             }
         }
 
@@ -409,36 +406,32 @@ internal class DefaultContext : BaseContext
             return;
         }
 
-        if (Level.WaterType == LiquidType.None && _liquidActor != null)
+        if (Level.WaterType == LiquidType.None)
         {
-            Eddy.Scene.DestroyActor(_liquidActor);
-            _liquidActor = null;
+            _liquidActor!.RemoveComponent<LiquidMesh>();
         }
-        else if (Level.WaterType != LiquidType.None && _liquidActor == null)
+        else if (!_liquidActor!.HasComponent<LiquidMesh>())
         {
-            _liquidActor = CreateSubActor();
             _liquidActor.Name = $"Water: {Level.WaterType}";
-            _liquidActor.AddComponent<LiquidMesh>();
+            var mesh = _liquidActor.AddComponent<LiquidMesh>();
+            mesh.Visualize(Level.WaterType, Level.WaterHeight, Level.Size.ToXna());
         }
-
-        if (_liquidActor != null)
+        else
         {
+            _liquidActor.Name = $"Water: {Level.WaterType}";
             var mesh = _liquidActor.GetComponent<LiquidMesh>();
             mesh.Visualize(Level.WaterType, Level.WaterHeight, Level.Size.ToXna());
         }
 
-        if (Level.Rainy && _rainActor == null)
+        if (Level.Rainy && !_rainActor!.HasComponent<RainMesh>())
         {
-            _rainActor = CreateSubActor();
-            _rainActor.Name = "Rain";
             var rainMesh = _rainActor.AddComponent<RainMesh>();
             rainMesh.Camera = Eddy.Camera;
             rainMesh.LevelSize = Level.Size.ToXna();
         }
-        else if (!Level.Rainy && _rainActor != null)
+        else if (!Level.Rainy)
         {
-            Eddy.Scene.DestroyActor(_rainActor);
-            _rainActor = null;
+            _rainActor!.RemoveComponent<RainMesh>();
         }
     }
 
@@ -477,42 +470,6 @@ internal class DefaultContext : BaseContext
         }
 
         #endregion
-
-        #region Liquid
-
-        if (Level.WaterType != LiquidType.None)
-        {
-            _liquidActor = CreateSubActor();
-            _liquidActor.Name = $"Water: {Level.WaterType}";
-
-            var mesh = _liquidActor.AddComponent<LiquidMesh>();
-            mesh.Visualize(Level.WaterType, Level.WaterHeight, Level.Size.ToXna());
-        }
-
-        #endregion
-
-        #region Rain
-
-        if (Level.Rainy)
-        {
-            _rainActor = CreateSubActor();
-            _rainActor.Name = "Rain";
-            var rainMesh = _rainActor.AddComponent<RainMesh>();
-            rainMesh.Camera = Eddy.Camera;
-            rainMesh.LevelSize = Level.Size.ToXna();
-        }
-
-        #endregion
-
-        #region Pickable Bounds
-
-        _pickablesActor = CreateSubActor();
-        _pickablesActor.Name = "Debug";
-
-        var bounds = _pickablesActor.AddComponent<PickableBounds>();
-        bounds.WireColor = Color.Purple;
-
-        #endregion
     }
 
     public void PostVisualize()
@@ -526,15 +483,31 @@ internal class DefaultContext : BaseContext
 
         #endregion
 
-        #region Pickable Bounds
+        #region Liquid
 
-        if (_pickablesActor?.HasComponent<PickableBounds>() ?? false)
+        _liquidActor = Eddy.Scene.CreateActor();
+        _liquidActor.Name = "Liquid";
+        _liquidActor.Visible = Eddy.Visuals.Value.HasFlag(EddyVisuals.Liquid);
+
+        if (Level.WaterType != LiquidType.None)
         {
-            _pickablesActor = CreateSubActor();
-            _pickablesActor.Name = "Debug";
+            _liquidActor.Name = $"Water: {Level.WaterType}";
+            _liquidActor.AddComponent<LiquidMesh>().Visualize(Level.WaterType, Level.WaterHeight, Level.Size.ToXna());
+        }
 
-            var bounds = _pickablesActor.AddComponent<PickableBounds>();
-            bounds.WireColor = Color.Purple;
+        #endregion
+
+        #region Rain
+
+        _rainActor = Eddy.Scene.CreateActor();
+        _rainActor.Name = "Rain";
+        _rainActor.Visible = Eddy.Visuals.Value.HasFlag(EddyVisuals.Rain);
+
+        if (Level.Rainy)
+        {
+            var rainMesh = _rainActor.AddComponent<RainMesh>();
+            rainMesh.Camera = Eddy.Camera;
+            rainMesh.LevelSize = Level.Size.ToXna();
         }
 
         #endregion
