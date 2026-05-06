@@ -161,7 +161,7 @@ public class Gizmo : ActorComponent
         _face = new GizmoHandle(_rendering, BlendMode.Opaque, ColorFaceNormal, ColorFaceBright);
     }
 
-    public bool Translate(ref Vector3 origin)
+    public bool Translate(ref Vector3 origin, float maxDelta = float.MaxValue)
     {
         _status.AddHints(
             ("LMB Drag", "Move X or Z"),
@@ -205,7 +205,9 @@ public class Gizmo : ActorComponent
                 {
                     var delta = ConstrainDelta(hitPoint.Value - _dragStartHitPoint, _activeHandle);
                     delta = SnapDelta(delta);
+                    delta = Vector3.Clamp(delta, -Vector3.One * maxDelta, Vector3.One * maxDelta);
                     var newPos = _dragStartValue + delta;
+
                     if (newPos != origin)
                     {
                         origin = newPos;

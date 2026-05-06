@@ -526,14 +526,14 @@ internal sealed class TrileContext : BaseContext
         }
 
         var centroid = ComputeSelectionCentroid();
-        if (Eddy.Gizmo.Translate(ref centroid))
+        if (Eddy.Gizmo.Translate(ref centroid, maxDelta: 0.5f))
         {
             var delta = centroid - ComputeSelectionCentroid();
             foreach (var emplacement in _selectedCursor.Emplacements.ToList())
             {
                 var active = GetActiveInstance(emplacement);
                 if (active == null) continue;
-                active.Position = (active.Position.ToXna() + delta).ToRepacker();
+                active.Position = ClampPositionInsideEmplacement(active.Position.ToXna() + delta, emplacement).ToRepacker();
                 ApplyActiveInstance(emplacement, active);
             }
         }
@@ -563,6 +563,12 @@ internal sealed class TrileContext : BaseContext
                 }
             }
         }
+    }
+
+    private static Vector3 ClampPositionInsideEmplacement(Vector3 position, TrileEmplacement emplacement)
+    {
+        var cellMin = new Vector3(emplacement.X, emplacement.Y, emplacement.Z);
+        return Vector3.Clamp(position, cellMin - new Vector3(0.5f), cellMin + new Vector3(1.5f));
     }
 
     private Vector3 ComputeSelectionCentroid()
@@ -1400,11 +1406,11 @@ internal sealed class TrileContext : BaseContext
         ImGui.EndDisabled();
 
         var position = instance.Position.ToXna();
-        if (ImGuiX.InputFloat3("Position", ref position))
+        if (ImGuiX.DragFloat3("Position", ref position, 0.01f))
         {
             using (Eddy.History.BeginScope("Edit Trile Position", EddyContext.Trile))
             {
-                instance.Position = position.ToRepacker();
+                instance.Position = ClampPositionInsideEmplacement(position, emplacement).ToRepacker();
             }
         }
 
@@ -1521,9 +1527,10 @@ internal sealed class TrileContext : BaseContext
             _previousPositionDrag = positionDrag;
             using (Eddy.History.BeginScope("Edit Triles Position", EddyContext.Trile))
             {
-                foreach (var inst in instances)
+                foreach (var emp in _selectedCursor.Emplacements.Where(e => Level.Triles.TryGetValue(e, out var ti) && ti.TrileId != InvalidId))
                 {
-                    inst.Position = (inst.Position.ToXna() + delta).ToRepacker();
+                    var inst = Level.Triles[emp];
+                    inst.Position = ClampPositionInsideEmplacement(inst.Position.ToXna() + delta, emp).ToRepacker();
                 }
             }
         }
