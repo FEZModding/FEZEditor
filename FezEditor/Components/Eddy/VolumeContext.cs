@@ -170,28 +170,25 @@ internal class VolumeContext : BaseContext
             }
         }
 
-        if (ImGui.GetIO().KeyCtrl)
+        if (_selectedIds.Count > 0 && ImGuiX.IsKeyShortcut(ImGuiKey.C))
         {
-            if (_selectedIds.Count > 0 && ImGui.IsKeyPressed(ImGuiKey.C))
-            {
-                BuildClipboard();
-            }
+            BuildClipboard();
+        }
 
-            if (_selectedIds.Count > 0 && ImGui.IsKeyPressed(ImGuiKey.X))
+        if (_selectedIds.Count > 0 && ImGuiX.IsKeyShortcut(ImGuiKey.X))
+        {
+            BuildClipboard();
+            using (Eddy.History.BeginScope("Cut Volumes", EddyContext.Volume))
             {
-                BuildClipboard();
-                using (Eddy.History.BeginScope("Cut Volumes", EddyContext.Volume))
-                {
-                    RemoveSelected();
-                }
+                RemoveSelected();
             }
+        }
 
-            if (ImGui.IsKeyPressed(ImGuiKey.V, repeat: false))
+        if (ImGuiX.IsKeyShortcut(ImGuiKey.V))
+        {
+            using (Eddy.History.BeginScope("Paste Volumes", EddyContext.Volume))
             {
-                using (Eddy.History.BeginScope("Paste Volumes", EddyContext.Volume))
-                {
-                    PasteClipboard();
-                }
+                PasteClipboard();
             }
         }
 

@@ -433,6 +433,11 @@ public static class ImGuiX
 
     #region Additions
 
+    public static bool IsKeyShortcut(ImGuiKey key)
+    {
+        return !ImGui.GetIO().WantTextInput && ImGui.GetIO().KeyCtrl && ImGui.IsKeyPressed(key);
+    }
+
     public static void Hyperlink(string label, string url)
     {
         ImGui.Text(label);

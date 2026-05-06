@@ -184,28 +184,25 @@ internal class ArtObjectContext : BaseContext
             }
         }
 
-        if (ImGui.GetIO().KeyCtrl)
+        if (_selectedIds.Count > 0 && ImGuiX.IsKeyShortcut(ImGuiKey.C))
         {
-            if (_selectedIds.Count > 0 && ImGui.IsKeyPressed(ImGuiKey.C))
-            {
-                BuildClipboard();
-            }
+            BuildClipboard();
+        }
 
-            if (_selectedIds.Count > 0 && ImGui.IsKeyPressed(ImGuiKey.X))
+        if (_selectedIds.Count > 0 && ImGuiX.IsKeyShortcut(ImGuiKey.X))
+        {
+            BuildClipboard();
+            using (Eddy.History.BeginScope("Cut Art Objects", EddyContext.ArtObject))
             {
-                BuildClipboard();
-                using (Eddy.History.BeginScope("Cut Art Objects", EddyContext.ArtObject))
-                {
-                    RemoveSelected();
-                }
+                RemoveSelected();
             }
+        }
 
-            if (ImGui.IsKeyPressed(ImGuiKey.V, repeat: false))
+        if (ImGuiX.IsKeyShortcut(ImGuiKey.V))
+        {
+            using (Eddy.History.BeginScope("Paste Art Objects", EddyContext.ArtObject))
             {
-                using (Eddy.History.BeginScope("Paste Art Objects", EddyContext.ArtObject))
-                {
-                    PasteClipboard();
-                }
+                PasteClipboard();
             }
         }
 

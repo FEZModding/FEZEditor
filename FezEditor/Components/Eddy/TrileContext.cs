@@ -300,7 +300,7 @@ internal sealed class TrileContext : BaseContext
             _selectedCursor.Reset();
         }
 
-        if (ImGui.GetIO().KeyCtrl && ImGui.GetIO().KeyShift && ImGui.IsKeyPressed(ImGuiKey.G) &&
+        if (ImGui.GetIO().KeyShift && ImGuiX.IsKeyShortcut(ImGuiKey.G) &&
             _selectedCursor.GroupId != null)
         {
             using (Eddy.History.BeginScope("Remove Trile Group", EddyContext.Trile))
@@ -311,7 +311,7 @@ internal sealed class TrileContext : BaseContext
             _selectedCursor.GroupId = null;
         }
 
-        if (ImGui.GetIO().KeyCtrl && !ImGui.GetIO().KeyShift && ImGui.IsKeyPressed(ImGuiKey.G) &&
+        if (!ImGui.GetIO().KeyShift && ImGuiX.IsKeyShortcut(ImGuiKey.G) &&
             _selectedCursor.Emplacements.Count > 1 && _selectedCursor.GroupId == null)
         {
             using (Eddy.History.BeginScope("Create Trile Group", EddyContext.Trile))
@@ -340,31 +340,28 @@ internal sealed class TrileContext : BaseContext
             }
         }
 
-        if (ImGui.GetIO().KeyCtrl)
+        if (_selectedCursor.Emplacements.Count > 0 && ImGuiX.IsKeyShortcut(ImGuiKey.C))
         {
-            if (_selectedCursor.Emplacements.Count > 0 && ImGui.IsKeyPressed(ImGuiKey.C))
+            BuildClipboard();
+        }
+
+        if (_selectedCursor.Emplacements.Count > 0 && ImGuiX.IsKeyShortcut(ImGuiKey.X))
+        {
+            BuildClipboard();
+            using (Eddy.History.BeginScope("Cut Triles", EddyContext.Trile))
             {
-                BuildClipboard();
+                RemoveSelected();
             }
 
-            if (_selectedCursor.Emplacements.Count > 0 && ImGui.IsKeyPressed(ImGuiKey.X))
-            {
-                BuildClipboard();
-                using (Eddy.History.BeginScope("Cut Triles", EddyContext.Trile))
-                {
-                    RemoveSelected();
-                }
+            _selectedCursor.Emplacements.Clear();
+            _selectedCursor.Face = null;
+        }
 
-                _selectedCursor.Emplacements.Clear();
-                _selectedCursor.Face = null;
-            }
-
-            if (ImGui.IsKeyPressed(ImGuiKey.V, repeat: false))
+        if (ImGuiX.IsKeyShortcut(ImGuiKey.V))
+        {
+            using (Eddy.History.BeginScope("Paste Triles", EddyContext.Trile))
             {
-                using (Eddy.History.BeginScope("Paste Triles", EddyContext.Trile))
-                {
-                    PasteClipboard();
-                }
+                PasteClipboard();
             }
         }
 
