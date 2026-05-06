@@ -211,7 +211,7 @@ public class EddyEditor : EditorComponent, IEddyEditor
                 ImGuiX.Image(texture, size);
                 const ImGuiHoveredFlags hoverFlags = ImGuiHoveredFlags.AllowWhenBlockedByActiveItem |
                                                      ImGuiHoveredFlags.AllowWhenBlockedByPopup;
-                InputService.IsViewportHovered = ImGui.IsItemHovered(hoverFlags);
+                InputService.IsViewportHovered = ImGui.IsItemHovered(hoverFlags) && !ImGui.IsMouseDragging(ImGuiMouseButton.Left);
 
                 var viewportMin = ImGuiX.GetItemRectMin();
                 _gizmoActor.GetComponent<Gizmo>().Viewport = viewportMin;
