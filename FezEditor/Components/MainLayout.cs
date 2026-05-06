@@ -90,7 +90,11 @@ public class MainLayout : DrawableGameComponent
                     ImGuiX.BeginChild("EditorArea", new Vector2(0, -statusBarHeight));
                     if (_editorService.Editors.Any())
                     {
-                        if (ImGui.BeginTabBar("##EditorTabs"))
+                        if (_editorService.Editors.FirstOrDefault() is WelcomeSplash welcome)
+                        {
+                            DrawEditor(welcome);
+                        }
+                        else if (ImGui.BeginTabBar("##EditorTabs"))
                         {
                             foreach (var editor in _editorService.Editors.ToArray())
                             {
@@ -110,13 +114,11 @@ public class MainLayout : DrawableGameComponent
                                     tabFlags |= ImGuiTabItemFlags.SetSelected;
                                 }
 
+
+
                                 var tabLabel = title + "###" + editor.Title;
                                 var isOpen = true;
-                                var beginTabItem = editor is WelcomeComponent
-                                    ? ImGui.BeginTabItem(tabLabel)
-                                    : ImGui.BeginTabItem(tabLabel, ref isOpen, tabFlags);
-
-                                if (beginTabItem)
+                                if (ImGui.BeginTabItem(tabLabel, ref isOpen, tabFlags))
                                 {
                                     DrawEditor(editor);
                                     ImGui.EndTabItem();

@@ -326,7 +326,7 @@ public class MenuBar : DrawableGameComponent
         {
             _resourceService.CloseProvider();
             _editorService.CloseAllEditors();
-            _editorService.OpenEditor(new WelcomeComponent(Game));
+            _editorService.OpenEditor(new WelcomeSplash(Game));
             return;
         }
 
@@ -336,7 +336,7 @@ public class MenuBar : DrawableGameComponent
         {
             _resourceService.CloseProvider();
             _editorService.CloseAllEditors();
-            _editorService.OpenEditor(new WelcomeComponent(Game));
+            _editorService.OpenEditor(new WelcomeSplash(Game));
         };
     }
 

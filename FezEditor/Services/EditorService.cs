@@ -292,7 +292,7 @@ public partial class EditorService
 
     private void UpdateFlags()
     {
-        if (_activeEditor is WelcomeComponent)
+        if (_activeEditor is WelcomeSplash)
         {
             Flags = EditorFlags.None;
             return;
