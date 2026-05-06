@@ -6,15 +6,11 @@ namespace FezEditor.Services;
 
 public partial class RenderingService
 {
-    private readonly record struct RasterizerKey(
-        CullMode CullMode,
-        FillMode FillMode,
-        float DepthBias,
-        float SlopeScaleDepthBias);
-
-    private static readonly Dictionary<RasterizerKey, RasterizerState> RasterizerStateCache = new();
+    private static readonly Dictionary<int, RasterizerState> RasterizerStateCache = new();
 
     private static readonly Dictionary<int, BlendState> BlendStateCache = new();
+
+    private static readonly Dictionary<int, DepthStencilState> DepthStencilStateCache = new();
 
     private class MaterialData
     {
@@ -28,17 +24,13 @@ public partial class RenderingService
         public ColorWriteChannels ColorWriteChannels = ColorWriteChannels.All;
         public SamplerState? SamplerState = SamplerState.PointClamp;
         public BlendState BlendState = ResolveBlendState(BlendMode.AlphaBlend, ColorWriteChannels.All);
-        public float DepthBias; // 0f
-        public float SlopeScaleDepthBias; // 0f
-
-        public readonly DepthStencilState DepthStencilState = new()
-        {
-            DepthBufferEnable = true, DepthBufferWriteEnable = true,
-            StencilEnable = true,
-            StencilFunction = CompareFunction.Always,
-            StencilPass = StencilOperation.Replace,
-            ReferenceStencil = 1
-        };
+        public float DepthBias;
+        public float SlopeScaleDepthBias;
+        public bool DepthWrite = true;
+        public CompareFunction DepthFunc = CompareFunction.LessEqual;
+        public bool StencilWrite = true;
+        public CompareFunction StencilFunc = CompareFunction.Always;
+        public int StencilRef = 1;
     }
 
     private readonly Dictionary<Rid, MaterialData> _materials = new();
@@ -116,30 +108,25 @@ public partial class RenderingService
 
     public void MaterialSetDepthWrite(Rid material, bool enabled)
     {
-        var dss = GetResource(_materials, material).DepthStencilState;
-        dss.DepthBufferWriteEnable = enabled;
-        dss.DepthBufferEnable = dss.DepthBufferWriteEnable || dss.DepthBufferFunction != CompareFunction.Never;
+        GetResource(_materials, material).DepthWrite = enabled;
     }
 
     public void MaterialSetDepthTest(Rid material, CompareFunction func)
     {
-        var dss = GetResource(_materials, material).DepthStencilState;
-        dss.DepthBufferFunction = func;
-        dss.DepthBufferEnable = dss.DepthBufferWriteEnable || dss.DepthBufferFunction != CompareFunction.Never;
+        GetResource(_materials, material).DepthFunc = func;
     }
 
     public void MaterialSetStencilWrite(Rid material, bool enabled)
     {
-        var dss = GetResource(_materials, material).DepthStencilState;
-        dss.StencilPass = enabled ? StencilOperation.Replace : StencilOperation.Keep;
+        GetResource(_materials, material).StencilWrite = enabled;
     }
 
     public void MaterialSetStencilTest(Rid material, CompareFunction func, int referenceValue)
     {
-        var dss = GetResource(_materials, material).DepthStencilState;
-        dss.StencilFunction = func;
-        dss.StencilPass = StencilOperation.Keep;
-        dss.ReferenceStencil = referenceValue;
+        var data = GetResource(_materials, material);
+        data.StencilFunc = func;
+        data.StencilWrite = false;
+        data.StencilRef = referenceValue;
     }
 
     public void MaterialSetColorWriteChannels(Rid material, ColorWriteChannels channels)
@@ -165,7 +152,7 @@ public partial class RenderingService
     {
         GraphicsDevice.SamplerStates[0] = mat.SamplerState;
         GraphicsDevice.BlendState = mat.BlendState;
-        GraphicsDevice.DepthStencilState = mat.DepthStencilState;
+        GraphicsDevice.DepthStencilState = ResolveDepthStencilState(mat);
         if (mat is { FillMode: FillMode.Solid, DepthBias: 0f, SlopeScaleDepthBias: 0f })
         {
             GraphicsDevice.RasterizerState = mat.CullMode switch
@@ -177,7 +164,7 @@ public partial class RenderingService
         }
         else
         {
-            var key = new RasterizerKey(mat.CullMode, mat.FillMode, mat.DepthBias, mat.SlopeScaleDepthBias);
+            var key = HashCode.Combine(mat.CullMode, mat.FillMode, mat.DepthBias, mat.SlopeScaleDepthBias);
             if (!RasterizerStateCache.TryGetValue(key, out var state))
             {
                 state = new RasterizerState
@@ -190,6 +177,26 @@ public partial class RenderingService
 
             GraphicsDevice.RasterizerState = state;
         }
+    }
+
+    private static DepthStencilState ResolveDepthStencilState(MaterialData mat)
+    {
+        var key = HashCode.Combine(mat.DepthWrite, mat.DepthFunc, mat.StencilWrite, mat.StencilFunc, mat.StencilRef);
+        if (!DepthStencilStateCache.TryGetValue(key, out var state))
+        {
+            state = new DepthStencilState
+            {
+                DepthBufferEnable = mat.DepthWrite || mat.DepthFunc != CompareFunction.Never,
+                DepthBufferWriteEnable = mat.DepthWrite,
+                DepthBufferFunction = mat.DepthFunc,
+                StencilEnable = true,
+                StencilFunction = mat.StencilFunc,
+                StencilPass = mat.StencilWrite ? StencilOperation.Replace : StencilOperation.Keep,
+                ReferenceStencil = mat.StencilRef
+            };
+            DepthStencilStateCache[key] = state;
+        }
+        return state;
     }
 
     private static BlendState ResolveBlendState(BlendMode mode, ColorWriteChannels colorWriteChannels)
