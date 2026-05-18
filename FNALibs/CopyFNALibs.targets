@@ -2,12 +2,10 @@
   <Target Name="ResolveFNALibs">
     <ItemGroup>
       <!-- When publishing with a RuntimeIdentifier, use RID to select libs regardless of host OS -->
-      <_FNALibs Include="$(MSBuildThisFileDirectory)x86\**\*.*" Condition="'$(RuntimeIdentifier)' == 'win-x86'" />
       <_FNALibs Include="$(MSBuildThisFileDirectory)x64\**\*.*" Condition="'$(RuntimeIdentifier)' == 'win-x64'" />
       <_FNALibs Include="$(MSBuildThisFileDirectory)libaarch64\**\*.*" Condition="'$(RuntimeIdentifier)' == 'osx-arm64' OR '$(RuntimeIdentifier)' == 'osx-x64'" />
       <_FNALibs Include="$(MSBuildThisFileDirectory)lib64\**\*.*" Condition="'$(RuntimeIdentifier)' == 'linux-x64'" />
       <!-- Fallback for local builds without a RuntimeIdentifier: use host OS -->
-      <_FNALibs Include="$(MSBuildThisFileDirectory)x86\**\*.*" Condition="'$(RuntimeIdentifier)' == '' AND '$(OS)' == 'Windows_NT' AND '$(Platform)' == 'x86'" />
       <_FNALibs Include="$(MSBuildThisFileDirectory)x64\**\*.*" Condition="'$(RuntimeIdentifier)' == '' AND '$(OS)' == 'Windows_NT' AND '$(Platform)' == 'x64'" />
       <_FNALibs Include="$(MSBuildThisFileDirectory)libaarch64\**\*.*" Condition="'$(RuntimeIdentifier)' == '' AND '$(OS)' != 'Windows_NT' AND '$(Platform)' == 'arm64'" />
       <_FNALibs Include="$(MSBuildThisFileDirectory)lib64\**\*.*" Condition="'$(RuntimeIdentifier)' == '' AND '$(OS)' != 'Windows_NT' AND '$(Platform)' == 'x64'" />
@@ -28,7 +26,6 @@
 
   <Target Name="CleanFNALibs" AfterTargets="Clean">
     <ItemGroup>
-      <_FNALibs Include="$(MSBuildThisFileDirectory)x86\**\*.*" Condition="'$(RuntimeIdentifier)' == 'win-x86' OR ('$(RuntimeIdentifier)' == '' AND '$(OS)' == 'Windows_NT' AND '$(Platform)' == 'x86')" />
       <_FNALibs Include="$(MSBuildThisFileDirectory)x64\**\*.*" Condition="'$(RuntimeIdentifier)' == 'win-x64' OR ('$(RuntimeIdentifier)' == '' AND '$(OS)' == 'Windows_NT' AND '$(Platform)' == 'x64')" />
       <_FNALibs Include="$(MSBuildThisFileDirectory)libaarch64\**\*.*" Condition="'$(RuntimeIdentifier)' == 'osx-arm64' OR '$(RuntimeIdentifier)' == 'osx-x64' OR ('$(RuntimeIdentifier)' == '' AND '$(OS)' != 'Windows_NT' AND '$(Platform)' == 'arm64')" />
       <_FNALibs Include="$(MSBuildThisFileDirectory)lib64\**\*.*" Condition="'$(RuntimeIdentifier)' == 'linux-x64' OR ('$(RuntimeIdentifier)' == '' AND '$(OS)' != 'Windows_NT' AND '$(Platform)' == 'x64')" />
