@@ -28,22 +28,12 @@ git submodule update --init
 
 ### Prerequisites
 
-- [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
-- `fxc.exe` for shader compilation (see below)
+- [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 
-### Shader Compiler (fxc.exe)
-
-The build requires `fxc.exe` to compile HLSL shaders. You can provide it in one of two ways:
-
-**Windows:**
-
-- Place `fxc.exe` in the `FXC/` directory, **or**
-- Install the [DirectX SDK (June 2010)](https://archive.org/details/dxsdk_jun10) — the build will locate it automatically via `%DXSDK_DIR%`
-
-**Linux / macOS (via Wine):**
-
-- Place `fxc.exe` in the `FXC/` directory and install Wine with `winetricks d3dcompiler_43`, **or**
-- Install the DirectX SDK under Wine with `winetricks dxsdk_jun2010`
+> [!NOTE]
+> The `fxc` shader compiler is now included in this repository.
+>
+> On Linux / macOS, make sure Wine is installed!
 
 ### Build and run locally
 
