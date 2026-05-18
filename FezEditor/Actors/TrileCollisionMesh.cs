@@ -79,7 +79,7 @@ public class TrileCollisionMesh : ActorComponent
         _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, quad, _material);
     }
 
-    public void AddInstanceData(Vector3 position, Dictionary<FaceOrientation, CollisionType> collision, Vector3 size)
+    public void AddInstanceData(Vector3 position, IDictionary<FaceOrientation, CollisionType> collision, Vector3 size)
     {
         position += size / 2f;
         size *= OverlayOversize;

@@ -1,6 +1,3 @@
 [submodule "FNA"]
 	path = FNA
 	url = https://github.com/FNA-XNA/FNA
-[submodule "FEZRepacker"]
-	path = FEZRepacker
-	url = https://github.com/FEZModding/FEZRepacker

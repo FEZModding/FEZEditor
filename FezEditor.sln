@@ -3,8 +3,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FezEditor", "FezEditor\FezE
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FNA.Core", "FNA\FNA.Core.csproj", "{85D8FE6C-B616-433C-9A90-9A6552296167}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FEZRepacker.Core", "FEZRepacker\Core\FEZRepacker.Core.csproj", "{510BD02A-1D5C-4895-BBA8-969CC5DD8EB5}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -19,9 +17,5 @@ Global
 		{85D8FE6C-B616-433C-9A90-9A6552296167}.Debug|x64.Build.0 = Debug|Any CPU
 		{85D8FE6C-B616-433C-9A90-9A6552296167}.Release|x64.ActiveCfg = Release|Any CPU
 		{85D8FE6C-B616-433C-9A90-9A6552296167}.Release|x64.Build.0 = Release|Any CPU
-		{510BD02A-1D5C-4895-BBA8-969CC5DD8EB5}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{510BD02A-1D5C-4895-BBA8-969CC5DD8EB5}.Debug|x64.Build.0 = Debug|Any CPU
-		{510BD02A-1D5C-4895-BBA8-969CC5DD8EB5}.Release|x64.ActiveCfg = Release|Any CPU
-		{510BD02A-1D5C-4895-BBA8-969CC5DD8EB5}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

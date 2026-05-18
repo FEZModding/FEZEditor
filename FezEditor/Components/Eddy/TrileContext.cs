@@ -912,7 +912,13 @@ internal sealed class TrileContext : BaseContext
 
         byte GetPhi(TrileEmplacement? emplacement)
         {
-            return Level.Triles.GetValueOrDefault(emplacement ?? new TrileEmplacement())?.PhiLight ?? _paintingPhi;
+            var emp = emplacement ?? new TrileEmplacement();
+            if (Level.Triles.TryGetValue(emp, out var trile))
+            {
+                return trile.PhiLight;
+            }
+
+            return _paintingPhi;
         }
 
         void AppendNewTrile(TrileEmplacement emplacement)

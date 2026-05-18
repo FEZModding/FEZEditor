@@ -535,7 +535,12 @@ internal class PathContext : BaseContext
             return Level.Groups.TryGetValue(_selectedPathId.Value, out var g) ? g.Path : null;
         }
 
-        return Level.Paths.GetValueOrDefault(_selectedPathId.Value);
+        if (Level.Paths.TryGetValue(_selectedPathId.Value, out var path))
+        {
+            return path;
+        }
+
+        return null;
     }
 
     private void TeardownVisualization()

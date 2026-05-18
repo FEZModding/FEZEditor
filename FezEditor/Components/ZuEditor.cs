@@ -151,7 +151,7 @@ public class ZuEditor : EditorComponent
             }
 
             ImGui.SameLine();
-            ImGui.TextDisabled($"U+{(int)_font.DefaultCharacter:X4}");
+            ImGui.TextDisabled($"U+{(int)_font.DefaultCharacter!:X4}");
         }
     }
 
@@ -709,9 +709,9 @@ public class ZuEditor : EditorComponent
             if (charIndex < 0)
             {
                 // Use default character if available
-                if (_font.DefaultCharacter != '\u0000')
+                if (_font.DefaultCharacter.HasValue && _font.DefaultCharacter != '\u0000')
                 {
-                    charIndex = _font.Characters.IndexOf(_font.DefaultCharacter);
+                    charIndex = _font.Characters.IndexOf(_font.DefaultCharacter.Value);
                 }
 
                 if (charIndex < 0)

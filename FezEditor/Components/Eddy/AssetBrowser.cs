@@ -175,7 +175,12 @@ public class AssetBrowser : IDisposable
 
     public string? GetTrileNameById(int trileId)
     {
-        return _trileSet?.Triles.GetValueOrDefault(trileId)?.Name;
+        if (_trileSet?.Triles.ContainsKey(trileId) ?? false)
+        {
+            return  _trileSet.Triles[trileId].Name;
+        }
+
+        return null;
     }
 
     public Texture2D? GetThumbnail(AssetType type, string name)

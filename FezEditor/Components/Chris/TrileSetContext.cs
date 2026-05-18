@@ -339,7 +339,7 @@ internal class TrileSetContext : IContext
         return ImGui.Combo("##item", ref face, faces, faces.Length);
     }
 
-    public Dictionary<FaceOrientation, CollisionType> GetTrileCollision()
+    public IDictionary<FaceOrientation, CollisionType> GetTrileCollision()
     {
         return Trile.Faces;
     }
