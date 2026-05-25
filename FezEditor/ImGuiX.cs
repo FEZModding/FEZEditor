@@ -662,7 +662,7 @@ public static class ImGuiX
         return changed;
     }
 
-    public static bool EditableArray<T>(string label, T[] items, RenderItem<T> renderItem)
+    public static bool EditableArray<T>(string label, ref T[] items, RenderItem<T> renderItem)
     {
         const ImGuiChildFlags flags = ImGuiChildFlags.Border | ImGuiChildFlags.AutoResizeY;
         var hash = label.GetHashCode();
@@ -894,6 +894,12 @@ public static class ImGuiX
         if (ImGui.Button(clock.Running ? Lucide.Pause: Lucide.Play)) {
             clock.Running = !clock.Running;
         }
+    }
+
+    public static bool NullableToggleButton<T>(string label, T? value) where T : class
+    {
+        var buttonText = value != null ? $"{Lucide.Trash2} Remove" : $"{Lucide.Plus} Add";
+        return ImGui.Button($"{buttonText}##{label}");
     }
 
     #endregion

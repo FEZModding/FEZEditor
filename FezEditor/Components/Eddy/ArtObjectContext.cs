@@ -518,260 +518,284 @@ internal class ArtObjectContext : BaseContext
 
         ImGui.SeparatorText("Actor Settings");
 
+        if (ImGuiX.NullableToggleButton("ActorSettings", instance.ActorSettings))
+        {
+            var shouldAdd = instance.ActorSettings == null;
+            var actionName = shouldAdd ? "Add" : "Remove";
+            using (Eddy.History.BeginScope($"{actionName} ActorSettings", EddyContext.Trile))
+            {
+                instance.ActorSettings = shouldAdd ? new ArtObjectActorSettings { Segment = null } : null;
+            }
+        }
+
         var settings = instance.ActorSettings;
-
-        var inactive = settings.Inactive;
-        if (ImGui.Checkbox("Inactive", ref inactive))
+        if (settings != null)
         {
-            using (Eddy.History.BeginScope("Edit AO Inactive", EddyContext.ArtObject))
+            var inactive = settings.Inactive;
+            if (ImGui.Checkbox("Inactive", ref inactive))
             {
-                settings.Inactive = inactive;
-            }
-        }
-
-        var containedTrile = (int)settings.ContainedTrile;
-        var actorNames = Enum.GetNames<ActorType>();
-        if (ImGui.Combo("Contained Trile", ref containedTrile, actorNames, actorNames.Length))
-        {
-            using (Eddy.History.BeginScope("Edit AO Contained Trile", EddyContext.ArtObject))
-            {
-                settings.ContainedTrile = (ActorType)containedTrile;
-            }
-        }
-
-        var attachedGroup = settings.AttachedGroup ?? InvalidId;
-        if (ImGui.InputInt("Attached Group", ref attachedGroup))
-        {
-            using (Eddy.History.BeginScope("Edit AO Attached Group", EddyContext.ArtObject))
-            {
-                settings.AttachedGroup = attachedGroup == InvalidId ? null : attachedGroup;
-            }
-        }
-
-        var spinEvery = settings.SpinEvery;
-        if (ImGui.DragFloat("Spin Every", ref spinEvery, 0.1f))
-        {
-            using (Eddy.History.BeginScope("Edit AO Spin Every", EddyContext.ArtObject))
-            {
-                settings.SpinEvery = spinEvery;
-            }
-        }
-
-        var spinOffset = settings.SpinOffset;
-        if (ImGui.DragFloat("Spin Offset", ref spinOffset, 0.1f))
-        {
-            using (Eddy.History.BeginScope("Edit AO Spin Offset", EddyContext.ArtObject))
-            {
-                settings.SpinOffset = spinOffset;
-            }
-        }
-
-        var offCenter = settings.OffCenter;
-        if (ImGui.Checkbox("Off Center", ref offCenter))
-        {
-            using (Eddy.History.BeginScope("Edit AO Off Center", EddyContext.ArtObject))
-            {
-                settings.OffCenter = offCenter;
-            }
-        }
-
-        var spinView = (int)settings.SpinView;
-        var viewpoints = Enum.GetNames<Viewpoint>();
-        if (ImGui.Combo("Spin View", ref spinView, viewpoints, viewpoints.Length))
-        {
-            using (Eddy.History.BeginScope("Edit AO Spin View", EddyContext.ArtObject))
-            {
-                settings.SpinView = (Viewpoint)spinView;
-            }
-        }
-
-        var rotationCenter = settings.RotationCenter.ToXna();
-        if (ImGuiX.DragFloat3("Rotation Center", ref rotationCenter, 0.01f))
-        {
-            using (Eddy.History.BeginScope("Edit AO Rotation Center", EddyContext.ArtObject))
-            {
-                settings.RotationCenter = rotationCenter.ToRepacker();
-            }
-        }
-
-        var nextNode = settings.NextNode ?? InvalidId;
-        if (ImGui.InputInt("Next Node", ref nextNode))
-        {
-            using (Eddy.History.BeginScope("Edit AO Next Node", EddyContext.ArtObject))
-            {
-                settings.NextNode = nextNode == InvalidId ? null : nextNode;
-            }
-        }
-
-        var destinationLevel = settings.DestinationLevel.EmptyIfNull();
-        if (ImGui.InputText("Destination Level", ref destinationLevel, 255))
-        {
-            using (Eddy.History.BeginScope("Edit AO Destination Level", EddyContext.ArtObject))
-            {
-                settings.DestinationLevel = destinationLevel.NullIfEmpty();
-            }
-        }
-
-        var treasureMapName = settings.TreasureMapName.EmptyIfNull();
-        if (ImGui.InputText("Treasure Map Name", ref treasureMapName, 255))
-        {
-            using (Eddy.History.BeginScope("Edit AO Treasure Map Name", EddyContext.ArtObject))
-            {
-                settings.TreasureMapName = treasureMapName.NullIfEmpty();
-            }
-        }
-
-        var timeswitchWindBackSpeed = settings.TimeswitchWindBackSpeed;
-        if (ImGui.DragFloat("Timeswitch Wind Back Speed", ref timeswitchWindBackSpeed, 0.01f))
-        {
-            using (Eddy.History.BeginScope("Edit AO Timeswitch Wind Back Speed", EddyContext.ArtObject))
-            {
-                settings.TimeswitchWindBackSpeed = timeswitchWindBackSpeed;
-            }
-        }
-
-        var vibrationPattern = settings.VibrationPattern.EmptyIfNull();
-        if (ImGuiX.EditableArray("Vibration Pattern", vibrationPattern, RenderVibrationMotorItem))
-        {
-            using (Eddy.History.BeginScope("Edit AO Vibration Pattern", EddyContext.ArtObject))
-            {
-                settings.VibrationPattern = vibrationPattern.NullIfEmpty();
-            }
-        }
-
-        var codePattern = settings.CodePattern.EmptyIfNull();
-        if (ImGuiX.EditableArray("Code Pattern", codePattern, RenderCodeInputItem))
-        {
-            using (Eddy.History.BeginScope("Edit AO Code Pattern", EddyContext.ArtObject))
-            {
-                settings.CodePattern = codePattern.NullIfEmpty();
-            }
-        }
-
-        var invisibleSides = settings.InvisibleSides.EmptyIfNull();
-        if (ImGuiX.EditableArray("Invisible Sides", invisibleSides, RenderFaceOrientationItem))
-        {
-            using (Eddy.History.BeginScope("Edit AO Invisible Sides", EddyContext.ArtObject))
-            {
-                settings.InvisibleSides = invisibleSides.Distinct().ToArray().NullIfEmpty();
-            }
-        }
-
-        ImGui.SeparatorText("Segment");
-        {
-            // Destination is recalculated at runtime by MovingGroupsHost from world-space AO positions
-            // Editing it here has no effect.
-            //
-            // var destination = segment.Destination.ToXna();
-            // if (ImGuiX.DragFloat3("Destination", ref destination, 0.01f))
-            // {
-            //     using (Eddy.History.BeginScope("Edit AO Segment Destination", EddyContext.ArtObject))
-            //     {
-            //         segment.Destination = destination.ToRepacker();
-            //     }
-            // }
-
-            var duration = settings.Segment.Duration;
-            if (ImGuiX.TimeSpanInput("Duration", ref duration))
-            {
-                using (Eddy.History.BeginScope("Edit AO Segment Duration", EddyContext.ArtObject))
+                using (Eddy.History.BeginScope("Edit AO Inactive", EddyContext.ArtObject))
                 {
-                    settings.Segment.Duration = duration;
+                    settings.Inactive = inactive;
                 }
             }
 
-            var waitTimeOnStart = settings.Segment.WaitTimeOnStart;
-            if (ImGuiX.TimeSpanInput("Wait Time On Start", ref waitTimeOnStart))
+            var containedTrile = (int)settings.ContainedTrile;
+            var actorNames = Enum.GetNames<ActorType>();
+            if (ImGui.Combo("Contained Trile", ref containedTrile, actorNames, actorNames.Length))
             {
-                using (Eddy.History.BeginScope("Edit AO Segment Wait Time On Start", EddyContext.ArtObject))
+                using (Eddy.History.BeginScope("Edit AO Contained Trile", EddyContext.ArtObject))
                 {
-                    settings.Segment.WaitTimeOnStart = waitTimeOnStart;
+                    settings.ContainedTrile = (ActorType)containedTrile;
                 }
             }
 
-            var waitTimeOnFinish = settings.Segment.WaitTimeOnFinish;
-            if (ImGuiX.TimeSpanInput("Wait Time On Finish", ref waitTimeOnFinish))
+            var attachedGroup = settings.AttachedGroup ?? InvalidId;
+            if (ImGui.InputInt("Attached Group", ref attachedGroup))
             {
-                using (Eddy.History.BeginScope("Edit AO Segment Wait Time On Finish", EddyContext.ArtObject))
+                using (Eddy.History.BeginScope("Edit AO Attached Group", EddyContext.ArtObject))
                 {
-                    settings.Segment.WaitTimeOnFinish = waitTimeOnFinish;
+                    settings.AttachedGroup = attachedGroup == InvalidId ? null : attachedGroup;
                 }
             }
 
-            var acceleration = settings.Segment.Acceleration;
-            if (ImGui.DragFloat("Acceleration", ref acceleration, 0.01f))
+            var spinEvery = settings.SpinEvery;
+            if (ImGui.DragFloat("Spin Every", ref spinEvery, 0.1f))
             {
-                using (Eddy.History.BeginScope("Edit AO Segment Acceleration", EddyContext.ArtObject))
+                using (Eddy.History.BeginScope("Edit AO Spin Every", EddyContext.ArtObject))
                 {
-                    settings.Segment.Acceleration = acceleration;
+                    settings.SpinEvery = spinEvery;
                 }
             }
 
-            var deceleration = settings.Segment.Deceleration;
-            if (ImGui.DragFloat("Deceleration", ref deceleration, 0.01f))
+            var spinOffset = settings.SpinOffset;
+            if (ImGui.DragFloat("Spin Offset", ref spinOffset, 0.1f))
             {
-                using (Eddy.History.BeginScope("Edit AO Segment Deceleration", EddyContext.ArtObject))
+                using (Eddy.History.BeginScope("Edit AO Spin Offset", EddyContext.ArtObject))
                 {
-                    settings.Segment.Deceleration = deceleration;
+                    settings.SpinOffset = spinOffset;
                 }
             }
 
-            var jitterFactor = settings.Segment.JitterFactor;
-            if (ImGui.DragFloat("Jitter Factor", ref jitterFactor, 0.01f))
+            var offCenter = settings.OffCenter;
+            if (ImGui.Checkbox("Off Center", ref offCenter))
             {
-                using (Eddy.History.BeginScope("Edit AO Segment Jitter Factor", EddyContext.ArtObject))
+                using (Eddy.History.BeginScope("Edit AO Off Center", EddyContext.ArtObject))
                 {
-                    settings.Segment.JitterFactor = jitterFactor;
+                    settings.OffCenter = offCenter;
                 }
             }
 
-            // Orientation is not used by MovingGroupsHost for connective rail segments.
-            //
-            // var orientation = segment.Orientation.ToXna();
-            // var orientationEuler = orientation.ToEuler();
-            // if (ImGuiX.DragFloat3("Orientation (Euler)", ref orientationEuler, 1f))
-            // {
-            //     using (Eddy.History.BeginScope("Edit AO Segment Orientation", EddyContext.ArtObject))
-            //     {
-            //         segment.Orientation = orientationEuler.FromEuler().ToRepacker();
-            //     }
-            // }
-
-            var hasCustomData = settings.Segment.CustomData != null;
-            if (ImGui.Checkbox("Custom Camera Data", ref hasCustomData))
+            var spinView = (int)settings.SpinView;
+            var viewpoints = Enum.GetNames<Viewpoint>();
+            if (ImGui.Combo("Spin View", ref spinView, viewpoints, viewpoints.Length))
             {
-                using (Eddy.History.BeginScope("Edit AO Segment Custom Data", EddyContext.ArtObject))
+                using (Eddy.History.BeginScope("Edit AO Spin View", EddyContext.ArtObject))
                 {
-                    settings.Segment.CustomData = hasCustomData ? new CameraNodeData() : null;
+                    settings.SpinView = (Viewpoint)spinView;
                 }
             }
 
-            if (settings.Segment.CustomData is { } customData)
+            var rotationCenter = settings.RotationCenter.ToXna();
+            if (ImGuiX.DragFloat3("Rotation Center", ref rotationCenter, 0.01f))
             {
-                var perspective = customData.Perspective;
-                if (ImGui.Checkbox("Perspective##cd", ref perspective))
+                using (Eddy.History.BeginScope("Edit AO Rotation Center", EddyContext.ArtObject))
                 {
-                    using (Eddy.History.BeginScope("Edit AO Segment Custom Data Perspective", EddyContext.ArtObject))
+                    settings.RotationCenter = rotationCenter.ToRepacker();
+                }
+            }
+
+            var nextNode = settings.NextNode ?? InvalidId;
+            if (ImGui.InputInt("Next Node", ref nextNode))
+            {
+                using (Eddy.History.BeginScope("Edit AO Next Node", EddyContext.ArtObject))
+                {
+                    settings.NextNode = nextNode == InvalidId ? null : nextNode;
+                }
+            }
+
+            var destinationLevel = settings.DestinationLevel.EmptyIfNull();
+            if (ImGui.InputText("Destination Level", ref destinationLevel, 255))
+            {
+                using (Eddy.History.BeginScope("Edit AO Destination Level", EddyContext.ArtObject))
+                {
+                    settings.DestinationLevel = destinationLevel.NullIfEmpty();
+                }
+            }
+
+            var treasureMapName = settings.TreasureMapName.EmptyIfNull();
+            if (ImGui.InputText("Treasure Map Name", ref treasureMapName, 255))
+            {
+                using (Eddy.History.BeginScope("Edit AO Treasure Map Name", EddyContext.ArtObject))
+                {
+                    settings.TreasureMapName = treasureMapName.NullIfEmpty();
+                }
+            }
+
+            var timeswitchWindBackSpeed = settings.TimeswitchWindBackSpeed;
+            if (ImGui.DragFloat("Timeswitch Wind Back Speed", ref timeswitchWindBackSpeed, 0.01f))
+            {
+                using (Eddy.History.BeginScope("Edit AO Timeswitch Wind Back Speed", EddyContext.ArtObject))
+                {
+                    settings.TimeswitchWindBackSpeed = timeswitchWindBackSpeed;
+                }
+            }
+
+            var vibrationPattern = settings.VibrationPattern.ToArray().EmptyIfNull();
+            if (ImGuiX.EditableArray("Vibration Pattern", ref vibrationPattern, RenderVibrationMotorItem))
+            {
+                using (Eddy.History.BeginScope("Edit AO Vibration Pattern", EddyContext.ArtObject))
+                {
+                    settings.VibrationPattern = vibrationPattern.NullIfEmpty();
+                }
+            }
+
+            var codePattern = settings.CodePattern.ToArray().EmptyIfNull();
+            if (ImGuiX.EditableArray("Code Pattern", ref codePattern, RenderCodeInputItem))
+            {
+                using (Eddy.History.BeginScope("Edit AO Code Pattern", EddyContext.ArtObject))
+                {
+                    settings.CodePattern = codePattern.NullIfEmpty();
+                }
+            }
+
+            var invisibleSides = settings.InvisibleSides.ToArray().EmptyIfNull();
+            if (ImGuiX.EditableArray("Invisible Sides", ref invisibleSides, RenderFaceOrientationItem))
+            {
+                using (Eddy.History.BeginScope("Edit AO Invisible Sides", EddyContext.ArtObject))
+                {
+                    settings.InvisibleSides = invisibleSides.Distinct().ToArray().NullIfEmpty();
+                }
+            }
+
+            ImGui.SeparatorText("Segment");
+
+            if (ImGuiX.NullableToggleButton("Segment", settings.Segment))
+            {
+                var shouldAdd = settings.Segment == null;
+                var actionName = shouldAdd ? "Add" : "Remove";
+                using (Eddy.History.BeginScope($"{actionName} AO Segment", EddyContext.Trile))
+                {
+                    settings.Segment = shouldAdd ? new PathSegment() : null;
+                }
+            }
+
+            if (settings.Segment != null)
+            {
+                // Destination is recalculated at runtime by MovingGroupsHost from world-space AO positions
+                // Editing it here has no effect.
+                //
+                // var destination = segment.Destination.ToXna();
+                // if (ImGuiX.DragFloat3("Destination", ref destination, 0.01f))
+                // {
+                //     using (Eddy.History.BeginScope("Edit AO Segment Destination", EddyContext.ArtObject))
+                //     {
+                //         segment.Destination = destination.ToRepacker();
+                //     }
+                // }
+
+                var duration = settings.Segment.Duration;
+                if (ImGuiX.TimeSpanInput("Duration", ref duration))
+                {
+                    using (Eddy.History.BeginScope("Edit AO Segment Duration", EddyContext.ArtObject))
                     {
-                        customData.Perspective = perspective;
+                        settings.Segment.Duration = duration;
                     }
                 }
 
-                var pixelsPerTrixel = customData.PixelsPerTrixel;
-                if (ImGui.InputInt("Pixels Per Trixel##cd", ref pixelsPerTrixel))
+                var waitTimeOnStart = settings.Segment.WaitTimeOnStart;
+                if (ImGuiX.TimeSpanInput("Wait Time On Start", ref waitTimeOnStart))
                 {
-                    using (Eddy.History.BeginScope("Edit AO Segment Custom Data Pixels Per Trixel", EddyContext.ArtObject))
+                    using (Eddy.History.BeginScope("Edit AO Segment Wait Time On Start", EddyContext.ArtObject))
                     {
-                        customData.PixelsPerTrixel = pixelsPerTrixel;
+                        settings.Segment.WaitTimeOnStart = waitTimeOnStart;
                     }
                 }
 
-                var soundName = customData.SoundName;
-                if (ImGui.InputText("Sound Name##cd", ref soundName, 255))
+                var waitTimeOnFinish = settings.Segment.WaitTimeOnFinish;
+                if (ImGuiX.TimeSpanInput("Wait Time On Finish", ref waitTimeOnFinish))
                 {
-                    using (Eddy.History.BeginScope("Edit AO Segment Custom Data Sound Name", EddyContext.ArtObject))
+                    using (Eddy.History.BeginScope("Edit AO Segment Wait Time On Finish", EddyContext.ArtObject))
                     {
-                        customData.SoundName = soundName;
+                        settings.Segment.WaitTimeOnFinish = waitTimeOnFinish;
+                    }
+                }
+
+                var acceleration = settings.Segment.Acceleration;
+                if (ImGui.DragFloat("Acceleration", ref acceleration, 0.01f))
+                {
+                    using (Eddy.History.BeginScope("Edit AO Segment Acceleration", EddyContext.ArtObject))
+                    {
+                        settings.Segment.Acceleration = acceleration;
+                    }
+                }
+
+                var deceleration = settings.Segment.Deceleration;
+                if (ImGui.DragFloat("Deceleration", ref deceleration, 0.01f))
+                {
+                    using (Eddy.History.BeginScope("Edit AO Segment Deceleration", EddyContext.ArtObject))
+                    {
+                        settings.Segment.Deceleration = deceleration;
+                    }
+                }
+
+                var jitterFactor = settings.Segment.JitterFactor;
+                if (ImGui.DragFloat("Jitter Factor", ref jitterFactor, 0.01f))
+                {
+                    using (Eddy.History.BeginScope("Edit AO Segment Jitter Factor", EddyContext.ArtObject))
+                    {
+                        settings.Segment.JitterFactor = jitterFactor;
+                    }
+                }
+
+                // Orientation is not used by MovingGroupsHost for connective rail segments.
+                //
+                // var orientation = segment.Orientation.ToXna();
+                // var orientationEuler = orientation.ToEuler();
+                // if (ImGuiX.DragFloat3("Orientation (Euler)", ref orientationEuler, 1f))
+                // {
+                //     using (Eddy.History.BeginScope("Edit AO Segment Orientation", EddyContext.ArtObject))
+                //     {
+                //         segment.Orientation = orientationEuler.FromEuler().ToRepacker();
+                //     }
+                // }
+
+                var hasCustomData = settings.Segment.CustomData != null;
+                if (ImGui.Checkbox("Custom Camera Data", ref hasCustomData))
+                {
+                    using (Eddy.History.BeginScope("Edit AO Segment Custom Data", EddyContext.ArtObject))
+                    {
+                        settings.Segment.CustomData = hasCustomData ? new CameraNodeData() : null;
+                    }
+                }
+
+                if (settings.Segment.CustomData is { } customData)
+                {
+                    var perspective = customData.Perspective;
+                    if (ImGui.Checkbox("Perspective##cd", ref perspective))
+                    {
+                        using (Eddy.History.BeginScope("Edit AO Segment Custom Data Perspective", EddyContext.ArtObject))
+                        {
+                            customData.Perspective = perspective;
+                        }
+                    }
+
+                    var pixelsPerTrixel = customData.PixelsPerTrixel;
+                    if (ImGui.InputInt("Pixels Per Trixel##cd", ref pixelsPerTrixel))
+                    {
+                        using (Eddy.History.BeginScope("Edit AO Segment Custom Data Pixels Per Trixel", EddyContext.ArtObject))
+                        {
+                            customData.PixelsPerTrixel = pixelsPerTrixel;
+                        }
+                    }
+
+                    var soundName = customData.SoundName;
+                    if (ImGui.InputText("Sound Name##cd", ref soundName, 255))
+                    {
+                        using (Eddy.History.BeginScope("Edit AO Segment Custom Data Sound Name", EddyContext.ArtObject))
+                        {
+                            customData.SoundName = soundName;
+                        }
                     }
                 }
             }

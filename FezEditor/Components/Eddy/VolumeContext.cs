@@ -404,88 +404,100 @@ internal class VolumeContext : BaseContext
             }
         }
 
-        var orientations = instance.Orientations.ToArray();
-        if (ImGuiX.EditableArray("Orientations", orientations, RenderFace))
+        var orientations = instance.Orientations.ToArray().EmptyIfNull();
+        if (ImGuiX.EditableArray("Orientations", ref orientations, RenderFace))
         {
             using (Eddy.History.BeginScope("Edit Orientations", EddyContext.Volume))
             {
-                instance.Orientations = orientations;
+                instance.Orientations = orientations.NullIfEmpty();
             }
         }
 
         ImGui.SeparatorText("Actor Settings");
 
+        if (ImGuiX.NullableToggleButton("ActorSettings", instance.ActorSettings))
+        {
+            var shouldAdd = instance.ActorSettings == null;
+            var actionName = shouldAdd ? "Add" : "Remove";
+            using (Eddy.History.BeginScope($"{actionName} ActorSettings", EddyContext.Trile))
+            {
+                instance.ActorSettings = shouldAdd ? new VolumeActorSettings() : null;
+            }
+        }
+
         var settings = instance.ActorSettings;
-
-        var farawayPlaneOffset = settings.FarawayPlaneOffset.ToXna();
-        if (ImGuiX.InputFloat2("Faraway Plane Offset", ref farawayPlaneOffset))
+        if (settings != null)
         {
-            using (Eddy.History.BeginScope("Edit Faraway Plane Offset", EddyContext.Volume))
+            var farawayPlaneOffset = settings.FarawayPlaneOffset.ToXna();
+            if (ImGuiX.InputFloat2("Faraway Plane Offset", ref farawayPlaneOffset))
             {
-                settings.FarawayPlaneOffset = farawayPlaneOffset.ToRepacker();
+                using (Eddy.History.BeginScope("Edit Faraway Plane Offset", EddyContext.Volume))
+                {
+                    settings.FarawayPlaneOffset = farawayPlaneOffset.ToRepacker();
+                }
             }
-        }
 
-        var isPointOfInterest = settings.IsPointOfInterest;
-        if (ImGui.Checkbox("Is Point Of Interest", ref isPointOfInterest))
-        {
-            using (Eddy.History.BeginScope("Edit Is Point Of Interest", EddyContext.Volume))
+            var isPointOfInterest = settings.IsPointOfInterest;
+            if (ImGui.Checkbox("Is Point Of Interest", ref isPointOfInterest))
             {
-                settings.IsPointOfInterest = isPointOfInterest;
+                using (Eddy.History.BeginScope("Edit Is Point Of Interest", EddyContext.Volume))
+                {
+                    settings.IsPointOfInterest = isPointOfInterest;
+                }
             }
-        }
 
-        var dotDialogue = settings.DotDialogue.ToList();
-        if (ImGuiX.EditableList("Dot Dialogue", dotDialogue, RenderDotDialog, () => new DotDialogueLine()))
-        {
-            using (Eddy.History.BeginScope("Edit Dot Dialogue", EddyContext.Volume))
+            var dotDialogue = settings.DotDialogue.ToList();
+            if (ImGuiX.EditableList("Dot Dialogue", dotDialogue, RenderDotDialog, () => new DotDialogueLine()))
             {
-                settings.DotDialogue = dotDialogue;
+                using (Eddy.History.BeginScope("Edit Dot Dialogue", EddyContext.Volume))
+                {
+                    settings.DotDialogue = dotDialogue;
+                }
             }
-        }
 
-        var waterLocked = settings.WaterLocked;
-        if (ImGui.Checkbox("Water Locked", ref waterLocked))
-        {
-            using (Eddy.History.BeginScope("Edit Water Locked", EddyContext.Volume))
+            var waterLocked = settings.WaterLocked;
+            if (ImGui.Checkbox("Water Locked", ref waterLocked))
             {
-                settings.WaterLocked = waterLocked;
+                using (Eddy.History.BeginScope("Edit Water Locked", EddyContext.Volume))
+                {
+                    settings.WaterLocked = waterLocked;
+                }
             }
-        }
 
-        var codePattern = settings.CodePattern.EmptyIfNull();
-        if (ImGuiX.EditableArray("Code Pattern", codePattern, RenderCodePattern))
-        {
-            using (Eddy.History.BeginScope("Edit Code Pattern", EddyContext.Volume))
+            var codePattern = settings.CodePattern.ToArray().EmptyIfNull();
+            if (ImGuiX.EditableArray("Code Pattern", ref codePattern, RenderCodePattern))
             {
-                settings.CodePattern = codePattern.NullIfEmpty();
+                using (Eddy.History.BeginScope("Edit Code Pattern", EddyContext.Volume))
+                {
+                    settings.CodePattern = codePattern.NullIfEmpty();
+                }
             }
-        }
 
-        var isBlackHole = settings.IsBlackHole;
-        if (ImGui.Checkbox("Is Black Hole", ref isBlackHole))
-        {
-            using (Eddy.History.BeginScope("Edit Is Black Hole", EddyContext.Volume))
+            var isBlackHole = settings.IsBlackHole;
+            if (ImGui.Checkbox("Is Black Hole", ref isBlackHole))
             {
-                settings.IsBlackHole = isBlackHole;
+                using (Eddy.History.BeginScope("Edit Is Black Hole", EddyContext.Volume))
+                {
+                    settings.IsBlackHole = isBlackHole;
+                }
             }
-        }
 
-        var needsTrigger = settings.NeedsTrigger;
-        if (ImGui.Checkbox("Needs Trigger", ref needsTrigger))
-        {
-            using (Eddy.History.BeginScope("Edit Needs Trigger", EddyContext.Volume))
+            var needsTrigger = settings.NeedsTrigger;
+            if (ImGui.Checkbox("Needs Trigger", ref needsTrigger))
             {
-                settings.NeedsTrigger = needsTrigger;
+                using (Eddy.History.BeginScope("Edit Needs Trigger", EddyContext.Volume))
+                {
+                    settings.NeedsTrigger = needsTrigger;
+                }
             }
-        }
 
-        var isSecretPassage = settings.IsSecretPassage;
-        if (ImGui.Checkbox("Is Secret Passage", ref isSecretPassage))
-        {
-            using (Eddy.History.BeginScope("Edit Is Secret Passage", EddyContext.Volume))
+            var isSecretPassage = settings.IsSecretPassage;
+            if (ImGui.Checkbox("Is Secret Passage", ref isSecretPassage))
             {
-                settings.IsSecretPassage = isSecretPassage;
+                using (Eddy.History.BeginScope("Edit Is Secret Passage", EddyContext.Volume))
+                {
+                    settings.IsSecretPassage = isSecretPassage;
+                }
             }
         }
     }
@@ -570,7 +582,7 @@ internal class VolumeContext : BaseContext
                 if (actor.TryGetComponent<VolumeMesh>(out var volumeMesh))
                 {
                     volumeMesh!.Size = size;
-                    volumeMesh.IsBlackHole = instance.ActorSettings.IsBlackHole;
+                    volumeMesh.IsBlackHole = instance.ActorSettings is {IsBlackHole: true};
                 }
             }
             else

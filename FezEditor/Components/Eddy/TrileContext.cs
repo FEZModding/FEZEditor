@@ -1425,25 +1425,13 @@ internal sealed class TrileContext : BaseContext
 
         ImGui.SeparatorText("Actor Settings");
 
-        if (instance.ActorSettings == null)
+        if (ImGuiX.NullableToggleButton("ActorSettings", instance.ActorSettings))
         {
-            if (ImGui.Button($"{Lucide.Plus} Add"))
+            var shouldAdd = instance.ActorSettings == null;
+            var actionName = shouldAdd ? "Add" : "Remove";
+            using (Eddy.History.BeginScope($"{actionName} ActorSettings", EddyContext.Trile))
             {
-                using (Eddy.History.BeginScope("Add ActorSettings", EddyContext.Trile))
-                {
-                    instance.ActorSettings = new TrileInstanceActorSettings();
-                }
-            }
-        }
-
-        if (instance.ActorSettings != null)
-        {
-            if (ImGui.Button($"{Lucide.Trash2} Remove"))
-            {
-                using (Eddy.History.BeginScope("Remove ActorSettings", EddyContext.Trile))
-                {
-                    instance.ActorSettings = null;
-                }
+                instance.ActorSettings = shouldAdd ? new TrileInstanceActorSettings() : null;
             }
         }
 
@@ -1467,30 +1455,30 @@ internal sealed class TrileContext : BaseContext
                 }
             }
 
-            var sequence = instance.ActorSettings.Sequence.ToArray();
-            if (ImGuiX.EditableArray("Sequence", sequence, RenderItem))
+            var sequence = instance.ActorSettings.Sequence.ToArray().EmptyIfNull();
+            if (ImGuiX.EditableArray("Sequence", ref sequence, RenderItem))
             {
                 using (Eddy.History.BeginScope("Edit Sequence", EddyContext.Trile))
                 {
-                    instance.ActorSettings.Sequence = sequence;
+                    instance.ActorSettings.Sequence = sequence.NullIfEmpty();
                 }
             }
 
-            var seqSample = instance.ActorSettings.SequenceSampleName;
+            var seqSample = instance.ActorSettings.SequenceSampleName.EmptyIfNull();
             if (ImGui.InputText("Sequence Sample", ref seqSample, 255))
             {
                 using (Eddy.History.BeginScope("Edit Sequence Sample", EddyContext.Trile))
                 {
-                    instance.ActorSettings.SequenceSampleName = seqSample;
+                    instance.ActorSettings.SequenceSampleName = seqSample.NullIfEmpty();
                 }
             }
 
-            var altSeqSample = instance.ActorSettings.SequenceAlternateSampleName;
+            var altSeqSample = instance.ActorSettings.SequenceAlternateSampleName.EmptyIfNull();
             if (ImGui.InputText("Sequence Alternate Sample", ref altSeqSample, 255))
             {
                 using (Eddy.History.BeginScope("Edit Sequence Alternate Sample", EddyContext.Trile))
                 {
-                    instance.ActorSettings.SequenceAlternateSampleName = altSeqSample;
+                    instance.ActorSettings.SequenceAlternateSampleName = altSeqSample.NullIfEmpty();
                 }
             }
 
