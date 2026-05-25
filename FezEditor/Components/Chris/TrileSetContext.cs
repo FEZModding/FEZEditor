@@ -346,7 +346,7 @@ internal class TrileSetContext : IContext
 
     public IEnumerable<Entry> EnumerateTriles(string filter = "")
     {
-        var ids = _set.Triles.Keys.ToArray();
+        var ids = _set.Triles.Keys.OrderBy(k => k).ToArray();
         foreach (var id in ids)
         {
             var trile = _set.Triles[id];
@@ -429,7 +429,7 @@ internal class TrileSetContext : IContext
         var atlasData = new byte[AtlasWidth * atlasHeight * 4];
         var i = 0;
 
-        foreach (var (id, trile) in set.Triles)
+        foreach (var (id, trile) in set.Triles.OrderBy(kv => kv.Key))
         {
             var col = i % AtlasColumns;
             var row = i / AtlasColumns;
