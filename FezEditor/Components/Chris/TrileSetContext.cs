@@ -135,6 +135,7 @@ internal class TrileSetContext : IContext
     public object Dematerialize(TrixelObject obj)
     {
         var trile = new Trile { Size = obj.Size.ToRepacker() };
+        trile.Geometry = new IndexedPrimitives<VertexInstance, RVector4>();
         (trile.Geometry.Vertices, trile.Geometry.Indices) = TrixelMaterializer.Dematerialize(obj);
         _set.Triles[Id] = trile;
 
@@ -490,7 +491,8 @@ internal class TrileSetContext : IContext
                 [FaceOrientation.Right] = CollisionType.None,
                 [FaceOrientation.Back] = CollisionType.None,
                 [FaceOrientation.Left] = CollisionType.None
-            }
+            },
+            Geometry = new IndexedPrimitives<VertexInstance, RVector4>()
         };
 
         var obj = new TrixelObject { Size = Vector3.One, Offset = new Vector3(0.5f) };

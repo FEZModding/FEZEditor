@@ -4,9 +4,11 @@ using FezEditor.Components.Chris;
 using FezEditor.Structure;
 using FezEditor.Tools;
 using FEZRepacker.Core.Definitions.Game.ArtObject;
+using FEZRepacker.Core.Definitions.Game.Graphics;
 using FEZRepacker.Core.Definitions.Game.TrileSet;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
+using Matrix = FEZRepacker.Core.Definitions.Game.XNA.Matrix;
 
 namespace FezEditor.Components;
 
@@ -693,7 +695,8 @@ public class ChrisEditor : EditorComponent, IChrisEditor
             {
                 Width = trileWidth,
                 Height = trileHeight
-            }
+            },
+            Geometry = new IndexedPrimitives<VertexInstance, Matrix>()
         };
 
         var colors = new Color[trileWidth * trileHeight];
