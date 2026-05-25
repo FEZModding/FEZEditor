@@ -98,7 +98,7 @@ internal sealed class TrileContext : BaseContext
             _lastOverlapIndex = Eddy.OverlapIndex;
             foreach (var (emplacement, instance) in Level.Triles.Where(kv => kv.Value.TrileId != InvalidId))
             {
-                for (var i = 0; i < instance.OverlappedTriles.Count; i++)
+                for (var i = 0; i < instance.OverlappedTriles?.Count; i++)
                 {
                     var overlap = instance.OverlappedTriles[i];
                     if (overlap.TrileId != InvalidId && _trileActors.TryGetValue(overlap.TrileId, out var overlapActor))
@@ -369,7 +369,7 @@ internal sealed class TrileContext : BaseContext
             _hoveredCursor.Emplacement != null &&
             Level.Triles.TryGetValue(_hoveredCursor.Emplacement, out var stackInstance))
         {
-            var count = stackInstance.OverlappedTriles.Count;
+            var count = stackInstance.OverlappedTriles?.Count;
             _selectedCursor.Emplacements.Clear();
             _selectedCursor.Emplacements.Add(_hoveredCursor.Emplacement);
             _selectedCursor.Face = _hoveredCursor.Face;
@@ -1003,12 +1003,13 @@ internal sealed class TrileContext : BaseContext
                                         Position = instance.Position
                                     };
 
-                                    if (slot < instance.OverlappedTriles.Count)
+                                    if (slot < instance.OverlappedTriles?.Count)
                                     {
                                         instance.OverlappedTriles[slot] = overlap;
                                     }
                                     else
                                     {
+                                        instance.OverlappedTriles = instance.OverlappedTriles.EmptyIfNull();
                                         instance.OverlappedTriles.Add(overlap);
                                     }
                                 }
@@ -1022,6 +1023,7 @@ internal sealed class TrileContext : BaseContext
                                     slot < instance.OverlappedTriles.Count)
                                 {
                                     instance.OverlappedTriles.RemoveAt(slot);
+                                    instance.OverlappedTriles = instance.OverlappedTriles.NullIfEmpty();
                                 }
 
                                 break;
@@ -1141,7 +1143,7 @@ internal sealed class TrileContext : BaseContext
             if (Level.Triles.TryGetValue(emplacement, out var mainInstance))
             {
                 var slot = Eddy.OverlapIndex - 1;
-                if (slot < mainInstance.OverlappedTriles.Count)
+                if (slot < mainInstance.OverlappedTriles?.Count)
                 {
                     var overlapId = mainInstance.OverlappedTriles[slot].TrileId;
                     _paintOps.Add(new PaintOp.OverlapErased(emplacement, slot));
@@ -1224,7 +1226,7 @@ internal sealed class TrileContext : BaseContext
         var presentIds = Level.Triles.Values
             .Where(ti => ti.TrileId != InvalidId)
             .SelectMany(ti => Enumerable.Repeat(ti.TrileId, 1)
-                .Concat(ti.OverlappedTriles.Where(o => o.TrileId != InvalidId).Select(o => o.TrileId)))
+                .Concat(ti.OverlappedTriles.EmptyIfNull().Where(o => o.TrileId != InvalidId).Select(o => o.TrileId)))
             .ToHashSet();
 
         foreach (var id in _trileActors.Keys.ToList())
@@ -1275,7 +1277,7 @@ internal sealed class TrileContext : BaseContext
         var trileIds = Level.Triles.Values
             .Where(ti => ti.TrileId != InvalidId)
             .SelectMany(ti => Enumerable.Repeat(ti.TrileId, 1)
-                .Concat(ti.OverlappedTriles.Where(o => o.TrileId != InvalidId).Select(o => o.TrileId)))
+                .Concat(ti.OverlappedTriles.EmptyIfNull().Where(o => o.TrileId != InvalidId).Select(o => o.TrileId)))
             .Distinct();
 
         foreach (var id in trileIds)
@@ -1337,7 +1339,7 @@ internal sealed class TrileContext : BaseContext
                     .SetInstanceData(emplacement, instance.Position.ToXna(), instance.PhiLight);
             }
 
-            for (var i = 0; i < instance.OverlappedTriles.Count; i++)
+            for (var i = 0; i < instance.OverlappedTriles?.Count; i++)
             {
                 var overlap = instance.OverlappedTriles[i];
                 if (overlap.TrileId != InvalidId && _trileActors.TryGetValue(overlap.TrileId, out var overlapActor))
@@ -1893,7 +1895,7 @@ internal sealed class TrileContext : BaseContext
                     continue;
                 }
 
-                if (slot >= main.OverlappedTriles.Count)
+                if (slot >= main.OverlappedTriles?.Count)
                 {
                     continue;
                 }
@@ -1926,7 +1928,7 @@ internal sealed class TrileContext : BaseContext
                     CleanupEmptyActor(instance.TrileId, mesh);
                 }
 
-                foreach (var overlap in instance.OverlappedTriles)
+                foreach (var overlap in instance.OverlappedTriles.EmptyIfNull())
                 {
                     if (_trileActors.TryGetValue(overlap.TrileId, out var ovActor))
                     {
@@ -1989,7 +1991,7 @@ internal sealed class TrileContext : BaseContext
         }
 
         var slot = Eddy.OverlapIndex - 1;
-        return slot < main.OverlappedTriles.Count
+        return slot < main.OverlappedTriles?.Count
             ? main.OverlappedTriles[slot]
             : null;
     }
@@ -2012,7 +2014,7 @@ internal sealed class TrileContext : BaseContext
         else
         {
             var slot = Eddy.OverlapIndex - 1;
-            if (slot >= main.OverlappedTriles.Count)
+            if (slot >= main.OverlappedTriles?.Count)
             {
                 return;
             }
@@ -2086,7 +2088,8 @@ internal sealed class TrileContext : BaseContext
             if (_set!.Triles.TryGetValue(instance.TrileId, out var trile))
             {
                 collisionMap.AddInstanceData(instance.Position.ToXna(), trile.Faces, trile.Size.ToXna());
-                foreach (var overlapped in instance.OverlappedTriles)
+
+                foreach (var overlapped in instance.OverlappedTriles.EmptyIfNull())
                 {
                     collisionMap.AddInstanceData(overlapped.Position.ToXna(), trile.Faces, trile.Size.ToXna());
                 }

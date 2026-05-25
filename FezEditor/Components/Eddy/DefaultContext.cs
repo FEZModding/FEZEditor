@@ -108,12 +108,12 @@ internal class DefaultContext : BaseContext
             }
         }
 
-        var sequenceSamplesPath = Level.SequenceSamplesPath;
+        var sequenceSamplesPath = Level.SequenceSamplesPath.EmptyIfNull();
         if (ImGui.InputText("Sequence Samples Path", ref sequenceSamplesPath, 255))
         {
             using (Eddy.History.BeginScope("Edit Level Sequence Samples Path", EddyContext.Default))
             {
-                Level.SequenceSamplesPath = sequenceSamplesPath;
+                Level.SequenceSamplesPath = sequenceSamplesPath.NullIfEmpty();
             }
         }
 
@@ -153,12 +153,12 @@ internal class DefaultContext : BaseContext
             }
         }
 
-        var gomezHaloName = Level.GomezHaloName;
+        var gomezHaloName = Level.GomezHaloName.EmptyIfNull();
         if (ImGui.InputText("Gomez Halo Name", ref gomezHaloName, 255))
         {
             using (Eddy.History.BeginScope("Edit Level Gomez Halo Name", EddyContext.Default))
             {
-                Level.GomezHaloName = gomezHaloName;
+                Level.GomezHaloName = gomezHaloName.NullIfEmpty();
             }
         }
 
@@ -209,7 +209,7 @@ internal class DefaultContext : BaseContext
             }
         }
 
-        ImGui.LabelText("Sky Name", Level.SkyName);
+        ImGui.LabelText("Sky Name", Level.SkyName.EmptyIfNull());
         ImGui.SameLine();
         if (ImGui.Button("...##SkyPick"))
         {
@@ -236,12 +236,12 @@ internal class DefaultContext : BaseContext
             }, options);
         }
 
-        var songName = Level.SongName;
+        var songName = Level.SongName.EmptyIfNull();
         if (ImGui.InputText("Song Name", ref songName, 255))
         {
             using (Eddy.History.BeginScope("Edit Level Song Name", EddyContext.Default))
             {
-                Level.SongName = songName;
+                Level.SongName = songName.NullIfEmpty();
             }
         }
 

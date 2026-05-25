@@ -453,12 +453,12 @@ internal class VolumeContext : BaseContext
             }
         }
 
-        var codePattern = settings.CodePattern.ToArray();
+        var codePattern = settings.CodePattern.EmptyIfNull();
         if (ImGuiX.EditableArray("Code Pattern", codePattern, RenderCodePattern))
         {
             using (Eddy.History.BeginScope("Edit Code Pattern", EddyContext.Volume))
             {
-                settings.CodePattern = codePattern;
+                settings.CodePattern = codePattern.NullIfEmpty();
             }
         }
 
@@ -610,7 +610,7 @@ internal class VolumeContext : BaseContext
         var mesh = actor.AddComponent<VolumeMesh>();
         mesh.Size = size;
         mesh.Color = DefaultColor;
-        mesh.IsBlackHole = instance.ActorSettings.IsBlackHole;
+        mesh.IsBlackHole = instance.ActorSettings is {IsBlackHole: true};
     }
 
     private void RemoveSelected()

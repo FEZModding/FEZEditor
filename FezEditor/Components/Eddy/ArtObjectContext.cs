@@ -603,21 +603,21 @@ internal class ArtObjectContext : BaseContext
             }
         }
 
-        var destinationLevel = settings.DestinationLevel;
+        var destinationLevel = settings.DestinationLevel.EmptyIfNull();
         if (ImGui.InputText("Destination Level", ref destinationLevel, 255))
         {
             using (Eddy.History.BeginScope("Edit AO Destination Level", EddyContext.ArtObject))
             {
-                settings.DestinationLevel = destinationLevel;
+                settings.DestinationLevel = destinationLevel.NullIfEmpty();
             }
         }
 
-        var treasureMapName = settings.TreasureMapName;
+        var treasureMapName = settings.TreasureMapName.EmptyIfNull();
         if (ImGui.InputText("Treasure Map Name", ref treasureMapName, 255))
         {
             using (Eddy.History.BeginScope("Edit AO Treasure Map Name", EddyContext.ArtObject))
             {
-                settings.TreasureMapName = treasureMapName;
+                settings.TreasureMapName = treasureMapName.NullIfEmpty();
             }
         }
 
@@ -630,33 +630,30 @@ internal class ArtObjectContext : BaseContext
             }
         }
 
-        var vibrationPattern = settings.VibrationPattern.ToList();
-        if (ImGuiX.EditableList("Vibration Pattern", vibrationPattern, RenderVibrationMotorItem,
-                () => VibrationMotor.None))
+        var vibrationPattern = settings.VibrationPattern.EmptyIfNull();
+        if (ImGuiX.EditableArray("Vibration Pattern", vibrationPattern, RenderVibrationMotorItem))
         {
             using (Eddy.History.BeginScope("Edit AO Vibration Pattern", EddyContext.ArtObject))
             {
-                settings.VibrationPattern =
-                    vibrationPattern.ToArray(); // I don't know why FEZRepacker made this as array
+                settings.VibrationPattern = vibrationPattern.NullIfEmpty();
             }
         }
 
-        var codePattern = settings.CodePattern.ToList();
-        if (ImGuiX.EditableList("Code Pattern", codePattern, RenderCodeInputItem, () => CodeInput.None))
+        var codePattern = settings.CodePattern.EmptyIfNull();
+        if (ImGuiX.EditableArray("Code Pattern", codePattern, RenderCodeInputItem))
         {
             using (Eddy.History.BeginScope("Edit AO Code Pattern", EddyContext.ArtObject))
             {
-                settings.CodePattern = codePattern.ToArray(); // Ditto
+                settings.CodePattern = codePattern.NullIfEmpty();
             }
         }
 
-        var invisibleSides = settings.InvisibleSides.ToList();
-        if (ImGuiX.EditableList("Invisible Sides", invisibleSides, RenderFaceOrientationItem,
-                () => FaceOrientation.Front))
+        var invisibleSides = settings.InvisibleSides.EmptyIfNull();
+        if (ImGuiX.EditableArray("Invisible Sides", invisibleSides, RenderFaceOrientationItem))
         {
             using (Eddy.History.BeginScope("Edit AO Invisible Sides", EddyContext.ArtObject))
             {
-                settings.InvisibleSides = invisibleSides.Distinct().ToArray(); // FEZRepacker should use HashSet here
+                settings.InvisibleSides = invisibleSides.Distinct().ToArray().NullIfEmpty();
             }
         }
 

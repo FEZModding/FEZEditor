@@ -144,13 +144,13 @@ internal class ScriptBrowser : IDisposable
                 }
 
                 ImGui.TableSetColumnIndex(1);
-                ImGui.Text(TruncateLines(script.Triggers.Select(st => st.Stringify())));
+                ImGui.Text(TruncateLines(script.Triggers.EmptyIfNull().Select(st => st.Stringify())));
 
                 ImGui.TableSetColumnIndex(2);
-                ImGui.Text(TruncateLines(script.Conditions.Select(sc => sc.Stringify())));
+                ImGui.Text(TruncateLines(script.Conditions.EmptyIfNull().Select(sc => sc.Stringify())));
 
                 ImGui.TableSetColumnIndex(3);
-                ImGui.Text(TruncateLines(script.Actions.Select(sa => sa.Stringify())));
+                ImGui.Text(TruncateLines(script.Actions.EmptyIfNull().Select(sa => sa.Stringify())));
             }
 
             ImGui.EndTable();
@@ -427,6 +427,7 @@ internal class ScriptBrowser : IDisposable
         {
             using (_eddy.History.BeginScope("Add Trigger", EddyContext.Script))
             {
+                _script!.Triggers = _script.Triggers.EmptyIfNull();
                 _script!.Triggers.Add(new ScriptTrigger());
                 _triggerIndex = _script.Triggers.Count - 1;
             }
@@ -451,6 +452,7 @@ internal class ScriptBrowser : IDisposable
             using (_eddy.History.BeginScope("Remove Trigger", EddyContext.Script))
             {
                 _script!.Triggers.RemoveAt(_triggerIndex);
+                _script!.Triggers = _script.Triggers.NullIfEmpty();
                 _triggerIndex = -1;
             }
         }
@@ -466,14 +468,14 @@ internal class ScriptBrowser : IDisposable
                 _triggerIndex = -1;
             }
 
-            if (_script!.Triggers.Count == 0)
+            if (_script!.Triggers is not { Count: > 0 })
             {
                 const string empty = "No triggers...";
                 ImGuiX.SetTextCentered(empty);
                 ImGui.Text(empty);
             }
 
-            for (var i = 0; i < _script.Triggers.Count; i++)
+            for (var i = 0; i < _script.Triggers?.Count; i++)
             {
                 var trigger = _script.Triggers[i];
                 if (ImGui.Selectable(trigger.Stringify() + $"##{i}", _triggerIndex == i))
@@ -489,7 +491,7 @@ internal class ScriptBrowser : IDisposable
 
         if (ImGuiX.BeginChild("##TriggerForm", Vector2.Zero))
         {
-            if (_triggerIndex >= 0 && _triggerIndex < _script!.Triggers.Count)
+            if (_triggerIndex >= 0 && _triggerIndex < _script!.Triggers?.Count)
             {
                 var t = _script.Triggers[_triggerIndex];
 
@@ -559,6 +561,7 @@ internal class ScriptBrowser : IDisposable
         {
             using (_eddy.History.BeginScope("Add Condition", EddyContext.Script))
             {
+                _script!.Conditions = _script.Conditions.EmptyIfNull();
                 _script!.Conditions.Add(new ScriptCondition());
                 _conditionIndex = _script.Conditions.Count - 1;
             }
@@ -583,6 +586,7 @@ internal class ScriptBrowser : IDisposable
             using (_eddy.History.BeginScope("Remove Condition", EddyContext.Script))
             {
                 _script!.Conditions.RemoveAt(_conditionIndex);
+                _script!.Conditions = _script.Conditions.NullIfEmpty();
                 _conditionIndex = -1;
             }
         }
@@ -598,14 +602,14 @@ internal class ScriptBrowser : IDisposable
                 _conditionIndex = -1;
             }
 
-            if (_script!.Conditions.Count == 0)
+            if (_script!.Conditions is not {Count: > 0})
             {
                 const string empty = "No conditions...";
                 ImGuiX.SetTextCentered(empty);
                 ImGui.Text(empty);
             }
 
-            for (var i = 0; i < _script.Conditions.Count; i++)
+            for (var i = 0; i < _script.Conditions?.Count; i++)
             {
                 var cond = _script.Conditions[i];
                 if (ImGui.Selectable(cond.Stringify() + $"##{i}", _conditionIndex == i))
@@ -621,7 +625,7 @@ internal class ScriptBrowser : IDisposable
 
         if (ImGuiX.BeginChild("##ConditionForm", Vector2.Zero))
         {
-            if (_conditionIndex >= 0 && _conditionIndex < _script!.Conditions.Count)
+            if (_conditionIndex >= 0 && _conditionIndex < _script!.Conditions?.Count)
             {
                 var c = _script.Conditions[_conditionIndex];
 
@@ -705,6 +709,7 @@ internal class ScriptBrowser : IDisposable
         {
             using (_eddy.History.BeginScope("Add Action", EddyContext.Script))
             {
+                _script!.Actions = _script!.Actions.EmptyIfNull();
                 _script!.Actions.Add(new ScriptAction());
                 _actionIndex = _script.Actions.Count - 1;
             }
@@ -729,6 +734,7 @@ internal class ScriptBrowser : IDisposable
             using (_eddy.History.BeginScope("Remove Action", EddyContext.Script))
             {
                 _script!.Actions.RemoveAt(_actionIndex);
+                _script!.Actions = _script.Actions.NullIfEmpty();
                 _actionIndex = -1;
             }
         }
@@ -744,14 +750,14 @@ internal class ScriptBrowser : IDisposable
                 _actionIndex = -1;
             }
 
-            if (_script!.Actions.Count == 0)
+            if (_script!.Actions is not { Count: > 0 })
             {
                 const string empty = "No actions...";
                 ImGuiX.SetTextCentered(empty);
                 ImGui.Text(empty);
             }
 
-            for (var i = 0; i < _script.Actions.Count; i++)
+            for (var i = 0; i < _script.Actions?.Count; i++)
             {
                 var action = _script.Actions[i];
                 if (ImGui.Selectable(action.Stringify() + $"##{i}", _actionIndex == i))
@@ -767,7 +773,7 @@ internal class ScriptBrowser : IDisposable
 
         if (ImGuiX.BeginChild("##ActionForm", Vector2.Zero, ImGuiChildFlags.None, ImGuiWindowFlags.HorizontalScrollbar))
         {
-            if (_actionIndex >= 0 && _actionIndex < _script!.Actions.Count)
+            if (_actionIndex >= 0 && _actionIndex < _script!.Actions?.Count)
             {
                 var a = _script.Actions[_actionIndex];
 
