@@ -641,7 +641,7 @@ internal class ArtObjectContext : BaseContext
                 }
             }
 
-            var vibrationPattern = settings.VibrationPattern.ToArray().EmptyIfNull();
+            var vibrationPattern = settings.VibrationPattern.EmptyIfNull().ToArray();
             if (ImGuiX.EditableArray("Vibration Pattern", ref vibrationPattern, RenderVibrationMotorItem))
             {
                 using (Eddy.History.BeginScope("Edit AO Vibration Pattern", EddyContext.ArtObject))
@@ -650,7 +650,7 @@ internal class ArtObjectContext : BaseContext
                 }
             }
 
-            var codePattern = settings.CodePattern.ToArray().EmptyIfNull();
+            var codePattern = settings.CodePattern.EmptyIfNull().ToArray();
             if (ImGuiX.EditableArray("Code Pattern", ref codePattern, RenderCodeInputItem))
             {
                 using (Eddy.History.BeginScope("Edit AO Code Pattern", EddyContext.ArtObject))
@@ -659,7 +659,7 @@ internal class ArtObjectContext : BaseContext
                 }
             }
 
-            var invisibleSides = settings.InvisibleSides.ToArray().EmptyIfNull();
+            var invisibleSides = settings.InvisibleSides.EmptyIfNull().ToArray();
             if (ImGuiX.EditableArray("Invisible Sides", ref invisibleSides, RenderFaceOrientationItem))
             {
                 using (Eddy.History.BeginScope("Edit AO Invisible Sides", EddyContext.ArtObject))

@@ -404,7 +404,7 @@ internal class VolumeContext : BaseContext
             }
         }
 
-        var orientations = instance.Orientations.ToArray().EmptyIfNull();
+        var orientations = instance.Orientations.EmptyIfNull().ToArray();
         if (ImGuiX.EditableArray("Orientations", ref orientations, RenderFace))
         {
             using (Eddy.History.BeginScope("Edit Orientations", EddyContext.Volume))
@@ -464,7 +464,7 @@ internal class VolumeContext : BaseContext
                 }
             }
 
-            var codePattern = settings.CodePattern.ToArray().EmptyIfNull();
+            var codePattern = settings.CodePattern.EmptyIfNull().ToArray();
             if (ImGuiX.EditableArray("Code Pattern", ref codePattern, RenderCodePattern))
             {
                 using (Eddy.History.BeginScope("Edit Code Pattern", EddyContext.Volume))
