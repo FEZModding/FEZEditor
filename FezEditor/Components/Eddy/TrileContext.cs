@@ -98,7 +98,12 @@ internal sealed class TrileContext : BaseContext
             _lastOverlapIndex = Eddy.OverlapIndex;
             foreach (var (emplacement, instance) in Level.Triles.Where(kv => kv.Value.TrileId != InvalidId))
             {
-                for (var i = 0; i < instance.OverlappedTriles?.Count; i++)
+                if (instance.OverlappedTriles == null)
+                {
+                    continue;
+                }
+
+                for (var i = 0; i < instance.OverlappedTriles.Count; i++)
                 {
                     var overlap = instance.OverlappedTriles[i];
                     if (overlap.TrileId != InvalidId && _trileActors.TryGetValue(overlap.TrileId, out var overlapActor))
@@ -369,7 +374,7 @@ internal sealed class TrileContext : BaseContext
             _hoveredCursor.Emplacement != null &&
             Level.Triles.TryGetValue(_hoveredCursor.Emplacement, out var stackInstance))
         {
-            var count = stackInstance.OverlappedTriles?.Count;
+            var count = stackInstance.OverlappedTriles.EmptyIfNull().Count;
             _selectedCursor.Emplacements.Clear();
             _selectedCursor.Emplacements.Add(_hoveredCursor.Emplacement);
             _selectedCursor.Face = _hoveredCursor.Face;
@@ -1003,7 +1008,7 @@ internal sealed class TrileContext : BaseContext
                                         Position = instance.Position
                                     };
 
-                                    if (slot < instance.OverlappedTriles?.Count)
+                                    if (slot < instance.OverlappedTriles.EmptyIfNull().Count)
                                     {
                                         instance.OverlappedTriles[slot] = overlap;
                                     }
@@ -1020,7 +1025,7 @@ internal sealed class TrileContext : BaseContext
                         case PaintOp.OverlapErased(var emplacement, var slot):
                             {
                                 if (Level.Triles.TryGetValue(emplacement, out var instance) &&
-                                    slot < instance.OverlappedTriles.Count)
+                                    slot < instance.OverlappedTriles.EmptyIfNull().Count)
                                 {
                                     instance.OverlappedTriles.RemoveAt(slot);
                                     instance.OverlappedTriles = instance.OverlappedTriles.NullIfEmpty();
@@ -1143,7 +1148,7 @@ internal sealed class TrileContext : BaseContext
             if (Level.Triles.TryGetValue(emplacement, out var mainInstance))
             {
                 var slot = Eddy.OverlapIndex - 1;
-                if (slot < mainInstance.OverlappedTriles?.Count)
+                if (slot < mainInstance.OverlappedTriles.EmptyIfNull().Count)
                 {
                     var overlapId = mainInstance.OverlappedTriles[slot].TrileId;
                     _paintOps.Add(new PaintOp.OverlapErased(emplacement, slot));
@@ -1339,7 +1344,12 @@ internal sealed class TrileContext : BaseContext
                     .SetInstanceData(emplacement, instance.Position.ToXna(), instance.PhiLight);
             }
 
-            for (var i = 0; i < instance.OverlappedTriles?.Count; i++)
+            if (instance.OverlappedTriles == null)
+            {
+                continue;
+            }
+
+            for (var i = 0; i < instance.OverlappedTriles.Count; i++)
             {
                 var overlap = instance.OverlappedTriles[i];
                 if (overlap.TrileId != InvalidId && _trileActors.TryGetValue(overlap.TrileId, out var overlapActor))
@@ -1606,12 +1616,12 @@ internal sealed class TrileContext : BaseContext
             }
         }
 
-        var sound = group.AssociatedSound;
+        var sound = group.AssociatedSound.EmptyIfNull();
         if (ImGui.InputText("Sound", ref sound, 255))
         {
             using (Eddy.History.BeginScope("Edit Group Sound", EddyContext.Trile))
             {
-                group.AssociatedSound = sound;
+                group.AssociatedSound = sound.NullIfEmpty();
             }
         }
 
@@ -1883,7 +1893,7 @@ internal sealed class TrileContext : BaseContext
                     continue;
                 }
 
-                if (slot >= main.OverlappedTriles?.Count)
+                if (slot >= main.OverlappedTriles.EmptyIfNull().Count)
                 {
                     continue;
                 }
@@ -1979,7 +1989,7 @@ internal sealed class TrileContext : BaseContext
         }
 
         var slot = Eddy.OverlapIndex - 1;
-        return slot < main.OverlappedTriles?.Count
+        return slot < main.OverlappedTriles.EmptyIfNull().Count
             ? main.OverlappedTriles[slot]
             : null;
     }
@@ -2002,7 +2012,7 @@ internal sealed class TrileContext : BaseContext
         else
         {
             var slot = Eddy.OverlapIndex - 1;
-            if (slot >= main.OverlappedTriles?.Count)
+            if (slot >= main.OverlappedTriles.EmptyIfNull().Count)
             {
                 return;
             }
