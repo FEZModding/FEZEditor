@@ -1,7 +1,10 @@
-﻿using FezEditor.Actors;
+using FezEditor.Actors;
+using FezEditor.Components.Jade;
 using FezEditor.Structure;
 using FezEditor.Tools;
 using FEZRepacker.Core.Definitions.Game.Common;
+using FEZRepacker.Core.Definitions.Game.Level;
+using FEZRepacker.Core.Definitions.Game.Level.Scripting;
 using FEZRepacker.Core.Definitions.Game.MapTree;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
@@ -10,13 +13,9 @@ namespace FezEditor.Components;
 
 public class JadeEditor : EditorComponent
 {
-    private const float LinkThickness = 0.05375f;
-
     public override object Asset => _mapTree;
 
     private readonly MapTree _mapTree;
-
-    private readonly Dictionary<MapNode, NodeActors> _nodeMapping = new();
 
     private readonly ConfirmWindow _confirm;
 
@@ -24,21 +23,23 @@ public class JadeEditor : EditorComponent
 
     private Actor _cameraActor = null!;
 
-    private State _nextState = State.MapView;
+    private MapTreeContext _context = null!;
 
-    private MapNode? _selectedNode;
+    private MapNode? _pendingRemoveNode;
 
-    private bool _showProperties;
+    private bool _pendingRevisualize;
 
-    private IDisposable? _pendingHistoryScope;
+    private bool _showProperties = true;
 
-    private Vector2 _viewportCenter;
+    private bool _showTree;
+
+    private string _treeFilter = "";
 
     public JadeEditor(Game game, string title, MapTree mapTree) : base(game, title)
     {
         _mapTree = mapTree;
         History.Track(mapTree);
-        History.StateChanged += _ => RebuildSceneSubTree(_mapTree, _mapTree.Root);
+        History.StateChanged += _ => _pendingRevisualize = true;
         Game.AddComponent(_confirm = new ConfirmWindow(game));
     }
 
@@ -46,11 +47,12 @@ public class JadeEditor : EditorComponent
     {
         _scene = new Scene(Game, ContentManager);
         _scene.Lighting.Ambient = new Color(new Vector3(1f / 3f));
+        Camera camera;
         {
             _cameraActor = _scene.CreateActor();
             _cameraActor.Name = "Camera";
 
-            var camera = _cameraActor.AddComponent<Camera>();
+            camera = _cameraActor.AddComponent<Camera>();
             var orbit = _cameraActor.AddComponent<OrbitControl>();
             _cameraActor.AddComponent<MapPanControl>();
             _cameraActor.AddComponent<MapZoomControl>();
@@ -67,16 +69,16 @@ public class JadeEditor : EditorComponent
             stars.Camera = _cameraActor.GetComponent<Camera>();
         }
 
-        RebuildSceneSubTree(_mapTree, _mapTree.Root);
+        _context = new MapTreeContext(this, _mapTree, _scene, camera);
+        _context.FullVisualize();
     }
 
     public override void Update(GameTime gameTime)
     {
-        if (_pendingHistoryScope != null)
+        if (_pendingRevisualize)
         {
-            _pendingHistoryScope?.Dispose();
-            _pendingHistoryScope = null;
-            RebuildSceneSubTree(_mapTree, _mapTree.Root);
+            _context.PartialRevisualize();
+            _pendingRevisualize = false;
             return;
         }
 
@@ -114,633 +116,347 @@ public class JadeEditor : EditorComponent
                 if (ImGui.IsItemHovered() && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
                 {
                     var viewportMin = ImGuiX.GetItemRectMin();
-                    _viewportCenter = viewportMin + (size / 2);
                     var ray = _scene.Viewport.Unproject(ImGuiX.GetMousePos(), viewportMin);
                     var actor = _scene.Raycast(ray)?.Actor;
-                    if (actor != null)
-                    {
-                        _nextState = State.MenuPopup;
-                        _selectedNode = HighlightNode(actor);
-                    }
-                    else
-                    {
-                        _nextState = State.MapView;
-                        _selectedNode = null;
-                    }
+                    _context.SelectedNode = actor != null ? SelectNode(actor) : null;
                 }
             }
         }
 
-        DrawMenuPopup();
-        DrawEditMapNodeWindow();
-        DrawRemoveMapNodeModal();
+        #region Properties Window
+
+        if (_showProperties)
+        {
+            const ImGuiWindowFlags flags = ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoResize |
+                                           ImGuiWindowFlags.NoCollapse;
+            if (ImGui.Begin($"Properties##{Title}", ref _showProperties, flags))
+            {
+                _context.DrawProperties();
+                ImGui.End();
+            }
+        }
+
+        #endregion
+
+        #region Map Tree Window
+
+        if (_showTree)
+        {
+            ImGuiX.SetNextWindowSize(new Vector2(280, 500), ImGuiCond.FirstUseEver);
+            const ImGuiWindowFlags flags1 = ImGuiWindowFlags.NoCollapse;
+
+            if (ImGui.Begin($"Map Tree##{Title}", ref _showTree, flags1))
+            {
+                ImGui.Text("Filter");
+                ImGui.SameLine();
+                ImGui.InputText($"{Lucide.Search}##treeFilter", ref _treeFilter, 255);
+                ImGui.Separator();
+
+                if (ImGui.Button($"{Lucide.Plus} Add New Node"))
+                {
+                    var levelOptions = new FileDialog.Options
+                    {
+                        Title = "Select Level...",
+                        Filters = [new FileDialog.Filter("Level", "fezlvl.json")]
+                    };
+
+                    FileDialog.Show(FileDialog.Type.OpenFile, files =>
+                    {
+                        var relativePath = ResourceService.GetRelativePath(files[0].Replace(".fezlvl.json", ""));
+                        var level = (Level)ResourceService.Load(relativePath);
+                        AddMapNode(level);
+                    }, levelOptions);
+                }
+
+                ImGui.Separator();
+                DrawMapTree();
+
+                ImGui.End();
+            }
+        }
+
+        #endregion
+
+        if (_pendingRemoveNode != null)
+        {
+            var nodeToRemove = _pendingRemoveNode;
+            _confirm.Text = $"Delete \"{nodeToRemove.LevelName}\" map node?";
+            _confirm.Confirmed = () => RemoveMapNode(nodeToRemove);
+            _confirm.Closed = null;
+            _pendingRemoveNode = null;
+        }
     }
 
     private void DrawToolbar()
     {
-        DrawToggleButton(ref _showProperties, Lucide.Wrench, "Properties");
+        {
+            ImGui.BeginDisabled(_showTree);
+            if (ImGui.Button($"{Lucide.ListTree} Structure"))
+            {
+                _showTree = true;
+            }
 
-
+            ImGui.EndDisabled();
+        }
 
         ImGui.SameLine();
         {
-            if (ImGui.Button(Lucide.GitBranchPlus))
+            ImGui.BeginDisabled(_showProperties);
+            if (ImGui.Button($"{Lucide.Wrench} Properties"))
             {
-                var scope = History.BeginScope("Build Vanilla Connections");
-                var generator = MapTreeGenerator.ApplyVanillaConnections(Game, _mapTree);
-                generator.Completed += _ => _pendingHistoryScope = scope;
+                _showProperties = true;
+            }
+
+            ImGui.EndDisabled();
+        }
+
+        ImGui.SameLine();
+        {
+            if (ImGui.Button($"{Lucide.GitBranchPlus} Regenerate"))
+            {
+                var scope = History.BeginScope("Regenerate Map Tree");
+                var generator = new MapTreeGenerator(Game, _mapTree);
+                generator.Disposed += (_, _) => scope.Dispose();
                 Game.AddComponent(generator);
             }
-
-            if (ImGui.IsItemHovered())
-            {
-                ImGui.SetTooltip("Build Vanilla Connections");
-            }
         }
     }
 
-    private static void DrawToggleButton(ref bool flag, string icon, string tooltip)
+    private bool TreeNodeMatchesFilter(MapNode node)
     {
-        ImGui.BeginDisabled(flag);
-        if (ImGui.Button(icon))
+        if (string.IsNullOrEmpty(_treeFilter))
         {
-            flag = true;
+            return true;
         }
 
-        if (ImGui.IsItemHovered())
+        if (node.LevelName.Contains(_treeFilter, StringComparison.OrdinalIgnoreCase))
         {
-            ImGui.SetTooltip(tooltip);
+            return true;
         }
 
-        ImGui.EndDisabled();
+        return node.Connections.Any(c => TreeNodeMatchesFilter(c.Node));
     }
 
-    private void DrawMenuPopup()
+    private void DrawMapTree()
     {
-        var panControl = _cameraActor.GetComponent<MapPanControl>();
-        if (_nextState == State.MenuPopup && panControl.Focused)
-        {
-            ImGuiX.SetNextWindowPos(_viewportCenter + new Vector2(48f, 32f), ImGuiCond.Always, new Vector2(0.5f));
-            ImGui.OpenPopup("##MenuPopup");
-            _nextState = State.MapView;
-        }
+        ImGui.BeginChild("##treeScroll");
+        ImGui.PushStyleVar(ImGuiStyleVar.IndentSpacing, 8f);
 
-        if (ImGui.BeginPopup("##MenuPopup"))
+        // Stack entries: null = TreePop sentinel, non-null = node to draw.
+        var stack = new Stack<MapNode?>();
+        stack.Push(_mapTree.Root);
+
+        while (stack.Count > 0)
         {
-            if (ImGui.BeginMenu("Add"))
+            var node = stack.Pop();
+            if (node == null)
             {
-                var (_, parentConnection) = FindParentWithConnection(_mapTree, _selectedNode!);
-                var parentFace = parentConnection?.Face.GetOpposite();
-                foreach (var face in FaceExtensions.NaturalOrder)
-                {
-                    ImGui.BeginDisabled(face == parentFace);
-                    if (ImGui.MenuItem(face.ToString()))
-                    {
-                        AppMapNode(face);
-                    }
-
-                    ImGui.EndDisabled();
-                }
-
-                ImGui.EndMenu();
+                ImGui.TreePop();
+                continue;
             }
 
-            if (ImGui.MenuItem("Remove"))
+            if (!TreeNodeMatchesFilter(node))
             {
-                _nextState = State.RemoveMapNode;
+                continue;
             }
 
-            ImGui.EndPopup();
-        }
-    }
-
-    private void DrawEditMapNodeWindow()
-    {
-        if (!_showProperties)
-        {
-            return;
-        }
-
-        var updateMesh = false;
-        var updateIcons = false;
-
-        const ImGuiWindowFlags flags = ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoResize |
-                                       ImGuiWindowFlags.NoCollapse;
-        if (ImGui.Begin($"Properties##{Title}", ref _showProperties, flags))
-        {
-            if (_selectedNode == null)
+            var isSelected = node == _context.SelectedNode;
+            if (isSelected)
             {
-                ImGui.TextDisabled("Select a node to edit its properties.");
+                ImGui.PushStyleColor(ImGuiCol.Header, ImGui.GetColorU32(ImGuiCol.HeaderActive));
             }
-            else
+
+            if (!string.IsNullOrEmpty(_treeFilter))
             {
-                ImGui.SeparatorText("Node");
+                ImGui.SetNextItemOpen(true);
+            }
 
-                var levelName = _selectedNode.LevelName;
-                if (ImGui.InputText("Level Name", ref levelName, 255))
+            var isOpen = ImGui.TreeNodeEx($"##{node.GetHashCode()}",
+                ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.SpanAvailWidth | ImGuiTreeNodeFlags.DefaultOpen |
+                (isSelected ? ImGuiTreeNodeFlags.Selected : ImGuiTreeNodeFlags.None) |
+                (node.Connections.Count == 0 ? ImGuiTreeNodeFlags.Leaf : ImGuiTreeNodeFlags.None));
+
+            if (isSelected)
+            {
+                ImGui.PopStyleColor();
+            }
+
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
+            {
+                _context.SelectedNode = node;
+                if (_context.TryGetMeshActor(node, out var meshActor))
                 {
-                    using (History.BeginScope("Edit Level Name"))
-                    {
-                        _selectedNode.LevelName = levelName;
-                        updateMesh = true;
-                    }
-                }
-
-                var nodeType = (int)_selectedNode.NodeType;
-                var nodeTypes = Enum.GetNames<LevelNodeType>();
-                if (ImGui.Combo("Node Type", ref nodeType, nodeTypes, nodeTypes.Length))
-                {
-                    using (History.BeginScope("Edit Node Type"))
-                    {
-                        _selectedNode.NodeType = (LevelNodeType)nodeType;
-                        updateMesh = true;
-                    }
-                }
-
-                var (_, parentConnection) = FindParentWithConnection(_mapTree, _selectedNode);
-                if (parentConnection != null)
-                {
-                    var faceNames = Enum.GetNames<FaceOrientation>();
-                    var faceIndex = (int)parentConnection.Face;
-                    if (ImGui.Combo("Parent Face", ref faceIndex, faceNames, faceNames.Length))
-                    {
-                        using (History.BeginScope("Edit Parent Face"))
-                        {
-                            parentConnection.Face = (FaceOrientation)faceIndex;
-                            RebuildSceneSubTree(_mapTree, _mapTree.Root);
-                        }
-                    }
-                }
-
-                ImGui.SeparatorText("Gates");
-
-                var hasLesserGate = _selectedNode.HasLesserGate;
-                if (ImGui.Checkbox("Has Lesser Gate", ref hasLesserGate))
-                {
-                    using (History.BeginScope("Has Lesser Gate"))
-                    {
-                        _selectedNode.HasLesserGate = hasLesserGate;
-                        updateIcons = true;
-                    }
-                }
-
-                var hasWarpGate = _selectedNode.HasWarpGate;
-                if (ImGui.Checkbox("Has Warp Gate", ref hasWarpGate))
-                {
-                    using (History.BeginScope("Has Warp Gate"))
-                    {
-                        _selectedNode.HasWarpGate = hasWarpGate;
-                        updateIcons = true;
-                    }
-                }
-
-                ImGui.SeparatorText("Win Conditions");
-
-                var chestCount = _selectedNode.Conditions.ChestCount;
-                if (ImGui.InputInt("Chest Count", ref chestCount))
-                {
-                    using (History.BeginScope("Edit Chest Count"))
-                    {
-                        _selectedNode.Conditions.ChestCount = chestCount;
-                        updateIcons = true;
-                    }
-                }
-
-                var lockedDoorCount = _selectedNode.Conditions.LockedDoorCount;
-                if (ImGui.InputInt("Locked Door Count", ref lockedDoorCount))
-                {
-                    using (History.BeginScope("Edit Locked Door Count"))
-                    {
-                        _selectedNode.Conditions.LockedDoorCount = lockedDoorCount;
-                        updateIcons = true;
-                    }
-                }
-
-                var unlockedDoorCount = _selectedNode.Conditions.UnlockedDoorCount;
-                if (ImGui.InputInt("Unlocked Door Count", ref unlockedDoorCount))
-                {
-                    using (History.BeginScope("Edit Unlocked Door Count"))
-                    {
-                        _selectedNode.Conditions.UnlockedDoorCount = unlockedDoorCount;
-                    }
-                }
-
-                var cubeShardCount = _selectedNode.Conditions.CubeShardCount;
-                if (ImGui.InputInt("Cube Shard Count", ref cubeShardCount))
-                {
-                    using (History.BeginScope("Edit Cube Shard Count"))
-                    {
-                        _selectedNode.Conditions.CubeShardCount = cubeShardCount;
-                        updateIcons = true;
-                    }
-                }
-
-                var otherCollectibleCount = _selectedNode.Conditions.OtherCollectibleCount;
-                if (ImGui.InputInt("Other Collectible Count", ref otherCollectibleCount))
-                {
-                    using (History.BeginScope("Edit Other Collectible Count"))
-                    {
-                        _selectedNode.Conditions.OtherCollectibleCount = otherCollectibleCount;
-                    }
-                }
-
-                var splitUpCount = _selectedNode.Conditions.SplitUpCount;
-                if (ImGui.InputInt("Split Up Count", ref splitUpCount))
-                {
-                    using (History.BeginScope("Edit Split Up Count"))
-                    {
-                        _selectedNode.Conditions.SplitUpCount = splitUpCount;
-                        updateIcons = true;
-                    }
-                }
-
-                var secretCount = _selectedNode.Conditions.SecretCount;
-                if (ImGui.InputInt("Secret Count", ref secretCount))
-                {
-                    using (History.BeginScope("Edit Secret Count"))
-                    {
-                        _selectedNode.Conditions.SecretCount = secretCount;
-                        updateIcons = true;
-                    }
-                }
-
-                var scriptIds = new Dirty<List<int>>(_selectedNode.Conditions.ScriptIds);
-                if (ImGuiX.EditableList("Script Ids", ref scriptIds, RenderInt, () => 0))
-                {
-                    using (History.BeginScope("Edit Script Ids"))
-                    {
-                        _selectedNode.Conditions.ScriptIds = scriptIds;
-                    }
-                }
-
-                if (_selectedNode.Connections.Count > 0)
-                {
-                    ImGui.SeparatorText("Connection Branch Oversizes");
-
-                    foreach (var connection in _selectedNode.Connections)
-                    {
-                        var branchOversize = connection.BranchOversize;
-                        if (ImGui.InputFloat(connection.Node.LevelName, ref branchOversize))
-                        {
-                            using (History.BeginScope("Edit Branch Oversize"))
-                            {
-                                connection.BranchOversize = branchOversize;
-                                RebuildSceneSubTree(_mapTree, _selectedNode);
-                                break;
-                            }
-                        }
-                    }
+                    _cameraActor.GetComponent<MapPanControl>().FocusOn(meshActor.Transform.Position);
                 }
             }
 
-            ImGui.End();
-        }
+            ImGui.SameLine();
+            ImGui.Text(node.LevelName);
 
-        if (_selectedNode != null && _nodeMapping.TryGetValue(_selectedNode, out var actors))
-        {
-            if (updateMesh)
+            if (node != _mapTree.Root)
             {
-                var mesh = actors.Mesh.GetComponent<MapNodeMesh>();
-                mesh.Visualize(_selectedNode);
+                var buttonWidth = ImGui.CalcTextSize(Lucide.X).X + ImGui.GetStyle().FramePadding.X * 2;
+                var cursorX = ImGui.GetWindowWidth() - buttonWidth - ImGui.GetStyle().ScrollbarSize - 4f;
+                if (cursorX > ImGui.GetCursorPosX())
+                {
+                    ImGui.SameLine(cursorX);
+                }
+
+                ImGuiX.PushStyleColor(ImGuiCol.Button, Color.Transparent);
+                if (ImGui.Button($"{Lucide.X}##{node.GetHashCode()}"))
+                {
+                    _pendingRemoveNode = node;
+                }
+
+                ImGui.PopStyleColor();
             }
 
-            if (updateIcons)
+            if (isOpen)
             {
-                var icons = actors.Icons.GetComponent<MapIconsMesh>();
-                icons.Visualize(_selectedNode);
+                // Push TreePop sentinel first so it runs after all children.
+                stack.Push(null);
+                // Push children in reverse order so they are drawn top-to-bottom.
+                for (var i = node.Connections.Count - 1; i >= 0; i--)
+                {
+                    stack.Push(node.Connections[i].Node);
+                }
             }
         }
-    }
 
-    private void DrawRemoveMapNodeModal()
-    {
-        if (_nextState == State.RemoveMapNode)
-        {
-            _confirm.Text = $"Delete \"{_selectedNode!.LevelName}\" map node?";
-            _confirm.Confirmed = RemoveMapNode;
-            _confirm.Closed = () => { _selectedNode = null; };
-            _nextState = State.MapView;
-        }
+        ImGui.PopStyleVar();
+        ImGui.EndChild();
     }
 
     public override void Dispose()
     {
+        _context.Dispose();
         _scene.Dispose();
         Game.RemoveComponent(_confirm);
         base.Dispose();
     }
 
-    private void RebuildSceneSubTree(MapTree tree, MapNode node)
+    private MapNode SelectNode(Actor actor)
     {
-        var (_, parentConnection) = FindParentWithConnection(tree, node);
-        var actors = _nodeMapping.GetValueOrDefault(node);
-        var offset = actors?.Mesh.Transform.Position ?? Vector3.Zero;
-
-        var multiBranchIds = new Dictionary<MapNodeConnection, int>();
-        var multiBranchCounts = new Dictionary<MapNodeConnection, int>();
-
-        var stack = new Stack<NodeProcessingState>();
-        stack.Push(new NodeProcessingState(node, parentConnection, offset));
-
-        RemoveNodeMapping(node);
-        while (stack.Count > 0)
-        {
-            (node, parentConnection, offset) = stack.Pop();
-
-            // Pre-register node so CreateLinkBranch can attach links to it.
-            // Links are created before the node mesh so they draw first in BFS order,
-            // allowing the node texture to overdraw them via depth testing.
-            _nodeMapping[node] = new NodeActors(null!, null!, new List<Actor>());
-
-            foreach (var c in node.Connections)
-            {
-                if (c.Node.NodeType == LevelNodeType.Lesser &&
-                    node.Connections.Any(x => x.Face == c.Face && c.Node.NodeType != LevelNodeType.Lesser))
-                {
-                    if (node.Connections.All(x => x.Face != FaceOrientation.Top))
-                    {
-                        c.Face = FaceOrientation.Top;
-                    }
-                    else if (node.Connections.All(x => x.Face != FaceOrientation.Down))
-                    {
-                        c.Face = FaceOrientation.Down;
-                    }
-                }
-            }
-
-            foreach (var c in node.Connections)
-            {
-                multiBranchIds.TryAdd(c, 0);
-            }
-
-            foreach (var c in node.Connections)
-            {
-                multiBranchIds[c] = node.Connections
-                    .Where(x => x.Face == c.Face)
-                    .Max(x => multiBranchIds[x]) + 1;
-                multiBranchCounts[c] = node.Connections.Count(x => x.Face == c.Face);
-            }
-
-            var num = 0f;
-            var orderedConnections = node.Connections.OrderByDescending(x => x.Node.NodeType.GetSizeFactor());
-            foreach (var item in orderedConnections)
-            {
-                if (parentConnection != null && item.Face == parentConnection.Face.GetOpposite())
-                {
-                    item.Face = item.Face.GetOpposite();
-                }
-
-                // Calculate size factor for this connection
-                var sizeFactor = 3f + ((node.NodeType.GetSizeFactor() + item.Node.NodeType.GetSizeFactor()) / 2f);
-                if ((node.NodeType == LevelNodeType.Hub || item.Node.NodeType == LevelNodeType.Hub) &&
-                    node.NodeType != LevelNodeType.Lesser && item.Node.NodeType != LevelNodeType.Lesser)
-                {
-                    sizeFactor += 1f;
-                }
-
-                // Adjust for lesser nodes
-                if ((node.NodeType == LevelNodeType.Lesser || item.Node.NodeType == LevelNodeType.Lesser) &&
-                    multiBranchCounts[item] == 1)
-                {
-                    sizeFactor -= item.Face.IsSide() ? 1 : 2;
-                }
-
-                // Apply branch oversize
-                sizeFactor *= 1.25f + item.BranchOversize;
-                var num4 = sizeFactor * 0.375f;
-                if (item.Node.NodeType == LevelNodeType.Node && node.NodeType == LevelNodeType.Node)
-                {
-                    num4 *= 1.5f;
-                }
-
-                // Calculate branch offset for multi-branch connections
-                var faceVector = item.Face.AsVector();
-                var vector2 = Vector3.Zero;
-                if (multiBranchCounts[item] > 1)
-                {
-                    vector2 = (multiBranchIds[item] - 1 - ((multiBranchCounts[item] - 1) / 2f)) *
-                              (Mathz.XzMask - item.Face.AsVector().Abs()) * num4;
-                }
-
-                var childOffset = offset + (faceVector * sizeFactor) + vector2;
-                stack.Push(new NodeProcessingState(item.Node, item, childOffset));
-
-                if (multiBranchCounts[item] > 1)
-                {
-                    // Create multi-branch link segments
-                    num = Math.Max(num, sizeFactor / 2f);
-                    var scale = (faceVector * num) + (Vector3.One * LinkThickness);
-                    var position = (faceVector * num / 2f) + offset;
-                    CreateLinkBranch(node, position, scale);
-
-                    scale = vector2 + (Vector3.One * LinkThickness);
-                    position = (vector2 / 2f) + offset + (faceVector * num);
-                    CreateLinkBranch(node, position, scale);
-
-                    var num5 = sizeFactor - num;
-                    scale = (faceVector * num5) + (Vector3.One * LinkThickness);
-                    position = (faceVector * num5 / 2f) + offset + (faceVector * num) + vector2;
-                    CreateLinkBranch(node, position, scale);
-                }
-                else
-                {
-                    // Create single branch link
-                    var scale = (faceVector * sizeFactor) + (Vector3.One * LinkThickness);
-                    var position = (faceVector * sizeFactor / 2f) + offset;
-                    CreateLinkBranch(node, position, scale);
-                }
-
-                // Handle special cases
-                switch (item.Node.LevelName)
-                {
-                    case "LIGHTHOUSE_SPIN":
-                        {
-                            const float num6 = 3.425f;
-                            var scale = (Vector3.Backward * num6) + (Vector3.One * LinkThickness);
-                            var position = (Vector3.Backward * num6 / 2f) + offset + (faceVector * sizeFactor);
-                            CreateLinkBranch(node, position, scale);
-                            break;
-                        }
-
-                    case "LIGHTHOUSE_HOUSE_A":
-                        {
-                            const float num7 = 5f;
-                            var scale = (Vector3.Right * num7) + (Vector3.One * LinkThickness);
-                            var position = (Vector3.Right * num7 / 2f) + offset + (faceVector * sizeFactor);
-                            CreateLinkBranch(node, position, scale);
-                            break;
-                        }
-                }
-            }
-
-            // Node mesh and icons are created last so they draw on top of links.
-            CreateNodeMesh(node, offset);
-        }
+        var node = _context.FindNodeByActor(actor) ?? throw new ArgumentException("Mapping for actor not found");
+        var panControl = _cameraActor.GetComponent<MapPanControl>();
+        panControl.FocusOn(actor.Transform.Position);
+        return node;
     }
 
-    private void RemoveNodeMapping(MapNode node)
+    private void AddMapNode(Level level)
     {
-        if (node == _mapTree.Root)
-        {
-            foreach (var actors in _nodeMapping.Values)
-            {
-                foreach (var actor in actors.Links)
-                {
-                    _scene.DestroyActor(actor);
-                }
-                _scene.DestroyActor(actors.Mesh);
-            }
+        var allNodes = _mapTree.Root
+            .EnumerateNodes()
+            .ToDictionary(mn => mn.LevelName, mn => mn, StringComparer.OrdinalIgnoreCase);
 
-            _nodeMapping.Clear();
+        if (allNodes.ContainsKey(level.Name))
+        {
             return;
         }
 
-        var stack = new Stack<MapNode>();
-        stack.Push(node);
-        while (stack.Count > 0)
+        // Forward: new level's script targets an already-existing node.
+        MapNode? parent = null;
+        foreach (var (action, _) in GetLevelTransitions(level))
         {
-            var current = stack.Pop();
-            if (_nodeMapping.Remove(current, out var actors))
+            if (allNodes.TryGetValue(action.Arguments[0], out var targetNode))
             {
-                foreach (var c in current.Connections)
-                {
-                    stack.Push(c.Node);
-                }
-
-                foreach (var actor in actors.Links)
-                {
-                    _scene.DestroyActor(actor);
-                }
-
-                // Icons is a child of Mesh actor, it will be deleted too
-                _scene.DestroyActor(actors.Mesh);
-            }
-        }
-    }
-
-    private void CreateNodeMesh(MapNode node, Vector3 offset)
-    {
-        var mesh = _scene.CreateActor();
-        mesh.Transform.Position = offset;
-        mesh.Name = node.LevelName;
-
-        var visual = mesh.AddComponent<MapNodeMesh>();
-        visual.Camera = _cameraActor.GetComponent<Camera>();
-        visual.Visualize(node);
-
-        var icons = _scene.CreateActor(mesh);
-        icons.Name = $"{node.LevelName} ^ Icons";
-        icons.AddComponent<MapIconsMesh>().Visualize(node);
-
-        _nodeMapping[node] = new NodeActors(mesh, icons, _nodeMapping[node].Links);
-    }
-
-    private void CreateLinkBranch(MapNode node, Vector3 position, Vector3 scale)
-    {
-        if (_nodeMapping.TryGetValue(node, out var mapActor))
-        {
-            var actor = _scene.CreateActor();
-            actor.Transform.Position = position;
-            actor.Transform.Scale = scale;
-            actor.Name = $"{node.LevelName} ^ Link";
-            actor.AddComponent<MapLinkMesh>();
-            mapActor.Links.Add(actor);
-        }
-    }
-
-    private MapNode HighlightNode(Actor actor)
-    {
-        foreach (var (node, actors) in _nodeMapping)
-        {
-            if (actors.Mesh == actor)
-            {
-                var panControl = _cameraActor.GetComponent<MapPanControl>();
-                panControl.FocusOn(actor.Transform.Position);
-                return node;
+                parent = targetNode;
+                break;
             }
         }
 
-        throw new ArgumentException("Mapping for actor not found");
-    }
+        // Reverse: an existing node's script targets the new level.
+        if (parent == null)
+        {
+            foreach (var existingNode in allNodes.Values)
+            {
+                var existingLevel = (Level)ResourceService.Load("Levels/" + existingNode.LevelName);
+                foreach (var (action, _) in GetLevelTransitions(existingLevel))
+                {
+                    if (string.Equals(action.Arguments[0], level.Name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        parent = existingNode;
+                        break;
+                    }
+                }
 
-    private void AppMapNode(FaceOrientation face)
-    {
+                if (parent != null)
+                {
+                    break;
+                }
+            }
+        }
+
+        var face = FaceOrientation.Front;
+        foreach (var (_, volume) in GetLevelTransitions(level))
+        {
+            if (volume.Orientations.Length > 0)
+            {
+                face = volume.Orientations[0];
+                break;
+            }
+        }
+
+        parent ??= _mapTree.Root;
         using (History.BeginScope("Add Map Node"))
         {
-            var newNode = new MapNode { LevelName = "UNTITLED" };
-            _selectedNode!.Connections.Add(new MapNodeConnection { Node = newNode, Face = face });
-            RebuildSceneSubTree(_mapTree, _selectedNode);
+            var newNode = new MapNode { LevelName = level.Name };
+            parent.Connections.Add(new MapNodeConnection { Node = newNode, Face = face });
         }
     }
 
-    private void RemoveMapNode()
+    private static IEnumerable<(ScriptAction Action, Volume Volume)> GetLevelTransitions(Level level)
     {
-        var (parent, _) = FindParentWithConnection(_mapTree, _selectedNode!);
-        var connection = parent?.Connections.FirstOrDefault(c => c.Node == _selectedNode);
-        if (connection != null)
+        foreach (var script in level.Scripts.Values)
         {
-            using (History.BeginScope("Remove Map Node"))
+            foreach (var action in script.Actions)
             {
-                parent!.Connections.Remove(connection);
-                RemoveNodeMapping(_selectedNode!);
-                RebuildSceneSubTree(_mapTree, parent);
-            }
-        }
-    }
-
-    private static (MapNode?, MapNodeConnection?) FindParentWithConnection(MapTree tree, MapNode node)
-    {
-        var stack = new Stack<MapNode>();
-        stack.Push(tree.Root);
-
-        while (stack.Count > 0)
-        {
-            var current = stack.Pop();
-            foreach (var currentConnection in current.Connections)
-            {
-                if (currentConnection.Node == node)
+                if (action.Object.Type != "Level" || !action.Operation.Contains("Level"))
                 {
-                    return (current, currentConnection);
+                    continue;
                 }
-            }
 
-            foreach (var connection in current.Connections)
-            {
-                stack.Push(connection.Node);
+                if (action.Operation == "ReturnToLastLevel" || action.Arguments.Length == 0)
+                {
+                    continue;
+                }
+
+                var trigger = script.Triggers
+                    .Where(t => t.Object is { Type: "Volume", Identifier: not null })
+                    .FirstOrDefault(t => t.Event == "Enter");
+
+                if (trigger == null)
+                {
+                    continue;
+                }
+
+                if (!level.Volumes.TryGetValue(trigger.Object.Identifier!.Value, out var volume))
+                {
+                    continue;
+                }
+
+                yield return (action, volume);
+                break;
             }
         }
-
-        return (null, null);
     }
 
-    private static bool RenderInt(int index, ref int item)
+    private void RemoveMapNode(MapNode node)
     {
-        return ImGui.InputInt("##item", ref item);
-    }
-
-    private record struct NodeProcessingState(
-        MapNode Node,
-        MapNodeConnection? ParentConnection,
-        Vector3 Offset
-    );
-
-    private record NodeActors(Actor Mesh, Actor Icons, List<Actor> Links);
-
-    private enum State
-    {
-        MapView,
-        MenuPopup,
-        RemoveMapNode
-    }
-
-    public static object Create(string name)
-    {
-        return new MapTree
+        var result = _mapTree.FindParentWithConnection(node);
+        if (result == null)
         {
-            Root = new MapNode
+            return;
+        }
+
+        var (parent, connection) = result.Value;
+        using (History.BeginScope("Remove Map Node"))
+        {
+            parent.Connections.Remove(connection);
+            if (_context.SelectedNode != null && node.EnumerateNodes().Contains(_context.SelectedNode))
             {
-                LevelName = name
+                _context.SelectedNode = null;
             }
-        };
+        }
     }
 }

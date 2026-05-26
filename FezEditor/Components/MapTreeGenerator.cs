@@ -72,15 +72,11 @@ public class MapTreeGenerator : DrawableGameComponent
         ["ARCH"] = 0.25f
     };
 
-    public event Action<MapTree?>? Completed;
-
     private readonly ResourceService _resources;
 
-    private readonly Mode _mode;
+    private string _rootLevelName = "";
 
-    private readonly string _rootLevelName;
-
-    private readonly MapTree? _existingTree;
+    private readonly MapTree _tree;
 
     private float _progress;
 
@@ -92,23 +88,23 @@ public class MapTreeGenerator : DrawableGameComponent
 
     private CancellationTokenSource? _cts;
 
-    private MapTreeGenerator(Game game, Mode mode, string rootLevelName, MapTree? existingTree) : base(game)
+    public MapTreeGenerator(Game game, MapTree tree) : base(game)
     {
         _resources = game.GetService<ResourceService>();
-        _mode = mode;
-        _rootLevelName = rootLevelName;
-        _existingTree = existingTree;
-        _ = ProcessAsync();
-    }
+        _tree = tree;
 
-    public static MapTreeGenerator CreateMap(Game game, string rootLevelName)
-    {
-        return new MapTreeGenerator(game, Mode.CreateMap, rootLevelName, null);
-    }
+        var rootOptions = new FileDialog.Options
+        {
+            Title = "Select Root Level...",
+            Filters = [new FileDialog.Filter("Level", "fezlvl.json")]
+        };
 
-    public static MapTreeGenerator ApplyVanillaConnections(Game game, MapTree tree)
-    {
-        return new MapTreeGenerator(game, Mode.ApplyVanillaConnections, tree.Root.LevelName, tree);
+        FileDialog.Show(FileDialog.Type.OpenFile, files =>
+        {
+            var rootPath = _resources.GetRelativePath(files[0].Replace(".fezlvl.json", ""));
+            _rootLevelName = Path.GetFileName(rootPath).ToUpperInvariant();
+            _ = ProcessAsync();
+        }, rootOptions);
     }
 
     public override void Update(GameTime gameTime)
@@ -170,15 +166,15 @@ public class MapTreeGenerator : DrawableGameComponent
     {
         _cts = new CancellationTokenSource();
         _state = State.Processing;
+        _status = "Generating map tree...";
         _progress = 0f;
 
-        MapTree? result = null;
         try
         {
             var ct = _cts.Token;
-            result = await Task.Run(() => _mode == Mode.CreateMap
-                ? CreateMapInternal(ct)
-                : ApplyVanillaConnectionsInternal(ct), ct);
+            await Task.Run(() => ProcessInternal(ct), ct);
+            _status = "Generation complete!";
+            _progress = 1.0f;
         }
         catch (OperationCanceledException)
         {
@@ -191,16 +187,13 @@ public class MapTreeGenerator : DrawableGameComponent
         finally
         {
             _state = State.Complete;
-            Completed?.Invoke(result);
         }
     }
 
-    private MapTree CreateMapInternal(CancellationToken ct)
+    private void ProcessInternal(CancellationToken ct)
     {
-        _status = "Scanning levels...";
-
         var root = new MapNode { LevelName = _rootLevelName };
-        var tree = new MapTree { Root = root };
+        _tree.Root = root;
 
         var visited = new Dictionary<string, MapNode>(StringComparer.OrdinalIgnoreCase);
         var queue = new Queue<(MapNode Node, MapNode? Parent, FaceOrientation Origin)>();
@@ -209,14 +202,15 @@ public class MapTreeGenerator : DrawableGameComponent
         queue.Enqueue((root, null, FaceOrientation.Front));
 
         var processed = 0;
+        var discovered = 1;
         while (queue.Count > 0)
         {
             ct.ThrowIfCancellationRequested();
 
             var (node, parentNode, origin) = queue.Dequeue();
-            _status = $"Processing {node.LevelName}...";
-            _progress = (float)processed / Math.Max(1, processed + queue.Count);
             processed++;
+            _status = $"Processing {node.LevelName}...";
+            _progress = (float)processed / discovered;
 
             Level level;
             TrileSet trileSet;
@@ -315,84 +309,41 @@ public class MapTreeGenerator : DrawableGameComponent
                             connection.Face = origin.GetOpposite();
                         }
 
+                        if (UpLevels.Contains(lastLevel))
+                        {
+                            connection.Face = FaceOrientation.Top;
+                        }
+                        else if (DownLevels.Contains(lastLevel))
+                        {
+                            connection.Face = FaceOrientation.Down;
+                        }
+                        else if (OppositeLevels.Contains(lastLevel))
+                        {
+                            connection.Face = connection.Face.GetOpposite();
+                        }
+                        else if (BackLevels.Contains(lastLevel))
+                        {
+                            connection.Face = FaceOrientation.Back;
+                        }
+                        else if (RightLevels.Contains(lastLevel))
+                        {
+                            connection.Face = FaceOrientation.Right;
+                        }
+                        else if (FrontLevels.Contains(lastLevel))
+                        {
+                            connection.Face = FaceOrientation.Front;
+                        }
+
                         connection.BranchOversize = OversizeLinks.GetValueOrDefault(lastLevel, 0f);
                         node.Connections.Add(connection);
                         queue.Enqueue((childNode, node, connection.Face));
+                        discovered++;
                     }
 
                     break;
                 }
             }
         }
-
-        _progress = 1f;
-        return tree;
-    }
-
-    private MapTree ApplyVanillaConnectionsInternal(CancellationToken ct)
-    {
-        _status = "Applying vanilla connections...";
-
-        var tree = _existingTree!;
-        var stack = new Stack<(MapNode Node, MapNode? Parent, FaceOrientation Origin)>();
-        stack.Push((tree.Root, null, FaceOrientation.Front));
-
-        var visited = new HashSet<MapNode> { tree.Root };
-        var processed = 0;
-
-        while (stack.Count > 0)
-        {
-            ct.ThrowIfCancellationRequested();
-
-            var (node, parentNode, origin) = stack.Pop();
-            _progress = (float)processed / Math.Max(1, processed + stack.Count);
-            processed++;
-
-            foreach (var connection in node.Connections)
-            {
-                var lastLevel = connection.Node.LevelName;
-
-                if (parentNode != null && origin == connection.Face)
-                {
-                    connection.Face = origin.GetOpposite();
-                }
-
-                if (UpLevels.Contains(lastLevel))
-                {
-                    connection.Face = FaceOrientation.Top;
-                }
-                else if (DownLevels.Contains(lastLevel))
-                {
-                    connection.Face = FaceOrientation.Down;
-                }
-                else if (OppositeLevels.Contains(lastLevel))
-                {
-                    connection.Face = connection.Face.GetOpposite();
-                }
-                else if (BackLevels.Contains(lastLevel))
-                {
-                    connection.Face = FaceOrientation.Back;
-                }
-                else if (RightLevels.Contains(lastLevel))
-                {
-                    connection.Face = FaceOrientation.Right;
-                }
-                else if (FrontLevels.Contains(lastLevel))
-                {
-                    connection.Face = FaceOrientation.Front;
-                }
-
-                connection.BranchOversize = OversizeLinks.GetValueOrDefault(lastLevel, connection.BranchOversize);
-
-                if (visited.Add(connection.Node))
-                {
-                    stack.Push((connection.Node, node, connection.Face));
-                }
-            }
-        }
-
-        _progress = 1f;
-        return tree;
     }
 
     private static void FillNodeProperties(MapNode node, Level level, TrileSet trileSet)
@@ -493,12 +444,6 @@ public class MapTreeGenerator : DrawableGameComponent
             default:
                 return false;
         }
-    }
-
-    private enum Mode
-    {
-        CreateMap,
-        ApplyVanillaConnections
     }
 
     private enum State

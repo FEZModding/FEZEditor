@@ -93,7 +93,6 @@ public class MapNodeMesh : ActorComponent, IPickable
         _rendering.MaterialSetSamplerState(_textureMaterial, PointMipClamp);
         _rendering.MaterialShaderSetParam(_textureMaterial, "TextureSize",
             new Vector2(_nodeTexture.Width, _nodeTexture.Height));
-        _rendering.MaterialShaderSetParam(_textureMaterial, "CubeOffset", _transform.Position);
 
         _nodeSize = Vector3.One * node.NodeType.GetSizeFactor();
         var outlineBox = MeshSurface.CreateBox(_nodeSize * OutlineSize);
@@ -124,6 +123,7 @@ public class MapNodeMesh : ActorComponent, IPickable
         var pixelsPerTrixel = (Camera?.Size ?? FallbackSize) / 45f * 18f;
         _rendering.MaterialShaderSetParam(_textureMaterial, "PixelsPerTrixel", pixelsPerTrixel);
         _rendering.MaterialShaderSetParam(_textureMaterial, "ViewportSize", new Vector2(width, height));
+        _rendering.MaterialShaderSetParam(_textureMaterial, "CubeOffset", _transform.Position);
     }
 
     public override void Dispose()

@@ -530,31 +530,14 @@ public class FileBrowser : DrawableGameComponent
 
         if (assetType == typeof(MapTree))
         {
-            var rootOptions = new FileDialog.Options
+            FileDialog.Show(FileDialog.Type.SaveFile, files =>
             {
-                Title = "Select Root Level...",
-                Filters = [new FileDialog.Filter("Level", "fezlvl.json")]
-            };
-
-            FileDialog.Show(FileDialog.Type.OpenFile, files =>
-            {
-                var rootPath = _resourceService.GetRelativePath(files[0].Replace(".fezlvl.json", ""));
-                var rootName = Path.GetFileName(rootPath).ToUpperInvariant();
-
-                FileDialog.Show(FileDialog.Type.SaveFile, files2 =>
-                {
-                    var relativePath = _resourceService.GetRelativePath(files2[0]);
-                    var generator = MapTreeGenerator.CreateMap(Game, rootName);
-                    generator.Completed += mapTree =>
-                    {
-                        if (mapTree != null)
-                        {
-                            _resourceService.Save(relativePath, mapTree);
-                        }
-                    };
-                    Game.AddComponent(generator);
-                }, options);
-            }, rootOptions);
+                var relativePath = _resourceService.GetRelativePath(files[0]);
+                var mapTree = new MapTree();
+                var generator = new MapTreeGenerator(Game, mapTree);
+                generator.Disposed += (_, _) => _resourceService.Save(relativePath, mapTree);
+                Game.AddComponent(generator);
+            }, options);
 
             return;
         }

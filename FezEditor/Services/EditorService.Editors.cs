@@ -74,7 +74,6 @@ public partial class EditorService
         if (assetType == typeof(FezFont)) return ZuEditor.Create();
         if (assetType == typeof(ArtObject)) return ChrisEditor.CreateAo(name);
         if (assetType == typeof(TrileSet)) return ChrisEditor.CreateTs(name);
-        if (assetType == typeof(MapTree)) return JadeEditor.Create(name);
         if (assetType == typeof(Sky)) return LukeEditor.Create(name);
         if (assetType == typeof(NpcMetadata)) return MuEditor.Create();
         throw new InvalidOperationException();
