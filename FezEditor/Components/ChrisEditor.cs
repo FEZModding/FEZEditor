@@ -8,6 +8,9 @@ using FEZRepacker.Core.Definitions.Game.Graphics;
 using FEZRepacker.Core.Definitions.Game.TrileSet;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using Color = Microsoft.Xna.Framework.Color;
 using Matrix = FEZRepacker.Core.Definitions.Game.XNA.Matrix;
 
 namespace FezEditor.Components;
@@ -26,7 +29,7 @@ public class ChrisEditor : EditorComponent, IChrisEditor
 
     public TrixelsMesh Trixels => _meshActor.GetComponent<TrixelsMesh>();
 
-    public Color PaintColor { get; set; } = new(255, 255, 255, 0);
+    public Color PaintColor { get; set; } = Color.White with { A = 0 };
 
     public ChrisTool CurrentTool { get; set; } = ChrisTool.Look;
 
@@ -61,6 +64,8 @@ public class ChrisEditor : EditorComponent, IChrisEditor
     private bool _showProperties;
 
     private bool _showTexture;
+
+    private bool _pendingRevisualize;
 
     private bool _showTrileSetList = true;
 
@@ -144,6 +149,12 @@ public class ChrisEditor : EditorComponent, IChrisEditor
 
     public override void Update(GameTime gameTime)
     {
+        if (_pendingRevisualize)
+        {
+            RevisualizeSubject();
+            _pendingRevisualize = false;
+        }
+
         Cursor.ClearHover();
         Cursor.ClearSelection();
         StatusService.ClearHints();
@@ -613,7 +624,115 @@ public class ChrisEditor : EditorComponent, IChrisEditor
             DrawToggleButton(ref _showTrileSetList, Lucide.List, "Trile Set");
         }
 
+        ImGui.SameLine();
+        ImGui.TextDisabled("|");
+
+        ImGui.SameLine();
+        {
+            if (ImGui.Button(Lucide.Upload))
+            {
+                ExportTexture();
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip("Export texture to file");
+            }
+        }
+
+        ImGui.SameLine();
+        {
+            if (ImGui.Button(Lucide.Download))
+            {
+                ImportTexture();
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip("Import texture from file");
+            }
+        }
+
         ImGui.Separator();
+    }
+
+    private void ExportTexture()
+    {
+        var options = new FileDialog.Options
+        {
+            Title = "Export texture...",
+            Filters = [new FileDialog.Filter("PNG image", "png")]
+        };
+
+        FileDialog.Show(FileDialog.Type.SaveFile, files =>
+        {
+            var rgba = new byte[Obj.Texture.Width * Obj.Texture.Height * 4];
+            if (PaintMode is PaintMode.Emission)
+            {
+                for (var i = 0; i < rgba.Length; i += 4)
+                {
+                    var a = Obj.Texture.TextureData[i + 3];
+                    rgba[i] = a;
+                    rgba[i + 1] = a;
+                    rgba[i + 2] = a;
+                    rgba[i + 3] = byte.MaxValue;
+                }
+            }
+            else
+            {
+                Buffer.BlockCopy(Obj.Texture.TextureData, 0, rgba, 0, rgba.Length);
+                for (var i = 3; i < rgba.Length; i += 4)
+                {
+                    rgba[i] = byte.MaxValue;
+                }
+            }
+
+            using var image = Image.LoadPixelData<Rgba32>(rgba, Obj.Texture.Width, Obj.Texture.Height);
+            image.SaveAsPng(Path.ChangeExtension(files[0], ".png"));
+        }, options);
+    }
+
+    private void ImportTexture()
+    {
+        var options = new FileDialog.Options
+        {
+            Title = "Import texture...",
+            Filters = [new FileDialog.Filter("PNG image", "png")]
+        };
+
+        FileDialog.Show(FileDialog.Type.OpenFile, files =>
+        {
+            using var image = Image.Load<Rgba32>(files[0]);
+            if (image.Width != Obj.Texture.Width || image.Height != Obj.Texture.Height)
+            {
+                return;
+            }
+
+            var incoming = new byte[image.Width * image.Height * 4];
+            image.CopyPixelDataTo(incoming);
+
+            using (History.BeginScope("Import Texture"))
+            {
+                if (PaintMode is PaintMode.Emission)
+                {
+                    for (var i = 3; i < incoming.Length; i += 4)
+                    {
+                        Obj.Texture.TextureData[i] = incoming[i - 3]; // R channel → alpha
+                    }
+                }
+                else
+                {
+                    for (var i = 0; i < incoming.Length; i += 4)
+                    {
+                        Obj.Texture.TextureData[i] = incoming[i];
+                        Obj.Texture.TextureData[i + 1] = incoming[i + 1];
+                        Obj.Texture.TextureData[i + 2] = incoming[i + 2];
+                    }
+                }
+
+                _pendingRevisualize = true;
+            }
+        }, options);
     }
 
     private void SwitchTrileSubject()
