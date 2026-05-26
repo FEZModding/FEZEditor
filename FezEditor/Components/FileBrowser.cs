@@ -2,6 +2,7 @@
 using FezEditor.Structure;
 using FezEditor.Tools;
 using FEZRepacker.Core.Definitions.Game.Level;
+using FEZRepacker.Core.Definitions.Game.MapTree;
 using FEZRepacker.Core.Definitions.Game.TrileSet;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
@@ -523,6 +524,37 @@ public class FileBrowser : DrawableGameComponent
                     _resourceService.Save(path2, asset);
                 }, options);
             }, options2);
+
+            return;
+        }
+
+        if (assetType == typeof(MapTree))
+        {
+            var rootOptions = new FileDialog.Options
+            {
+                Title = "Select Root Level...",
+                Filters = [new FileDialog.Filter("Level", "fezlvl.json")]
+            };
+
+            FileDialog.Show(FileDialog.Type.OpenFile, files =>
+            {
+                var rootPath = _resourceService.GetRelativePath(files[0].Replace(".fezlvl.json", ""));
+                var rootName = Path.GetFileName(rootPath).ToUpperInvariant();
+
+                FileDialog.Show(FileDialog.Type.SaveFile, files2 =>
+                {
+                    var relativePath = _resourceService.GetRelativePath(files2[0]);
+                    var generator = MapTreeGenerator.CreateMap(Game, rootName);
+                    generator.Completed += mapTree =>
+                    {
+                        if (mapTree != null)
+                        {
+                            _resourceService.Save(relativePath, mapTree);
+                        }
+                    };
+                    Game.AddComponent(generator);
+                }, options);
+            }, rootOptions);
 
             return;
         }

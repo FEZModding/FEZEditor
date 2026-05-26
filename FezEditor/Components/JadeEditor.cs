@@ -30,6 +30,8 @@ public class JadeEditor : EditorComponent
 
     private bool _showProperties;
 
+    private IDisposable? _pendingHistoryScope;
+
     private Vector2 _viewportCenter;
 
     public JadeEditor(Game game, string title, MapTree mapTree) : base(game, title)
@@ -70,12 +72,22 @@ public class JadeEditor : EditorComponent
 
     public override void Update(GameTime gameTime)
     {
+        if (_pendingHistoryScope != null)
+        {
+            _pendingHistoryScope?.Dispose();
+            _pendingHistoryScope = null;
+            RebuildSceneSubTree(_mapTree, _mapTree.Root);
+            return;
+        }
+
         StatusService.AddHints(("LMB", "Select Node"));
         _scene.Update(gameTime);
     }
 
     public override void Draw()
     {
+        DrawToolbar();
+
         var size = ImGuiX.GetContentRegionAvail();
         var w = (int)size.X;
         var h = (int)size.Y;
@@ -122,6 +134,17 @@ public class JadeEditor : EditorComponent
         DrawMenuPopup();
         DrawEditMapNodeWindow();
         DrawRemoveMapNodeModal();
+    }
+
+    private void DrawToolbar()
+    {
+        if (ImGui.Button($"{Lucide.GitBranchPlus} Build Vanilla Connections"))
+        {
+            var scope = History.BeginScope("Build Vanilla Connections");
+            var generator = MapTreeGenerator.ApplyVanillaConnections(Game, _mapTree);
+            generator.Completed += _ => _pendingHistoryScope = scope;
+            Game.AddComponent(generator);
+        }
     }
 
     private void DrawMenuPopup()
@@ -508,6 +531,21 @@ public class JadeEditor : EditorComponent
 
     private void RemoveNodeMapping(MapNode node)
     {
+        if (node == _mapTree.Root)
+        {
+            foreach (var actors in _nodeMapping.Values)
+            {
+                foreach (var actor in actors.Links)
+                {
+                    _scene.DestroyActor(actor);
+                }
+                _scene.DestroyActor(actors.Mesh);
+            }
+
+            _nodeMapping.Clear();
+            return;
+        }
+
         var stack = new Stack<MapNode>();
         stack.Push(node);
         while (stack.Count > 0)
