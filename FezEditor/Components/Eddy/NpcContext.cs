@@ -463,8 +463,8 @@ internal class NpcContext : BaseContext
             }
         }
 
-        var speech = instance.Speech.ToList();
-        if (ImGuiX.EditableList("Speech", speech, RenderSpeechLine, () => new SpeechLine()))
+        var speech = new Dirty<List<SpeechLine>>(instance.Speech);
+        if (ImGuiX.EditableList("Speech", ref speech, RenderSpeechLine, () => new SpeechLine()))
         {
             using (Eddy.History.BeginScope("Edit NPC Speech", EddyContext.NonPlayableCharacter))
             {
@@ -472,12 +472,16 @@ internal class NpcContext : BaseContext
             }
         }
 
-        var actions = instance.Actions.ToDictionary(a => (int)a.Key, a => a.Value);
-        if (ImGuiX.EditableDict("Actions", actions, RenderNpcActionContent, RenderNewContent, () => new NpcActionContent()))
+        // NpcAction is not IEquatable, so int key is being used
+        var actions = new Dirty<Dictionary<int, NpcActionContent>>(
+            instance.Actions.ToDictionary(kv => (int)kv.Key, kv => kv.Value));
+
+        if (ImGuiX.EditableDict("Actions", ref actions,
+                RenderNpcActionContent, RenderNewContent, () => new NpcActionContent()))
         {
             using (Eddy.History.BeginScope("Edit NPC Actions", EddyContext.NonPlayableCharacter))
             {
-                instance.Actions = actions.ToDictionary(a => (NpcAction)a.Key, a => a.Value);
+                instance.Actions = actions.Value.ToDictionary(kv => (NpcAction)kv.Key, kv => kv.Value);
             }
         }
     }
@@ -498,7 +502,7 @@ internal class NpcContext : BaseContext
         }
         {
             var soundName = item.OverrideContent.SoundName;
-            edited |= ImGui.InputText("Sound Name##sl2" + item, ref soundName, 255);
+            edited |= ImGui.InputText("Sound Name##sl2" + index, ref soundName, 255);
             item.OverrideContent.SoundName = soundName;
         }
         return edited;

@@ -1465,12 +1465,12 @@ internal sealed class TrileContext : BaseContext
                 }
             }
 
-            var sequence = instance.ActorSettings.Sequence.EmptyIfNull().ToArray();
-            if (ImGuiX.EditableArray("Sequence", ref sequence, RenderItem))
+            var sequence = new Dirty<bool[]>(instance.ActorSettings.Sequence.EmptyIfNull());
+            if (ImGuiX.EditableArray("Sequence", ref sequence, RenderItem, () => default))
             {
                 using (Eddy.History.BeginScope("Edit Sequence", EddyContext.Trile))
                 {
-                    instance.ActorSettings.Sequence = sequence.NullIfEmpty();
+                    instance.ActorSettings.Sequence = sequence.Value.NullIfEmpty();
                 }
             }
 

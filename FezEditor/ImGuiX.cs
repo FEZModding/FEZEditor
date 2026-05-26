@@ -606,39 +606,40 @@ public static class ImGuiX
 
     public delegate bool RenderItem<T>(int index, ref T item);
 
-    public static bool EditableList<T>(string label, List<T> items, RenderItem<T> renderItem, Func<T> createNew)
+    public static bool EditableList<T>(string label, ref Dirty<List<T>> items, RenderItem<T> renderItem, Func<T> createNew)
     {
         const ImGuiChildFlags flags = ImGuiChildFlags.Border | ImGuiChildFlags.AutoResizeY;
         var hash = label.GetHashCode();
+        var list = items.Value;
 
         var changed = false;
         ImGui.Text(label);
         ImGui.SameLine();
 
-        var count = "item" + (items.Count is > 1 or 0 ? "s" : "");
-        var header = $"List ({items.Count} {count})###ListHeader_{hash}";
+        var count = "item" + (list.Count is > 1 or 0 ? "s" : "");
+        var header = $"List ({list.Count} {count})###ListHeader_{hash}";
         if (ImGui.CollapsingHeader(header))
         {
             if (BeginChild($"##Child_{hash}", Vector2.Zero, flags))
             {
                 if (BeginListBox($"##ListBox_{hash}", new Vector2(-1, 0)))
                 {
-                    for (var i = 0; i < items.Count; i++)
+                    for (var i = 0; i < list.Count; i++)
                     {
                         ImGui.PushID(i);
                         ImGui.SetNextItemWidth(-48);
 
-                        var item = items[i];
+                        var item = list[i];
                         if (renderItem(i, ref item))
                         {
-                            items[i] = item;
+                            list[i] = item;
                             changed = true;
                         }
 
                         ImGui.SameLine();
                         if (ImGui.Button(Lucide.X))
                         {
-                            items.RemoveAt(i);
+                            list.RemoveAt(i);
                             i--;
                             changed = true;
                         }
@@ -651,7 +652,7 @@ public static class ImGuiX
 
                 if (ImGui.Button($"{Lucide.Plus} Add"))
                 {
-                    items.Add(createNew());
+                    list.Add(createNew());
                     changed = true;
                 }
 
@@ -659,104 +660,126 @@ public static class ImGuiX
             }
         }
 
+        if (changed)
+        {
+            items = new Dirty<List<T>>(list, true);
+        }
+
         return changed;
     }
 
-    public static bool EditableArray<T>(string label, ref T[] items, RenderItem<T> renderItem)
+    public static bool EditableArray<T>(string label, ref Dirty<T[]> items, RenderItem<T> renderItem, Func<T> createNew)
     {
         const ImGuiChildFlags flags = ImGuiChildFlags.Border | ImGuiChildFlags.AutoResizeY;
         var hash = label.GetHashCode();
+        var array = items.Value;
 
         var changed = false;
         ImGui.Text(label);
         ImGui.SameLine();
 
-        var count = "item" + (items.Length is > 1 or 0 ? "s" : "");
-        var header = $"Array ({items.Length} {count})###ArrayHeader_{hash}";
+        var count = "item" + (array.Length is > 1 or 0 ? "s" : "");
+        var header = $"Array ({array.Length} {count})###ArrayHeader_{hash}";
         if (ImGui.CollapsingHeader(header))
         {
             if (BeginChild($"##Child_{hash}", Vector2.Zero, flags))
             {
-                var arraySize = items.Length;
-                if (ImGui.InputInt($"Size", ref arraySize) && arraySize >= 0)
-                {
-                    var newItems = new T[arraySize];
-                    var elementsToCopy = Math.Min(items.Length, newItems.Length);
-                    Array.Copy(items, 0, newItems, 0, elementsToCopy);
-                    items = newItems;
-                    changed = true;
-                }
-
                 if (BeginListBox($"##ListBox_{hash}", new Vector2(-1, 0)))
                 {
-                    for (var i = 0; i < items.Length; i++)
+                    for (var i = 0; i < array.Length; i++)
                     {
                         ImGui.PushID(i);
                         ImGui.SetNextItemWidth(-48);
 
-                        var item = items[i];
+                        var item = array[i];
                         if (renderItem(i, ref item))
                         {
-                            items[i] = item;
-                            changed = true;
-                        }
-                        ImGui.PopID();
-                    }
-
-                    ImGui.EndListBox();
-                }
-
-                ImGui.EndChild();
-            }
-        }
-
-        return changed;
-    }
-
-    public delegate bool RenderKeyValuePair<in K, V>(K key, ref V value) where K : IEquatable<K>;
-
-    public delegate bool RenderNewKey<K>(ref K key) where K : IEquatable<K>;
-
-    public static bool EditableDict<K, V>(string label, Dictionary<K, V> items,
-        RenderKeyValuePair<K, V> renderItem,
-        RenderNewKey<K> renderNewKey,
-        Func<V> createDefaultValue) where K : IEquatable<K>
-    {
-        const ImGuiChildFlags flags = ImGuiChildFlags.Border | ImGuiChildFlags.AutoResizeY;
-        var hash = label.GetHashCode();
-
-        var changed = false;
-        ImGui.Text(label);
-        ImGui.SameLine();
-
-        var count = "key" + (items.Count is > 1 or 0 ? "s" : "");
-        var header = $"Dictionary ({items.Count} {count})###DictionaryHeader_{hash}";
-        if (ImGui.CollapsingHeader(header))
-        {
-            if (BeginChild($"##Child_{hash}", Vector2.Zero, flags))
-            {
-                if (BeginListBox($"##ListBox_{hash}", new Vector2(-1, 0)))
-                {
-                    var keys = items.Keys.ToList();
-
-                    for (var i = 0; i < keys.Count; i++)
-                    {
-                        var key = keys[i];
-                        var value = items[key];
-
-                        ImGui.PushID(i);
-                        ImGui.SetNextItemWidth(-48);
-
-                        if (renderItem(key, ref value))
-                        {
-                            items[key] = value;
+                            array[i] = item;
                             changed = true;
                         }
 
                         ImGui.SameLine();
                         if (ImGui.Button(Lucide.X))
                         {
-                            items.Remove(key);
+                            var newArray = new T[array.Length - 1];
+                            Array.Copy(array, 0, newArray, 0, i);
+                            Array.Copy(array, i + 1, newArray, i, array.Length - i - 1);
+                            array = newArray;
+                            changed = true;
+                            ImGui.PopID();
+                            break;
+                        }
+
+                        ImGui.PopID();
+                    }
+
+                    ImGui.EndListBox();
+                }
+
+                if (ImGui.Button($"{Lucide.Plus} Add"))
+                {
+                    Array.Resize(ref array, array.Length + 1);
+                    array[^1] = createNew();
+                    changed = true;
+                }
+
+                ImGui.EndChild();
+            }
+        }
+
+        if (changed)
+        {
+            items = new Dirty<T[]>(array, true);
+        }
+
+        return changed;
+    }
+
+    public delegate bool RenderKeyValuePair<in TKey, TValue>(TKey key, ref TValue value) where TKey : IEquatable<TKey>;
+
+    public delegate bool RenderNewKey<TKey>(ref TKey key) where TKey : IEquatable<TKey>;
+
+    public static bool EditableDict<TKey, TValue>(string label, ref Dirty<Dictionary<TKey, TValue>> items,
+        RenderKeyValuePair<TKey, TValue> renderItem,
+        RenderNewKey<TKey> renderNewKey,
+        Func<TValue> createDefaultValue) where TKey : IEquatable<TKey>
+    {
+        const ImGuiChildFlags flags = ImGuiChildFlags.Border | ImGuiChildFlags.AutoResizeY;
+        var hash = label.GetHashCode();
+        var dict = items.Value;
+
+        var changed = false;
+        ImGui.Text(label);
+        ImGui.SameLine();
+
+        var count = "key" + (dict.Count is > 1 or 0 ? "s" : "");
+        var header = $"Dictionary ({dict.Count} {count})###DictionaryHeader_{hash}";
+        if (ImGui.CollapsingHeader(header))
+        {
+            if (BeginChild($"##Child_{hash}", Vector2.Zero, flags))
+            {
+                if (BeginListBox($"##ListBox_{hash}", new Vector2(-1, 0)))
+                {
+                    var keys = dict.Keys.ToList();
+
+                    for (var i = 0; i < keys.Count; i++)
+                    {
+                        var key = keys[i];
+                        var value = dict[key];
+
+                        ImGui.PushID(i);
+                        ImGui.SetNextItemWidth(-48);
+
+                        if (renderItem(key, ref value))
+                        {
+                            dict[key] = value;
+                            changed = true;
+                        }
+
+                        ImGui.SameLine();
+                        if (ImGui.Button(Lucide.X))
+                        {
+                            dict.Remove(key);
                             changed = true;
                         }
 
@@ -767,21 +790,26 @@ public static class ImGuiX
                 }
 
                 // New entry input
-                K newKey = default!;
+                TKey newKey = default!;
                 ImGui.Button($"{Lucide.Plus} Add New Key");
                 ImGui.SameLine();
 
                 if (renderNewKey(ref newKey))
                 {
-                    if (!items.ContainsKey(newKey))
+                    if (!dict.ContainsKey(newKey))
                     {
-                        items.Add(newKey, createDefaultValue());
+                        dict.Add(newKey, createDefaultValue());
                         changed = true;
                     }
                 }
 
                 ImGui.EndChild();
             }
+        }
+
+        if (changed)
+        {
+            items = new Dirty<Dictionary<TKey, TValue>>(dict, true);
         }
 
         return changed;

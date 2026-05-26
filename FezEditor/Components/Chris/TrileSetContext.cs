@@ -302,14 +302,16 @@ internal class TrileSetContext : IContext
         }
 
         // FaceOrientation is not IEquatable, so string key is being used
-        var collisionFaces = _properties.Faces.ToDictionary(kv => kv.Key.ToString(), kv => kv.Value);
-        if (ImGuiX.EditableDict("Collision Faces", collisionFaces, RenderFace, AddCollisionType,
-                () => CollisionType.None))
+        var collisionFaces = new Dirty<Dictionary<string, CollisionType>>(
+            _properties.Faces.ToDictionary(kv => kv.Key.ToString(), kv => kv.Value));
+
+        if (ImGuiX.EditableDict("Collision Faces", ref collisionFaces,
+                RenderFace, AddCollisionType, () => CollisionType.None))
         {
             using (history.BeginScope("Edit Collision Faces"))
             {
-                _properties.Faces =
-                    collisionFaces.ToDictionary(kv => Enum.Parse<FaceOrientation>(kv.Key), kv => kv.Value);
+                _properties.Faces = collisionFaces.Value
+                    .ToDictionary(kv => Enum.Parse<FaceOrientation>(kv.Key), kv => kv.Value);
                 revisualize = true;
             }
         }

@@ -404,12 +404,12 @@ internal class VolumeContext : BaseContext
             }
         }
 
-        var orientations = instance.Orientations.EmptyIfNull().ToArray();
-        if (ImGuiX.EditableArray("Orientations", ref orientations, RenderFace))
+        var orientations = new Dirty<FaceOrientation[]>(instance.Orientations.EmptyIfNull());
+        if (ImGuiX.EditableArray("Orientations", ref orientations, RenderFace, () => default))
         {
             using (Eddy.History.BeginScope("Edit Orientations", EddyContext.Volume))
             {
-                instance.Orientations = orientations.NullIfEmpty();
+                instance.Orientations = orientations.Value.NullIfEmpty();
             }
         }
 
@@ -446,8 +446,8 @@ internal class VolumeContext : BaseContext
                 }
             }
 
-            var dotDialogue = settings.DotDialogue.ToList();
-            if (ImGuiX.EditableList("Dot Dialogue", dotDialogue, RenderDotDialog, () => new DotDialogueLine()))
+            var dotDialogue = new Dirty<List<DotDialogueLine>>(settings.DotDialogue);
+            if (ImGuiX.EditableList("Dot Dialogue", ref dotDialogue, RenderDotDialog, () => new DotDialogueLine()))
             {
                 using (Eddy.History.BeginScope("Edit Dot Dialogue", EddyContext.Volume))
                 {
@@ -464,12 +464,12 @@ internal class VolumeContext : BaseContext
                 }
             }
 
-            var codePattern = settings.CodePattern.EmptyIfNull().ToArray();
-            if (ImGuiX.EditableArray("Code Pattern", ref codePattern, RenderCodePattern))
+            var codePattern = new Dirty<CodeInput[]>(settings.CodePattern.EmptyIfNull());
+            if (ImGuiX.EditableArray("Code Pattern", ref codePattern, RenderCodePattern, () => default))
             {
                 using (Eddy.History.BeginScope("Edit Code Pattern", EddyContext.Volume))
                 {
-                    settings.CodePattern = codePattern.NullIfEmpty();
+                    settings.CodePattern = codePattern.Value.NullIfEmpty();
                 }
             }
 

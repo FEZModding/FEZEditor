@@ -254,12 +254,12 @@ public class DiezEditor : EditorComponent
                 }
             }
 
-            var customOrdering = _trackedSong.CustomOrdering.ToList();
-            if (ImGuiX.EditableList("Custom Ordering:", customOrdering, RenderInt, () => 0))
+            var customOrdering = new Dirty<int[]>(_trackedSong.CustomOrdering);
+            if (ImGuiX.EditableArray("Custom Ordering:", ref customOrdering, RenderInt, () => default))
             {
                 using (History.BeginScope("Change Custom Ordering"))
                 {
-                    _trackedSong.CustomOrdering = customOrdering.ToArray();
+                    _trackedSong.CustomOrdering = customOrdering;
                 }
             }
         }

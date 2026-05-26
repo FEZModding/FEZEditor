@@ -641,30 +641,30 @@ internal class ArtObjectContext : BaseContext
                 }
             }
 
-            var vibrationPattern = settings.VibrationPattern.EmptyIfNull().ToArray();
-            if (ImGuiX.EditableArray("Vibration Pattern", ref vibrationPattern, RenderVibrationMotorItem))
+            var vibrationPattern = new Dirty<VibrationMotor[]>(settings.VibrationPattern.EmptyIfNull());
+            if (ImGuiX.EditableArray("Vibration Pattern", ref vibrationPattern, RenderVibrationMotorItem, () => default))
             {
                 using (Eddy.History.BeginScope("Edit AO Vibration Pattern", EddyContext.ArtObject))
                 {
-                    settings.VibrationPattern = vibrationPattern.NullIfEmpty();
+                    settings.VibrationPattern = vibrationPattern.Value.NullIfEmpty();
                 }
             }
 
-            var codePattern = settings.CodePattern.EmptyIfNull().ToArray();
-            if (ImGuiX.EditableArray("Code Pattern", ref codePattern, RenderCodeInputItem))
+            var codePattern = new Dirty<CodeInput[]>(settings.CodePattern.EmptyIfNull());
+            if (ImGuiX.EditableArray("Code Pattern", ref codePattern, RenderCodeInputItem, () => default))
             {
                 using (Eddy.History.BeginScope("Edit AO Code Pattern", EddyContext.ArtObject))
                 {
-                    settings.CodePattern = codePattern.NullIfEmpty();
+                    settings.CodePattern = codePattern.Value.NullIfEmpty();
                 }
             }
 
-            var invisibleSides = settings.InvisibleSides.EmptyIfNull().ToArray();
-            if (ImGuiX.EditableArray("Invisible Sides", ref invisibleSides, RenderFaceOrientationItem))
+            var invisibleSides = new Dirty<FaceOrientation[]>(settings.InvisibleSides.EmptyIfNull());
+            if (ImGuiX.EditableArray("Invisible Sides", ref invisibleSides, RenderFaceOrientationItem, () => default))
             {
                 using (Eddy.History.BeginScope("Edit AO Invisible Sides", EddyContext.ArtObject))
                 {
-                    settings.InvisibleSides = invisibleSides.Distinct().ToArray().NullIfEmpty();
+                    settings.InvisibleSides = invisibleSides.Value.Distinct().ToArray().NullIfEmpty();
                 }
             }
 
