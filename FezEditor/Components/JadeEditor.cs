@@ -138,13 +138,41 @@ public class JadeEditor : EditorComponent
 
     private void DrawToolbar()
     {
-        if (ImGui.Button($"{Lucide.GitBranchPlus} Build Vanilla Connections"))
+        DrawToggleButton(ref _showProperties, Lucide.Wrench, "Properties");
+
+
+
+        ImGui.SameLine();
         {
-            var scope = History.BeginScope("Build Vanilla Connections");
-            var generator = MapTreeGenerator.ApplyVanillaConnections(Game, _mapTree);
-            generator.Completed += _ => _pendingHistoryScope = scope;
-            Game.AddComponent(generator);
+            if (ImGui.Button(Lucide.GitBranchPlus))
+            {
+                var scope = History.BeginScope("Build Vanilla Connections");
+                var generator = MapTreeGenerator.ApplyVanillaConnections(Game, _mapTree);
+                generator.Completed += _ => _pendingHistoryScope = scope;
+                Game.AddComponent(generator);
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip("Build Vanilla Connections");
+            }
         }
+    }
+
+    private static void DrawToggleButton(ref bool flag, string icon, string tooltip)
+    {
+        ImGui.BeginDisabled(flag);
+        if (ImGui.Button(icon))
+        {
+            flag = true;
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(tooltip);
+        }
+
+        ImGui.EndDisabled();
     }
 
     private void DrawMenuPopup()
@@ -154,17 +182,11 @@ public class JadeEditor : EditorComponent
         {
             ImGuiX.SetNextWindowPos(_viewportCenter + new Vector2(48f, 32f), ImGuiCond.Always, new Vector2(0.5f));
             ImGui.OpenPopup("##MenuPopup");
-            _showProperties = false;
             _nextState = State.MapView;
         }
 
         if (ImGui.BeginPopup("##MenuPopup"))
         {
-            if (ImGui.MenuItem("Edit..."))
-            {
-                _showProperties = true;
-            }
-
             if (ImGui.BeginMenu("Add"))
             {
                 var (_, parentConnection) = FindParentWithConnection(_mapTree, _selectedNode!);
@@ -194,9 +216,8 @@ public class JadeEditor : EditorComponent
 
     private void DrawEditMapNodeWindow()
     {
-        if (_selectedNode == null || !_showProperties)
+        if (!_showProperties)
         {
-            _showProperties = false;
             return;
         }
 
@@ -207,139 +228,167 @@ public class JadeEditor : EditorComponent
                                        ImGuiWindowFlags.NoCollapse;
         if (ImGui.Begin($"Properties##{Title}", ref _showProperties, flags))
         {
-            var levelName = _selectedNode.LevelName;
-            if (ImGui.InputText("Level Name", ref levelName, 255))
+            if (_selectedNode == null)
             {
-                using (History.BeginScope("Edit Level Name"))
-                {
-                    _selectedNode.LevelName = levelName;
-                    updateMesh = true;
-                }
+                ImGui.TextDisabled("Select a node to edit its properties.");
             }
-
-            var nodeType = (int)_selectedNode.NodeType;
-            var nodeTypes = Enum.GetNames<LevelNodeType>();
-            if (ImGui.Combo("Node Type", ref nodeType, nodeTypes, nodeTypes.Length))
+            else
             {
-                using (History.BeginScope("Edit Node Type"))
+                ImGui.SeparatorText("Node");
+
+                var levelName = _selectedNode.LevelName;
+                if (ImGui.InputText("Level Name", ref levelName, 255))
                 {
-                    _selectedNode.NodeType = (LevelNodeType)nodeType;
-                    updateMesh = true;
-                }
-            }
-
-            var hasLesserGate = _selectedNode.HasLesserGate;
-            if (ImGui.Checkbox("Has Lesser Gate", ref hasLesserGate))
-            {
-                using (History.BeginScope("Has Lesser Gate"))
-                {
-                    _selectedNode.HasLesserGate = hasLesserGate;
-                    updateIcons = true;
-                }
-            }
-
-            var hasWarpGate = _selectedNode.HasWarpGate;
-            if (ImGui.Checkbox("Has Warp Gate", ref hasWarpGate))
-            {
-                using (History.BeginScope("Has Warp Gate"))
-                {
-                    _selectedNode.HasWarpGate = hasWarpGate;
-                    updateIcons = true;
-                }
-            }
-
-            var chestCount = _selectedNode.Conditions.ChestCount;
-            if (ImGui.InputInt("Chest Count", ref chestCount))
-            {
-                using (History.BeginScope("Edit Chest Count"))
-                {
-                    _selectedNode.Conditions.ChestCount = chestCount;
-                    updateIcons = true;
-                }
-            }
-
-            var lockedDoorCount = _selectedNode.Conditions.LockedDoorCount;
-            if (ImGui.InputInt("Locked Door Count", ref lockedDoorCount))
-            {
-                using (History.BeginScope("Edit Locked Door Count"))
-                {
-                    _selectedNode.Conditions.LockedDoorCount = lockedDoorCount;
-                    updateIcons = true;
-                }
-            }
-
-            var unlockedDoorCount = _selectedNode.Conditions.UnlockedDoorCount;
-            if (ImGui.InputInt("Unlocked Door Count", ref unlockedDoorCount))
-            {
-                using (History.BeginScope("Edit Unlocked Door Count"))
-                {
-                    _selectedNode.Conditions.UnlockedDoorCount = unlockedDoorCount;
-                }
-            }
-
-            var cubeShardCount = _selectedNode.Conditions.CubeShardCount;
-            if (ImGui.InputInt("Cube Shard Count", ref cubeShardCount))
-            {
-                using (History.BeginScope("Edit Cube Shard Count"))
-                {
-                    _selectedNode.Conditions.CubeShardCount = cubeShardCount;
-                    updateIcons = true;
-                }
-            }
-
-            var otherCollectibleCount = _selectedNode.Conditions.OtherCollectibleCount;
-            if (ImGui.InputInt("Other Collectible Count", ref otherCollectibleCount))
-            {
-                using (History.BeginScope("Edit Other Collectible Count"))
-                {
-                    _selectedNode.Conditions.OtherCollectibleCount = otherCollectibleCount;
-                }
-            }
-
-            var splitUpCount = _selectedNode.Conditions.SplitUpCount;
-            if (ImGui.InputInt("Split Up Count", ref splitUpCount))
-            {
-                using (History.BeginScope("Edit Split Up Count"))
-                {
-                    _selectedNode.Conditions.SplitUpCount = splitUpCount;
-                    updateIcons = true;
-                }
-            }
-
-            var secretCount = _selectedNode.Conditions.SecretCount;
-            if (ImGui.InputInt("Secret Count", ref secretCount))
-            {
-                using (History.BeginScope("Edit Secret Count"))
-                {
-                    _selectedNode.Conditions.SecretCount = secretCount;
-                    updateIcons = true;
-                }
-            }
-
-            var scriptIds = new Dirty<List<int>>(_selectedNode.Conditions.ScriptIds);
-            if (ImGuiX.EditableList("Script Ids", ref scriptIds, RenderInt, () => 0))
-            {
-                using (History.BeginScope("Edit Script Ids"))
-                {
-                    _selectedNode.Conditions.ScriptIds = scriptIds;
-                }
-            }
-
-            if (_selectedNode.Connections.Count > 0)
-            {
-                ImGui.SeparatorText("Connection Branch Oversizes");
-            }
-
-            foreach (var connection in _selectedNode.Connections)
-            {
-                var branchOversize = connection.BranchOversize;
-                if (ImGui.InputFloat(connection.Face.ToString(), ref branchOversize))
-                {
-                    using (History.BeginScope("Edit Branch Oversize"))
+                    using (History.BeginScope("Edit Level Name"))
                     {
-                        connection.BranchOversize = branchOversize;
-                        RebuildSceneSubTree(_mapTree, _selectedNode);
-                        break;
+                        _selectedNode.LevelName = levelName;
+                        updateMesh = true;
+                    }
+                }
+
+                var nodeType = (int)_selectedNode.NodeType;
+                var nodeTypes = Enum.GetNames<LevelNodeType>();
+                if (ImGui.Combo("Node Type", ref nodeType, nodeTypes, nodeTypes.Length))
+                {
+                    using (History.BeginScope("Edit Node Type"))
+                    {
+                        _selectedNode.NodeType = (LevelNodeType)nodeType;
+                        updateMesh = true;
+                    }
+                }
+
+                var (_, parentConnection) = FindParentWithConnection(_mapTree, _selectedNode);
+                if (parentConnection != null)
+                {
+                    var faceNames = Enum.GetNames<FaceOrientation>();
+                    var faceIndex = (int)parentConnection.Face;
+                    if (ImGui.Combo("Parent Face", ref faceIndex, faceNames, faceNames.Length))
+                    {
+                        using (History.BeginScope("Edit Parent Face"))
+                        {
+                            parentConnection.Face = (FaceOrientation)faceIndex;
+                            RebuildSceneSubTree(_mapTree, _mapTree.Root);
+                        }
+                    }
+                }
+
+                ImGui.SeparatorText("Gates");
+
+                var hasLesserGate = _selectedNode.HasLesserGate;
+                if (ImGui.Checkbox("Has Lesser Gate", ref hasLesserGate))
+                {
+                    using (History.BeginScope("Has Lesser Gate"))
+                    {
+                        _selectedNode.HasLesserGate = hasLesserGate;
+                        updateIcons = true;
+                    }
+                }
+
+                var hasWarpGate = _selectedNode.HasWarpGate;
+                if (ImGui.Checkbox("Has Warp Gate", ref hasWarpGate))
+                {
+                    using (History.BeginScope("Has Warp Gate"))
+                    {
+                        _selectedNode.HasWarpGate = hasWarpGate;
+                        updateIcons = true;
+                    }
+                }
+
+                ImGui.SeparatorText("Win Conditions");
+
+                var chestCount = _selectedNode.Conditions.ChestCount;
+                if (ImGui.InputInt("Chest Count", ref chestCount))
+                {
+                    using (History.BeginScope("Edit Chest Count"))
+                    {
+                        _selectedNode.Conditions.ChestCount = chestCount;
+                        updateIcons = true;
+                    }
+                }
+
+                var lockedDoorCount = _selectedNode.Conditions.LockedDoorCount;
+                if (ImGui.InputInt("Locked Door Count", ref lockedDoorCount))
+                {
+                    using (History.BeginScope("Edit Locked Door Count"))
+                    {
+                        _selectedNode.Conditions.LockedDoorCount = lockedDoorCount;
+                        updateIcons = true;
+                    }
+                }
+
+                var unlockedDoorCount = _selectedNode.Conditions.UnlockedDoorCount;
+                if (ImGui.InputInt("Unlocked Door Count", ref unlockedDoorCount))
+                {
+                    using (History.BeginScope("Edit Unlocked Door Count"))
+                    {
+                        _selectedNode.Conditions.UnlockedDoorCount = unlockedDoorCount;
+                    }
+                }
+
+                var cubeShardCount = _selectedNode.Conditions.CubeShardCount;
+                if (ImGui.InputInt("Cube Shard Count", ref cubeShardCount))
+                {
+                    using (History.BeginScope("Edit Cube Shard Count"))
+                    {
+                        _selectedNode.Conditions.CubeShardCount = cubeShardCount;
+                        updateIcons = true;
+                    }
+                }
+
+                var otherCollectibleCount = _selectedNode.Conditions.OtherCollectibleCount;
+                if (ImGui.InputInt("Other Collectible Count", ref otherCollectibleCount))
+                {
+                    using (History.BeginScope("Edit Other Collectible Count"))
+                    {
+                        _selectedNode.Conditions.OtherCollectibleCount = otherCollectibleCount;
+                    }
+                }
+
+                var splitUpCount = _selectedNode.Conditions.SplitUpCount;
+                if (ImGui.InputInt("Split Up Count", ref splitUpCount))
+                {
+                    using (History.BeginScope("Edit Split Up Count"))
+                    {
+                        _selectedNode.Conditions.SplitUpCount = splitUpCount;
+                        updateIcons = true;
+                    }
+                }
+
+                var secretCount = _selectedNode.Conditions.SecretCount;
+                if (ImGui.InputInt("Secret Count", ref secretCount))
+                {
+                    using (History.BeginScope("Edit Secret Count"))
+                    {
+                        _selectedNode.Conditions.SecretCount = secretCount;
+                        updateIcons = true;
+                    }
+                }
+
+                var scriptIds = new Dirty<List<int>>(_selectedNode.Conditions.ScriptIds);
+                if (ImGuiX.EditableList("Script Ids", ref scriptIds, RenderInt, () => 0))
+                {
+                    using (History.BeginScope("Edit Script Ids"))
+                    {
+                        _selectedNode.Conditions.ScriptIds = scriptIds;
+                    }
+                }
+
+                if (_selectedNode.Connections.Count > 0)
+                {
+                    ImGui.SeparatorText("Connection Branch Oversizes");
+
+                    foreach (var connection in _selectedNode.Connections)
+                    {
+                        var branchOversize = connection.BranchOversize;
+                        if (ImGui.InputFloat(connection.Node.LevelName, ref branchOversize))
+                        {
+                            using (History.BeginScope("Edit Branch Oversize"))
+                            {
+                                connection.BranchOversize = branchOversize;
+                                RebuildSceneSubTree(_mapTree, _selectedNode);
+                                break;
+                            }
+                        }
                     }
                 }
             }
@@ -347,7 +396,7 @@ public class JadeEditor : EditorComponent
             ImGui.End();
         }
 
-        if (_nodeMapping.TryGetValue(_selectedNode, out var actors))
+        if (_selectedNode != null && _nodeMapping.TryGetValue(_selectedNode, out var actors))
         {
             if (updateMesh)
             {
