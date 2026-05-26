@@ -64,6 +64,18 @@ public class ThumbnailGenerator : DrawableGameComponent
 
     public override void Draw(GameTime gameTime)
     {
+        if (_state == State.Disposed)
+        {
+            return;
+        }
+
+        if (_state == State.Complete && _previousState == State.Disposed)
+        {
+            // completed before first draw - nothing to show
+            _state = State.Disposed;
+            return;
+        }
+
         const string popup = "Thumbnails";
         if (_state != _previousState)
         {
