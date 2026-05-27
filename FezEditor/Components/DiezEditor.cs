@@ -111,13 +111,21 @@ public class DiezEditor : EditorComponent
         ImGui.SameLine();
         if (ImGui.Button($"{Lucide.Plus} Add"))
         {
-            using (History.BeginScope("Add New Loop"))
-            {
-                _trackedSong.Loops.Add(new Loop
+            var rootPath = $"Music/{_trackedSong.Name}/";
+            ResourceService.RequestAssetPathFromUser(
+                title: "Select Loop",
+                text: "Pick a loop file to add to this song:",
+                rootPath: rootPath,
+                onProvided: loopPath =>
                 {
-                    Name = $"{_trackedSong.Name} ^ Loop{_trackedSong.Loops.Count}"
+                    using (History.BeginScope("Add New Loop"))
+                    {
+                        _trackedSong.Loops.Add(new Loop
+                        {
+                            Name = $"{_trackedSong.Name} ^ {loopPath[rootPath.Length..]}"
+                        });
+                    }
                 });
-            }
         }
 
         ImGui.SameLine();
@@ -283,14 +291,7 @@ public class DiezEditor : EditorComponent
 
         ImGui.SeparatorText("Filename");
         {
-            var filename = loop.Name;
-            if (ImGui.InputText("##Filename", ref filename, 255))
-            {
-                using (History.BeginScope("Change Loop Name"))
-                {
-                    loop.Name = filename;
-                }
-            }
+            ImGui.LabelText("##Filename", loop.Name);
         }
 
         ImGui.SeparatorText("Trigger between after every...");

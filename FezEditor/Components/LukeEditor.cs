@@ -237,14 +237,23 @@ public class LukeEditor : EditorComponent
                     }
                 }
 
-                var background = _sky.Background;
-                if (ImGui.InputText("Background", ref background, 255))
+                ImGui.LabelText("Background", NoneIsEmpty(_sky.Background));
+                ImGui.SameLine();
+                if (ImGui.Button("...##BackgroundPick"))
                 {
-                    using (History.BeginScope("Edit Background"))
-                    {
-                        _sky.Background = background;
-                        _revisualize = true;
-                    }
+                    var rootPath = $"Skies/{_sky.Name}/";
+                    ResourceService.RequestAssetPathFromUser(
+                        title: "Select Background Texture",
+                        text: "Pick a texture for the sky background:",
+                        rootPath,
+                        onProvided: backgroundPath =>
+                        {
+                            using (History.BeginScope("Edit Background"))
+                            {
+                                _sky.Background = backgroundPath[rootPath.Length..];
+                                _revisualize = true;
+                            }
+                        });
                 }
 
                 DrawTexturePreview(_sky.Background);
@@ -414,14 +423,23 @@ public class LukeEditor : EditorComponent
 
             if (ImGui.CollapsingHeader("Shadows", ImGuiTreeNodeFlags.DefaultOpen))
             {
-                var shadows = _sky.Shadows;
-                if (ImGui.InputText("Texture Name##Shadows", ref shadows, 255))
+                ImGui.LabelText("##Shadows", NoneIsEmpty(_sky.Shadows));
+                ImGui.SameLine();
+                if (ImGui.Button("...##ShadowsPick"))
                 {
-                    using (History.BeginScope("Edit Shadows"))
-                    {
-                        _sky.Shadows = shadows;
-                        _revisualize = true;
-                    }
+                    var rootPath = $"Skies/{_sky.Name}/";
+                    ResourceService.RequestAssetPathFromUser(
+                        title: "Select Shadows Texture",
+                        text: "Pick a texture for sky shadows:",
+                        rootPath,
+                        onProvided: shadowsPath =>
+                        {
+                            using (History.BeginScope("Edit Shadows"))
+                            {
+                                _sky.Shadows = shadowsPath[rootPath.Length..];
+                                _revisualize = true;
+                            }
+                        });
                 }
 
                 DrawTexturePreview(_sky.Shadows);
@@ -450,14 +468,23 @@ public class LukeEditor : EditorComponent
 
             if (ImGui.CollapsingHeader("Stars", ImGuiTreeNodeFlags.DefaultOpen))
             {
-                var stars = _sky.Stars;
-                if (ImGui.InputText("Texture Name##Stars", ref stars, 255))
+                ImGui.LabelText("##Stars", NoneIsEmpty(_sky.Stars));
+                ImGui.SameLine();
+                if (ImGui.Button("...##StarsPick"))
                 {
-                    using (History.BeginScope("Edit Stars"))
-                    {
-                        _sky.Stars = stars;
-                        _revisualize = true;
-                    }
+                    var rootPath = $"Skies/{_sky.Name}/";
+                    ResourceService.RequestAssetPathFromUser(
+                        title: "Select Stars Texture",
+                        text: "Pick a texture for sky stars:",
+                        rootPath,
+                        onProvided: starsPath =>
+                        {
+                            using (History.BeginScope("Edit Stars"))
+                            {
+                                _sky.Stars = starsPath[rootPath.Length..];
+                                _revisualize = true;
+                            }
+                        });
                 }
 
                 DrawTexturePreview(_sky.Stars);
@@ -465,14 +492,23 @@ public class LukeEditor : EditorComponent
 
             if (ImGui.CollapsingHeader("Cloud Tint", ImGuiTreeNodeFlags.DefaultOpen))
             {
-                var cloudTint = _sky.CloudTint;
-                if (ImGui.InputText("Texture Name##CloudTint", ref cloudTint, 255))
+                ImGui.LabelText("##CloudTint", NoneIsEmpty(_sky.CloudTint));
+                ImGui.SameLine();
+                if (ImGui.Button("...##CloudTintPick"))
                 {
-                    using (History.BeginScope("Edit Cloud Tint"))
-                    {
-                        _sky.CloudTint = cloudTint;
-                        _revisualize = true;
-                    }
+                    var rootPath = $"Skies/{_sky.Name}/";
+                    ResourceService.RequestAssetPathFromUser(
+                        title: "Select Cloud Tint Texture",
+                        text: "Pick a texture for sky cloud tint:",
+                        rootPath,
+                        onProvided: cloudTintPath =>
+                        {
+                            using (History.BeginScope("Edit Cloud Tint"))
+                            {
+                                _sky.CloudTint = cloudTintPath[rootPath.Length..];
+                                _revisualize = true;
+                            }
+                        });
                 }
 
                 DrawTexturePreview(_sky.CloudTint);
@@ -500,27 +536,26 @@ public class LukeEditor : EditorComponent
         {
             if (ImGui.Button($"{Lucide.Plus} Add##AddCloud"))
             {
-                using (History.BeginScope("Add Cloud"))
-                {
-                    _sky.Clouds.Add("");
-                    changed = true;
-                }
+                var rootPath = $"Skies/{_sky.Name}/";
+                ResourceService.RequestAssetPathFromUser(
+                    title: "Select Cloud Texture",
+                    text: "Pick a texture for the new cloud:",
+                    rootPath: rootPath,
+                    onProvided: picked =>
+                    {
+                        using (History.BeginScope("Add Cloud"))
+                        {
+                            _sky.Clouds.Add(picked[rootPath.Length..]);
+                            _revisualize = true;
+                        }
+                    });
             }
 
             for (var i = 0; i < _sky.Clouds.Count; i++)
             {
                 ImGui.PushID(i);
 
-                var cloud = _sky.Clouds[i];
-                if (ImGui.InputText("Texture Name##Cloud", ref cloud, 255))
-                {
-                    using (History.BeginScope("Edit Cloud"))
-                    {
-                        _sky.Clouds[i] = cloud;
-                        changed = true;
-                    }
-                }
-
+                ImGui.LabelText("##Cloud", NoneIsEmpty(_sky.Clouds[i]));
                 ImGui.SameLine();
                 if (ImGui.Button(Lucide.Trash2))
                 {
@@ -550,11 +585,19 @@ public class LukeEditor : EditorComponent
         {
             if (ImGui.Button($"{Lucide.Plus} Add##AddLayer"))
             {
-                using (History.BeginScope("Add Layer"))
-                {
-                    _sky.Layers.Add(new SkyLayer());
-                    changed = true;
-                }
+                var rootPath = $"Skies/{_sky.Name}/";
+                ResourceService.RequestAssetPathFromUser(
+                    title: "Select Layer Texture",
+                    text: "Pick a texture for the new sky layer:",
+                    rootPath: rootPath,
+                    onProvided: picked =>
+                    {
+                        using (History.BeginScope("Add Layer"))
+                        {
+                            _sky.Layers.Add(new SkyLayer { Name = picked[rootPath.Length..] });
+                            _revisualize = true;
+                        }
+                    });
             }
 
             for (var i = 0; i < _sky.Layers.Count; i++)
@@ -566,15 +609,7 @@ public class LukeEditor : EditorComponent
 
                 if (ImGui.TreeNode($"{label}##Layer"))
                 {
-                    var name = layer.Name;
-                    if (ImGui.InputText("Texture Name##LayerName", ref name, 255))
-                    {
-                        using (History.BeginScope("Edit Layer Name"))
-                        {
-                            layer.Name = name;
-                            changed = true;
-                        }
-                    }
+                    ImGui.LabelText("##LayerName", NoneIsEmpty(layer.Name));
 
                     DrawTexturePreview(layer.Name);
 
@@ -664,6 +699,11 @@ public class LukeEditor : EditorComponent
         DisposeTrackers();
         _scene.Dispose();
         base.Dispose();
+    }
+
+    private static string NoneIsEmpty(string name)
+    {
+        return string.IsNullOrEmpty(name) ? "(none)" : name;
     }
 
     public static Sky Create(string name)
