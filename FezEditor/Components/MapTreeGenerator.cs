@@ -92,19 +92,15 @@ public class MapTreeGenerator : DrawableGameComponent
     {
         _resources = game.GetService<ResourceService>();
         _tree = tree;
-
-        var rootOptions = new FileDialog.Options
-        {
-            Title = "Select Root Level...",
-            Filters = [new FileDialog.Filter("Level", "fezlvl.json")]
-        };
-
-        FileDialog.Show(FileDialog.Type.OpenFile, files =>
-        {
-            var rootPath = _resources.GetRelativePath(files[0].Replace(".fezlvl.json", ""));
-            _rootLevelName = Path.GetFileName(rootPath).ToUpperInvariant();
-            _ = ProcessAsync();
-        }, rootOptions);
+        _resources.RequestAssetPathFromUser(
+            title: "Select Root Level",
+            text: "Pick the root level to generate the map tree from:",
+            rootPath: "Levels/",
+            onProvided: levelPath =>
+            {
+                _rootLevelName = Path.GetFileName(levelPath).ToUpperInvariant();
+                _ = ProcessAsync();
+            });
     }
 
     public override void Update(GameTime gameTime)

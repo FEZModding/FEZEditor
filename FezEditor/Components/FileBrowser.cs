@@ -508,12 +508,14 @@ public class FileBrowser : DrawableGameComponent
             if (assetType == typeof(Level))
             {
                 _resourceService.RequestAssetPathFromUser(
-                    "Select Trile Set", "Pick trile set to use by a new level:",
-                    "Trile Sets/", trileSetPath =>
+                    title: "Select Trile Set",
+                    text: "Pick trile set to use by a new level:",
+                    rootPath: "Trile Sets/",
+                    onProvided: trileSetPath =>
                     {
                         var trileSet = (TrileSet)_resourceService.Load(trileSetPath);
                         var path = _resourceService.GetRelativePath(files[0]);
-                        var asset = EddyEditor.Create(defaultName, (TrileSet)trileSet);
+                        var asset = EddyEditor.Create(defaultName, trileSet);
                         _resourceService.Save(path, asset);
                     }
                 );

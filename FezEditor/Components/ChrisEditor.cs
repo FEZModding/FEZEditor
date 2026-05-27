@@ -326,22 +326,16 @@ public class ChrisEditor : EditorComponent, IChrisEditor
                     ImGui.BeginDisabled(_selectedTriles.Count == 0);
                     if (ImGui.Button($"{Lucide.ArrowRightFromLine}"))
                     {
-                        var options = new FileDialog.Options
-                        {
-                            Title = "Choose trile set file...",
-                            Filters = new FileDialog.Filter[]
+                        ResourceService.RequestAssetPathFromUser(
+                            title: "Select Trile Set",
+                            text: "Pick a trile set to import selected triles into:",
+                            rootPath: "Trile Sets/",
+                            onProvided: trileSetPath =>
                             {
-                                new("FEZTS files", "fezts.glb")
-                            }
-                        };
-
-                        FileDialog.Show(FileDialog.Type.OpenFile, files =>
-                        {
-                            var relativePath = ResourceService.GetRelativePath(files[0]).Replace(".fezts.glb", "");
-                            var targetSet = (TrileSet)ResourceService.Load(relativePath);
-                            subject.AppendTriles(_selectedTriles, targetSet);
-                            ResourceService.Save(relativePath, targetSet);
-                        }, options);
+                                var targetSet = (TrileSet)ResourceService.Load(trileSetPath);
+                                subject.AppendTriles(_selectedTriles, targetSet);
+                                ResourceService.Save(trileSetPath, targetSet);
+                            });
                     }
 
                     if (ImGui.IsItemHovered())

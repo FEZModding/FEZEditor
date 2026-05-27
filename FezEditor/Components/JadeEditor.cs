@@ -154,18 +154,15 @@ public class JadeEditor : EditorComponent
 
                 if (ImGui.Button($"{Lucide.Plus} Add New Node"))
                 {
-                    var levelOptions = new FileDialog.Options
-                    {
-                        Title = "Select Level...",
-                        Filters = [new FileDialog.Filter("Level", "fezlvl.json")]
-                    };
-
-                    FileDialog.Show(FileDialog.Type.OpenFile, files =>
-                    {
-                        var relativePath = ResourceService.GetRelativePath(files[0].Replace(".fezlvl.json", ""));
-                        var level = (Level)ResourceService.Load(relativePath);
-                        AddMapNode(level);
-                    }, levelOptions);
+                    ResourceService.RequestAssetPathFromUser(
+                        title: "Select Level",
+                        text: "Pick a level to add as a new map node:",
+                        rootPath: "Levels/",
+                        onProvided: levelPath =>
+                        {
+                            var level = (Level)ResourceService.Load(levelPath);
+                            AddMapNode(level);
+                        });
                 }
 
                 ImGui.Separator();
