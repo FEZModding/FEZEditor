@@ -379,7 +379,7 @@ internal class DefaultContext : BaseContext
         if (Level.SkyName != _skyName)
         {
             _skyName = Level.SkyName;
-            _sky = (Sky)ResourceService.Load($"Skies/{_skyName}");
+            _sky = ResourceService.Load<Sky>($"Skies/{_skyName}");
             Eddy.Scene.Lighting.Ambient = Color.White * Level.BaseAmbient;
             Eddy.Scene.Lighting.Diffuse = Color.White * Level.BaseDiffuse;
 
@@ -432,7 +432,7 @@ internal class DefaultContext : BaseContext
         #region Sky
 
         _skyName = Level.SkyName;
-        _sky = (Sky)ResourceService.Load($"Skies/{Level.SkyName}");
+        _sky = ResourceService.Load<Sky>($"Skies/{Level.SkyName}");
         Eddy.Scene.Lighting.Ambient = Color.White * Level.BaseAmbient;
         Eddy.Scene.Lighting.Diffuse = Color.White * Level.BaseDiffuse;
 

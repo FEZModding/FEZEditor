@@ -76,7 +76,7 @@ public partial class EditorService
                 rootPath: "Trile Sets/",
                 onProvided: trileSetPath =>
                 {
-                    var trileSet = (TrileSet)_resourceService.Load(trileSetPath);
+                    var trileSet = _resourceService.Load<TrileSet>(trileSetPath);
                     _resourceService.Save(relativePath, EddyEditor.Create(defaultName, trileSet));
                 });
             return;

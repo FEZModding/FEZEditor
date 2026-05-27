@@ -57,7 +57,7 @@ public class SkyStarsMesh : SkyBaseMesh
             return;
         }
 
-        var texture = (RTexture2D)_resources.Load($"Skies/{sky}/{stars}");
+        var texture = _resources.Load<RTexture2D>($"Skies/{sky}/{stars}");
         Texture = RepackerExtensions.ConvertToTexture2D(texture);
 
         foreach (var (face, side) in _sides)

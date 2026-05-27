@@ -65,7 +65,7 @@ public class SkyLayersMesh : SkyBaseMesh
             var layer = layers[index];
             if (!_textures.TryGetValue(layer.Name, out var layerTexture))
             {
-                var texture = (RTexture2D)_resources.Load($"Skies/{sky}/{layer.Name}");
+                var texture = _resources.Load<RTexture2D>($"Skies/{sky}/{layer.Name}");
                 layerTexture = RepackerExtensions.ConvertToTexture2D(texture);
                 _textures[layer.Name] = layerTexture;
             }
@@ -73,7 +73,7 @@ public class SkyLayersMesh : SkyBaseMesh
             Texture2D? obsTexture = null;
             if (layer.Name == "OBS_SKY_A")
             {
-                var texture = (RTexture2D)_resources.Load($"Skies/{sky}/OBS_SKY_C");
+                var texture = _resources.Load<RTexture2D>($"Skies/{sky}/OBS_SKY_C");
                 obsTexture = RepackerExtensions.ConvertToTexture2D(texture);
                 _textures[layer.Name] = obsTexture;
             }

@@ -160,7 +160,7 @@ public class JadeEditor : EditorComponent
                         rootPath: "Levels/",
                         onProvided: levelPath =>
                         {
-                            var level = (Level)ResourceService.Load(levelPath);
+                            var level = ResourceService.Load<Level>(levelPath);
                             AddMapNode(level);
                         });
                 }
@@ -367,7 +367,7 @@ public class JadeEditor : EditorComponent
         {
             foreach (var existingNode in allNodes.Values)
             {
-                var existingLevel = (Level)ResourceService.Load("Levels/" + existingNode.LevelName);
+                var existingLevel = ResourceService.Load<Level>("Levels/" + existingNode.LevelName);
                 foreach (var (action, _) in GetLevelTransitions(existingLevel))
                 {
                     if (string.Equals(action.Arguments[0], level.Name, StringComparison.OrdinalIgnoreCase))

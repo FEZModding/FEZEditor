@@ -68,7 +68,7 @@ public class SkyShadowsMesh : SkyBaseMesh
             return;
         }
 
-        var rTexture = (RTexture2D)_resources.Load($"Skies/{skyName}/{shadows}");
+        var rTexture = _resources.Load<RTexture2D>($"Skies/{skyName}/{shadows}");
         Texture = RepackerExtensions.ConvertToTexture2D(rTexture);
         _rendering.MaterialAssignBaseTexture(_material, Texture);
 

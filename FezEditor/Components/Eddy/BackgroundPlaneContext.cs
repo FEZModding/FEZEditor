@@ -857,7 +857,7 @@ internal class BackgroundPlaneContext : BaseContext
 
     private void SetupVisualization(BackgroundPlaneMesh mesh, BackgroundPlane bgPlane)
     {
-        var asset = ResourceService.Load($"Background Planes/{bgPlane.TextureName}");
+        var asset = ResourceService.Load<object>($"Background Planes/{bgPlane.TextureName}");
         mesh.Camera = Eddy.Camera;
         mesh.Billboard = bgPlane.Billboard;
         mesh.DoubleSided = bgPlane.Doublesided;

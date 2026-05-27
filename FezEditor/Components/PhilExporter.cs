@@ -174,7 +174,7 @@ public class PhilExporter : DrawableGameComponent
         var bgPlanes = _level.BackgroundPlanes.Where(kv => kv.Key != -1).ToDictionary();
         var npcs = _level.NonPlayerCharacters.Where(kv => kv.Key != -1).ToDictionary();
 
-        var sky = (Sky)_resources.Load($"Skies/{_level.SkyName}");
+        var sky = _resources.Load<Sky>($"Skies/{_level.SkyName}");
         var totalItems = triles.Count
                          + artObjects.Count
                          + bgPlanes.Count
@@ -204,7 +204,7 @@ public class PhilExporter : DrawableGameComponent
             _status = "Exporting triles...";
             ct.ThrowIfCancellationRequested();
 
-            var set = (TrileSet)_resources.Load($"Trile Sets/{_level.TrileSetName}");
+            var set = _resources.Load<TrileSet>($"Trile Sets/{_level.TrileSetName}");
             var meshes = new Dictionary<int, Mesh>();
 
             using (var atlasAlbedo = ExtractAlbedo(set.TextureAtlas))
@@ -263,7 +263,7 @@ public class PhilExporter : DrawableGameComponent
                 {
                     try
                     {
-                        var ao = (ArtObject)_resources.Load($"Art Objects/{instance.Name}");
+                        var ao = _resources.Load<ArtObject>($"Art Objects/{instance.Name}");
                         if (ao.Geometry.Vertices.Length > 0)
                         {
                             using var image = ExtractAlbedo(ao.Cubemap);
@@ -308,7 +308,7 @@ public class PhilExporter : DrawableGameComponent
 
                 try
                 {
-                    var asset = _resources.Load($"Background Planes/{bgPlane.TextureName}");
+                    var asset = _resources.Load<object>($"Background Planes/{bgPlane.TextureName}");
                     RgbaImage image;
                     NVector2 size;
 
@@ -484,7 +484,7 @@ public class PhilExporter : DrawableGameComponent
         {
             try
             {
-                var bgTex = (RTexture2D)_resources.Load($"Skies/{sky.Name}/{sky.Background}");
+                var bgTex = _resources.Load<RTexture2D>($"Skies/{sky.Name}/{sky.Background}");
                 using var bgImg = ImageFromTexture(bgTex);
 
                 var col = (int)(SkyNoonDayFraction * bgImg.Width) % bgImg.Width;
@@ -517,7 +517,7 @@ public class PhilExporter : DrawableGameComponent
         {
             try
             {
-                var bgTex = (RTexture2D)_resources.Load($"Skies/{sky.Name}/{sky.Background}");
+                var bgTex = _resources.Load<RTexture2D>($"Skies/{sky.Name}/{sky.Background}");
                 var col = (int)(SkyNoonDayFraction * bgTex.Width) % bgTex.Width;
                 var midY = bgTex.Height / 2;
                 var offset = (midY * bgTex.Width + col) * 4;
@@ -536,7 +536,7 @@ public class PhilExporter : DrawableGameComponent
         {
             try
             {
-                var tintTex = (RTexture2D)_resources.Load($"Skies/{sky.Name}/{sky.CloudTint}");
+                var tintTex = _resources.Load<RTexture2D>($"Skies/{sky.Name}/{sky.CloudTint}");
                 var col = (int)(SkyNoonDayFraction * tintTex.Width) % tintTex.Width;
                 var midY = tintTex.Height / 2;
                 var offset = (midY * tintTex.Width + col) * 4;
@@ -571,7 +571,7 @@ public class PhilExporter : DrawableGameComponent
             {
                 try
                 {
-                    var starsTex = (RTexture2D)_resources.Load($"Skies/{sky.Name}/{sky.Stars}");
+                    var starsTex = _resources.Load<RTexture2D>($"Skies/{sky.Name}/{sky.Stars}");
                     using var starsImg = ImageFromTexture(starsTex);
 
                     var levelSize = _level.Size.ToNumerics();
@@ -631,7 +631,7 @@ public class PhilExporter : DrawableGameComponent
 
                         try
                         {
-                            var cloudTex = (RTexture2D)_resources.Load($"Skies/{sky.Name}/{cloudName}");
+                            var cloudTex = _resources.Load<RTexture2D>($"Skies/{sky.Name}/{cloudName}");
                             cloudImages.Add(ImageFromTexture(cloudTex));
                         }
                         catch (Exception ex)
@@ -708,7 +708,7 @@ public class PhilExporter : DrawableGameComponent
 
             try
             {
-                var layerTex = (RTexture2D)_resources.Load($"Skies/{sky.Name}/{layer.Name}");
+                var layerTex = _resources.Load<RTexture2D>($"Skies/{sky.Name}/{layer.Name}");
                 using var layerImg = ImageFromTexture(layerTex);
 
                 var diffuse = NVector3.Lerp(cloudTint, fogColor, layer.FogTint);

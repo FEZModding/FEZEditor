@@ -212,8 +212,8 @@ public class MapTreeGenerator : DrawableGameComponent
             TrileSet trileSet;
             try
             {
-                level = (Level)_resources.Load("Levels/" + node.LevelName);
-                trileSet = (TrileSet)_resources.Load("Trile Sets/" + level.TrileSetName);
+                level = _resources.Load<Level>("Levels/" + node.LevelName);
+                trileSet = _resources.Load<TrileSet>("Trile Sets/" + level.TrileSetName);
             }
             catch (Exception ex)
             {

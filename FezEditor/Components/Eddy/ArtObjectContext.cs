@@ -870,7 +870,7 @@ internal class ArtObjectContext : BaseContext
                     _rotationAngles[id] = instance.Rotation.ToXna().ToYawPitchRollDegrees();
 
                     var mesh = actor.AddComponent<ArtObjectMesh>();
-                    var ao = (ArtObject)ResourceService.Load($"Art Objects/{instance.Name}");
+                    var ao = ResourceService.Load<ArtObject>($"Art Objects/{instance.Name}");
                     mesh.Visualize(ao);
                 }
             }
@@ -901,7 +901,7 @@ internal class ArtObjectContext : BaseContext
             _rotationAngles[id] = actor.Transform.Rotation.ToYawPitchRollDegrees();
 
             var mesh = actor.AddComponent<ArtObjectMesh>();
-            var ao = (ArtObject)ResourceService.Load($"Art Objects/{instance.Name}");
+            var ao = ResourceService.Load<ArtObject>($"Art Objects/{instance.Name}");
             mesh.Visualize(ao);
         }
     }
@@ -961,7 +961,7 @@ internal class ArtObjectContext : BaseContext
             _rotationAngles[id] = actor.Transform.Rotation.ToYawPitchRollDegrees();
 
             var mesh = actor.AddComponent<ArtObjectMesh>();
-            var ao = (ArtObject)ResourceService.Load($"Art Objects/{instance.Name}");
+            var ao = ResourceService.Load<ArtObject>($"Art Objects/{instance.Name}");
             mesh.Visualize(ao);
 
             _selectedIds.Add(id);

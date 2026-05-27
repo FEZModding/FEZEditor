@@ -332,7 +332,7 @@ public class ChrisEditor : EditorComponent, IChrisEditor
                             rootPath: "Trile Sets/",
                             onProvided: trileSetPath =>
                             {
-                                var targetSet = (TrileSet)ResourceService.Load(trileSetPath);
+                                var targetSet = ResourceService.Load<TrileSet>(trileSetPath);
                                 subject.AppendTriles(_selectedTriles, targetSet);
                                 ResourceService.Save(trileSetPath, targetSet);
                             });

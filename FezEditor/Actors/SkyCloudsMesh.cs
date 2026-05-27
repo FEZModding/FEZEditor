@@ -90,7 +90,7 @@ public class SkyCloudsMesh : SkyBaseMesh
         {
             if (!_textures.TryGetValue(cloud, out var tex))
             {
-                var rTexture = (RTexture2D)_resources.Load($"Skies/{sky}/{cloud}");
+                var rTexture = _resources.Load<RTexture2D>($"Skies/{sky}/{cloud}");
                 tex = RepackerExtensions.ConvertToTexture2D(rTexture);
                 _textures[cloud] = tex;
             }

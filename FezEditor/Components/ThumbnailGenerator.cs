@@ -213,7 +213,7 @@ public class ThumbnailGenerator : DrawableGameComponent
                 {
                     case AssetType.ArtObject:
                         {
-                            var ao = (ArtObject)_resources.Load(entry.Path);
+                            var ao = _resources.Load<ArtObject>(entry.Path);
                             thumbnailer = new Thumbnailer(cachePath, lastWrite, ao);
                             break;
                         }
@@ -222,7 +222,7 @@ public class ThumbnailGenerator : DrawableGameComponent
                         {
                             if (cachedTrileSetPath != entry.Path)
                             {
-                                cachedTrileSet = (TrileSet)_resources.Load(entry.Path);
+                                cachedTrileSet = _resources.Load<TrileSet>(entry.Path);
                                 cachedTrileSetPath = entry.Path;
                             }
 
@@ -248,7 +248,7 @@ public class ThumbnailGenerator : DrawableGameComponent
 
                     case AssetType.BackgroundPlane:
                         {
-                            var asset = _resources.Load(entry.Path);
+                            var asset = _resources.Load<object>(entry.Path);
                             if (asset is RAnimatedTexture anim)
                             {
                                 thumbnailer = new Thumbnailer(cachePath, lastWrite, anim);

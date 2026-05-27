@@ -85,7 +85,7 @@ public class MapNodeMesh : ActorComponent, IPickable
 
         if (!string.IsNullOrEmpty(textureFile))
         {
-            var rTexture = (RTexture2D)_resources.Load(textureFile);
+            var rTexture = _resources.Load<RTexture2D>(textureFile);
             _nodeTexture = RepackerExtensions.ConvertToTexture2D(rTexture);
         }
 

@@ -1271,7 +1271,7 @@ internal sealed class TrileContext : BaseContext
         #region Trile Set
 
         var path = $"Trile Sets/{Level.TrileSetName}";
-        _set = (TrileSet)ResourceService.Load(path);
+        _set = ResourceService.Load<TrileSet>(path);
         _hologramTrileId = InvalidId;
         Eddy.AssetBrowser.SetTrileSet(path, _set);
 

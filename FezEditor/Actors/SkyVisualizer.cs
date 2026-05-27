@@ -149,7 +149,7 @@ public class SkyVisualizer : ActorComponent
 
         if (!string.IsNullOrEmpty(sky.Background))
         {
-            var bgTexture = (RTexture2D)_resources.Load($"Skies/{sky.Name}/{sky.Background}");
+            var bgTexture = _resources.Load<RTexture2D>($"Skies/{sky.Name}/{sky.Background}");
             _fogColors = new Color[bgTexture.Width];
             for (var x = 0; x < bgTexture.Width; x++)
             {
@@ -172,7 +172,7 @@ public class SkyVisualizer : ActorComponent
 
         if (!string.IsNullOrEmpty(sky.CloudTint))
         {
-            var tintTexture = (RTexture2D)_resources.Load($"Skies/{sky.Name}/{sky.CloudTint}");
+            var tintTexture = _resources.Load<RTexture2D>($"Skies/{sky.Name}/{sky.CloudTint}");
             _cloudTintTexture = RepackerExtensions.ConvertToTexture2D(tintTexture);
             _cloudTintColors = new Color[tintTexture.Width];
             for (var x = 0; x < tintTexture.Width; x++)

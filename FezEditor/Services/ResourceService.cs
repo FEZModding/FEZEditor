@@ -115,35 +115,35 @@ public class ResourceService : IDisposable
         return _provider?.IsReadonlyPath(path) ?? true;
     }
 
-    public object Load(string path)
+    public T Load<T>(string path) where T: class
     {
         if (path.Contains("SaveSlot", StringComparison.OrdinalIgnoreCase))
         {
             using var stream = _provider!.OpenStream(path, string.Empty);
             var saveData = SaveData.Read(stream);
             Logger.Information("Loaded save data - {0}", path);
-            return saveData;
+            return (saveData as T)!;
         }
 
         if (_provider!.GetExtension(path) == ".ogg")
         {
-            var stream = _provider.OpenStream(path, ".ogg");
+            var stream = _provider!.OpenStream(path, ".ogg");
             var oggContainer = new VorbisSoundContainer(stream, leaveOpen: false);
             Logger.Information("Loaded *.ogg file as SoundEffect - {0}", path);
-            return oggContainer;
+            return (oggContainer as T)!;
         }
 
         path = path.Replace('\\', '/');
-        if (_cache.TryGetValue(path, out var weakRef) && weakRef.TryGetTarget(out var cached))
+        if (_cache.TryGetValue(path, out var reference) && reference.TryGetTarget(out var cached))
         {
             Logger.Debug("Cache hit - {0} ({1})", path, cached.GetType().Name);
-            return cached;
+            return (T)cached;
         }
 
-        var @object = _provider!.Load<object>(path);
-        _cache[path] = new WeakReference<object>(@object);
-        Logger.Information("Loaded - {0} ({1})", path, @object.GetType().Name);
-        return @object;
+        var asset = _provider!.Load<T>(path);
+        _cache[path] = new WeakReference<object>(asset);
+        Logger.Information("Loaded - {0} ({1})", path, asset.GetType().Name);
+        return asset;
     }
 
     public SaveData LoadSaveDataFromContent(string path)
