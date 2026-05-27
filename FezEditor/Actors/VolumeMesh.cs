@@ -50,7 +50,6 @@ public class VolumeMesh : ActorComponent, IPickable
         _rendering.MaterialAssignEffect(_overlay, _rendering.BasicEffect);
         _rendering.MaterialSetCullMode(_overlay, CullMode.None);
         _rendering.MaterialSetSamplerState(_overlay, SamplerState.PointWrap);
-        _rendering.MaterialSetDepthWrite(_overlay, false);
     }
 
     public override void Update(GameTime gameTime)
