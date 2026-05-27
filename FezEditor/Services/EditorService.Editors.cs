@@ -7,7 +7,6 @@ using FEZRepacker.Core.Definitions.Game.NpcMetadata;
 using FEZRepacker.Core.Definitions.Game.Sky;
 using FEZRepacker.Core.Definitions.Game.TrackedSong;
 using FEZRepacker.Core.Definitions.Game.TrileSet;
-using FEZRepacker.Core.Definitions.Game.XNA;
 
 namespace FezEditor.Services;
 
@@ -38,7 +37,7 @@ public partial class EditorService
             TrileSet ts => new ChrisEditor(_game, path, ts),
             MapTree tree => new JadeEditor(_game, path, tree),
             Level level => new EddyEditor(_game, path, level),
-            SoundEffect soundEffect => new RickViewer(_game, path, soundEffect),
+            RSoundEffect soundEffect => new RickViewer(_game, path, soundEffect),
             VorbisSoundContainer oggContainer => new RickViewer(_game, path, oggContainer),
             Sky sky => new LukeEditor(_game, path, sky),
             RTexture2D texture => new TexViewer(_game, path, texture),
@@ -67,15 +66,41 @@ public partial class EditorService
         throw new InvalidOperationException();
     }
 
-    public static object CreateAssetOfType(Type assetType, string name)
+    public void CreateAndSaveAsset(Type assetType, string relativePath, string defaultName)
     {
-        if (assetType == typeof(TrackedSong)) return DiezEditor.Create(name);
-        if (assetType == typeof(TextStorage)) return PoEditor.Create();
-        if (assetType == typeof(FezFont)) return ZuEditor.Create();
-        if (assetType == typeof(ArtObject)) return ChrisEditor.CreateAo(name);
-        if (assetType == typeof(TrileSet)) return ChrisEditor.CreateTs(name);
-        if (assetType == typeof(Sky)) return LukeEditor.Create(name);
-        if (assetType == typeof(NpcMetadata)) return MuEditor.Create();
-        throw new InvalidOperationException();
+        if (assetType == typeof(Level))
+        {
+            _resourceService.RequestAssetPathFromUser(
+                title: "Select Trile Set",
+                text: "Pick trile set to use by a new level:",
+                rootPath: "Trile Sets/",
+                onProvided: trileSetPath =>
+                {
+                    var trileSet = (TrileSet)_resourceService.Load(trileSetPath);
+                    _resourceService.Save(relativePath, EddyEditor.Create(defaultName, trileSet));
+                });
+            return;
+        }
+
+        if (assetType == typeof(MapTree))
+        {
+            var mapTree = new MapTree();
+            var generator = new MapTreeGenerator(_game, mapTree);
+            generator.Disposed += (_, _) => _resourceService.Save(relativePath, mapTree);
+            _game.Components.Add(generator);
+            return;
+        }
+
+        object? asset = null;
+        if (assetType == typeof(TrackedSong)) asset = DiezEditor.Create(defaultName);
+        if (assetType == typeof(TextStorage)) asset = PoEditor.Create();
+        if (assetType == typeof(FezFont)) asset = ZuEditor.Create();
+        if (assetType == typeof(ArtObject)) asset = ChrisEditor.CreateAo(defaultName);
+        if (assetType == typeof(TrileSet)) asset = ChrisEditor.CreateTs(defaultName);
+        if (assetType == typeof(Sky)) asset = LukeEditor.Create(defaultName);
+        if (assetType == typeof(NpcMetadata)) asset = MuEditor.Create();
+        if (asset == null) throw new InvalidOperationException();
+
+        _resourceService.Save(relativePath, asset);
     }
 }
