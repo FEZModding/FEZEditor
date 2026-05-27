@@ -21,13 +21,15 @@ public partial class ImGuiService : IDisposable
 
     private static readonly Color ClearColor = new(0.2f, 0.2f, 0.294f);
 
-    public float AutoDisplayScale { get; }
+    public float AutoDisplayScale { get; private set; }
 
     private const float FallbackFrameTime = 1f / 60f;
 
     private const float WheelDelta = 120f;
 
     private readonly Game _game;
+
+    private readonly AppStorageService _storage;
 
     private readonly InputService _input;
 
@@ -55,18 +57,18 @@ public partial class ImGuiService : IDisposable
 
     private float _displayScale;
 
-    private float? _pendingFontScale;
+    private float? _pendingDisplayScale;
 
     public ImGuiService(Game game)
     {
         _game = game;
+        _storage = game.GetService<AppStorageService>();
         _input = game.GetService<InputService>();
 
         // Set up the context
         {
             var context = ImGui.CreateContext();
             ImGui.SetCurrentContext(context);
-            SetupStyle();
             PopulateKeyMappings();
             TextInputEXT.TextInput += HandleInput;
             TextInputEXT.StartTextInput();
@@ -91,6 +93,7 @@ public partial class ImGuiService : IDisposable
         }
 
         BuildFontAtlas();
+        ApplyStyleScale();
 
         // Initialize rendering
         {
@@ -125,10 +128,20 @@ public partial class ImGuiService : IDisposable
     /// <param name="gameTime">Current game timing information.</param>
     public void BeforeLayout(GameTime gameTime)
     {
-        if (_pendingFontScale.HasValue)
+        var currentAuto = GetDisplayScale(_game.Window.Handle);
+        if (MathF.Abs(currentAuto - AutoDisplayScale) > 0.01f)
         {
-            _displayScale = _pendingFontScale.Value;
-            _pendingFontScale = null;
+            AutoDisplayScale = currentAuto;
+            if (!_storage.DisplayScale.HasValue)
+            {
+                _pendingDisplayScale = currentAuto;
+            }
+        }
+
+        if (_pendingDisplayScale.HasValue)
+        {
+            _displayScale = _pendingDisplayScale.Value;
+            _pendingDisplayScale = null;
             if (UnbindTexture(_fontTexture))
             {
                 _fontTexture.Dispose();
@@ -136,6 +149,7 @@ public partial class ImGuiService : IDisposable
 
             ImGui.GetIO().Fonts.Clear();
             BuildFontAtlas();
+            ApplyStyleScale();
         }
 
         var io = ImGui.GetIO();
@@ -353,9 +367,15 @@ public partial class ImGuiService : IDisposable
         }
     }
 
-    public void RebuildFonts(float scale)
+    public void SetDisplayScale(float scale)
     {
-        _pendingFontScale = scale;
+        _pendingDisplayScale = scale;
+    }
+
+    private void ApplyStyleScale()
+    {
+        SetupStyle();
+        ImGui.GetStyle().ScaleAllSizes(_displayScale);
     }
 
     private unsafe void BuildFontAtlas()

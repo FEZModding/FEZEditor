@@ -238,7 +238,7 @@ public class MenuBar : DrawableGameComponent
                         if (current != null)
                         {
                             _storageService.DisplayScale = null;
-                            _imguiService.RebuildFonts(autoScale);
+                            _imguiService.SetDisplayScale(autoScale);
                         }
                     }
 
@@ -253,7 +253,7 @@ public class MenuBar : DrawableGameComponent
                             if (!selected)
                             {
                                 _storageService.DisplayScale = preset;
-                                _imguiService.RebuildFonts(preset);
+                                _imguiService.SetDisplayScale(preset);
                             }
                         }
                     }

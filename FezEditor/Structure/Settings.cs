@@ -19,7 +19,7 @@ public record Settings
 
     public Color[] PaintPalette { get; init; } = Array.Empty<Color>();
 
-    public float? DisplayScale { get; init; } = 1f;
+    public float? DisplayScale { get; init; } // null - automatic
 
     public record RecentProvider(string Path, string Kind);
 
