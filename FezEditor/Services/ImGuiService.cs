@@ -383,6 +383,7 @@ public partial class ImGuiService : IDisposable
         var io = ImGui.GetIO();
         LoadFont("Fonts/ProggyForever", io.Fonts.GetGlyphRangesDefault(), size: 13f);
         LoadIconsFont("Fonts/Lucide", Lucide.IconMin, Lucide.IconMax, size: 16f, yOffset: 4f);
+        LoadIconsFont("Fonts/AtIcons", AtIcons.IconMin, AtIcons.IconMax, size: 13f, yOffset: 0f);
         ImGuiX.Fonts.NotoSans = LoadFont("Fonts/NotoSans", io.Fonts.GetGlyphRangesDefault(), size: 24f);
         ImGuiX.Fonts.NotoSansJp = LoadFont("Fonts/NotoSansJP", io.Fonts.GetGlyphRangesJapanese(), size: 24f);
         ImGuiX.Fonts.NotoSansKr = LoadFont("Fonts/NotoSansKR", io.Fonts.GetGlyphRangesKorean(), size: 24f);

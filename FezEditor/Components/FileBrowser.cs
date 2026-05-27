@@ -1,9 +1,6 @@
 ﻿using FezEditor.Services;
 using FezEditor.Structure;
 using FezEditor.Tools;
-using FEZRepacker.Core.Definitions.Game.Level;
-using FEZRepacker.Core.Definitions.Game.MapTree;
-using FEZRepacker.Core.Definitions.Game.TrileSet;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
 
@@ -146,7 +143,8 @@ public class FileBrowser : DrawableGameComponent
 
             ImGui.SameLine();
             ImGui.SetNextItemWidth(-1);
-            if (ImGui.InputTextWithHint("##PathInput", "Selected Path", ref _path, 512, ImGuiInputTextFlags.EnterReturnsTrue))
+            if (ImGui.InputTextWithHint("##PathInput", "Selected Path", ref _path, 512,
+                    ImGuiInputTextFlags.EnterReturnsTrue))
             {
                 // Try to find and select the node at this path
                 var node = FindNodeByPath(_path);
@@ -250,6 +248,7 @@ public class FileBrowser : DrawableGameComponent
                 {
                     DrawContextMenu(contextTarget, flatten: true);
                 }
+
                 ImGui.EndPopup();
             }
 
@@ -378,7 +377,7 @@ public class FileBrowser : DrawableGameComponent
 
                 if (ImGui.BeginPopupContextItem())
                 {
-                    if (node.IsReference && !node.IsDirectory)
+                    if (node is { IsReference: true, IsDirectory: false })
                     {
                         DrawReferenceContextMenu(node);
                     }
@@ -386,6 +385,7 @@ public class FileBrowser : DrawableGameComponent
                     {
                         DrawContextMenu(node, flatten: false);
                     }
+
                     ImGui.EndPopup();
                 }
 
@@ -778,12 +778,22 @@ public class FileBrowser : DrawableGameComponent
             return Lucide.FileQuestionMark;
         }
 
-        var parts = extension.TrimStart('.').Split('.');
-        var lastExt = parts.Length > 0 ? parts[^1].ToLowerInvariant() : "";
-        return lastExt switch
+        return extension switch
         {
-            "json" => Lucide.Braces,
-            "png" or "jpg" or "jpeg" or "gif" or "bmp" or "glb" => Lucide.Image,
+            ".fezanim.json" => AtIcons.Film,
+            ".fezao.glb" => AtIcons.Pyramid,
+            ".fezlvl.json" => AtIcons.Tilemap,
+            ".fezmap.json" => AtIcons.Globe,
+            ".feznpc.json" => AtIcons.Human,
+            ".fezsky.json" => AtIcons.SunCloud,
+            ".fezsong.json" => AtIcons.NoteDouble,
+            ".feztxt.json" => AtIcons.Text,
+            ".fezts.glb" => AtIcons.Tileset,
+            ".fezfont.png" => AtIcons.Font,
+            ".fxc" => AtIcons.Checkerboard,
+            ".ogg" or ".wav" => AtIcons.Speaker,
+            ".png" => AtIcons.Image,
+            ".gif" => AtIcons.Film,
             _ => Lucide.FileBox
         };
     }
