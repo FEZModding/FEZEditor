@@ -1599,7 +1599,7 @@ internal sealed class TrileContext : BaseContext
         ImGui.SeparatorText("Geyser");
         {
             var geyserOffset = group.GeyserOffset;
-            if (ImGui.DragFloat("Offset", ref geyserOffset, 0.1f))
+            if (ImGui.DragFloat("Offset##GeyserOffset", ref geyserOffset, 0.1f))
             {
                 using (Eddy.History.BeginScope("Edit Geyser Offset", EddyContext.Trile))
                 {
@@ -1692,7 +1692,7 @@ internal sealed class TrileContext : BaseContext
             }
 
             var spinOffset = group.SpinOffset;
-            if (ImGui.DragFloat("Offset", ref spinOffset, 0.1f))
+            if (ImGui.DragFloat("Offset##SpinOffset", ref spinOffset, 0.1f))
             {
                 using (Eddy.History.BeginScope("Edit Spin Offset", EddyContext.Trile))
                 {
