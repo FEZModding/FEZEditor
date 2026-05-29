@@ -280,14 +280,6 @@ internal sealed class TrileContext : BaseContext
                 ("Ctrl+X", "Cut")
             );
 
-            if (_selectedCursor.GroupId != null)
-            {
-                StatusService.AddHints(("Ctrl+Shift+G", "Ungroup"));
-            }
-            else if (_selectedCursor.Emplacements.Count > 1)
-            {
-                StatusService.AddHints(("Ctrl+G", "Group"));
-            }
         }
 
         if (_select.Clipboard.Count > 0 && _hoveredCursor.Emplacement != null)
@@ -303,46 +295,6 @@ internal sealed class TrileContext : BaseContext
             }
 
             _selectedCursor.Reset();
-        }
-
-        if (ImGui.GetIO().KeyShift && ImGuiX.IsKeyShortcut(ImGuiKey.G) &&
-            _selectedCursor.GroupId != null)
-        {
-            using (Eddy.History.BeginScope("Remove Trile Group", EddyContext.Trile))
-            {
-                Level.Groups.Remove(_selectedCursor.GroupId.Value);
-            }
-
-            _selectedCursor.GroupId = null;
-        }
-
-        if (!ImGui.GetIO().KeyShift && ImGuiX.IsKeyShortcut(ImGuiKey.G) &&
-            _selectedCursor.Emplacements.Count > 1 && _selectedCursor.GroupId == null)
-        {
-            using (Eddy.History.BeginScope("Create Trile Group", EddyContext.Trile))
-            {
-                var groupId = Level.Groups.Count > 0 ? Level.Groups.Keys.Max() + 1 : 0;
-                var group = new TrileGroup();
-
-                foreach (var emp in _selectedCursor.Emplacements)
-                {
-                    if (Level.Triles.TryGetValue(emp, out var instance))
-                    {
-                        group.Triles.Add(instance);
-                        _emplacementGroups[emp] = groupId;
-                    }
-                }
-
-                if (!_groupEmplacements.TryGetValue(groupId, out var set))
-                {
-                    set = new HashSet<TrileEmplacement>();
-                    _groupEmplacements[groupId] = set;
-                }
-
-                set.UnionWith(_selectedCursor.Emplacements);
-                Level.Groups[groupId] = group;
-                _selectedCursor.GroupId = groupId;
-            }
         }
 
         if (_selectedCursor.Emplacements.Count > 0 && ImGuiX.IsKeyShortcut(ImGuiKey.C))
@@ -1517,6 +1469,17 @@ internal sealed class TrileContext : BaseContext
 
         ImGui.TextDisabled($"{instances.Count} triles selected");
 
+        if (CanCreateGroupFromSelection())
+        {
+            if (ImGui.Button($"{Lucide.Group} Group"))
+            {
+                CreateSelectedGroup();
+                return;
+            }
+
+            ImGui.Separator();
+        }
+
         var positionDrag = _previousPositionDrag;
         if (ImGuiX.DragFloat3("Position", ref positionDrag, 0.1f))
         {
@@ -1596,6 +1559,14 @@ internal sealed class TrileContext : BaseContext
     private void DrawGroupProperties(int id, TrileGroup group)
     {
         ImGui.TextDisabled($"Trile Group: {group.Triles.Count} trile(s) (ID={id})");
+
+        if (ImGui.Button($"{Lucide.Ungroup} Ungroup"))
+        {
+            UngroupSelectedGroup();
+            return;
+        }
+
+        ImGui.Separator();
 
         var actor = (int)group.ActorType;
         var actors = Enum.GetNames<ActorType>();
@@ -1940,6 +1911,77 @@ internal sealed class TrileContext : BaseContext
 
         UpdateCollisionMesh();
         EnsurePlaceholder();
+    }
+
+    private bool CanCreateGroupFromSelection()
+    {
+        if (_selectedCursor.GroupId != null)
+        {
+            return false;
+        }
+
+        var selectedTriles = _selectedCursor.Emplacements
+            .Where(e => Level.Triles.TryGetValue(e, out var ti) && ti.TrileId != InvalidId)
+            .ToList();
+
+        return selectedTriles.Count > 1 && selectedTriles.All(e => !_emplacementGroups.ContainsKey(e));
+    }
+
+    private void CreateSelectedGroup()
+    {
+        var selectedTriles = _selectedCursor.Emplacements
+            .Where(e => Level.Triles.TryGetValue(e, out var ti) && ti.TrileId != InvalidId)
+            .Where(e => !_emplacementGroups.ContainsKey(e))
+            .ToList();
+
+        if (selectedTriles.Count < 2)
+        {
+            return;
+        }
+
+        using (Eddy.History.BeginScope("Create Trile Group", EddyContext.Trile))
+        {
+            var groupId = Level.Groups.Count > 0 ? Level.Groups.Keys.Max() + 1 : 0;
+            var group = new TrileGroup();
+            var set = new HashSet<TrileEmplacement>();
+
+            foreach (var emp in selectedTriles)
+            {
+                var instance = Level.Triles[emp];
+                group.Triles.Add(instance);
+                _emplacementGroups[emp] = groupId;
+                set.Add(emp);
+            }
+
+            _groupEmplacements[groupId] = set;
+            Level.Groups[groupId] = group;
+            _selectedCursor.GroupId = groupId;
+        }
+    }
+
+    private void UngroupSelectedGroup()
+    {
+        if (_selectedCursor.GroupId == null)
+        {
+            return;
+        }
+
+        var groupId = _selectedCursor.GroupId.Value;
+        using (Eddy.History.BeginScope("Remove Trile Group", EddyContext.Trile))
+        {
+            Level.Groups.Remove(groupId);
+            _groupEmplacements.Remove(groupId);
+
+            foreach (var emp in _selectedCursor.Emplacements)
+            {
+                if (_emplacementGroups.TryGetValue(emp, out var empGroupId) && empGroupId == groupId)
+                {
+                    _emplacementGroups.Remove(emp);
+                }
+            }
+
+            _selectedCursor.GroupId = null;
+        }
     }
 
     private void AddToGroup(int groupId, TrileEmplacement emp, TrileInstance instance)
