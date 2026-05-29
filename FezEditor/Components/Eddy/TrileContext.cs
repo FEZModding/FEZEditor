@@ -1701,15 +1701,32 @@ internal sealed class TrileContext : BaseContext
             }
         }
 
-        if (group.Path != null)
+        ImGui.SeparatorText("Path");
+        if (group.Path == null)
         {
-            ImGui.SeparatorText("Path");
+            ImGui.TextDisabled("No path assigned.");
+            if (ImGui.Button($"{Lucide.Route} Create Path##GroupPath"))
+            {
+                using (Eddy.History.BeginScope("Create Group Path", EddyContext.Path))
+                {
+                    group.Path = new MovementPath();
+                }
+
+                _selectedCursor.Reset();
+                Eddy.Pending = new PathContext.Pending(id, IsGroup: true);
+                Eddy.SelectedContext = EddyContext.Path;
+                Eddy.Tool = EddyTool.Paint;
+            }
+        }
+        else
+        {
             ImGui.TextDisabled($"{group.Path.Segments.Count} segment(s)");
             if (ImGui.Button("Edit Path##GroupPath"))
             {
+                _selectedCursor.Reset();
                 Eddy.Pending = new PathContext.Pending(id, IsGroup: true);
                 Eddy.SelectedContext = EddyContext.Path;
-                Eddy.Tool = EddyTool.Select;
+                Eddy.Tool = group.Path.Segments.Count == 0 ? EddyTool.Paint : EddyTool.Select;
             }
         }
     }

@@ -118,6 +118,28 @@ internal class PathContext : BaseContext
         Eddy.AllowedTools.Add(EddyTool.Translate);
         Eddy.AllowedTools.Add(EddyTool.Paint);
 
+        if (ImGui.IsKeyPressed(ImGuiKey.Escape))
+        {
+            _selectedPathId = null;
+            _selectedWaypointIndices.Clear();
+            Eddy.SelectedContext = EddyContext.Default;
+            Eddy.Tool = EddyTool.Select;
+            return;
+        }
+
+        if (_selectedWaypointIndices.Count > 0)
+        {
+            StatusService.AddHints(("Delete", "Erase Waypoint"));
+        }
+
+        if (_selectedWaypointIndices.Count > 0 && ImGui.IsKeyPressed(ImGuiKey.Delete))
+        {
+            using (Eddy.History.BeginScope("Delete Path Waypoint", EddyContext.Path))
+            {
+                RemoveWaypoints(_selectedWaypointIndices);
+            }
+        }
+
         if (Eddy.Tool == EddyTool.Select &&
             ImGui.IsMouseClicked(ImGuiMouseButton.Left) &&
             Eddy.IsViewportHovered &&
@@ -187,6 +209,34 @@ internal class PathContext : BaseContext
                     mesh.WaypointColors[i] = i == _hoveredWaypointIndex ? WaypointHoverColor : PathColor;
                 }
             }
+        }
+    }
+
+    private void RemoveWaypoints(params IEnumerable<int> indices)
+    {
+        var path = GetActivePath();
+        if (path == null)
+        {
+            _selectedWaypointIndices.Clear();
+            return;
+        }
+
+        foreach (var index in indices.OrderDescending().ToList())
+        {
+            if (index >= 0 && index < path.Segments.Count)
+            {
+                path.Segments.RemoveAt(index);
+            }
+        }
+
+        _selectedWaypointIndices.Clear();
+
+        var activeKey = _selectedIsGroupPath ? -(_selectedPathId!.Value + 1) : _selectedPathId!.Value;
+        if (_pathActors.TryGetValue(activeKey, out var actor))
+        {
+            var mesh = actor.GetComponent<PathMesh>();
+            mesh.Waypoints = path.Segments.Select(ps => _selectedOffset + ps.Destination.ToXna()).ToList();
+            mesh.WaypointColors = Enumerable.Repeat(PathColor, mesh.Waypoints.Count).ToList();
         }
     }
 
@@ -446,7 +496,7 @@ internal class PathContext : BaseContext
             var isSegSelected = _selectedWaypointIndices.Contains(i);
             if (isSegSelected)
             {
-                ImGui.PushStyleColor(ImGuiCol.Header, new System.Numerics.Vector4(0.6f, 0.5f, 0f, 1f));
+                ImGui.PushStyleColor(ImGuiCol.Header, new NVector4(0.6f, 0.5f, 0f, 1f));
             }
 
             if (ImGui.CollapsingHeader($"Segment {i}##{i}"))
@@ -455,6 +505,17 @@ internal class PathContext : BaseContext
                 var dest = seg.Destination.ToXna();
                 ImGuiX.DragFloat3("Destination", ref dest);
                 ImGui.EndDisabled();
+
+                ImGui.SameLine();
+                if (ImGui.Button($"{Lucide.X}##Segment{i}"))
+                {
+                    using (Eddy.History.BeginScope("Delete Path Waypoint", EddyContext.Path))
+                    {
+                        RemoveWaypoints(i);
+                    }
+
+                    break;
+                }
             }
 
             if (ImGui.IsItemClicked())
