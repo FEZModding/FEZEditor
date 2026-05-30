@@ -491,7 +491,7 @@ public class EddyEditor : EditorComponent, IEddyEditor
             }
 
             ImGui.SameLine();
-            ImGui.SetNextItemWidth(60f);
+            ImGui.SetNextItemWidth(ImGui.GetFontSize() * 4.7f);
 
             var overlapIndex = OverlapIndex;
             if (ImGui.InputInt("##Layer", ref overlapIndex))
