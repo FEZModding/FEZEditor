@@ -34,7 +34,7 @@ public class AboutWindow : DrawableGameComponent
     public override void Draw(GameTime gameTime)
     {
         ImGui.SetNextWindowCollapsed(!_isOpen, ImGuiCond.FirstUseEver);
-        ImGuiX.SetNextWindowCentered();
+        ImGuiX.SetNextWindowCentered(ImGuiCond.Always);
 
         const ImGuiWindowFlags flags = ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoCollapse |
                                        ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove;

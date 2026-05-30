@@ -63,7 +63,6 @@ public class EditWindow : DrawableGameComponent
                 throw new ArgumentException("Dialog text is empty");
             }
 
-            ImGuiX.SetNextWindowCentered();
             ImGui.OpenPopup(strId);
             Clear();
         }
@@ -75,7 +74,7 @@ public class EditWindow : DrawableGameComponent
         }
 
         ImGuiX.SetNextWindowSize(new Vector2(320, 0));
-
+        ImGuiX.SetNextWindowCentered(ImGuiCond.Always);
         if (ImGui.BeginPopupModal(strId, flags))
         {
             ImGui.Text(Text);

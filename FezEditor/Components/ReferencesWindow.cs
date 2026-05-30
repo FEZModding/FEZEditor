@@ -28,7 +28,6 @@ public class ReferencesWindow : DrawableGameComponent
     {
         if (_pendingOpen)
         {
-            ImGuiX.SetNextWindowCentered();
             ImGui.OpenPopup("References##referencesWindow");
             _open = true;
             _pendingOpen = false;
@@ -42,6 +41,7 @@ public class ReferencesWindow : DrawableGameComponent
         const ImGuiWindowFlags flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.AlwaysAutoResize;
 
         ImGuiX.SetNextWindowSize(new Vector2(480, 0));
+        ImGuiX.SetNextWindowCentered(ImGuiCond.Always);
         if (!ImGui.BeginPopupModal("References##referencesWindow", ref _open, flags))
         {
             return;

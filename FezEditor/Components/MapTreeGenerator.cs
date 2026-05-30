@@ -121,12 +121,12 @@ public class MapTreeGenerator : DrawableGameComponent
         const string popup = "Map Tree##Generator";
         if (_state != _previousState)
         {
-            ImGuiX.SetNextWindowCentered();
             ImGui.OpenPopup(popup);
             _previousState = _state;
         }
 
         var isOpen = true;
+        ImGuiX.SetNextWindowCentered(ImGuiCond.Always);
         if (ImGui.BeginPopupModal(popup, ref isOpen, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoCollapse))
         {
             switch (_state)

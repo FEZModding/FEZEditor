@@ -90,12 +90,12 @@ public class ResourceExtractor : DrawableGameComponent
                 State.Complete => "Asset Extraction##Complete",
                 _ => _popup
             };
-            ImGuiX.SetNextWindowCentered();
             ImGui.OpenPopup(_popup);
             _previousState = _state;
         }
 
         var isOpen = true;
+        ImGuiX.SetNextWindowCentered(ImGuiCond.Always);
         if (ImGui.BeginPopupModal(_popup, ref isOpen, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoCollapse))
         {
             switch (_state)

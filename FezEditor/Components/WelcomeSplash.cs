@@ -47,7 +47,7 @@ public class WelcomeSplash : EditorComponent
     {
         ImGui.OpenPopup("##welcome");
 
-        ImGuiX.SetNextWindowCentered();
+        ImGuiX.SetNextWindowCentered(ImGuiCond.Always);
         ImGui.SetNextWindowSize(new NVector2(SplashWidth, 0), ImGuiCond.Always);
 
         ImGuiX.PushStyleColor(ImGuiCol.ModalWindowDimBg, BackgroundTint);

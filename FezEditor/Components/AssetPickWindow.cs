@@ -75,7 +75,6 @@ public class AssetPickWindow : DrawableGameComponent
             }
 
             RecacheAssetPaths();
-            ImGuiX.SetNextWindowCentered();
             ImGui.OpenPopup(strId);
             Clear();
         }
@@ -87,7 +86,7 @@ public class AssetPickWindow : DrawableGameComponent
         }
 
         ImGuiX.SetNextWindowSize(new Vector2(320, 0));
-
+        ImGuiX.SetNextWindowCentered(ImGuiCond.Always);
         if (ImGui.BeginPopupModal(strId, flags))
         {
             ImGui.Text(Text);

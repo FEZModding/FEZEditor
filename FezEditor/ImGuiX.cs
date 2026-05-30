@@ -469,10 +469,10 @@ public static class ImGuiX
         }
     }
 
-    public static void SetNextWindowCentered()
+    public static void SetNextWindowCentered(ImGuiCond condition)
     {
         var center = ImGui.GetMainViewport().GetCenter();
-        ImGui.SetNextWindowPos(center, ImGuiCond.Appearing, NVector2.One / 2f);
+        ImGui.SetNextWindowPos(center, condition, NVector2.One / 2f);
     }
 
     public static void SetTextCentered(string text)
