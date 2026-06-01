@@ -21,12 +21,6 @@ public class FezEditor : Game
 
     public const string Commit = ThisAssembly.Git.Commit;
 
-#if DEBUG
-    public const bool IsDebugBuild = true;
-#else
-    public const bool IsDebugBuild = false;
-#endif
-
     private readonly GraphicsDeviceManager _deviceManager;
 
     private AppStorageService _appStorage = null!;

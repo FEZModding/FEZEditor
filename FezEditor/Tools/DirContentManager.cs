@@ -1,6 +1,5 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Serilog;
 

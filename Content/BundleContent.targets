@@ -1,6 +1,11 @@
 <Project>
   <Import Project="../FXC/CompileShaders.targets"/>
 
+  <ItemGroup Condition="'$(Configuration)' == 'Release'">
+    <EmbeddedResource Include="$(IntermediateOutputPath)ContentBundle"
+                      LogicalName="ContentBundle"/>
+  </ItemGroup>
+
   <!-- Debug: Copy to folder -->
   <Target Name="BundleContentDebug" AfterTargets="Build" DependsOnTargets="CompileShaders" Condition="'$(Configuration)' == 'Debug'">
     <ReadLinesFromFile File="$(MSBuildThisFileDirectory).ignore" Condition="Exists('$(MSBuildThisFileDirectory).ignore')">
@@ -18,8 +23,8 @@
           OverwriteReadOnlyFiles="true"/>
   </Target>
 
-  <!-- Release: Bundle to pkz -->
-  <Target Name="BundleContent" AfterTargets="Build" DependsOnTargets="CompileShaders" Condition="'$(Configuration)' == 'Release'">
+  <!-- Release: Bundle and embed into the editor assembly -->
+  <Target Name="BundleContent" BeforeTargets="CreateManifestResourceNames" DependsOnTargets="CompileShaders" Condition="'$(Configuration)' == 'Release'">
     <ReadLinesFromFile File="$(MSBuildThisFileDirectory).ignore" Condition="Exists('$(MSBuildThisFileDirectory).ignore')">
       <Output TaskParameter="Lines" ItemName="IgnorePatterns"/>
     </ReadLinesFromFile>
@@ -34,9 +39,9 @@
           SkipUnchangedFiles="true"
           OverwriteReadOnlyFiles="true"/>
 
-    <Delete Files="$(OutputPath)Content.pkz" Condition="Exists('$(OutputPath)Content.pkz')"/>
+    <Delete Files="$(IntermediateOutputPath)ContentBundle" Condition="Exists('$(IntermediateOutputPath)ContentBundle')"/>
     <ZipDirectory SourceDirectory="$(IntermediateOutputPath)Content"
-                  DestinationFile="$(OutputPath)Content.pkz"
+                  DestinationFile="$(IntermediateOutputPath)ContentBundle"
                   Overwrite="true"/>
 
     <ItemGroup>
@@ -45,17 +50,9 @@
     <Delete Files="@(CompiledShaders)"/>
   </Target>
 
-  <!-- Publish: Copy pkz to publish dir -->
-  <Target Name="PublishContent" AfterTargets="Publish" Condition="'$(Configuration)' == 'Release'">
-    <Copy SourceFiles="$(OutputPath)Content.pkz"
-          DestinationFolder="$(PublishDir)"
-          SkipUnchangedFiles="true"
-          Condition="Exists('$(OutputPath)Content.pkz')"/>
-  </Target>
-
   <!-- Clean -->
   <Target Name="CleanBundledContent" AfterTargets="Clean">
-    <Delete Files="$(OutputPath)Content.pkz"/>
+    <Delete Files="$(IntermediateOutputPath)ContentBundle"/>
     <RemoveDir Directories="$(IntermediateOutputPath)Content"/>
     <RemoveDir Directories="$(OutputPath)Content"/>
   </Target>

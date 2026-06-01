@@ -1,5 +1,4 @@
 ﻿using System.IO.Compression;
-using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Xna.Framework.Content;
@@ -21,11 +20,9 @@ public class ZipContentManager : ContentManager, IContentManager
 
     private readonly ZipArchive _archive;
 
-    public ZipContentManager(IServiceProvider serviceProvider, string zipPath)
-        : base(serviceProvider)
+    public ZipContentManager(IServiceProvider serviceProvider, Stream stream) : base(serviceProvider)
     {
-        _archive = ZipFile.OpenRead(zipPath);
-        CheckContentsVersion();
+        _archive = new ZipArchive(stream, ZipArchiveMode.Read);
     }
 
     public T LoadJson<T>(string assetName)
@@ -73,70 +70,6 @@ public class ZipContentManager : ContentManager, IContentManager
         stream.CopyTo(memory);
         memory.Position = 0;
         return memory;
-    }
-
-    private void CheckContentsVersion()
-    {
-        var entry = _archive.GetEntry(".version")!;
-
-        using var stream = entry.Open();
-        using var reader = new StreamReader(stream);
-        var rule = reader.ReadToEnd().Trim();
-
-        string op;
-        string versionStr;
-
-        if (rule.StartsWith(">="))
-        {
-            op = ">=";
-            versionStr = rule[2..].Trim();
-        }
-        else if (rule.StartsWith("<="))
-        {
-            op = "<=";
-            versionStr = rule[2..].Trim();
-        }
-        else if (rule.StartsWith("=="))
-        {
-            op = "==";
-            versionStr = rule[2..].Trim();
-        }
-        else if (rule.StartsWith('>'))
-        {
-            op = ">";
-            versionStr = rule[1..].Trim();
-        }
-        else if (rule.StartsWith('<'))
-        {
-            op = "<";
-            versionStr = rule[1..].Trim();
-        }
-        else
-        {
-            op = "==";
-            versionStr = rule;
-        }
-
-        var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version!;
-        assemblyVersion = new Version(assemblyVersion.Major, assemblyVersion.Minor, Math.Max(assemblyVersion.Build, 0));
-
-        var contentsVersion = Version.Parse(versionStr);
-        contentsVersion = new Version(contentsVersion.Major, contentsVersion.Minor, Math.Max(contentsVersion.Build, 0));
-
-        var compatible = op switch
-        {
-            ">=" => contentsVersion >= assemblyVersion,
-            "<=" => contentsVersion <= assemblyVersion,
-            "==" => contentsVersion == assemblyVersion,
-            ">" => contentsVersion > assemblyVersion,
-            "<" => contentsVersion < assemblyVersion,
-            _ => false
-        };
-
-        if (!compatible)
-        {
-            throw new NotSupportedException($"Invalid version: {rule}, requires: >={assemblyVersion}");
-        }
     }
 
     protected override void Dispose(bool disposing)

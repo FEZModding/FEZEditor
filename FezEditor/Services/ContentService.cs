@@ -2,7 +2,6 @@
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 using Serilog;
-using Serilog.Core;
 
 namespace FezEditor.Services;
 
@@ -12,6 +11,8 @@ public class ContentService : IDisposable
     private static readonly ILogger Logger = Logging.Create<ContentService>();
 
     private const string Root = "Content";
+
+    private const string Bundle = "ContentBundle";
 
     private readonly Dictionary<object, IContentManager> _managers = new();
 
@@ -29,14 +30,14 @@ public class ContentService : IDisposable
     {
         if (!_managers.TryGetValue(context, out var manager))
         {
-            if (FezEditor.IsDebugBuild)
-            {
-                manager = new DirContentManager(_services, Root);
-            }
-            else
-            {
-                manager = new ZipContentManager(_services, Path.ChangeExtension(Root, ".pkz"));
-            }
+#if DEBUG
+            manager = new DirContentManager(_services, Root);
+#else
+            var assembly = typeof(FezEditor).Assembly;
+            var stream = assembly.GetManifestResourceStream(Bundle)
+                         ?? throw new FileNotFoundException($"Embedded content resource not found: {Bundle}!");
+            manager = new ZipContentManager(_services, stream);
+#endif
 
             Logger.Information("Loaded {0} for {1}",
                 manager.GetType().Name, context.GetType().Name);
