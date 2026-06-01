@@ -14,7 +14,7 @@ public class WelcomeSplash : EditorComponent
 
     private static readonly Color BackgroundTint = Color.Black with { A = 102 };
 
-    private static readonly Color WatermarkTint = Color.White with { A = 128 };
+    private static readonly Color WatermarkTint = Color.White with { A = 192 };
 
     private const float TextOffset = 4f;
 
@@ -79,11 +79,10 @@ public class WelcomeSplash : EditorComponent
             var versionPos = new NVector2(imageMax.X - versionSize.X - TextOffset, imageMin.Y + TextOffset);
             drawList.AddText(versionPos, Color.Black.PackedValue, FezEditor.Version);
 
-            var splashAuthorsSize = ImGui.CalcTextSize(FezEditor.SplashAuthors);
-            var splashAuthorsPos = new NVector2(
-                imageMax.X - splashAuthorsSize.X - TextOffset,
-                imageMax.Y - splashAuthorsSize.Y - TextOffset);
-            drawList.AddText(splashAuthorsPos, WatermarkTint.PackedValue, FezEditor.SplashAuthors);
+            var splashAuthorText = $"Art by {FezEditor.SplashAuthors}";
+            var splashAuthorsSize = ImGui.CalcTextSize(splashAuthorText);
+            var splashAuthorsPos = new NVector2(imageMin.X + TextOffset, imageMax.Y - splashAuthorsSize.Y - TextOffset);
+            drawList.AddText(splashAuthorsPos, WatermarkTint.PackedValue, splashAuthorText);
 
             var offsetX = (imageWidth - ButtonWidth) / 2f;
             ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offsetX);
