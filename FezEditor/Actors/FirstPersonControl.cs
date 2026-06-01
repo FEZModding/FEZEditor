@@ -38,7 +38,7 @@ public class FirstPersonControl : ActorComponent
         _yaw = MathF.Atan2(-lookDir.X, -lookDir.Z);
         _pitch = MathF.Asin(MathHelper.Clamp(lookDir.Y, -1f, 1f));
         _pitch = MathHelper.Clamp(_pitch, -MathHelper.PiOver2 + 0.01f, MathHelper.PiOver2 - 0.01f);
-        _transform.Position = target + approachDirection * distance;
+        _transform.Position = target + (approachDirection * distance);
     }
 
     public override void Update(GameTime gameTime)
@@ -50,7 +50,7 @@ public class FirstPersonControl : ActorComponent
         var b = _input.GetActionBinding(InputActions.MoveBackward);
         var r = _input.GetActionBinding(InputActions.MoveRight);
         _status.AddHints(
-            (f+l+b+r, "Movement"),
+            (f + l + b + r, "Movement"),
             ("RMB", "Look around"),
             ("Scroll", $"Speed: {SpeedSteps[_speedIndex]}"),
             ("Shift", "Speed boost")

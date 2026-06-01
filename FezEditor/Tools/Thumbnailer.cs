@@ -183,7 +183,7 @@ public class Thumbnailer
         var result = new byte[rect.Width * rect.Height * BytesPerPixel];
         for (var row = 0; row < rect.Height; row++)
         {
-            var srcOffset = ((rect.Y + row) * stride + rect.X) * BytesPerPixel;
+            var srcOffset = (((rect.Y + row) * stride) + rect.X) * BytesPerPixel;
             var dstOffset = row * rect.Width * BytesPerPixel;
             Buffer.BlockCopy(data, srcOffset, result, dstOffset, rect.Width * BytesPerPixel);
         }

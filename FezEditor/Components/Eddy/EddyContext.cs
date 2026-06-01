@@ -32,15 +32,18 @@ public static class EddyContextExtensions
         };
     }
 
-    public static EddyContext? GetEntity(string typeName) => typeName switch
+    public static EddyContext? GetEntity(string typeName)
     {
-        "ArtObject" => EddyContext.ArtObject,
-        "Group" or "RotatingGroup" or "SuckBlock" or "Switch" or "SpinBlock" => EddyContext.Trile,
-        "Npc" => EddyContext.NonPlayableCharacter,
-        "Volume" => EddyContext.Volume,
-        "Path" => EddyContext.Path,
-        "Plane" => EddyContext.BackgroundPlane,
-        "Script" => EddyContext.Script,
-        _ => null
-    };
+        return typeName switch
+        {
+            "ArtObject" => EddyContext.ArtObject,
+            "Group" or "RotatingGroup" or "SuckBlock" or "Switch" or "SpinBlock" => EddyContext.Trile,
+            "Npc" => EddyContext.NonPlayableCharacter,
+            "Volume" => EddyContext.Volume,
+            "Path" => EddyContext.Path,
+            "Plane" => EddyContext.BackgroundPlane,
+            "Script" => EddyContext.Script,
+            _ => null
+        };
+    }
 }

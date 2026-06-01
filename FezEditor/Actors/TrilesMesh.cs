@@ -269,7 +269,7 @@ public class TrilesMesh : ActorComponent, IPickable
     {
         public Matrix ToStride()
         {
-            var quaternion = (Phi is >= 0 and <= 3) ? PhiAngles[Phi] : Quaternion.Identity;
+            var quaternion = Phi is >= 0 and <= 3 ? PhiAngles[Phi] : Quaternion.Identity;
             var tint = Tint.ToVector4();
             return new Matrix(
                 Position.X, Position.Y, Position.Z, 0f,

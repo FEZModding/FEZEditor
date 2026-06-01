@@ -128,7 +128,8 @@ public class InputService
 
     public bool CaptureMiddleMouseDelta(out Vector2 delta)
     {
-        _middleMouseButtonCaptured = CaptureMouseDelta(_currentMouseState.MiddleButton == ButtonState.Pressed, out delta);
+        _middleMouseButtonCaptured =
+            CaptureMouseDelta(_currentMouseState.MiddleButton == ButtonState.Pressed, out delta);
         return _middleMouseButtonCaptured;
     }
 

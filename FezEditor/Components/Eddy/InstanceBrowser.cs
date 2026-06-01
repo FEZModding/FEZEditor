@@ -145,7 +145,7 @@ public class InstanceBrowser : IDisposable
 
                 for (var col = 0; col < columns; col++)
                 {
-                    var i = row * columns + col;
+                    var i = (row * columns) + col;
                     if (i >= entries.Count)
                     {
                         break;

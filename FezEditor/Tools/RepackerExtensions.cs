@@ -61,6 +61,7 @@ public static class RepackerExtensions
         {
             rgba[i] = 255;
         }
+
         texture.SetData(rgba);
     }
 
@@ -75,7 +76,8 @@ public static class RepackerExtensions
     {
         if (sourceTexture.Format != RSurfaceFormat.Color)
         {
-            throw new FormatException($"Cannot extract emission layer from Texture2D with format {sourceTexture.Format}");
+            throw new FormatException(
+                $"Cannot extract emission layer from Texture2D with format {sourceTexture.Format}");
         }
 
         var rgba = new byte[texture.Width * texture.Height * 4];
@@ -87,6 +89,7 @@ public static class RepackerExtensions
             rgba[i + 2] = alpha;
             rgba[i + 3] = 255;
         }
+
         texture.SetData(rgba);
     }
 

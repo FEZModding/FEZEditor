@@ -21,7 +21,7 @@ public class RickViewer : EditorComponent
     private readonly Stopwatch _playbackStopwatch = new();
     private TimeSpan _duration = TimeSpan.Zero;
 
-    private float? _currentSeekRequest = null;
+    private float? _currentSeekRequest;
 
     public RickViewer(Game game, string title, RSoundEffect soundEffectAsset) : base(game, title)
     {
@@ -44,6 +44,7 @@ public class RickViewer : EditorComponent
             _oggSoundContainer.Dispose();
             _oggSoundContainer = null;
         }
+
         CreateInitialSoundEffectInstance();
     }
 
@@ -100,7 +101,8 @@ public class RickViewer : EditorComponent
             sliderValue = _currentSeekRequest.Value;
             totalPlaybackElapsed = TimeSpan.FromSeconds(_duration.TotalSeconds * sliderValue);
         }
-        var format = $"{totalPlaybackElapsed:mm\\:ss\\.ff} / {_duration:mm\\:ss\\.ff}";
+
+        var format = $@"{totalPlaybackElapsed:mm\:ss\.ff} / {_duration:mm\:ss\.ff}";
         ImGui.SliderFloat("##playbackSlider", ref sliderValue, 0f, 1f, format);
 
         if (ImGui.IsItemActivated())

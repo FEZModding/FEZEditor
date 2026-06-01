@@ -404,7 +404,7 @@ internal class ArtObjectContext : BaseContext
                 var box = mesh.GetBounds().ElementAt(index);
                 var face = Mathz.DetermineFace(box, Eddy.Ray, Eddy.Hit.Value.Distance);
                 var trileCenter = hoveredInstance.Position.ToXna() + new Vector3(0.5f);
-                var origin = trileCenter + face.AsVector() * (0.5f + CursorMesh.OverlayOffset);
+                var origin = trileCenter + (face.AsVector() * (0.5f + CursorMesh.OverlayOffset));
                 var surface = MeshSurface.CreateFaceQuad(Vector3.One, origin, face);
                 Eddy.Cursor.SetHoverSurfaces([(surface, PrimitiveType.TriangleList)], HoverColor);
             }
@@ -642,7 +642,8 @@ internal class ArtObjectContext : BaseContext
             }
 
             var vibrationPattern = new Dirty<VibrationMotor[]>(settings.VibrationPattern.EmptyIfNull());
-            if (ImGuiX.EditableArray("Vibration Pattern", ref vibrationPattern, RenderVibrationMotorItem, () => default))
+            if (ImGuiX.EditableArray("Vibration Pattern", ref vibrationPattern, RenderVibrationMotorItem,
+                    () => default))
             {
                 using (Eddy.History.BeginScope("Edit AO Vibration Pattern", EddyContext.ArtObject))
                 {

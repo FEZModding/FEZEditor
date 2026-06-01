@@ -52,7 +52,7 @@ public class VorbisSoundContainer : IDisposable
             BytesPerSecond = _vorbisReader.SampleRate * _vorbisReader.Channels * 2,
             BlockAlignment = (short)(_vorbisReader.Channels * 2),
             BitsPerSample = 16,
-            DataChunk = _sampleBuffer!,
+            DataChunk = _sampleBuffer!
         };
     }
 

@@ -155,10 +155,10 @@ public class JadeEditor : EditorComponent
                 if (ImGui.Button($"{Lucide.Plus} Add New Node"))
                 {
                     ResourceService.RequestAssetPathFromUser(
-                        title: "Select Level",
-                        text: "Pick a level to add as a new map node:",
-                        rootPath: "Levels/",
-                        onProvided: levelPath =>
+                        "Select Level",
+                        "Pick a level to add as a new map node:",
+                        "Levels/",
+                        levelPath =>
                         {
                             var level = ResourceService.Load<Level>(levelPath);
                             AddMapNode(level);
@@ -292,7 +292,7 @@ public class JadeEditor : EditorComponent
 
             if (node != _mapTree.Root)
             {
-                var buttonWidth = ImGui.CalcTextSize(Lucide.X).X + ImGui.GetStyle().FramePadding.X * 2;
+                var buttonWidth = ImGui.CalcTextSize(Lucide.X).X + (ImGui.GetStyle().FramePadding.X * 2);
                 var cursorX = ImGui.GetWindowWidth() - buttonWidth - ImGui.GetStyle().ScrollbarSize - 4f;
                 if (cursorX > ImGui.GetCursorPosX())
                 {

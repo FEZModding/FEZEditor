@@ -711,7 +711,7 @@ public class ChrisEditor : EditorComponent, IChrisEditor
                 {
                     for (var i = 3; i < incoming.Length; i += 4)
                     {
-                        Obj.Texture.TextureData[i] = incoming[i - 3]; // R channel → alpha
+                        Obj.Texture.TextureData[i] = incoming[i - 3]; // R channel -> alpha
                     }
                 }
                 else

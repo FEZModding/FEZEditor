@@ -157,12 +157,13 @@ public class MapTreeContext : IDisposable
             var (node, parentConnection, offset) = stack.Pop();
             layout[node] = offset;
 
-            // Resolve face conflicts for lesser nodes — store overrides locally, never write back to c.Face.
+            // Resolve face conflicts for lesser nodes - store overrides locally, never write back to connection face
             foreach (var c in node.Connections)
             {
                 var face = overrides.GetValueOrDefault(c, c.Face);
                 if (c.Node.NodeType == LevelNodeType.Lesser &&
-                    node.Connections.Any(x => overrides.GetValueOrDefault(x, x.Face) == face && c.Node.NodeType != LevelNodeType.Lesser))
+                    node.Connections.Any(x => overrides.GetValueOrDefault(x, x.Face) == face &&
+                                              c.Node.NodeType != LevelNodeType.Lesser))
                 {
                     if (node.Connections.All(x => overrides.GetValueOrDefault(x, x.Face) != FaceOrientation.Top))
                     {
@@ -193,7 +194,10 @@ public class MapTreeContext : IDisposable
             foreach (var item in orderedConnections)
             {
                 var itemFace = overrides.GetValueOrDefault(item, item.Face);
-                var parentFace = parentConnection != null ? overrides.GetValueOrDefault(parentConnection, parentConnection.Face) : (FaceOrientation?)null;
+                var parentFace = parentConnection != null
+                    ? overrides.GetValueOrDefault(parentConnection, parentConnection.Face)
+                    : (FaceOrientation?)null;
+
                 if (parentFace.HasValue && itemFace == parentFace.Value.GetOpposite())
                 {
                     itemFace = itemFace.GetOpposite();

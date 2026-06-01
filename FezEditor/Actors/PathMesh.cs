@@ -57,7 +57,7 @@ public class PathMesh : ActorComponent, IPickable
             for (var i = 0; i < Waypoints.Count - 1; i++)
             {
                 surface.Indices[i * 2] = i;
-                surface.Indices[i * 2 + 1] = i + 1;
+                surface.Indices[(i * 2) + 1] = i + 1;
             }
 
             _rendering.MeshAddSurface(_mesh, PrimitiveType.LineList, surface, _material);
@@ -98,6 +98,7 @@ public class PathMesh : ActorComponent, IPickable
                 nearest = dist.Value;
                 nearestIdx = idx;
             }
+
             idx++;
         }
 

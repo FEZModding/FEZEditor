@@ -21,6 +21,7 @@ public class Args
                     {
                         result.LogLevel = level;
                     }
+
                     break;
             }
         }

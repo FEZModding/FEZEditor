@@ -114,8 +114,6 @@ public class MainLayout : DrawableGameComponent
                                     tabFlags |= ImGuiTabItemFlags.SetSelected;
                                 }
 
-
-
                                 var tabLabel = title + "###" + editor.Title;
                                 var isOpen = true;
                                 if (ImGui.BeginTabItem(tabLabel, ref isOpen, tabFlags))

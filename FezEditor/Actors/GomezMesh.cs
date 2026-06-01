@@ -75,7 +75,8 @@ public class GomezMesh : ActorComponent, IPickable
         _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, backQuad, _backMaterial);
 
         ApplyTextureTransform(_frontMaterial, _frontTexture, frameSize);
-        ApplyTextureTransform(_backMaterial, _backTexture, new Rectangle(0, 0, _backTexture.Width, _backTexture.Height));
+        ApplyTextureTransform(_backMaterial, _backTexture,
+            new Rectangle(0, 0, _backTexture.Width, _backTexture.Height));
     }
 
     public IEnumerable<BoundingBox> GetBounds()
@@ -93,8 +94,8 @@ public class GomezMesh : ActorComponent, IPickable
 
     public override void Update(GameTime gameTime)
     {
-        _rendering.MaterialShaderSetParam<Vector4>(_frontMaterial, "Tint", Tint.ToVector4());
-        _rendering.MaterialShaderSetParam<Vector4>(_backMaterial, "Tint", Tint.ToVector4());
+        _rendering.MaterialShaderSetParam(_frontMaterial, "Tint", Tint.ToVector4());
+        _rendering.MaterialShaderSetParam(_backMaterial, "Tint", Tint.ToVector4());
 
         if (_frontFrames.Count == 0)
         {
@@ -154,8 +155,4 @@ public class GomezMesh : ActorComponent, IPickable
             return list;
         }
     }
-
-
-
-
 }

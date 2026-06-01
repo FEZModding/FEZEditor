@@ -120,8 +120,13 @@ public partial class RenderingService : IDisposable
 
     public Dictionary<string, string> GetStats()
     {
-        var instances = _multiMeshes.Values.Sum(mm => mm.VisibleInstances < 0 ? mm.InstanceCount : mm.VisibleInstances);
-        var textures = _materials.Values.Select(md => md.Texture).Where(t => t is { IsDisposed: false }).Distinct().Count();
+        var instances = _multiMeshes.Values
+            .Sum(mm => mm.VisibleInstances < 0 ? mm.InstanceCount : mm.VisibleInstances);
+
+        var textures = _materials.Values.Select(md => md.Texture)
+            .Where(t => t is { IsDisposed: false })
+            .Distinct()
+            .Count();
 
         return new Dictionary<string, string>
         {

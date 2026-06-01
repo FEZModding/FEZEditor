@@ -79,8 +79,8 @@ internal abstract class TextureTool : BaseTool
         };
 
         var faceIndex = Array.IndexOf(FaceExtensions.NaturalOrder, face.Face);
-        var x = faceIndex * obj.Texture.Width / 6 + lx;
-        var idx = (y * obj.Texture.Width + x) * 4;
+        var x = (faceIndex * obj.Texture.Width / 6) + lx;
+        var idx = ((y * obj.Texture.Width) + x) * 4;
 
         return idx;
     }

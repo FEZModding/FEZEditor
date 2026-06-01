@@ -110,7 +110,7 @@ public class LiquidMesh : ActorComponent
 
         _rendering.InstanceSetPosition(_instance, new Vector3(bounds.X / 2f, -1f, bounds.Z / 2f));
         _rendering.InstanceSetScale(_instance, new Vector3(bounds.X, level, bounds.Z));
-        _transform.Position = (Vector3.UnitY * (level + 0.5f));
+        _transform.Position = Vector3.UnitY * (level + 0.5f);
 
         var surface = MeshSurface.CreateColoredBox(Vector3.One, Color.White);
         for (var i = 0; i < surface.Vertices.Length; i++)
@@ -141,7 +141,9 @@ public class LiquidMesh : ActorComponent
 
         var silhouetteColor = UnderwaterColor.GetValueOrDefault(_type, Color.White) with { A = 255 };
         _rendering.MaterialSetAlbedo(_silhouette, silhouetteColor);
-        _rendering.MaterialSetColorWriteChannels(_silhouette, underwater ? ColorWriteChannels.None : ColorWriteChannels.All);
+        _rendering.MaterialSetColorWriteChannels(_silhouette, underwater
+            ? ColorWriteChannels.None
+            : ColorWriteChannels.All);
 
         if (!underwater)
         {

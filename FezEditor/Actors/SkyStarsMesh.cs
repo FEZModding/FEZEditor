@@ -104,7 +104,7 @@ public class SkyStarsMesh : SkyBaseMesh
         Vector3 scale;
         if (orthogonal)
         {
-            scale = new Vector3(Sky.Camera.Size * 2f + ExtraScale) * BaseScale;
+            scale = new Vector3((Sky.Camera.Size * 2f) + ExtraScale) * BaseScale;
             Actor.Transform.Position = Sky.Camera.Position;
         }
         else
@@ -125,7 +125,7 @@ public class SkyStarsMesh : SkyBaseMesh
             var textureMatrix = new Matrix(
                 scaleU, 0, 0, 0,
                 0, scaleV, 0, 0,
-                side.Offset - scaleU / 2f, side.Offset - scaleV / 2, 1, 0,
+                side.Offset - (scaleU / 2f), side.Offset - (scaleV / 2), 1, 0,
                 0, 0, 0, 1
             );
 

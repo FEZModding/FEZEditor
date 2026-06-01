@@ -75,7 +75,8 @@ public class AssetBrowser : IDisposable
 
         if (_trileSet != null && _trileSetPath != null)
         {
-            triles.AddRange(_trileSet.Triles.Values.Select(trile => new Entry(trile.Name, _trileSetPath, AssetType.Trile)));
+            triles.AddRange(
+                _trileSet.Triles.Values.Select(trile => new Entry(trile.Name, _trileSetPath, AssetType.Trile)));
         }
 
         foreach (var file in _resources.Files)
@@ -177,7 +178,7 @@ public class AssetBrowser : IDisposable
     {
         if (_trileSet?.Triles.ContainsKey(trileId) ?? false)
         {
-            return  _trileSet.Triles[trileId].Name;
+            return _trileSet.Triles[trileId].Name;
         }
 
         return null;
@@ -293,7 +294,7 @@ public class AssetBrowser : IDisposable
         }
 
         // Thumbnail row
-        const float barHeight = ThumbSize + CellSpacing * 2;
+        const float barHeight = ThumbSize + (CellSpacing * 2);
         ImGui.BeginChild("##SelectionBar", new NVector2(0, barHeight), ImGuiChildFlags.None, ImGuiWindowFlags.NoScrollbar);
 
         var selectedThumb = SharedThumbnails.GetValueOrDefault(selected.CachePath) ?? _placeholder;
@@ -401,7 +402,7 @@ public class AssetBrowser : IDisposable
 
                 for (var col = 0; col < columns; col++)
                 {
-                    var i = row * columns + col;
+                    var i = (row * columns) + col;
                     if (i >= entries.Count)
                     {
                         break;

@@ -293,6 +293,7 @@ internal class BackgroundPlaneContext : BaseContext
                     {
                         actor.Transform.Rotation = newRotation;
                     }
+
                     _rotationAngles.Remove(id);
                 }
             }
@@ -404,7 +405,7 @@ internal class BackgroundPlaneContext : BaseContext
                 var box = mesh.GetBounds().ElementAt(index);
                 var face = Mathz.DetermineFace(box, Eddy.Ray, Eddy.Hit.Value.Distance);
                 var trileCenter = hoveredInstance.Position.ToXna() + new Vector3(0.5f);
-                var origin = trileCenter + face.AsVector() * (0.5f + CursorMesh.OverlayOffset);
+                var origin = trileCenter + (face.AsVector() * (0.5f + CursorMesh.OverlayOffset));
                 var surface = MeshSurface.CreateFaceQuad(Vector3.One, origin, face);
                 Eddy.Cursor.SetHoverSurfaces([(surface, PrimitiveType.TriangleList)], HoverColor);
             }
@@ -503,6 +504,7 @@ internal class BackgroundPlaneContext : BaseContext
             angles = instance.Rotation.ToXna().ToYawPitchRollDegrees();
             _rotationAngles[id] = angles;
         }
+
         if (ImGuiX.DragFloat3("Rotation (Yaw, Pitch, Roll)", ref angles, 1f, -180f, 180f, "%.1f"))
         {
             _rotationAngles[id] = angles;
@@ -697,7 +699,6 @@ internal class BackgroundPlaneContext : BaseContext
                 instance.ParallaxFactor = parallaxFactor;
             }
         }
-
     }
 
     public override void PartialRevisualize(EddyContext context)
@@ -790,6 +791,7 @@ internal class BackgroundPlaneContext : BaseContext
                 Eddy.Scene.DestroyActor(actor);
                 _bgPlaneActors.Remove(id);
             }
+
             _rotationAngles.Remove(id);
         }
 

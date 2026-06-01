@@ -115,7 +115,7 @@ public class ResourceService : IDisposable
         return _provider?.IsReadonlyPath(path) ?? true;
     }
 
-    public T Load<T>(string path) where T: class
+    public T Load<T>(string path) where T : class
     {
         if (path.Contains("SaveSlot", StringComparison.OrdinalIgnoreCase))
         {
@@ -343,6 +343,7 @@ public class ResourceService : IDisposable
         {
             return $"{pathParts[^2]}/{pathParts[^1]}";
         }
+
         return pathParts[^1];
     }
 }

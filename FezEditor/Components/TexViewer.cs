@@ -26,10 +26,10 @@ public class TexViewer : EditorComponent
 
     private int CurrentFrame
     {
-        get => _currentFrame;
+        get;
         set
         {
-            _currentFrame = value;
+            field = value;
             _scrollToFrame = true;
         }
     }
@@ -51,8 +51,6 @@ public class TexViewer : EditorComponent
     private bool _showTimeline;
 
     private TempTextureTracker? _tracker;
-
-    private int _currentFrame;
 
     private bool _scrollToFrame;
 
@@ -137,7 +135,7 @@ public class TexViewer : EditorComponent
 
         var canvasMin = ImGuiX.GetItemRectMin();
         var canvasMax = canvasMin + avail;
-        var canvasCenter = canvasMin + avail * 0.5f;
+        var canvasCenter = canvasMin + (avail * 0.5f);
 
         InputService.IsViewportHovered = ImGui.IsItemHovered();
         if (InputService.CaptureScrollWheelDelta(out var scrollDelta))
@@ -162,7 +160,7 @@ public class TexViewer : EditorComponent
         }
 
         var imageSize = new Vector2(frame.Width, frame.Height) * _zoom;
-        var imageMin = canvasCenter + _pan - imageSize * 0.5f;
+        var imageMin = canvasCenter + _pan - (imageSize * 0.5f);
         var imageMax = imageMin + imageSize;
 
         var dl = ImGui.GetWindowDrawList();
@@ -439,11 +437,11 @@ public class TexViewer : EditorComponent
                 }
 
                 var rectMin = new NVector2(
-                    MathHelper.Max(imageMin.X + col * CheckerSize, visMin.X),
-                    MathHelper.Max(imageMin.Y + row * CheckerSize, visMin.Y));
+                    MathHelper.Max(imageMin.X + (col * CheckerSize), visMin.X),
+                    MathHelper.Max(imageMin.Y + (row * CheckerSize), visMin.Y));
                 var rectMax = new NVector2(
-                    MathHelper.Min(imageMin.X + (col + 1) * CheckerSize, visMax.X),
-                    MathHelper.Min(imageMin.Y + (row + 1) * CheckerSize, visMax.Y));
+                    MathHelper.Min(imageMin.X + ((col + 1) * CheckerSize), visMax.X),
+                    MathHelper.Min(imageMin.Y + ((row + 1) * CheckerSize), visMax.Y));
 
                 dl.AddRectFilled(rectMin, rectMax, CheckerDark.PackedValue);
             }

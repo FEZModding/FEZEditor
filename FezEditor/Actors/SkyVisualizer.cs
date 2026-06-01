@@ -153,7 +153,7 @@ public class SkyVisualizer : ActorComponent
             _fogColors = new Color[bgTexture.Width];
             for (var x = 0; x < bgTexture.Width; x++)
             {
-                var offset = (bgTexture.Height / 2 * bgTexture.Width + x) * 4;
+                var offset = ((bgTexture.Height / 2 * bgTexture.Width) + x) * 4;
                 _fogColors[x] = new Color(
                     bgTexture.TextureData[offset],
                     bgTexture.TextureData[offset + 1],
@@ -177,7 +177,7 @@ public class SkyVisualizer : ActorComponent
             _cloudTintColors = new Color[tintTexture.Width];
             for (var x = 0; x < tintTexture.Width; x++)
             {
-                var offset = (tintTexture.Height / 2 * tintTexture.Width + x) * 4;
+                var offset = ((tintTexture.Height / 2 * tintTexture.Width) + x) * 4;
                 _cloudTintColors[x] = new Color(
                     tintTexture.TextureData[offset],
                     tintTexture.TextureData[offset + 1],

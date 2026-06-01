@@ -407,7 +407,7 @@ internal class TrileSetContext : IContext
                     _ => 0.625f
                 };
 
-                var uWithinFace = (trileSpaceUv.X / (4f / 3f) - faceSlotU) * 8f;
+                var uWithinFace = ((trileSpaceUv.X / (4f / 3f)) - faceSlotU) * 8f;
                 var faceAtlasX = trile.AtlasOffset.X + (((faceSlotIndex * AtlasFaceSize) + 1f) / atlasW);
                 var mappedU = faceAtlasX + (uWithinFace * FaceSize / atlasW);
                 var mappedV = trile.AtlasOffset.Y + (1f / atlasH) +
@@ -619,5 +619,4 @@ internal class TrileSetContext : IContext
     }
 
     public readonly record struct Entry(int Id, string Name, Texture2D Texture, Vector2 Uv0, Vector2 Uv1);
-
 }

@@ -88,7 +88,7 @@ public static class Mathz
 
     public static FaceOrientation DetermineFace(BoundingBox box, Ray ray, float distance)
     {
-        var point = ray.Position + ray.Direction * distance;
+        var point = ray.Position + (ray.Direction * distance);
         var center = (box.Min + box.Max) / 2f;
         var bounds = (box.Max - box.Min) / 2f;
 
@@ -137,26 +137,26 @@ public static class Mathz
 
     public static float Between(this Random random, float min, float max)
     {
-        return min + (float)random.NextDouble() * (max - min);
+        return min + ((float)random.NextDouble() * (max - min));
     }
 
     // Decomposes to yaw/pitch/roll matching CreateFromYawPitchRoll (intrinsic Y-X-Z).
     public static Vector3 ToYawPitchRollDegrees(this Quaternion q)
     {
         // Yaw (Y-axis)
-        var sinyCosp = 2 * (q.W * q.Y + q.Z * q.X);
-        var cosyCosp = 1 - 2 * (q.Y * q.Y + q.X * q.X);
+        var sinyCosp = 2 * ((q.W * q.Y) + (q.Z * q.X));
+        var cosyCosp = 1 - (2 * ((q.Y * q.Y) + (q.X * q.X)));
         var yaw = MathF.Atan2(sinyCosp, cosyCosp);
 
         // Pitch (X-axis)
-        var sinp = 2 * (q.W * q.X - q.Y * q.Z);
+        var sinp = 2 * ((q.W * q.X) - (q.Y * q.Z));
         var pitch = MathF.Abs(sinp) >= 1
             ? MathF.CopySign(MathF.PI / 2, sinp)
             : MathF.Asin(sinp);
 
         // Roll (Z-axis)
-        var sinrCosp = 2 * (q.W * q.Z + q.Y * q.X);
-        var cosrCosp = 1 - 2 * (q.Z * q.Z + q.X * q.X);
+        var sinrCosp = 2 * ((q.W * q.Z) + (q.Y * q.X));
+        var cosrCosp = 1 - (2 * ((q.Z * q.Z) + (q.X * q.X)));
         var roll = MathF.Atan2(sinrCosp, cosrCosp);
 
         return new Vector3(yaw, pitch, roll) * Rad2Deg;
@@ -179,6 +179,7 @@ public static class Mathz
         {
             return Quaternion.Identity;
         }
+
         if (dot < -0.9999f)
         {
             return Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI);

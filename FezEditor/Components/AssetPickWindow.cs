@@ -122,6 +122,7 @@ public class AssetPickWindow : DrawableGameComponent
                     var assetPath = $"{RootPath.Value}{_cachedAssetPaths[_selectedAssetIndex]}";
                     Accepted?.Invoke(assetPath);
                 }
+
                 ImGui.CloseCurrentPopup();
             }
 

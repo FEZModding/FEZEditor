@@ -50,6 +50,7 @@ public class DiezEditor : EditorComponent
             {
                 _editorService.OpenEditorFor(loopPath);
             }
+
             _requestedLoopToOpen = null;
         }
     }
@@ -483,6 +484,7 @@ public class DiezEditor : EditorComponent
                 return true;
             }
         }
+
         loopPath = string.Empty;
         return false;
     }

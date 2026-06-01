@@ -196,6 +196,7 @@ public partial class RenderingService
             };
             DepthStencilStateCache[key] = state;
         }
+
         return state;
     }
 

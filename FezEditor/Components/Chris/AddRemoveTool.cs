@@ -31,8 +31,8 @@ internal class AddRemoveTool : BaseTool
 
         if (ImGui.IsMouseReleased(ImGuiMouseButton.Left))
         {
-            if (_lmb == LmbState.Pressed && Chris is { IsViewportHovered: true, Hit: not null } ||
-                _lmb == LmbState.Dragging && Chris.SelectedFaces.Count > 0)
+            if ((_lmb == LmbState.Pressed && Chris is { IsViewportHovered: true, Hit: not null }) ||
+                (_lmb == LmbState.Dragging && Chris.SelectedFaces.Count > 0))
             {
                 ApplyChanges();
             }

@@ -62,7 +62,7 @@ public class WelcomeSplash : EditorComponent
                                                ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.AlwaysAutoResize))
         {
             var padding = ImGui.GetStyle().WindowPadding;
-            var imageWidth = SplashWidth - padding.X * 2;
+            var imageWidth = SplashWidth - (padding.X * 2);
             var imageSize = new Vector2(imageWidth, imageWidth / 2f);
 
             ImGuiX.Image(_splashTexture, imageSize);

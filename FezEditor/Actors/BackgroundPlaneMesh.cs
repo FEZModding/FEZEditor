@@ -102,6 +102,7 @@ public class BackgroundPlaneMesh : ActorComponent, IPickable
             default:
                 throw new NotSupportedException("Unsupported asset type: " + asset.GetType());
         }
+
         _rendering.MaterialAssignBaseTexture(_material, _texture);
 
         var surface = MeshSurface.CreateQuad(PlaneSize);

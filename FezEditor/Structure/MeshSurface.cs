@@ -124,14 +124,14 @@ public class MeshSurface
         {
             Vertices = new[]
             {
-                (new Vector3(-1f, -1f, -1f) * size),
-                (new Vector3(1f, -1f, -1f) * size),
-                (new Vector3(1f, 1f, -1f) * size),
-                (new Vector3(-1f, 1f, -1f) * size),
-                (new Vector3(-1f, -1f, 1f) * size),
-                (new Vector3(1f, -1f, 1f) * size),
-                (new Vector3(1f, 1f, 1f) * size),
-                (new Vector3(-1f, 1f, 1f) * size)
+                new Vector3(-1f, -1f, -1f) * size,
+                new Vector3(1f, -1f, -1f) * size,
+                new Vector3(1f, 1f, -1f) * size,
+                new Vector3(-1f, 1f, -1f) * size,
+                new Vector3(-1f, -1f, 1f) * size,
+                new Vector3(1f, -1f, 1f) * size,
+                new Vector3(1f, 1f, 1f) * size,
+                new Vector3(-1f, 1f, 1f) * size
             },
             Colors = new[]
             {
@@ -285,7 +285,7 @@ public class MeshSurface
 
         var shaft = CreateCylinderNoCaps(axis, sides, shaftLength, shaftRadius);
         var tip = CreateBox(Vector3.One * tipWidth);
-        tip.Translate(axis * (shaftLength + tipWidth * 0.5f));
+        tip.Translate(axis * (shaftLength + (tipWidth * 0.5f)));
 
         return CreateMergedMesh([shaft, tip]);
     }
@@ -315,11 +315,15 @@ public class MeshSurface
         for (var i = 0; i < sides; i++)
         {
             var a = i * 2;
-            var b = i * 2 + 1;
-            var c = ((i + 1) % sides) * 2;
-            var d = ((i + 1) % sides) * 2 + 1;
-            indices.Add(a); indices.Add(b); indices.Add(c);
-            indices.Add(b); indices.Add(d); indices.Add(c);
+            var b = (i * 2) + 1;
+            var c = (i + 1) % sides * 2;
+            var d = ((i + 1) % sides * 2) + 1;
+            indices.Add(a);
+            indices.Add(b);
+            indices.Add(c);
+            indices.Add(b);
+            indices.Add(d);
+            indices.Add(c);
         }
 
         return new MeshSurface
@@ -348,14 +352,18 @@ public class MeshSurface
         for (var i = 0; i < sides; i++)
         {
             var angle = 2f * MathF.PI * i / sides;
-            vertices.Add(Vector3.Transform(new Vector3(MathF.Cos(angle) * radius, 0, MathF.Sin(angle) * radius), rotation));
+            vertices.Add(Vector3.Transform(new Vector3(MathF.Cos(angle) * radius, 0, MathF.Sin(angle) * radius),
+                rotation));
             normals.Add(downNormal);
         }
+
         for (var i = 0; i < sides; i++)
         {
             var a = coneBaseStart + 1 + i;
-            var b = coneBaseStart + 1 + (i + 1) % sides;
-            indices.Add(coneBaseStart); indices.Add(b); indices.Add(a);
+            var b = coneBaseStart + 1 + ((i + 1) % sides);
+            indices.Add(coneBaseStart);
+            indices.Add(b);
+            indices.Add(a);
         }
 
         // Cone surface
@@ -368,15 +376,22 @@ public class MeshSurface
             var v1 = Vector3.Transform(new Vector3(MathF.Cos(a1) * radius, 0, MathF.Sin(a1) * radius), rotation);
 
             // Cone normal: perpendicular to slant edge
-            var slant0 = Vector3.Normalize(Vector3.Transform(new Vector3(MathF.Cos(a0), radius / length, MathF.Sin(a0)), rotation));
-            var slant1 = Vector3.Normalize(Vector3.Transform(new Vector3(MathF.Cos(a1), radius / length, MathF.Sin(a1)), rotation));
+            var slant0 = Vector3.Normalize(Vector3.Transform(new Vector3(MathF.Cos(a0), radius / length, MathF.Sin(a0)),
+                rotation));
+            var slant1 = Vector3.Normalize(Vector3.Transform(new Vector3(MathF.Cos(a1), radius / length, MathF.Sin(a1)),
+                rotation));
             var tipNormal = Vector3.Normalize((slant0 + slant1) / 2f);
 
             var baseIdx = vertices.Count;
-            vertices.Add(v0); normals.Add(slant0);
-            vertices.Add(v1); normals.Add(slant1);
-            vertices.Add(coneTip); normals.Add(tipNormal);
-            indices.Add(baseIdx); indices.Add(baseIdx + 1); indices.Add(baseIdx + 2);
+            vertices.Add(v0);
+            normals.Add(slant0);
+            vertices.Add(v1);
+            normals.Add(slant1);
+            vertices.Add(coneTip);
+            normals.Add(tipNormal);
+            indices.Add(baseIdx);
+            indices.Add(baseIdx + 1);
+            indices.Add(baseIdx + 2);
         }
 
         return new MeshSurface
@@ -404,14 +419,14 @@ public class MeshSurface
         for (var i = 0; i < segments; i++)
         {
             var angle = 2f * MathF.PI * i / segments;
-            var ringCenter = right * MathF.Cos(angle) * radius + forward * MathF.Sin(angle) * radius;
+            var ringCenter = (right * MathF.Cos(angle) * radius) + (forward * MathF.Sin(angle) * radius);
             var outward = Vector3.Normalize(ringCenter);
 
             for (var j = 0; j < crossSections; j++)
             {
                 var tubeAngle = 2f * MathF.PI * j / crossSections;
-                var tubeNormal = outward * MathF.Cos(tubeAngle) + axis * MathF.Sin(tubeAngle);
-                vertices.Add(ringCenter + tubeNormal * tubeRadius);
+                var tubeNormal = (outward * MathF.Cos(tubeAngle)) + (axis * MathF.Sin(tubeAngle));
+                vertices.Add(ringCenter + (tubeNormal * tubeRadius));
                 normals.Add(tubeNormal);
             }
         }
@@ -422,12 +437,16 @@ public class MeshSurface
             for (var j = 0; j < crossSections; j++)
             {
                 var nextJ = (j + 1) % crossSections;
-                var a = i * crossSections + j;
-                var b = i * crossSections + nextJ;
-                var c = nextI * crossSections + j;
-                var d = nextI * crossSections + nextJ;
-                indices.Add(a); indices.Add(b); indices.Add(c);
-                indices.Add(b); indices.Add(d); indices.Add(c);
+                var a = (i * crossSections) + j;
+                var b = (i * crossSections) + nextJ;
+                var c = (nextI * crossSections) + j;
+                var d = (nextI * crossSections) + nextJ;
+                indices.Add(a);
+                indices.Add(b);
+                indices.Add(c);
+                indices.Add(b);
+                indices.Add(d);
+                indices.Add(c);
             }
         }
 
@@ -501,13 +520,13 @@ public class MeshSurface
             }
         }
 
-        return new MeshSurface()
+        return new MeshSurface
         {
             Vertices = vertices.ToArray(),
             Indices = indices.ToArray(),
             Normals = allHaveNormals ? normals.ToArray() : null,
             Colors = allHaveColors ? colors.ToArray() : null,
-            TexCoords = allHaveTexCoords ? texCoords.ToArray() : null,
+            TexCoords = allHaveTexCoords ? texCoords.ToArray() : null
         };
     }
 }

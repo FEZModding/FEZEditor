@@ -272,7 +272,11 @@ public class MapTreeGenerator : DrawableGameComponent
                     switch (lastLevel)
                     {
                         case "THRONE":
-                            if (level.Name == "ZU_CITY_RUINS") continue;
+                            if (level.Name == "ZU_CITY_RUINS")
+                            {
+                                continue;
+                            }
+
                             break;
                         case "PYRAMID":
                         case "CABIN_INTERIOR_A":

@@ -289,7 +289,7 @@ public class Gizmo : ActorComponent
                 if (hitPoint.HasValue)
                 {
                     var newScale = ApplyScaleDelta(_dragStartValue,
-                        delta: hitPoint.Value - _dragStartHitPoint, _activeHandle, gizmoScale);
+                        hitPoint.Value - _dragStartHitPoint, _activeHandle, gizmoScale);
                     if (newScale != scale)
                     {
                         scale = newScale;
@@ -326,7 +326,7 @@ public class Gizmo : ActorComponent
         var changed = false;
 
         var faceNormal = face.AsVector();
-        var tipPos = origin + faceNormal * (ArrowShaftLength + ArrowTipLength * 0.5f) * gizmoScale;
+        var tipPos = origin + (faceNormal * (ArrowShaftLength + (ArrowTipLength * 0.5f)) * gizmoScale);
 
         var leftDown = ImGui.IsMouseDown(ImGuiMouseButton.Left);
         var leftClicked = leftDown && !_wasLeftPressed;
@@ -425,16 +425,19 @@ public class Gizmo : ActorComponent
         return GizmoScreenSize / pixelsPerUnit;
     }
 
-    private Ray GetMouseRay() => Camera.Unproject(ImGuiX.GetMousePos(), Viewport);
+    private Ray GetMouseRay()
+    {
+        return Camera.Unproject(ImGuiX.GetMousePos(), Viewport);
+    }
 
     private static Handle HitTestTranslate(Ray ray, Vector3 origin, float scale)
     {
-        var tipDist = (ArrowShaftLength + ArrowTipLength * 0.5f) * scale;
+        var tipDist = (ArrowShaftLength + (ArrowTipLength * 0.5f)) * scale;
         var pickR = PickRadius * scale;
 
-        var dX = RayClosestDistanceToLineSegment(ray, origin, origin + Vector3.UnitX * tipDist);
-        var dY = RayClosestDistanceToLineSegment(ray, origin, origin + Vector3.UnitY * tipDist);
-        var dZ = RayClosestDistanceToLineSegment(ray, origin, origin + Vector3.UnitZ * tipDist);
+        var dX = RayClosestDistanceToLineSegment(ray, origin, origin + (Vector3.UnitX * tipDist));
+        var dY = RayClosestDistanceToLineSegment(ray, origin, origin + (Vector3.UnitY * tipDist));
+        var dZ = RayClosestDistanceToLineSegment(ray, origin, origin + (Vector3.UnitZ * tipDist));
 
         var best = Handle.None;
         var bestDist = float.MaxValue;
@@ -516,7 +519,7 @@ public class Gizmo : ActorComponent
             return false;
         }
 
-        var hit = ray.Position + ray.Direction * t;
+        var hit = ray.Position + (ray.Direction * t);
         var dist = Vector3.Distance(hit, origin);
         return MathF.Abs(dist - ringR) < halfW * 3f;
     }
@@ -529,10 +532,10 @@ public class Gizmo : ActorComponent
             return Handle.ScaleCenter;
         }
 
-        var tipDist = (ArrowShaftLength + ArrowTipLength * 0.5f) * scale;
-        var dX = RayClosestDistanceToLineSegment(ray, origin, origin + Vector3.UnitX * tipDist);
-        var dY = RayClosestDistanceToLineSegment(ray, origin, origin + Vector3.UnitY * tipDist);
-        var dZ = RayClosestDistanceToLineSegment(ray, origin, origin + Vector3.UnitZ * tipDist);
+        var tipDist = (ArrowShaftLength + (ArrowTipLength * 0.5f)) * scale;
+        var dX = RayClosestDistanceToLineSegment(ray, origin, origin + (Vector3.UnitX * tipDist));
+        var dY = RayClosestDistanceToLineSegment(ray, origin, origin + (Vector3.UnitY * tipDist));
+        var dZ = RayClosestDistanceToLineSegment(ray, origin, origin + (Vector3.UnitZ * tipDist));
 
         var best = Handle.None;
         var bestDist = float.MaxValue;
@@ -561,13 +564,13 @@ public class Gizmo : ActorComponent
     {
         var oc = ray.Position - center;
         var b = Vector3.Dot(oc, ray.Direction);
-        var c = Vector3.Dot(oc, oc) - radius * radius;
-        return b * b - c >= 0;
+        var c = Vector3.Dot(oc, oc) - (radius * radius);
+        return (b * b) - c >= 0;
     }
 
     private static float RayClosestDistanceToLineSegment(Ray ray, Vector3 linePointA, Vector3 linePointB)
     {
-        var lineDelta= linePointB - linePointA;
+        var lineDelta = linePointB - linePointA;
         var lineToRayDelta = ray.Position - linePointA;
 
         var rayDirLengthSquared = Vector3.Dot(ray.Direction, ray.Direction);
@@ -576,23 +579,24 @@ public class Gizmo : ActorComponent
         var rayDirDotLineToRay = Vector3.Dot(ray.Direction, lineToRayDelta);
         var lineDeltaDotLineToRay = Vector3.Dot(lineDelta, lineToRayDelta);
 
-        var denominator = rayDirLengthSquared * lineLengthSquared - rayDirDotLineDelta * rayDirDotLineDelta;
+        var denominator = (rayDirLengthSquared * lineLengthSquared) - (rayDirDotLineDelta * rayDirDotLineDelta);
 
         var rayFraction = 0f;
         if (denominator > float.Epsilon)
         {
-            rayFraction = (rayDirDotLineDelta * lineDeltaDotLineToRay - lineLengthSquared * rayDirDotLineToRay) / denominator;
+            rayFraction = ((rayDirDotLineDelta * lineDeltaDotLineToRay) - (lineLengthSquared * rayDirDotLineToRay)) /
+                          denominator;
             rayFraction = Math.Max(0f, rayFraction);
         }
 
-        var lineFraction = (rayDirDotLineDelta * rayFraction + lineDeltaDotLineToRay) / lineLengthSquared;
+        var lineFraction = ((rayDirDotLineDelta * rayFraction) + lineDeltaDotLineToRay) / lineLengthSquared;
         lineFraction = Math.Clamp(lineFraction, 0f, 1f);
 
-        rayFraction = (rayDirDotLineDelta * lineFraction - rayDirDotLineToRay) / rayDirLengthSquared;
+        rayFraction = ((rayDirDotLineDelta * lineFraction) - rayDirDotLineToRay) / rayDirLengthSquared;
         rayFraction = Math.Max(0f, rayFraction);
 
-        var closestOnRay = ray.Position + ray.Direction * rayFraction;
-        var closestOnLine = linePointA + lineDelta * lineFraction;
+        var closestOnRay = ray.Position + (ray.Direction * rayFraction);
+        var closestOnLine = linePointA + (lineDelta * lineFraction);
 
         return (closestOnRay - closestOnLine).Length();
     }
@@ -634,7 +638,7 @@ public class Gizmo : ActorComponent
     private Vector3 GetCameraFacingPlaneNormal(Vector3 origin, Vector3 axis)
     {
         var camDir = GetCameraDirection(origin);
-        var perp = camDir - Vector3.Dot(camDir, axis) * axis;
+        var perp = camDir - (Vector3.Dot(camDir, axis) * axis);
         if (perp.LengthSquared() < 0.001f)
         {
             perp = Vector3.Cross(axis, Vector3.UnitY);
@@ -661,7 +665,7 @@ public class Gizmo : ActorComponent
             return null;
         }
 
-        return ray.Position + ray.Direction * t;
+        return ray.Position + (ray.Direction * t);
     }
 
     private static Vector3 ConstrainDelta(Vector3 delta, Handle handle)
@@ -696,7 +700,7 @@ public class Gizmo : ActorComponent
             Handle.ScaleX => startScale + new Vector3(delta.X * sensitivity, 0, 0),
             Handle.ScaleY => startScale + new Vector3(0, delta.Y * sensitivity, 0),
             Handle.ScaleZ => startScale + new Vector3(0, 0, delta.Z * sensitivity),
-            Handle.ScaleCenter => startScale + Vector3.One * (delta.X + delta.Y + delta.Z) * sensitivity / 3f,
+            Handle.ScaleCenter => startScale + (Vector3.One * (delta.X + delta.Y + delta.Z) * sensitivity / 3f),
             _ => startScale
         };
     }
@@ -906,6 +910,9 @@ public class Gizmo : ActorComponent
             }
         }
 
-        public void Dispose(RenderingService r) => r.FreeRid(Mat);
+        public void Dispose(RenderingService r)
+        {
+            r.FreeRid(Mat);
+        }
     }
 }

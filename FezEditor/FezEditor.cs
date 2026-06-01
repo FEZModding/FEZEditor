@@ -139,6 +139,6 @@ public class FezEditor : Game
             : string.Empty;
 
         SplashAuthors = metadata.OfType<System.Reflection.AssemblyMetadataAttribute>()
-                            .First(attr => attr.Key == "SplashAuthors").Value ?? string.Empty;
+            .First(attr => attr.Key == "SplashAuthors").Value ?? string.Empty;
     }
 }

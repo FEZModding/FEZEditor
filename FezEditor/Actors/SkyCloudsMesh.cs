@@ -134,10 +134,10 @@ public class SkyCloudsMesh : SkyBaseMesh
                 _rendering.InstanceSetMesh(instance, mesh);
 
                 var phiJitter = _random.Between(0f, 1f / rows * MathHelper.TwoPi);
-                var phi = ((float)row / rows * MathHelper.TwoPi + phiSeed + phiJitter) % MathHelper.TwoPi;
+                var phi = (((float)row / rows * MathHelper.TwoPi) + phiSeed + phiJitter) % MathHelper.TwoPi;
 
                 var heightJitter = _random.Between(0f, 1f / perRow * HeightRange);
-                var localHeight = ((col / perRow * HeightRange + heightSeed + heightJitter) % HeightRange) -
+                var localHeight = (((col / perRow * HeightRange) + heightSeed + heightJitter) % HeightRange) -
                                   HalfHeightRange;
 
                 _clouds.Add(new CloudInstance
@@ -176,7 +176,7 @@ public class SkyCloudsMesh : SkyBaseMesh
         var levelWidth = Math.Abs(Vector3.Dot(Sky.LevelSize, camRight)) / ParallaxLevelPadding;
         var cameraDeltaX = Vector3.Dot(camRight, camPos) - Vector3.Dot(camRight, _lastCamPos);
         var cameraDeltaY = camPos.Y - _lastCamPos.Y;
-        var parallaxLevelWidth = Math.Abs(Vector3.Dot(Sky.LevelSize + Vector3.One * ParallaxLevelPadding, camRight));
+        var parallaxLevelWidth = Math.Abs(Vector3.Dot(Sky.LevelSize + (Vector3.One * ParallaxLevelPadding), camRight));
 
         Actor.Transform.Position = camPos;
 
@@ -216,15 +216,15 @@ public class SkyCloudsMesh : SkyBaseMesh
             #region World Position
 
             var orbitRadius = orthogonal
-                ? levelHalf + Vector3.One * OrthoOrbitPadding
-                : levelHalf + Vector3.One *
-                (PerspectiveOrbitBase + PerspectiveOrbitDistanceScale * cloud.Layer.DistanceFactor);
+                ? levelHalf + (Vector3.One * OrthoOrbitPadding)
+                : levelHalf + (Vector3.One *
+                               (PerspectiveOrbitBase + (PerspectiveOrbitDistanceScale * cloud.Layer.DistanceFactor)));
 
             var spreadFactor = orthogonal ? OrthoHeightSpread : 1f;
             var cloudWorldPos = new Vector3(
-                MathF.Sin(cloud.Phi) * orbitRadius.X + levelHalf.X,
+                (MathF.Sin(cloud.Phi) * orbitRadius.X) + levelHalf.X,
                 cloud.GetHeight(spreadFactor),
-                MathF.Cos(cloud.Phi) * orbitRadius.Z + levelHalf.Z
+                (MathF.Cos(cloud.Phi) * orbitRadius.Z) + levelHalf.Z
             );
 
             #endregion
@@ -247,7 +247,7 @@ public class SkyCloudsMesh : SkyBaseMesh
             }
 
             cloud.VisibilityFactor = MathHelper.Clamp(
-                cloud.VisibilityFactor + elapsed * VisibilityFadeSpeed * (cloud.ActualVisibility ? 1f : -1f),
+                cloud.VisibilityFactor + (elapsed * VisibilityFadeSpeed * (cloud.ActualVisibility ? 1f : -1f)),
                 0f, 1f);
 
             var layerOpacity = cloud.Layer.Opacity * Sky.AmbientFactor * MathF.Pow(cloud.VisibilityFactor, 2);
@@ -267,7 +267,7 @@ public class SkyCloudsMesh : SkyBaseMesh
             var scale = new Vector3(cloud.TextureWidth, cloud.TextureHeight, 1f) * Mathz.TrixelSize;
             if (!orthogonal)
             {
-                scale *= PerspectiveScaleBase + cloud.Layer.DistanceFactor * 2f;
+                scale *= PerspectiveScaleBase + (cloud.Layer.DistanceFactor * 2f);
             }
 
             var rotation = orthogonal
@@ -310,7 +310,7 @@ public class SkyCloudsMesh : SkyBaseMesh
 
         public float GetHeight(float spreadFactor)
         {
-            return LocalHeightOffset * spreadFactor + GlobalHeightOffset;
+            return (LocalHeightOffset * spreadFactor) + GlobalHeightOffset;
         }
     }
 

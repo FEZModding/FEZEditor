@@ -136,7 +136,6 @@ public class EddyEditor : EditorComponent, IEddyEditor
             camera.Near = 0.25f;
             camera.Far = 500f;
             orientation.UseFaceLabels = false;
-
         }
         {
             // DefaultContext is instantiated first so its subroot is first in the scene (draws before level geometry).
@@ -174,7 +173,7 @@ public class EddyEditor : EditorComponent, IEddyEditor
             gizmo.Camera = _cameraActor.GetComponent<Camera>();
         }
 
-        var gomezPos = _level.StartingFace.Id.ToXna().ToVector3() + Vector3.Up * 1.5f;
+        var gomezPos = _level.StartingFace.Id.ToXna().ToVector3() + (Vector3.Up * 1.5f);
         var approachDir = _level.StartingFace.Face.AsVector();
         _cameraActor.GetComponent<FirstPersonControl>().FocusOn(gomezPos, approachDir, 10f);
     }
@@ -201,7 +200,8 @@ public class EddyEditor : EditorComponent, IEddyEditor
         {
             var texture = Scene.Viewport.GetTexture();
             var previewer = Game.Components.OfType<FarawayPreviewer>().FirstOrDefault();
-            if (previewer is not { IsExporting: true } && (texture == null || texture.Width != w || texture.Height != h))
+            if (previewer is not { IsExporting: true } &&
+                (texture == null || texture.Width != w || texture.Height != h))
             {
                 Scene.Viewport.SetSize(w, h);
             }
@@ -211,7 +211,8 @@ public class EddyEditor : EditorComponent, IEddyEditor
                 ImGuiX.Image(texture, size);
                 const ImGuiHoveredFlags hoverFlags = ImGuiHoveredFlags.AllowWhenBlockedByActiveItem |
                                                      ImGuiHoveredFlags.AllowWhenBlockedByPopup;
-                InputService.IsViewportHovered = ImGui.IsItemHovered(hoverFlags) && !ImGui.IsMouseDragging(ImGuiMouseButton.Left);
+                InputService.IsViewportHovered =
+                    ImGui.IsItemHovered(hoverFlags) && !ImGui.IsMouseDragging(ImGuiMouseButton.Left);
 
                 var viewportMin = ImGuiX.GetItemRectMin();
                 _gizmoActor.GetComponent<Gizmo>().Viewport = viewportMin;
@@ -394,6 +395,7 @@ public class EddyEditor : EditorComponent, IEddyEditor
             {
                 _showAssetBrowser = true;
             }
+
             ImGui.EndDisabled();
 
             if (ImGui.IsItemHovered())
@@ -441,6 +443,7 @@ public class EddyEditor : EditorComponent, IEddyEditor
             {
                 _showInstanceBrowser = true;
             }
+
             ImGui.EndDisabled();
 
             if (ImGui.IsItemHovered())
@@ -456,6 +459,7 @@ public class EddyEditor : EditorComponent, IEddyEditor
             {
                 _showScriptBrowser = true;
             }
+
             ImGui.EndDisabled();
 
             if (ImGui.IsItemHovered())
@@ -471,6 +475,7 @@ public class EddyEditor : EditorComponent, IEddyEditor
             {
                 _showProperties = true;
             }
+
             ImGui.EndDisabled();
 
             if (ImGui.IsItemHovered())
@@ -506,7 +511,7 @@ public class EddyEditor : EditorComponent, IEddyEditor
     private void DrawViewOptions()
     {
         var text = $"{Lucide.EllipsisVertical} {_viewMode}";
-        var viewButtonWidth = ImGui.CalcTextSize(text).X + ImGui.GetStyle().FramePadding.X * 2;
+        var viewButtonWidth = ImGui.CalcTextSize(text).X + (ImGui.GetStyle().FramePadding.X * 2);
         ImGui.SameLine(ImGui.GetContentRegionMax().X - viewButtonWidth);
 
         if (ImGui.Button(text))
@@ -618,7 +623,7 @@ public class EddyEditor : EditorComponent, IEddyEditor
         }
 
         var lineHeight = ImGui.GetTextLineHeight();
-        ImGuiX.DrawStats(position - new Vector2(0, lineHeight * stats.Count + 8), stats);
+        ImGuiX.DrawStats(position - new Vector2(0, (lineHeight * stats.Count) + 8), stats);
     }
 
     public void FocusOn(Vector3 target)
@@ -641,9 +646,9 @@ public class EddyEditor : EditorComponent, IEddyEditor
         {
             // Camera starts at the level boundary in this direction, at target's Y height
             var camPos = new Vector3(
-                levelCenter.X + dir.X * levelSize.X / 2f,
+                levelCenter.X + (dir.X * levelSize.X / 2f),
                 target.Y,
-                levelCenter.Z + dir.Z * levelSize.Z / 2f
+                levelCenter.Z + (dir.Z * levelSize.Z / 2f)
             );
 
             // Raycast from boundary toward target
@@ -668,9 +673,9 @@ public class EddyEditor : EditorComponent, IEddyEditor
 
         // Place camera at level boundary in the best direction, clamped to desired distance
         var finalCamPos = new Vector3(
-            levelCenter.X + bestDir1.X * levelSize.X / 2f,
+            levelCenter.X + (bestDir1.X * levelSize.X / 2f),
             target.Y,
-            levelCenter.Z + bestDir1.Z * levelSize.Z / 2f
+            levelCenter.Z + (bestDir1.Z * levelSize.Z / 2f)
         );
 
         var approachDir = Vector3.Normalize(finalCamPos - target);

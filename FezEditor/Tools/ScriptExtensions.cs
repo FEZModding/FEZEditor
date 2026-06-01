@@ -50,6 +50,7 @@ public static class ScriptExtensions
             {
                 output += ", ";
             }
+
             output += action.Arguments[i];
         }
 

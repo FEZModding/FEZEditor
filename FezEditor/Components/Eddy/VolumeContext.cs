@@ -256,7 +256,7 @@ internal class VolumeContext : BaseContext
         {
             var instance = Level.Volumes[id];
             var size = instance.To.ToXna() - instance.From.ToXna();
-            sum += instance.From.ToXna() + size / 2f;
+            sum += instance.From.ToXna() + (size / 2f);
         }
 
         return sum / _selectedIds.Count;
@@ -284,8 +284,8 @@ internal class VolumeContext : BaseContext
                 {
                     var center = (instance.From + instance.To).ToXna() / 2f;
                     var newSize = (instance.To - instance.From).ToXna() + delta;
-                    instance.From = (center - newSize / 2f).ToRepacker();
-                    instance.To = (center + newSize / 2f).ToRepacker();
+                    instance.From = (center - (newSize / 2f)).ToRepacker();
+                    instance.To = (center + (newSize / 2f)).ToRepacker();
                     if (_volumeActors.TryGetValue(id, out var actor))
                     {
                         actor.Transform.Position = center;
@@ -331,7 +331,7 @@ internal class VolumeContext : BaseContext
                 hoveredFace = Mathz.DetermineFace(box, Eddy.Ray, Eddy.Hit.Value.Distance);
 
                 var trileCenter = hoveredInstance.Position.ToXna() + new Vector3(0.5f);
-                var origin = trileCenter + hoveredFace.Value.AsVector() * (0.5f + CursorMesh.OverlayOffset);
+                var origin = trileCenter + (hoveredFace.Value.AsVector() * (0.5f + CursorMesh.OverlayOffset));
                 var surface = MeshSurface.CreateFaceQuad(Vector3.One, origin, hoveredFace.Value);
                 Eddy.Cursor.SetHoverSurfaces([(surface, PrimitiveType.TriangleList)], HoverColor);
             }
@@ -551,6 +551,7 @@ internal class VolumeContext : BaseContext
         {
             item = inputValues[input];
         }
+
         return edited;
     }
 
@@ -582,7 +583,7 @@ internal class VolumeContext : BaseContext
                 if (actor.TryGetComponent<VolumeMesh>(out var volumeMesh))
                 {
                     volumeMesh!.Size = size;
-                    volumeMesh.IsBlackHole = instance.ActorSettings is {IsBlackHole: true};
+                    volumeMesh.IsBlackHole = instance.ActorSettings is { IsBlackHole: true };
                 }
             }
             else
@@ -610,7 +611,7 @@ internal class VolumeContext : BaseContext
         {
             var actor = CreateSubActor();
             actor.Name = $"{id}: Volume";
-            actor.Transform.Position = (instance.From + (instance.To - instance.From) / 2f).ToXna();
+            actor.Transform.Position = (instance.From + ((instance.To - instance.From) / 2f)).ToXna();
             _volumeActors[id] = actor;
             SetupVolumeActor(actor, instance);
         }
@@ -622,7 +623,7 @@ internal class VolumeContext : BaseContext
         var mesh = actor.AddComponent<VolumeMesh>();
         mesh.Size = size;
         mesh.Color = DefaultColor;
-        mesh.IsBlackHole = instance.ActorSettings is {IsBlackHole: true};
+        mesh.IsBlackHole = instance.ActorSettings is { IsBlackHole: true };
     }
 
     private void RemoveSelected()

@@ -130,8 +130,8 @@ public class Camera : ActorComponent
         var local = mousePos - viewport;
         var invViewProj = Matrix.Invert(ViewProjection);
 
-        var ndcX = (local.X / width) * 2f - 1f;
-        var ndcY = 1f - (local.Y / height) * 2f;
+        var ndcX = (local.X / width * 2f) - 1f;
+        var ndcY = 1f - (local.Y / height * 2f);
 
         var nearVec = new Vector4(ndcX, ndcY, 0f, 1f);
         var farVec = new Vector4(ndcX, ndcY, 1f, 1f);

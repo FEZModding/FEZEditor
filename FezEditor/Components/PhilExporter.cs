@@ -219,8 +219,7 @@ public class PhilExporter : DrawableGameComponent
                         continue;
                     }
 
-                    var mesh = BuildMeshFromVertexInstances(levelModel, trile.Geometry, material,
-                        reverseWinding: true);
+                    var mesh = BuildMeshFromVertexInstances(levelModel, trile.Geometry, material);
                     if (mesh != null)
                     {
                         meshes[id] = mesh;
@@ -268,8 +267,7 @@ public class PhilExporter : DrawableGameComponent
                         {
                             using var image = ExtractAlbedo(ao.Cubemap);
                             var material = CreateMaterial(levelModel, image, instance.Name);
-                            mesh = BuildMeshFromVertexInstances(levelModel, ao.Geometry, material,
-                                reverseWinding: true)!;
+                            mesh = BuildMeshFromVertexInstances(levelModel, ao.Geometry, material)!;
                             meshes[instance.Name] = mesh;
                         }
                     }
@@ -469,7 +467,7 @@ public class PhilExporter : DrawableGameComponent
             var node = parent.CreateNode($"{nodeId}_{name}");
             node.Mesh = mesh;
             node.LocalTransform = new AffineTransform(NVector3.One, NQuaternion.Identity,
-                new NVector3(x, y + size.Y / 2f, z));
+                new NVector3(x, y + (size.Y / 2f), z));
         }
         catch (Exception ex)
         {
@@ -520,7 +518,7 @@ public class PhilExporter : DrawableGameComponent
                 var bgTex = _resources.Load<RTexture2D>($"Skies/{sky.Name}/{sky.Background}");
                 var col = (int)(SkyNoonDayFraction * bgTex.Width) % bgTex.Width;
                 var midY = bgTex.Height / 2;
-                var offset = (midY * bgTex.Width + col) * 4;
+                var offset = ((midY * bgTex.Width) + col) * 4;
                 fogColor = new NVector3(
                     bgTex.TextureData[offset] / 255f,
                     bgTex.TextureData[offset + 1] / 255f,
@@ -539,7 +537,7 @@ public class PhilExporter : DrawableGameComponent
                 var tintTex = _resources.Load<RTexture2D>($"Skies/{sky.Name}/{sky.CloudTint}");
                 var col = (int)(SkyNoonDayFraction * tintTex.Width) % tintTex.Width;
                 var midY = tintTex.Height / 2;
-                var offset = (midY * tintTex.Width + col) * 4;
+                var offset = ((midY * tintTex.Width) + col) * 4;
                 cloudTint = new NVector3(
                     tintTex.TextureData[offset] / 255f,
                     tintTex.TextureData[offset + 1] / 255f,
@@ -588,13 +586,13 @@ public class PhilExporter : DrawableGameComponent
                             var dstRow = dstAcc.GetRowSpan(dy);
                             for (var dx = 0; dx < dstRow.Length; dx++)
                             {
-                                var px = (float)dx / dstAcc.Width - 0.5f;
-                                var py = (float)dy / dstAcc.Height - 0.5f;
-                                var u = starsOffset + px * starsTilingX;
-                                var v = starsOffset + py * starsTilingY;
+                                var px = ((float)dx / dstAcc.Width) - 0.5f;
+                                var py = ((float)dy / dstAcc.Height) - 0.5f;
+                                var u = starsOffset + (px * starsTilingX);
+                                var v = starsOffset + (py * starsTilingY);
 
-                                var sx = ((int)(u * srcAcc.Width) % srcAcc.Width + srcAcc.Width) % srcAcc.Width;
-                                var sy = ((int)(v * srcAcc.Height) % srcAcc.Height + srcAcc.Height) % srcAcc.Height;
+                                var sx = (((int)(u * srcAcc.Width) % srcAcc.Width) + srcAcc.Width) % srcAcc.Width;
+                                var sy = (((int)(v * srcAcc.Height) % srcAcc.Height) + srcAcc.Height) % srcAcc.Height;
 
                                 var srcPx = srcAcc.GetRowSpan(sy)[sx];
 
@@ -648,8 +646,8 @@ public class PhilExporter : DrawableGameComponent
                         for (var i = 0; i < total; i++)
                         {
                             var cloudImg = cloudImages[rng.Next(cloudImages.Count)];
-                            var cx = rng.Next(-cloudImg.Width / 2, SkyFaceSize + cloudImg.Width / 2);
-                            var cy = rng.Next(-cloudImg.Height / 2, SkyFaceSize + cloudImg.Height / 2);
+                            var cx = rng.Next(-cloudImg.Width / 2, SkyFaceSize + (cloudImg.Width / 2));
+                            var cy = rng.Next(-cloudImg.Height / 2, SkyFaceSize + (cloudImg.Height / 2));
 
                             faceImage.ProcessPixelRows(cloudImg, (dstAcc, srcAcc) =>
                             {
@@ -689,7 +687,10 @@ public class PhilExporter : DrawableGameComponent
                 }
                 finally
                 {
-                    foreach (var img in cloudImages) img.Dispose();
+                    foreach (var img in cloudImages)
+                    {
+                        img.Dispose();
+                    }
                 }
             }
             catch (Exception ex)
@@ -722,7 +723,7 @@ public class PhilExporter : DrawableGameComponent
                     : 0f;
                 var uBase = (sky.NoPerFaceLayerXOffset ? 0f : faceIndex / 4f) + sky.LayerBaseXOffset;
                 var layerDepthV = sky.VerticalTiling ? layerDepth : layerDepth - 0.5f;
-                var vBase = sky.LayerBaseHeight + layerDepthV * sky.LayerBaseSpacing;
+                var vBase = sky.LayerBaseHeight + (layerDepthV * sky.LayerBaseSpacing);
 
                 var levelSize = _level.Size.ToNumerics();
                 var texCoordsX = layerImg.Width * Mathz.TrixelSize;
@@ -737,16 +738,16 @@ public class PhilExporter : DrawableGameComponent
                         var dstRow = dstAcc.GetRowSpan(dy);
                         for (var dx = 0; dx < dstRow.Length; dx++)
                         {
-                            var px = (float)dx / dstAcc.Width - 0.5f;
-                            var py = (float)dy / dstAcc.Height - 0.5f;
-                            var u = -uBase + px * tilingX;
-                            var v = vBase + py * tilingY;
+                            var px = ((float)dx / dstAcc.Width) - 0.5f;
+                            var py = ((float)dy / dstAcc.Height) - 0.5f;
+                            var u = -uBase + (px * tilingX);
+                            var v = vBase + (py * tilingY);
 
-                            var sx = ((int)(u * srcAcc.Width) % srcAcc.Width + srcAcc.Width) % srcAcc.Width;
+                            var sx = (((int)(u * srcAcc.Width) % srcAcc.Width) + srcAcc.Width) % srcAcc.Width;
                             int sy;
                             if (sky.VerticalTiling)
                             {
-                                sy = ((int)(v * srcAcc.Height) % srcAcc.Height + srcAcc.Height) % srcAcc.Height;
+                                sy = (((int)(v * srcAcc.Height) % srcAcc.Height) + srcAcc.Height) % srcAcc.Height;
                             }
                             else
                             {
@@ -759,9 +760,9 @@ public class PhilExporter : DrawableGameComponent
                             var srcA = srcPx.A / 255f * opacity;
                             ref var dstPx = ref dstRow[dx];
                             BlendOver(ref dstPx,
-                                r: srcPx.R * tintR / 255,
-                                g: srcPx.G * tintG / 255,
-                                b: srcPx.B * tintB / 255,
+                                srcPx.R * tintR / 255,
+                                srcPx.G * tintG / 255,
+                                srcPx.B * tintB / 255,
                                 srcA);
                         }
                     }
@@ -779,9 +780,9 @@ public class PhilExporter : DrawableGameComponent
     private static void BlendOver(ref Rgba32 dst, int r, int g, int b, float alpha)
     {
         var inv = 1f - alpha;
-        dst.R = (byte)(r * alpha + dst.R * inv);
-        dst.G = (byte)(g * alpha + dst.G * inv);
-        dst.B = (byte)(b * alpha + dst.B * inv);
+        dst.R = (byte)((r * alpha) + (dst.R * inv));
+        dst.G = (byte)((g * alpha) + (dst.G * inv));
+        dst.B = (byte)((b * alpha) + (dst.B * inv));
         dst.A = 255;
     }
 
@@ -887,8 +888,7 @@ public class PhilExporter : DrawableGameComponent
     private static Mesh? BuildMeshFromVertexInstances<TInstance>(
         ModelRoot model,
         IndexedPrimitives<VertexInstance, TInstance> geom,
-        Material material,
-        bool reverseWinding = false)
+        Material material)
     {
         if (geom.Vertices.Length == 0)
         {
@@ -909,16 +909,15 @@ public class PhilExporter : DrawableGameComponent
         var indices = new int[rawIndices.Length];
         for (var i = 0; i < rawIndices.Length; i++)
         {
-            var src = reverseWinding
-                ? geom.PrimitiveType switch
-                {
-                    FEZRepacker.Core.Definitions.Game.XNA.PrimitiveType.TriangleList =>
-                        i + (((i + 1) % 3) - 1),
-                    FEZRepacker.Core.Definitions.Game.XNA.PrimitiveType.TriangleStrip =>
-                        rawIndices.Length - (i + 1),
-                    _ => i
-                }
-                : i;
+            var src = geom.PrimitiveType switch
+            {
+                FEZRepacker.Core.Definitions.Game.XNA.PrimitiveType.TriangleList =>
+                    i + (((i + 1) % 3) - 1),
+                FEZRepacker.Core.Definitions.Game.XNA.PrimitiveType.TriangleStrip =>
+                    rawIndices.Length - (i + 1),
+                _ => i
+            };
+
             indices[i] = rawIndices[src];
         }
 

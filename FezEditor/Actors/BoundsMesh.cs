@@ -45,7 +45,7 @@ public class BoundsMesh : ActorComponent
         var surface = MeshSurface.CreateWireframeBox(Size, WireColor);
         _rendering.MeshClear(_mesh);
         _rendering.MeshAddSurface(_mesh, PrimitiveType.LineList, surface, _material);
-        _rendering.InstanceSetPosition(_instance, _transform.Position + Size / 2f);
+        _rendering.InstanceSetPosition(_instance, _transform.Position + (Size / 2f));
         _rendering.InstanceSetVisibility(_instance, Actor.Visible);
     }
 

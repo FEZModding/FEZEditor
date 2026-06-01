@@ -602,7 +602,7 @@ internal class ScriptBrowser : IDisposable
                 _conditionIndex = -1;
             }
 
-            if (_script!.Conditions is not {Count: > 0})
+            if (_script!.Conditions is not { Count: > 0 })
             {
                 const string empty = "No conditions...";
                 ImGuiX.SetTextCentered(empty);

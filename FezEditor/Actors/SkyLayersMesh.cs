@@ -81,7 +81,7 @@ public class SkyLayersMesh : SkyBaseMesh
             var side = 0;
             foreach (var (face, instancesList) in _sides)
             {
-                var texture = (obsTexture != null && face != FaceOrientation.Left) ? obsTexture : layerTexture;
+                var texture = obsTexture != null && face != FaceOrientation.Left ? obsTexture : layerTexture;
                 var material = _rendering.MaterialCreate();
                 var compareFunction = layer.InFront ? CompareFunction.Always : CompareFunction.LessEqual;
 
@@ -135,8 +135,8 @@ public class SkyLayersMesh : SkyBaseMesh
             Actor.Transform.Position = Sky.LevelSize / 2f;
         }
 
-        var sideOffset = Vector3.Dot(camPos - Sky.LevelSize / 2f, Sky.Camera.InverseView.Right);
-        var heightOffset = camPos.Y - Sky.LevelSize.Y / 2f - Sky.ViewOffset;
+        var sideOffset = Vector3.Dot(camPos - (Sky.LevelSize / 2f), Sky.Camera.InverseView.Right);
+        var heightOffset = camPos.Y - (Sky.LevelSize.Y / 2f) - Sky.ViewOffset;
         var fogColor = Sky.FogColor;
         var cloudTint = Sky.CloudTint;
 
@@ -156,29 +156,29 @@ public class SkyLayersMesh : SkyBaseMesh
                 #region Layer Texture Matrix
 
                 {
-                    var layerDepth = layer.Index / ((layers.Count > 1) ? (layers.Count - 1) : 1);
+                    var layerDepth = layer.Index / (layers.Count > 1 ? layers.Count - 1 : 1);
                     var uv = new Vector2(scale.X, scale.Y) / layer.TexCoords;
                     var tc = new Vector2(sideOffset, heightOffset) / layer.TexCoords;
 
                     // U with per-face base offset [0, 0.25, 0.5, 0.75]
                     var u = (Sky.NoPerFaceLayerXOffset ? 0 : layer.Side / 4f)
                             + Sky.LayerBaseXOffset
-                            + tc.X * Sky.HorizontalDistance
-                            + tc.X * Sky.InterLayerHorizontalDistance * layerDepth
-                            - layer.WindOffset * Sky.WindDistance
-                            - layer.WindOffset * Sky.WindParallax * layerDepth;
+                            + (tc.X * Sky.HorizontalDistance)
+                            + (tc.X * Sky.InterLayerHorizontalDistance * layerDepth)
+                            - (layer.WindOffset * Sky.WindDistance)
+                            - (layer.WindOffset * Sky.WindParallax * layerDepth);
 
                     // V (layerDepth adjusted for VerticalTiling)
                     var layerDepthV = Sky.VerticalTiling ? layerDepth : layerDepth - 0.5f;
                     var v = Sky.LayerBaseHeight
-                            + layerDepthV * Sky.LayerBaseSpacing
-                            - tc.Y * Sky.VerticalDistance
-                            - layerDepthV * Sky.InterLayerVerticalDistance * tc.Y;
+                            + (layerDepthV * Sky.LayerBaseSpacing)
+                            - (tc.Y * Sky.VerticalDistance)
+                            - (layerDepthV * Sky.InterLayerVerticalDistance * tc.Y);
 
                     var textureMatrix = new Matrix(
                         -uv.X, 0, 0, 0,
                         0, uv.Y, 0, 0,
-                        -u + uv.X / 2, v - uv.Y / 2, 1, 0,
+                        -u + (uv.X / 2), v - (uv.Y / 2), 1, 0,
                         0, 0, 0, 1
                     );
 

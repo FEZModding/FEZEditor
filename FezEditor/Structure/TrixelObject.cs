@@ -31,19 +31,18 @@ public class TrixelObject
     [JsonConverter(typeof(Base64Converter))]
     public byte[] MissingTrixels
     {
-        get => _missingTrixels;
+        get;
         set
         {
-            _missingTrixels = value;
+            field = value;
             _visibleFaces = _visibleFaces.Marked();
         }
-    }
+    } = Array.Empty<byte>();
 
     [JsonConverter(typeof(CompressConverter))]
     public RTexture2D Texture { get; set; } = new();
 
-    [JsonIgnore]
-    public Vector3 Offset { get; set; } = Vector3.Zero;
+    [JsonIgnore] public Vector3 Offset { get; set; } = Vector3.Zero;
 
     public TrixelProperties? Properties { get; set; }
 
@@ -67,8 +66,6 @@ public class TrixelObject
     }
 
     private Vector3 _size;
-
-    private byte[] _missingTrixels = Array.Empty<byte>();
 
     private Dirty<TrixelFace[]> _visibleFaces = new(Array.Empty<TrixelFace>());
 
@@ -309,7 +306,7 @@ public class TrixelObject
         {
             var json = JsonSerializer.SerializeToUtf8Bytes(value);
             using var ms = new MemoryStream();
-            using (var deflate = new DeflateStream(ms, CompressionLevel.Fastest, leaveOpen: true))
+            using (var deflate = new DeflateStream(ms, CompressionLevel.Fastest, true))
             {
                 deflate.Write(json);
             }

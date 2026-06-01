@@ -316,9 +316,9 @@ internal class PathContext : BaseContext
         var box = mesh.GetBounds().ElementAt(index);
         var face = Mathz.DetermineFace(box, Eddy.Ray, Eddy.Hit.Value.Distance);
         var trileCenter = hoveredInstance.Position.ToXna() + new Vector3(0.5f);
-        var hitPoint = trileCenter + face.AsVector() * 0.5f;
+        var hitPoint = trileCenter + (face.AsVector() * 0.5f);
 
-        var origin = trileCenter + face.AsVector() * (0.5f + CursorMesh.OverlayOffset);
+        var origin = trileCenter + (face.AsVector() * (0.5f + CursorMesh.OverlayOffset));
         var surface = MeshSurface.CreateFaceQuad(Vector3.One, origin, face);
         Eddy.Cursor.SetHoverSurfaces([(surface, PrimitiveType.TriangleList)], HoverColor);
 
@@ -376,6 +376,7 @@ internal class PathContext : BaseContext
         {
             presentKeys.Add(id);
         }
+
         foreach (var groupId in Level.Groups.Keys.Where(k => k != InvalidId && Level.Groups[k].Path != null))
         {
             presentKeys.Add(-(groupId + 1));

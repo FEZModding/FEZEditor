@@ -299,7 +299,7 @@ public class ResourceExtractor : DrawableGameComponent
                 _progress = (float)_filesProcessed / _totalFiles;
 
                 Logger.Information("Asset extracted ({0}/{1}) - {2}",
-                    _filesProcessed,  _totalFiles, bundle.BundlePath);
+                    _filesProcessed, _totalFiles, bundle.BundlePath);
             }
         }
     }

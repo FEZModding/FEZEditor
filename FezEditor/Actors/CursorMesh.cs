@@ -156,7 +156,7 @@ public sealed class CursorMesh : ActorComponent
             }
         }
 
-        var isVisible = (_hover.Surfaces is { Count: > 0 }) || (_selection.Surfaces is { Count: > 0 });
+        var isVisible = _hover.Surfaces is { Count: > 0 } || _selection.Surfaces is { Count: > 0 };
         _rendering.InstanceSetVisibility(Actor.InstanceRid, isVisible);
     }
 

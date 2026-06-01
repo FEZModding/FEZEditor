@@ -14,7 +14,7 @@ public static class NullableExtensions
 
     public static T[]? NullIfEmpty<T>(this T[] instance)
     {
-        return instance is not {Length: > 0} ? null : instance;
+        return instance is not { Length: > 0 } ? null : instance;
     }
 
     public static T[] EmptyIfNull<T>(this T[]? instance)
@@ -24,7 +24,7 @@ public static class NullableExtensions
 
     public static List<T>? NullIfEmpty<T>(this List<T> instance)
     {
-        return instance is not {Count: > 0} ? null : instance;
+        return instance is not { Count: > 0 } ? null : instance;
     }
 
     public static List<T> EmptyIfNull<T>(this List<T>? instance)

@@ -80,6 +80,7 @@ internal class ModResourceProvider : IResourceProvider
                     _referenceFiles.Add(path);
                     _referenceVirtualFiles.Add(ReferencesVirtualPathPrefix + path);
                 }
+
                 _referenceLookup[path] = reference;
             }
         }

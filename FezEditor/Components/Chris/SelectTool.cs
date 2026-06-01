@@ -41,7 +41,8 @@ internal class SelectTool : BaseTool
 
     protected override void Act()
     {
-        if (!Chris.IsViewportHovered || Chris.CurrentTool is not (ChrisTool.Add or ChrisTool.Remove or ChrisTool.Bucket))
+        if (!Chris.IsViewportHovered ||
+            Chris.CurrentTool is not (ChrisTool.Add or ChrisTool.Remove or ChrisTool.Bucket))
         {
             return;
         }
@@ -94,8 +95,10 @@ internal class SelectTool : BaseTool
 
     private MeshSurface BuildTrixelFaceQuad(TrixelFace tf)
     {
-        var faceCenter = (tf.Emplacement.ToVector3() + ((Vector3.One + tf.Face.AsVector()) * 0.5f)) * Mathz.TrixelSize - Chris.Obj.Offset;
-        var origin = faceCenter + tf.Face.AsVector() * CursorMesh.OverlayOffset * Mathz.TrixelSize;
+        var faceCenter =
+            ((tf.Emplacement.ToVector3() + ((Vector3.One + tf.Face.AsVector()) * 0.5f)) * Mathz.TrixelSize) -
+            Chris.Obj.Offset;
+        var origin = faceCenter + (tf.Face.AsVector() * CursorMesh.OverlayOffset * Mathz.TrixelSize);
         return MeshSurface.CreateFaceQuad(Vector3.One * Mathz.TrixelSize, origin, tf.Face);
     }
 }

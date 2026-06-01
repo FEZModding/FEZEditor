@@ -171,6 +171,7 @@ public class LukeEditor : EditorComponent
         {
             _showProperties = true;
         }
+
         ImGui.EndDisabled();
 
         var visualizer = _skyActor.GetComponent<SkyVisualizer>();
@@ -463,7 +464,6 @@ public class LukeEditor : EditorComponent
                         _revisualize = true;
                     }
                 }
-
             }
 
             if (ImGui.CollapsingHeader("Stars", ImGuiTreeNodeFlags.DefaultOpen))

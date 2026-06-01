@@ -65,8 +65,8 @@ public static class TrixelMaterializer
 
                     // Clamp out-of-bounds surface trixels.
                     pos = Vector3.Clamp(pos,
-                        min: Vector3.Zero,
-                        max: new Vector3(obj.Width, obj.Height, obj.Depth) - Vector3.One);
+                        Vector3.Zero,
+                        new Vector3(obj.Width, obj.Height, obj.Depth) - Vector3.One);
 
                     surface.Add(new Vector3I(pos));
                 }

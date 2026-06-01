@@ -89,7 +89,8 @@ public partial class ImGuiService : IDisposable
             AutoDisplayScale = GetDisplayScale(_game.Window.Handle);
             _displayScale = storage.DisplayScale ?? AutoDisplayScale;
             Logger.Information("Display scale - {0:F2} (auto={1:F2}, override={2})",
-                _displayScale, AutoDisplayScale, storage.DisplayScale.HasValue ? storage.DisplayScale.Value.ToString("F2") : "none");
+                _displayScale, AutoDisplayScale,
+                storage.DisplayScale.HasValue ? storage.DisplayScale.Value.ToString("F2") : "none");
         }
 
         BuildFontAtlas();

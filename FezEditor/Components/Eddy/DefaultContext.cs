@@ -50,12 +50,8 @@ internal class DefaultContext : BaseContext
                 _skyActor.Visible = Eddy.Visuals.Value.HasFlag(EddyVisuals.Sky);
             }
 
-            if (_liquidActor != null)
-            {
-                _liquidActor.Visible = Eddy.Visuals.Value.HasFlag(EddyVisuals.Liquid);
-            }
-
-            if (_rainActor != null) _rainActor.Visible = Eddy.Visuals.Value.HasFlag(EddyVisuals.Rain);
+            _liquidActor?.Visible = Eddy.Visuals.Value.HasFlag(EddyVisuals.Liquid);
+            _rainActor?.Visible = Eddy.Visuals.Value.HasFlag(EddyVisuals.Rain);
 
             if (_boundsActor?.HasComponent<BoundsMesh>() ?? false)
             {

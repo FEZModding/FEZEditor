@@ -20,8 +20,8 @@ public class FarawayPreviewer : DrawableGameComponent
     [
         ("Front", EddyEditor.ViewMode.Front, 0f),
         ("Right", EddyEditor.ViewMode.Right, MathHelper.PiOver2),
-        ("Back",  EddyEditor.ViewMode.Back,  MathHelper.Pi),
-        ("Left",  EddyEditor.ViewMode.Left,  -MathHelper.PiOver2)
+        ("Back", EddyEditor.ViewMode.Back, MathHelper.Pi),
+        ("Left", EddyEditor.ViewMode.Left, -MathHelper.PiOver2)
     ];
 
     public bool IsExporting => _state is State.WaitFrame or State.Capturing;
@@ -233,17 +233,17 @@ public class FarawayPreviewer : DrawableGameComponent
                     var c = pixels[i];
                     if (_pendingExport == ExportKind.FarawayThumb && c is { R: > 200, G: < 50, B: > 200 })
                     {
-                        rgba[i * 4 + 0] = 0;
-                        rgba[i * 4 + 1] = 0;
-                        rgba[i * 4 + 2] = 0;
-                        rgba[i * 4 + 3] = 0;
+                        rgba[(i * 4) + 0] = 0;
+                        rgba[(i * 4) + 1] = 0;
+                        rgba[(i * 4) + 2] = 0;
+                        rgba[(i * 4) + 3] = 0;
                     }
                     else
                     {
-                        rgba[i * 4 + 0] = c.R;
-                        rgba[i * 4 + 1] = c.G;
-                        rgba[i * 4 + 2] = c.B;
-                        rgba[i * 4 + 3] = 255;
+                        rgba[(i * 4) + 0] = c.R;
+                        rgba[(i * 4) + 1] = c.G;
+                        rgba[(i * 4) + 2] = c.B;
+                        rgba[(i * 4) + 3] = 255;
                     }
                 }
 
