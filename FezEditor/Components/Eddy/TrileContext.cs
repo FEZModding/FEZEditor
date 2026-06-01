@@ -188,7 +188,7 @@ internal sealed class TrileContext : BaseContext
             }
         }
 
-        if (Eddy.Tool != EddyTool.Paint)
+        if (Eddy.Tool != EddyTool.Paint || Eddy.SelectedContext != EddyContext.Trile)
         {
             Eddy.Cursor.ClearHologram();
         }
@@ -721,7 +721,7 @@ internal sealed class TrileContext : BaseContext
 
     public override void DrawOverlay()
     {
-        if (Eddy.Tool != EddyTool.Paint || !Eddy.IsViewportHovered)
+        if (Eddy.Tool != EddyTool.Paint || !Eddy.IsViewportHovered || Eddy.SelectedContext != EddyContext.Trile)
         {
             return;
         }
