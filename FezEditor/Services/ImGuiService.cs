@@ -35,6 +35,10 @@ public partial class ImGuiService : IDisposable
 
     private Texture2D _fontTexture = null!;
 
+    private readonly List<nint> _fontDataAllocations = [];
+
+    private readonly List<nint> _fontGlyphRangeAllocations = [];
+
     private readonly BasicEffect _basicEffect;
 
     private readonly RasterizerState _rasterizerState;
@@ -362,6 +366,7 @@ public partial class ImGuiService : IDisposable
     public void Dispose()
     {
         GC.SuppressFinalize(this);
+        FreeFontAtlasAllocations();
         if (UnbindTexture(_fontTexture))
         {
             _fontTexture.Dispose();
@@ -398,6 +403,7 @@ public partial class ImGuiService : IDisposable
 
         var pixels = new byte[width * height * bytesPerPixel];
         Marshal.Copy(new IntPtr(pixelData), pixels, 0, pixels.Length);
+        FreeFontAtlasAllocations();
 
         _fontTexture = new Texture2D(_game.GraphicsDevice, width, height, false, SurfaceFormat.Color);
         _fontTexture.SetData(pixels);
@@ -417,7 +423,11 @@ public partial class ImGuiService : IDisposable
         var nativeData = CopyToNative(data);
         var config = ImGuiNative.ImFontConfig_ImFontConfig();
         config->MergeMode = 0;
-        return io.Fonts.AddFontFromMemoryTTF(nativeData, data.Length, size * _displayScale, config, glyphRanges);
+        config->FontDataOwnedByAtlas = 0;
+        var font = io.Fonts.AddFontFromMemoryTTF(nativeData, data.Length, size * _displayScale, config, glyphRanges);
+        _fontDataAllocations.Add(nativeData);
+        ImGuiNative.ImFontConfig_destroy(config);
+        return font;
     }
 
     /// <summary>
@@ -435,15 +445,15 @@ public partial class ImGuiService : IDisposable
         var nativeData = CopyToNative(data);
         var config = ImGuiNative.ImFontConfig_ImFontConfig();
         config->MergeMode = 1;
+        config->FontDataOwnedByAtlas = 0;
         config->GlyphMinAdvanceX = size * _displayScale;
         config->GlyphOffset = new NVector2(0, yOffset);
 
-        var ranges = new ushort[] { min, max, 0 };
-        fixed (ushort* rangesPtr = ranges)
-        {
-            io.Fonts.AddFontFromMemoryTTF(nativeData, data.Length, size * _displayScale, config, (nint)rangesPtr);
-        }
+        var rangesPtr = CopyGlyphRanges(min, max);
+        io.Fonts.AddFontFromMemoryTTF(nativeData, data.Length, size * _displayScale, config, rangesPtr);
 
+        _fontDataAllocations.Add(nativeData);
+        _fontGlyphRangeAllocations.Add(rangesPtr);
         ImGuiNative.ImFontConfig_destroy(config);
     }
 
@@ -452,6 +462,31 @@ public partial class ImGuiService : IDisposable
         var ptr = Marshal.AllocHGlobal(data.Length);
         Marshal.Copy(data, 0, ptr, data.Length);
         return ptr;
+    }
+
+    private static unsafe nint CopyGlyphRanges(ushort min, ushort max)
+    {
+        var ptr = (ushort*)Marshal.AllocHGlobal(sizeof(ushort) * 3);
+        ptr[0] = min;
+        ptr[1] = max;
+        ptr[2] = 0;
+        return (nint)ptr;
+    }
+
+    private void FreeFontAtlasAllocations()
+    {
+        foreach (var allocation in _fontDataAllocations)
+        {
+            Marshal.FreeHGlobal(allocation);
+        }
+
+        foreach (var allocation in _fontGlyphRangeAllocations)
+        {
+            Marshal.FreeHGlobal(allocation);
+        }
+
+        _fontDataAllocations.Clear();
+        _fontGlyphRangeAllocations.Clear();
     }
 
     private static float GetDisplayScale(IntPtr windowHandle)
