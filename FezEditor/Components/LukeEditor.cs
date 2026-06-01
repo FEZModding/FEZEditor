@@ -54,16 +54,16 @@ public class LukeEditor : EditorComponent
             camera.Size = 80f / 3f;
         }
         {
+            _levelCube = _scene.CreateActor();
+            _levelCube.Name = "LevelQuad";
+            var mesh = _levelCube.AddComponent<SimpleMesh>();
+            mesh.Visualize(MeshSurface.CreateFaceQuad(Vector3.One, FaceOrientation.Front));
+        }
+        {
             _skyActor = _scene.CreateActor();
             _skyActor.Name = "Sky";
             var visualizer = _skyActor.AddComponent<SkyVisualizer>();
             visualizer.Initialize(_scene, camera, _clock);
-        }
-        {
-            _levelCube = _scene.CreateActor();
-            _levelCube.Name = "LevelQuad";
-            var mesh = _levelCube.AddComponent<SimpleMesh>();
-            mesh.Visualize(MeshSurface.CreateFaceQuad(Vector3.One, FaceOrientation.Back));
         }
 
         RevisualizeSky();
