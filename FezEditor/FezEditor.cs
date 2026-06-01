@@ -13,9 +13,11 @@ public class FezEditor : Game
 {
     private static readonly ILogger Logger = Logging.Create<FezEditor>();
 
-    public static readonly string Version = GetAssemblyVersion();
+    public static readonly string Version;
 
-    public static readonly string Authors = GetAssemblyAuthors();
+    public static readonly string Authors;
+
+    public static readonly string SplashAuthors;
 
     public const string Commit = ThisAssembly.Git.Commit;
 
@@ -120,20 +122,23 @@ public class FezEditor : Game
         base.Dispose(disposing);
     }
 
-    private static string GetAssemblyVersion()
+    static FezEditor()
     {
-        return ThisAssembly.Git.BaseVersion.Major + "." +
-               ThisAssembly.Git.BaseVersion.Minor +
-               (ThisAssembly.Git.BaseVersion.Patch != "0" ? "." + ThisAssembly.Git.BaseVersion.Patch : "");
-    }
+        Version = ThisAssembly.Git.BaseVersion.Major + "." +
+                  ThisAssembly.Git.BaseVersion.Minor +
+                  (ThisAssembly.Git.BaseVersion.Patch != "0" ? "." + ThisAssembly.Git.BaseVersion.Patch : "");
 
-    private static string GetAssemblyAuthors()
-    {
-        var attrs = System.Reflection.Assembly
-            .GetExecutingAssembly()
+        var assembly = typeof(FezEditor).Assembly;
+        var attrs = assembly
             .GetCustomAttributes(typeof(System.Reflection.AssemblyCompanyAttribute), false);
-        return attrs.Length > 0
+        var metadata = assembly
+            .GetCustomAttributes(typeof(System.Reflection.AssemblyMetadataAttribute), false);
+
+        Authors = attrs.Length > 0
             ? ((System.Reflection.AssemblyCompanyAttribute)attrs[0]).Company
             : string.Empty;
+
+        SplashAuthors = metadata.OfType<System.Reflection.AssemblyMetadataAttribute>()
+                            .First(attr => attr.Key == "SplashAuthors").Value ?? string.Empty;
     }
 }

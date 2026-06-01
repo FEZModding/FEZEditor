@@ -3,6 +3,7 @@
   <PropertyGroup>
     <Title>FEZEditor</Title>
     <Authors>zerocker, FEZModding community</Authors>
+    <SplashAuthors>Krzyhau</SplashAuthors>
     <Description>A modding editor for FEZ</Description>
     <Version>2026.04</Version>
     <LangVersion>14</LangVersion>
@@ -30,6 +31,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FNA\FNA.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>SplashAuthors</_Parameter1>
+      <_Parameter2>$(SplashAuthors)</_Parameter2>
+    </AssemblyAttribute>
   </ItemGroup>
 
   <ItemGroup>

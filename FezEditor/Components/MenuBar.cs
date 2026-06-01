@@ -73,7 +73,7 @@ public class MenuBar : DrawableGameComponent
 
     protected override void LoadContent()
     {
-        _logoTexture = Game.Content.Load<Texture2D>("Icon");
+        _logoTexture = Game.Content.Load<Texture2D>("Media/Icon");
         _mainLayout = Game.GetComponent<MainLayout>();
         _fileBrowser = Game.GetComponent<FileBrowser>();
     }

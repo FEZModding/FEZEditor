@@ -20,7 +20,7 @@ public class AboutWindow : DrawableGameComponent
 
     protected override void LoadContent()
     {
-        _logoTexture = Game.Content.Load<Texture2D>("Icon");
+        _logoTexture = Game.Content.Load<Texture2D>("Media/Icon");
     }
 
     public override void Update(GameTime gameTime)
@@ -48,6 +48,7 @@ public class AboutWindow : DrawableGameComponent
             ImGui.Text("FEZEditor - a modding tool for FEZ assets");
             ImGui.Text($"Version {FezEditor.Version} ({FezEditor.Commit})");
             ImGui.Text($"Developed by {FezEditor.Authors}");
+            ImGui.Text($"Splash by {FezEditor.SplashAuthors}");
             ImGui.Text("Powered by ");
             ImGui.SameLine(0, 0);
             ImGuiX.Hyperlink("FNA", "https://github.com/FNA-XNA/FNA");

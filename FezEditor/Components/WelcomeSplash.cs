@@ -14,11 +14,17 @@ public class WelcomeSplash : EditorComponent
 
     private static readonly Color BackgroundTint = Color.Black with { A = 102 };
 
+    private static readonly Color WatermarkTint = Color.White with { A = 128 };
+
+    private const float TextOffset = 4f;
+
     private const float SplashWidth = 500f;
 
     private const float ButtonWidth = 400f;
 
     private Texture2D _splashTexture = null!;
+
+    private Texture2D _logoTexture = null!;
 
     private ResourceExtractor? _resourceExtractor;
 
@@ -40,7 +46,8 @@ public class WelcomeSplash : EditorComponent
 
     public override void LoadContent()
     {
-        _splashTexture = ContentManager.Load<Texture2D>("Splash");
+        _splashTexture = ContentManager.Load<Texture2D>("Media/Splash");
+        _logoTexture = ContentManager.Load<Texture2D>("Media/LogoDark");
     }
 
     public override void Draw()
@@ -56,7 +63,27 @@ public class WelcomeSplash : EditorComponent
         {
             var padding = ImGui.GetStyle().WindowPadding;
             var imageWidth = SplashWidth - padding.X * 2;
-            ImGuiX.Image(_splashTexture, new Vector2(imageWidth, imageWidth / 2f));
+            var imageSize = new Vector2(imageWidth, imageWidth / 2f);
+
+            ImGuiX.Image(_splashTexture, imageSize);
+
+            var imageMin = ImGui.GetItemRectMin();
+            var imageMax = ImGui.GetItemRectMax();
+            var drawList = ImGui.GetWindowDrawList();
+
+            var logoSize = new NVector2(_logoTexture.Width, _logoTexture.Height);
+            var logoPos = imageMin + new NVector2(TextOffset);
+            drawList.AddImage(ImGuiX.Bind(_logoTexture), logoPos, logoPos + logoSize);
+
+            var versionSize = ImGui.CalcTextSize(FezEditor.Version);
+            var versionPos = new NVector2(imageMax.X - versionSize.X - TextOffset, imageMin.Y + TextOffset);
+            drawList.AddText(versionPos, Color.Black.PackedValue, FezEditor.Version);
+
+            var splashAuthorsSize = ImGui.CalcTextSize(FezEditor.SplashAuthors);
+            var splashAuthorsPos = new NVector2(
+                imageMax.X - splashAuthorsSize.X - TextOffset,
+                imageMax.Y - splashAuthorsSize.Y - TextOffset);
+            drawList.AddText(splashAuthorsPos, WatermarkTint.PackedValue, FezEditor.SplashAuthors);
 
             var offsetX = (imageWidth - ButtonWidth) / 2f;
             ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offsetX);
