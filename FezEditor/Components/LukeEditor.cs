@@ -75,7 +75,7 @@ public class LukeEditor : EditorComponent
 
         var visualizer = _skyActor.GetComponent<SkyVisualizer>();
         visualizer.Visualize(_sky);
-        visualizer.VisualizeShadows(_sky.Name, _sky.Shadows);
+        visualizer.VisualizeShadows(_sky.Name, _sky.Shadows.EmptyIfNull());
 
         _levelCube.Transform.Scale = visualizer.LevelSize;
         _levelCube.Visible = visualizer.Shadows;
@@ -424,7 +424,7 @@ public class LukeEditor : EditorComponent
 
             if (ImGui.CollapsingHeader("Shadows", ImGuiTreeNodeFlags.DefaultOpen))
             {
-                ImGui.LabelText("##Shadows", NoneIsEmpty(_sky.Shadows));
+                ImGui.LabelText("##Shadows", NoneIsEmpty(_sky.Shadows.EmptyIfNull()));
                 ImGui.SameLine();
                 if (ImGui.Button("...##ShadowsPick"))
                 {
@@ -443,7 +443,7 @@ public class LukeEditor : EditorComponent
                         });
                 }
 
-                DrawTexturePreview(_sky.Shadows);
+                DrawTexturePreview(_sky.Shadows.EmptyIfNull());
 
                 var shadowOpacity = _sky.ShadowOpacity;
                 if (ImGui.DragFloat("Shadow Opacity", ref shadowOpacity, 0.01f, 0f, 1f))
@@ -468,7 +468,7 @@ public class LukeEditor : EditorComponent
 
             if (ImGui.CollapsingHeader("Stars", ImGuiTreeNodeFlags.DefaultOpen))
             {
-                ImGui.LabelText("##Stars", NoneIsEmpty(_sky.Stars));
+                ImGui.LabelText("##Stars", NoneIsEmpty(_sky.Stars.EmptyIfNull()));
                 ImGui.SameLine();
                 if (ImGui.Button("...##StarsPick"))
                 {
@@ -487,12 +487,12 @@ public class LukeEditor : EditorComponent
                         });
                 }
 
-                DrawTexturePreview(_sky.Stars);
+                DrawTexturePreview(_sky.Stars.EmptyIfNull());
             }
 
             if (ImGui.CollapsingHeader("Cloud Tint", ImGuiTreeNodeFlags.DefaultOpen))
             {
-                ImGui.LabelText("##CloudTint", NoneIsEmpty(_sky.CloudTint));
+                ImGui.LabelText("##CloudTint", NoneIsEmpty(_sky.CloudTint.EmptyIfNull()));
                 ImGui.SameLine();
                 if (ImGui.Button("...##CloudTintPick"))
                 {
@@ -511,7 +511,7 @@ public class LukeEditor : EditorComponent
                         });
                 }
 
-                DrawTexturePreview(_sky.CloudTint);
+                DrawTexturePreview(_sky.CloudTint.EmptyIfNull());
             }
 
             if (DrawClouds())

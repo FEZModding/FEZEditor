@@ -971,7 +971,7 @@ internal sealed class TrileContext : BaseContext
                                         Position = instance.Position
                                     };
 
-                                    if (slot < instance.OverlappedTriles.EmptyIfNull().Count)
+                                    if (instance.OverlappedTriles != null && slot < instance.OverlappedTriles.Count)
                                     {
                                         instance.OverlappedTriles[slot] = overlap;
                                     }
@@ -988,7 +988,8 @@ internal sealed class TrileContext : BaseContext
                         case PaintOp.OverlapErased(var emplacement, var slot):
                             {
                                 if (Level.Triles.TryGetValue(emplacement, out var instance) &&
-                                    slot < instance.OverlappedTriles.EmptyIfNull().Count)
+                                    instance.OverlappedTriles != null &&
+                                    slot < instance.OverlappedTriles.Count)
                                 {
                                     instance.OverlappedTriles.RemoveAt(slot);
                                     instance.OverlappedTriles = instance.OverlappedTriles.NullIfEmpty();
@@ -1111,7 +1112,7 @@ internal sealed class TrileContext : BaseContext
             if (Level.Triles.TryGetValue(emplacement, out var mainInstance))
             {
                 var slot = Eddy.OverlapIndex - 1;
-                if (slot < mainInstance.OverlappedTriles.EmptyIfNull().Count)
+                if ( mainInstance.OverlappedTriles != null && slot < mainInstance.OverlappedTriles.Count)
                 {
                     var overlapId = mainInstance.OverlappedTriles[slot].TrileId;
                     _paintOps.Add(new PaintOp.OverlapErased(emplacement, slot));
@@ -1893,7 +1894,7 @@ internal sealed class TrileContext : BaseContext
                     continue;
                 }
 
-                if (slot >= main.OverlappedTriles.EmptyIfNull().Count)
+                if (main.OverlappedTriles == null || slot >= main.OverlappedTriles.Count)
                 {
                     continue;
                 }
@@ -2059,8 +2060,13 @@ internal sealed class TrileContext : BaseContext
             return main;
         }
 
+        if (main.OverlappedTriles == null)
+        {
+            return null;
+        }
+
         var slot = Eddy.OverlapIndex - 1;
-        return slot < main.OverlappedTriles.EmptyIfNull().Count
+        return slot < main.OverlappedTriles.Count
             ? main.OverlappedTriles[slot]
             : null;
     }

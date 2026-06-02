@@ -406,6 +406,11 @@ public class JadeEditor : EditorComponent
     {
         foreach (var script in level.Scripts.Values)
         {
+            if (script.Actions == null || script.Triggers == null)
+            {
+                continue;
+            }
+
             foreach (var action in script.Actions)
             {
                 if (action.Object.Type != "Level" || !action.Operation.Contains("Level"))

@@ -383,7 +383,7 @@ internal class DefaultContext : BaseContext
             {
                 visualizer!.LevelSize = Level.Size.ToXna();
                 visualizer.Visualize(_sky);
-                visualizer.VisualizeShadows(_sky.Name, _sky.Shadows);
+                visualizer.VisualizeShadows(_sky.Name, _sky.Shadows.EmptyIfNull());
             }
         }
 

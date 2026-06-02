@@ -117,9 +117,9 @@ public class SkyVisualizer : ActorComponent
         DestroyActors();
 
         _backgroundName = sky.Background;
-        _starsName = sky.Stars;
-        _shadowsName = sky.Shadows;
-        _cloudTintName = sky.CloudTint;
+        _starsName = sky.Stars.EmptyIfNull();
+        _shadowsName = sky.Shadows.EmptyIfNull();
+        _cloudTintName = sky.CloudTint.EmptyIfNull();
 
         #region Sky properties
 
@@ -217,7 +217,7 @@ public class SkyVisualizer : ActorComponent
             _stars = _scene.CreateActor(Actor);
             var mesh = _stars.AddComponent<SkyStarsMesh>();
             mesh.Sky = this;
-            mesh.Visualize(sky.Name, sky.Stars, Rainy);
+            mesh.Visualize(sky.Name, sky.Stars.EmptyIfNull(), Rainy);
         }
 
         #endregion

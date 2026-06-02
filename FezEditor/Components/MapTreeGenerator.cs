@@ -225,6 +225,11 @@ public class MapTreeGenerator : DrawableGameComponent
 
             foreach (var script in level.Scripts.Values)
             {
+                if (script.Actions == null)
+                {
+                    continue;
+                }
+
                 foreach (var action in script.Actions)
                 {
                     if (action.Object.Type != "Level" || !action.Operation.Contains("Level"))
@@ -235,7 +240,7 @@ public class MapTreeGenerator : DrawableGameComponent
                     var connection = new MapNodeConnection();
                     var hasConnection = true;
 
-                    var trigger = script.Triggers
+                    var trigger = script.Triggers.EmptyIfNull()
                         .Where(st => st.Object.Type == "Volume")
                         .Where(st => st.Object.Identifier.HasValue)
                         .FirstOrDefault(st => st.Event == "Enter");
@@ -393,7 +398,7 @@ public class MapTreeGenerator : DrawableGameComponent
             .Count(kv => kv.Value.Name.Contains("qr", StringComparison.OrdinalIgnoreCase));
 
         node.Conditions.SecretCount += level.Volumes
-            .Count(kv => kv.Value.ActorSettings.CodePattern.Length > 0);
+            .Count(kv => kv.Value.ActorSettings is { CodePattern.Length: > 0 });
 
         node.Conditions.SecretCount += level.Name != "OWL"
             ? level.NonPlayerCharacters.Count(kv => kv.Value.Name == "Owl")
@@ -404,7 +409,7 @@ public class MapTreeGenerator : DrawableGameComponent
             .Count(kv => !kv.Value.Name.Contains("BROKEN", StringComparison.OrdinalIgnoreCase));
 
         node.Conditions.SecretCount += level.Scripts.Values
-            .Count(s => s.Actions.Any(sa => sa.Object.Type == "Level" && sa.Operation == "ResolvePuzzle"));
+            .Count(s => s.Actions != null && s.Actions.Any(sa => sa.Object.Type == "Level" && sa.Operation == "ResolvePuzzle"));
 
         node.Conditions.SecretCount += PuzzleLevels.Contains(level.Name)
             ? level.Name != "CLOCK" ? 1 : 4

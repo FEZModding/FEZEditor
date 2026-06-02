@@ -369,12 +369,15 @@ public class PhilExporter : DrawableGameComponent
             }
 
             ct.ThrowIfCancellationRequested();
-            ExportNpc(levelModel, npcsNode, "Gomez",
-                _level.StartingFace.Id.X,
-                _level.StartingFace.Id.Y + 1f,
-                _level.StartingFace.Id.Z,
-                "Gomez", "IdleWink");
-            Advance("Gomez");
+            if (_level.StartingFace != null)
+            {
+                ExportNpc(levelModel, npcsNode, "Gomez",
+                    _level.StartingFace.Id.X,
+                    _level.StartingFace.Id.Y + 1f,
+                    _level.StartingFace.Id.Z,
+                    "Gomez", "IdleWink");
+                Advance("Gomez");
+            }
         }
 
         #endregion

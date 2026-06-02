@@ -625,7 +625,7 @@ internal class NpcContext : BaseContext
                 Speech = instance.Speech.Select(sl => new SpeechLine
                 {
                     Text = sl.Text,
-                    OverrideContent = new NpcActionContent
+                    OverrideContent = sl.OverrideContent == null ? null : new NpcActionContent
                     {
                         AnimationName = sl.OverrideContent.AnimationName,
                         SoundName = sl.OverrideContent.SoundName

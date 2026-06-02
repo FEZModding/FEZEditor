@@ -1,6 +1,7 @@
 ﻿using FezEditor.Components;
 using FezEditor.Structure;
 using FEZRepacker.Core.Definitions.Game.ArtObject;
+using FEZRepacker.Core.Definitions.Game.Helpers;
 using FEZRepacker.Core.Definitions.Game.Level;
 using FEZRepacker.Core.Definitions.Game.MapTree;
 using FEZRepacker.Core.Definitions.Game.NpcMetadata;

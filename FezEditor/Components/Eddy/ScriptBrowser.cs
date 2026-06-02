@@ -435,7 +435,7 @@ internal class ScriptBrowser : IDisposable
 
         ImGui.SameLine();
         ImGui.BeginDisabled(_triggerIndex == -1);
-        if (ImGui.Button($"{Lucide.Copy} Clone"))
+        if (ImGui.Button($"{Lucide.Copy} Clone") && _script!.Triggers != null)
         {
             using (_eddy.History.BeginScope("Clone Trigger", EddyContext.Script))
             {
@@ -447,7 +447,7 @@ internal class ScriptBrowser : IDisposable
         }
 
         ImGui.SameLine();
-        if (ImGui.Button($"{Lucide.Trash2} Remove"))
+        if (ImGui.Button($"{Lucide.Trash2} Remove") && _script!.Triggers != null)
         {
             using (_eddy.History.BeginScope("Remove Trigger", EddyContext.Script))
             {
@@ -569,7 +569,7 @@ internal class ScriptBrowser : IDisposable
 
         ImGui.SameLine();
         ImGui.BeginDisabled(_conditionIndex == -1);
-        if (ImGui.Button($"{Lucide.Copy} Clone"))
+        if (ImGui.Button($"{Lucide.Copy} Clone") && _script!.Conditions != null)
         {
             using (_eddy.History.BeginScope("Clone Condition", EddyContext.Script))
             {
@@ -581,7 +581,7 @@ internal class ScriptBrowser : IDisposable
         }
 
         ImGui.SameLine();
-        if (ImGui.Button($"{Lucide.Trash2} Remove"))
+        if (ImGui.Button($"{Lucide.Trash2} Remove") && _script!.Conditions != null)
         {
             using (_eddy.History.BeginScope("Remove Condition", EddyContext.Script))
             {
@@ -717,7 +717,7 @@ internal class ScriptBrowser : IDisposable
 
         ImGui.SameLine();
         ImGui.BeginDisabled(_actionIndex == -1);
-        if (ImGui.Button($"{Lucide.Copy} Clone"))
+        if (ImGui.Button($"{Lucide.Copy} Clone") && _script!.Actions != null)
         {
             using (_eddy.History.BeginScope("Clone Action", EddyContext.Script))
             {
@@ -729,7 +729,7 @@ internal class ScriptBrowser : IDisposable
         }
 
         ImGui.SameLine();
-        if (ImGui.Button($"{Lucide.Trash2} Remove"))
+        if (ImGui.Button($"{Lucide.Trash2} Remove") && _script!.Actions != null)
         {
             using (_eddy.History.BeginScope("Remove Action", EddyContext.Script))
             {

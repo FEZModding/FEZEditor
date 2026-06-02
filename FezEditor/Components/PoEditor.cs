@@ -1,5 +1,6 @@
 ﻿using FezEditor.Structure;
 using FezEditor.Tools;
+using FEZRepacker.Core.Definitions.Game.Helpers;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
 
@@ -55,8 +56,8 @@ public class PoEditor : EditorComponent
 
     private void UpdateTableView()
     {
-        var englishStorage = _textStorage[Language.English.GetId()];
-        var selectedStorage = _textStorage[_selectedLanguage.GetId()];
+        var englishStorage = _textStorage.AllResources[Language.English.GetId()];
+        var selectedStorage = _textStorage.AllResources[_selectedLanguage.GetId()];
 
         _textTable.Clear();
         _disableTranslationColumn = _selectedLanguage == Language.English;
@@ -221,7 +222,7 @@ public class PoEditor : EditorComponent
         {
             using (History.BeginScope("Delete text entry"))
             {
-                foreach (var storage in _textStorage.Values)
+                foreach (var storage in _textStorage.AllResources.Values)
                 {
                     if (storage.Remove(_pendingDeleteId))
                     {
@@ -253,7 +254,7 @@ public class PoEditor : EditorComponent
         {
             ImGuiX.InputTextMultiline("##NewId", ref _newEntryId, 256, new Vector2(-1, 40));
 
-            var idExists = _textStorage[Language.English.GetId()].ContainsKey(_newEntryId);
+            var idExists = _textStorage.AllResources[Language.English.GetId()].ContainsKey(_newEntryId);
             if (idExists)
             {
                 ImGuiX.TextColored(new Color(1, 0.3f, 0.3f, 1), "ID already exists.");
@@ -272,7 +273,7 @@ public class PoEditor : EditorComponent
         {
             using (History.BeginScope("Add text entry"))
             {
-                foreach (var storage in _textStorage.Values)
+                foreach (var storage in _textStorage.AllResources.Values)
                 {
                     storage.TryAdd(_newEntryId, "");
                 }
@@ -310,7 +311,7 @@ public class PoEditor : EditorComponent
                     {
                         using (History.BeginScope("Update id of text"))
                         {
-                            foreach (var storage in _textStorage.Values)
+                            foreach (var storage in _textStorage.AllResources.Values)
                             {
                                 if (storage.Remove(row[_activeCell.Column], out var text))
                                 {
@@ -326,7 +327,7 @@ public class PoEditor : EditorComponent
                     {
                         using (History.BeginScope("Update source of text"))
                         {
-                            var englishStorage = _textStorage[Language.English.GetId()];
+                            var englishStorage = _textStorage.AllResources[Language.English.GetId()];
                             englishStorage[row[0]] = NormalizeLineEndings(_cellText);
                         }
 
@@ -337,7 +338,7 @@ public class PoEditor : EditorComponent
                     {
                         using (History.BeginScope("Update translation of text"))
                         {
-                            var languageStorage = _textStorage[_selectedLanguage.GetId()];
+                            var languageStorage = _textStorage.AllResources[_selectedLanguage.GetId()];
                             languageStorage[row[0]] = NormalizeLineEndings(_cellText);
                         }
 
@@ -388,7 +389,7 @@ public class PoEditor : EditorComponent
 
         foreach (var language in Enum.GetValues<Language>())
         {
-            storage[language.GetId()] = new Dictionary<string, string>();
+            storage.AllResources[language.GetId()] = new Dictionary<string, string>();
         }
 
         return storage;
