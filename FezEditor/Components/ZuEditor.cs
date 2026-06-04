@@ -26,6 +26,8 @@ public class ZuEditor : EditorComponent
 
     private FontPreview _preview = null!;
 
+    private TempTextureTracker? _atlasTracker;
+
     public ZuEditor(Game game, string title, FezFont font) : base(game, title)
     {
         Font = font;
@@ -38,9 +40,20 @@ public class ZuEditor : EditorComponent
         FontTexture = RepackerExtensions.ConvertToTexture2D(Font.Texture);
         FontTexturePtr = ImGuiX.Bind(FontTexture);
         CharactersFont = SelectCharactersFont();
+
         _properties = new FontProperties(this);
         _preview = new FontPreview(Title, this);
         _atlas = new FontAtlas(_preview, this);
+
+        if (!ResourceService.IsReadonly)
+        {
+            var path = Path.ChangeExtension(ResourceService.GetFullPath(Title), ".png");
+            if (File.Exists(path))
+            {
+                _atlasTracker = new TempTextureTracker(Game, path);
+                _atlasTracker.Changed += OnAtlasChanged;
+            }
+        }
     }
 
     public override void Draw()
@@ -156,6 +169,14 @@ public class ZuEditor : EditorComponent
         }
     }
 
+    private void OnAtlasChanged(Texture2D texture)
+    {
+        ImGuiX.Unbind(FontTexture);
+        FontTexture.Dispose();
+        FontTexture = texture;
+        FontTexturePtr = ImGuiX.Bind(FontTexture);
+    }
+
     private ImFontPtr SelectCharactersFont()
     {
         if (Title.Contains("japanese", StringComparison.OrdinalIgnoreCase))
@@ -174,6 +195,20 @@ public class ZuEditor : EditorComponent
         }
 
         return ImGuiX.Fonts.NotoSans;
+    }
+
+    public override void Dispose()
+    {
+        if (_atlasTracker != null)
+        {
+            _atlasTracker.Changed -= OnAtlasChanged;
+            _atlasTracker.Dispose();
+        }
+
+        ImGuiX.Unbind(FontTexture);
+        FontTexture.Dispose();
+        FontTexturePtr = IntPtr.Zero;
+        base.Dispose();
     }
 
     public static object Create()
