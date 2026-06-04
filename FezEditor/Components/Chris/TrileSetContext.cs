@@ -407,7 +407,10 @@ internal class TrileSetContext : IContext
                     _ => 0.625f
                 };
 
-                var uWithinFace = ((trileSpaceUv.X / (4f / 3f)) - faceSlotU) * 8f;
+                // Right and Back use a reversed [-1, 0] cubemap range.
+                var reversedRange = orientation is FaceOrientation.Right or FaceOrientation.Back ? 1f : 0f;
+                var uWithinFace = ((trileSpaceUv.X / (4f / 3f)) - faceSlotU) * 8f + reversedRange;
+
                 var faceAtlasX = trile.AtlasOffset.X + (((faceSlotIndex * AtlasFaceSize) + 1f) / atlasW);
                 var mappedU = faceAtlasX + (uWithinFace * FaceSize / atlasW);
                 var mappedV = trile.AtlasOffset.Y + (1f / atlasH) +
