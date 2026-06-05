@@ -429,7 +429,7 @@ public class EddyEditor : EditorComponent, IEddyEditor
 
             if (ImGui.IsItemHovered())
             {
-                ImGui.SetTooltip("Place Path");
+                ImGui.SetTooltip("Start a new Path");
             }
         }
 

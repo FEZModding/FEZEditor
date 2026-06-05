@@ -229,15 +229,67 @@ internal class PathContext : BaseContext
             }
         }
 
+        if (path.Segments.Count == 0)
+        {
+            DeleteActivePath();
+            return;
+        }
+
         _selectedWaypointIndices.Clear();
+        RefreshActivePathActor(path);
+    }
+
+    private void DeleteActivePath()
+    {
+        if (!_selectedPathId.HasValue)
+        {
+            _selectedWaypointIndices.Clear();
+            return;
+        }
 
         var activeKey = _selectedIsGroupPath ? -(_selectedPathId!.Value + 1) : _selectedPathId!.Value;
         if (_pathActors.TryGetValue(activeKey, out var actor))
         {
-            var mesh = actor.GetComponent<PathMesh>();
-            mesh.Waypoints = path.Segments.Select(ps => _selectedOffset + ps.Destination.ToXna()).ToList();
-            mesh.WaypointColors = Enumerable.Repeat(PathColor, mesh.Waypoints.Count).ToList();
+            Eddy.Scene.DestroyActor(actor);
+            _pathActors.Remove(activeKey);
         }
+
+        if (_selectedIsGroupPath)
+        {
+            if (Level.Groups.TryGetValue(_selectedPathId.Value, out var group))
+            {
+                group.Path = null;
+            }
+        }
+        else
+        {
+            Level.Paths.Remove(_selectedPathId.Value);
+        }
+
+        _selectedPathId = null;
+        _selectedIsGroupPath = false;
+        _selectedOffset = Vector3.Zero;
+        _selectedWaypointIndices.Clear();
+        Eddy.SelectedContext = EddyContext.Default;
+        Eddy.Tool = EddyTool.Select;
+    }
+
+    private void RefreshActivePathActor(MovementPath path)
+    {
+        if (!_selectedPathId.HasValue)
+        {
+            return;
+        }
+
+        var activeKey = _selectedIsGroupPath ? -(_selectedPathId.Value + 1) : _selectedPathId.Value;
+        if (!_pathActors.TryGetValue(activeKey, out var actor))
+        {
+            return;
+        }
+
+        var mesh = actor.GetComponent<PathMesh>();
+        mesh.Waypoints = path.Segments.Select(ps => _selectedOffset + ps.Destination.ToXna()).ToList();
+        mesh.WaypointColors = Enumerable.Repeat(PathColor, mesh.Waypoints.Count).ToList();
     }
 
     private void UpdateTranslate()
@@ -294,12 +346,12 @@ internal class PathContext : BaseContext
 
     private void UpdatePaint()
     {
-        if (Eddy.Tool != EddyTool.Paint)
+        if (Eddy.Tool != EddyTool.Paint || _selectedPathId != null)
         {
             return;
         }
 
-        StatusService.AddHints(("LMB", "Place Waypoint"));
+        StatusService.AddHints(("LMB", "Start a new Path"));
 
         if (!Eddy.Hit.HasValue || !Eddy.Hit.Value.Actor.TryGetComponent<TrilesMesh>(out var mesh) || mesh == null)
         {
@@ -324,25 +376,26 @@ internal class PathContext : BaseContext
 
         if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && Eddy.IsViewportHovered)
         {
-            using (Eddy.History.BeginScope("Place Path Waypoint", EddyContext.Path))
+            using (Eddy.History.BeginScope("Create Path", EddyContext.Path))
             {
-                if (_selectedPathId == null)
+                var newId = Level.Paths.Keys.Where(k => k != InvalidId).DefaultIfEmpty(-1).Max() + 1;
+                Level.Paths[newId] = new MovementPath
                 {
-                    var newId = Level.Paths.Keys.Where(k => k != InvalidId).DefaultIfEmpty(-1).Max() + 1;
-                    Level.Paths[newId] = new MovementPath();
-                    _selectedPathId = newId;
-                    _selectedIsGroupPath = false;
-                    _selectedOffset = Vector3.Zero;
-                    _selectedWaypointIndices.Clear();
-                }
+                    Segments = new List<PathSegment>
+                    {
+                        new()
+                        {
+                            Destination = hitPoint.ToRepacker()
+                        }
+                    }
+                };
 
-                var path = GetActivePath()!;
-                path.Segments.Add(new PathSegment
-                {
-                    Destination = (hitPoint - _selectedOffset).ToRepacker()
-                });
+                _selectedPathId = newId;
+                _selectedIsGroupPath = false;
+                _selectedOffset = Vector3.Zero;
                 _selectedWaypointIndices.Clear();
-                _selectedWaypointIndices.Add(path.Segments.Count - 1);
+                _selectedWaypointIndices.Add(0);
+                Eddy.Tool = EddyTool.Select;
             }
         }
     }
@@ -356,7 +409,7 @@ internal class PathContext : BaseContext
 
         var mousePos = ImGui.GetMousePos();
         var drawPos = mousePos + new NVector2(12f, 12f);
-        const string text = $"{Lucide.Route} Waypoint";
+        const string text = $"{Lucide.Route} Path";
         var padding = new NVector2(4f, 2f);
         var dl = ImGui.GetForegroundDrawList(ImGui.GetMainViewport());
         dl.AddRectFilled(drawPos - padding, drawPos + ImGui.CalcTextSize(text) + padding,
@@ -490,36 +543,92 @@ internal class PathContext : BaseContext
             }
         }
 
+        var soundName = path.SoundName.EmptyIfNull();
+        if (ImGui.InputText("Sound Name", ref soundName, 255))
+        {
+            using (Eddy.History.BeginScope("Edit Path Sound Name", EddyContext.Path))
+            {
+                path.SoundName = soundName.NullIfEmpty();
+            }
+        }
+
+        var saveTrigger = path.SaveTrigger;
+        if (ImGui.Checkbox("Save Trigger", ref saveTrigger))
+        {
+            using (Eddy.History.BeginScope("Edit Path Save Trigger", EddyContext.Path))
+            {
+                path.SaveTrigger = saveTrigger;
+            }
+        }
+
         ImGui.SeparatorText($"Segments ({path.Segments.Count})");
+        if (ImGui.Button($"{Lucide.Plus} Add Segment##PathSegment"))
+        {
+            using (Eddy.History.BeginScope("Add Path Segment", EddyContext.Path))
+            {
+                var destination = path.Segments.Count == 0
+                    ? Vector3.UnitX
+                    : path.Segments[^1].Destination.ToXna() + Vector3.Down;
+
+                path.Segments.Add(new PathSegment
+                {
+                    Destination = destination.ToRepacker()
+                });
+                _selectedWaypointIndices.Clear();
+                _selectedWaypointIndices.Add(path.Segments.Count - 1);
+                RefreshActivePathActor(path);
+            }
+        }
+
         for (var i = 0; i < path.Segments.Count; i++)
         {
             var seg = path.Segments[i];
             var isSegSelected = _selectedWaypointIndices.Contains(i);
+
+            ImGui.PushID(i);
             if (isSegSelected)
             {
                 ImGui.PushStyleColor(ImGuiCol.Header, new NVector4(0.6f, 0.5f, 0f, 1f));
             }
 
-            if (ImGui.CollapsingHeader($"Segment {i}##{i}"))
+            var isOpen = ImGui.CollapsingHeader($"Segment {i}");
+            var isHeaderClicked = ImGui.IsItemClicked();
+            if (isOpen)
             {
-                ImGui.BeginDisabled(true);
-                var dest = seg.Destination.ToXna();
-                ImGuiX.DragFloat3("Destination", ref dest);
-                ImGui.EndDisabled();
+                var isDeleted = false;
+                const ImGuiChildFlags flags = ImGuiChildFlags.Border |
+                                              ImGuiChildFlags.AutoResizeY |
+                                              ImGuiChildFlags.AutoResizeX;
+                if (ImGuiX.BeginChild($"##Segment_{i}", Vector2.Zero, flags))
+                {
+                    if (ImGui.Button($"{Lucide.Trash2} Delete Segment"))
+                    {
+                        isDeleted = true;
+                    }
 
-                ImGui.SameLine();
-                if (ImGui.Button($"{Lucide.X}##Segment{i}"))
+                    DrawSegmentProperties(path, seg);
+                }
+
+                ImGui.EndChild();
+
+                if (isDeleted)
                 {
                     using (Eddy.History.BeginScope("Delete Path Waypoint", EddyContext.Path))
                     {
                         RemoveWaypoints(i);
                     }
 
+                    if (isSegSelected)
+                    {
+                        ImGui.PopStyleColor();
+                    }
+
+                    ImGui.PopID();
                     break;
                 }
             }
 
-            if (ImGui.IsItemClicked())
+            if (isHeaderClicked)
             {
                 if (!ImGui.GetIO().KeyShift)
                 {
@@ -532,6 +641,123 @@ internal class PathContext : BaseContext
             if (isSegSelected)
             {
                 ImGui.PopStyleColor();
+            }
+
+            ImGui.PopID();
+        }
+    }
+
+    private void DrawSegmentProperties(MovementPath path, PathSegment seg)
+    {
+        var dest = seg.Destination.ToXna();
+        if (ImGuiX.DragFloat3("Destination", ref dest, 0.01f))
+        {
+            using (Eddy.History.BeginScope("Edit Path Segment Destination", EddyContext.Path))
+            {
+                seg.Destination = dest.ToRepacker();
+                RefreshActivePathActor(path);
+            }
+        }
+
+        var duration = seg.Duration;
+        if (ImGuiX.TimeSpanInput("Duration", ref duration))
+        {
+            using (Eddy.History.BeginScope("Edit Path Segment Duration", EddyContext.Path))
+            {
+                seg.Duration = duration;
+            }
+        }
+
+        var waitTimeOnStart = seg.WaitTimeOnStart;
+        if (ImGuiX.TimeSpanInput("Wait Time On Start", ref waitTimeOnStart))
+        {
+            using (Eddy.History.BeginScope("Edit Path Segment Wait Time On Start", EddyContext.Path))
+            {
+                seg.WaitTimeOnStart = waitTimeOnStart;
+            }
+        }
+
+        var waitTimeOnFinish = seg.WaitTimeOnFinish;
+        if (ImGuiX.TimeSpanInput("Wait Time On Finish", ref waitTimeOnFinish))
+        {
+            using (Eddy.History.BeginScope("Edit Path Segment Wait Time On Finish", EddyContext.Path))
+            {
+                seg.WaitTimeOnFinish = waitTimeOnFinish;
+            }
+        }
+
+        var acceleration = seg.Acceleration;
+        if (ImGui.DragFloat("Acceleration", ref acceleration, 0.01f))
+        {
+            using (Eddy.History.BeginScope("Edit Path Segment Acceleration", EddyContext.Path))
+            {
+                seg.Acceleration = acceleration;
+            }
+        }
+
+        var deceleration = seg.Deceleration;
+        if (ImGui.DragFloat("Deceleration", ref deceleration, 0.01f))
+        {
+            using (Eddy.History.BeginScope("Edit Path Segment Deceleration", EddyContext.Path))
+            {
+                seg.Deceleration = deceleration;
+            }
+        }
+
+        var jitterFactor = seg.JitterFactor;
+        if (ImGui.DragFloat("Jitter Factor", ref jitterFactor, 0.01f))
+        {
+            using (Eddy.History.BeginScope("Edit Path Segment Jitter Factor", EddyContext.Path))
+            {
+                seg.JitterFactor = jitterFactor;
+            }
+        }
+
+        var orientation = seg.Orientation.ToXna().ToYawPitchRollDegrees();
+        if (ImGuiX.DragFloat3("Orientation (Yaw, Pitch, Roll)", ref orientation, 1f, -180f, 180f, "%.1f"))
+        {
+            using (Eddy.History.BeginScope("Edit Path Segment Orientation", EddyContext.Path))
+            {
+                seg.Orientation = Mathz.FromYawPitchRollDegrees(orientation).ToRepacker();
+            }
+        }
+
+        var hasCustomData = seg.CustomData != null;
+        if (ImGui.Checkbox("Custom Camera Data", ref hasCustomData))
+        {
+            using (Eddy.History.BeginScope("Edit Path Segment Custom Data", EddyContext.Path))
+            {
+                seg.CustomData = hasCustomData ? new CameraNodeData() : null;
+            }
+        }
+
+        if (seg.CustomData is { } customData)
+        {
+            var perspective = customData.Perspective;
+            if (ImGui.Checkbox("Perspective", ref perspective))
+            {
+                using (Eddy.History.BeginScope("Edit Path Segment Custom Data Perspective", EddyContext.Path))
+                {
+                    customData.Perspective = perspective;
+                }
+            }
+
+            var pixelsPerTrixel = customData.PixelsPerTrixel;
+            if (ImGui.InputInt("Pixels Per Trixel", ref pixelsPerTrixel))
+            {
+                using (Eddy.History.BeginScope("Edit Path Segment Custom Data Pixels Per Trixel", EddyContext.Path))
+                {
+                    customData.PixelsPerTrixel = pixelsPerTrixel;
+                }
+            }
+
+            var soundName = customData.SoundName.EmptyIfNull();
+            if (ImGui.InputText("Sound Name", ref soundName, 255))
+            {
+                using (Eddy.History.BeginScope("Edit Path Segment Custom Data Sound Name", EddyContext.Path))
+                {
+                    customData.SoundName = soundName.NullIfEmpty();
+                }
             }
         }
     }

@@ -1744,24 +1744,41 @@ internal sealed class TrileContext : BaseContext
             {
                 using (Eddy.History.BeginScope("Create Group Path", EddyContext.Path))
                 {
-                    group.Path = new MovementPath();
+                    group.Path = new MovementPath
+                    {
+                        Segments = new List<PathSegment> { new() }
+                    };
                 }
 
                 _selectedCursor.Reset();
                 Eddy.Pending = new PathContext.Pending(id, true);
                 Eddy.SelectedContext = EddyContext.Path;
-                Eddy.Tool = EddyTool.Paint;
+                Eddy.Tool = EddyTool.Select;
             }
         }
         else
         {
             ImGui.TextDisabled($"{group.Path.Segments.Count} segment(s)");
-            if (ImGui.Button("Edit Path##GroupPath"))
+            if (ImGui.Button("Edit Path##EditGroupPath"))
             {
                 _selectedCursor.Reset();
                 Eddy.Pending = new PathContext.Pending(id, true);
                 Eddy.SelectedContext = EddyContext.Path;
                 Eddy.Tool = group.Path.Segments.Count == 0 ? EddyTool.Paint : EddyTool.Select;
+            }
+
+            ImGui.SameLine();
+            if (ImGui.Button($"{Lucide.Trash2}##DeleteGroupPath"))
+            {
+                using (Eddy.History.BeginScope("Delete Group Path", EddyContext.Path))
+                {
+                    group.Path = null;
+                }
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip("Delete this Path");
             }
         }
     }
