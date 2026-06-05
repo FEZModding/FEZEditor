@@ -146,7 +146,7 @@ public class TrilesMesh : ActorComponent, IPickable
         _instancesDirty = true;
 
         FreeDisplacement(emplacement);
-        if (emplacement.X != (int)position.X || emplacement.Y != (int)position.Y || emplacement.Z != (int)position.Z)
+        if (IsOffsetInsideEmplacement(position, emplacement))
         {
             var instance = _rendering.InstanceCreate(Actor.InstanceRid);
             var pos = new Vector3(emplacement.X, emplacement.Y, emplacement.Z) + EmplacementCenter;
@@ -156,6 +156,15 @@ public class TrilesMesh : ActorComponent, IPickable
             _rendering.InstanceSetRotation(instance, rot);
             _displacements[emplacement] = instance;
         }
+    }
+
+    private static bool IsOffsetInsideEmplacement(Vector3 position, TrileEmplacement emplacement)
+    {
+        var basePosition = new Vector3(emplacement.X, emplacement.Y, emplacement.Z);
+        return position != basePosition &&
+               Mathz.FezRound(position.X) == emplacement.X &&
+               Mathz.FezRound(position.Y) == emplacement.Y &&
+               Mathz.FezRound(position.Z) == emplacement.Z;
     }
 
     public void SetOverlapInstanceData(TrileEmplacement emplacement, int index, Vector3 position, byte phi, Color tint)

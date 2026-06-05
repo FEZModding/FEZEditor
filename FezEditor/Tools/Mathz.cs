@@ -1,5 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
+using FezEditor.Structure;
 using FEZRepacker.Core.Definitions.Game.Common;
+using FEZRepacker.Core.Definitions.Game.Level;
 using Microsoft.Xna.Framework;
 
 namespace FezEditor.Tools;
@@ -217,5 +219,58 @@ public static class Mathz
 
         var t = f * Vector3.Dot(edge2, q);
         return t > float.Epsilon ? t : null;
+    }
+
+    public static int FezRound(double value)
+    {
+        if (value < 0.0)
+        {
+            return (int)(value - 0.5);
+        }
+
+        return (int)(value + 0.5);
+    }
+
+    public static Vector3 ClampWithinEmplacement(this Vector3 position, TrileEmplacement emplacement)
+    {
+        var boundingBox = GetEmplacementPositionBounds(emplacement);
+        return Vector3.Clamp(position, boundingBox.Min, boundingBox.Max);
+    }
+
+    public static BoundingBox GetEmplacementPositionBounds(TrileEmplacement emplacement)
+    {
+        var min = new Vector3(
+            GetEmplacementPositionMin(emplacement.X),
+            GetEmplacementPositionMin(emplacement.Y),
+            GetEmplacementPositionMin(emplacement.Z));
+
+        var max = new Vector3(
+            GetEmplacementPositionMax(emplacement.X),
+            GetEmplacementPositionMax(emplacement.Y),
+            GetEmplacementPositionMax(emplacement.Z));
+
+        return new BoundingBox(min, max);
+    }
+
+    private static float GetEmplacementPositionMin(int emplacement)
+    {
+        var min = emplacement - 0.5f;
+        if (emplacement <= 0)
+        {
+            min = MathF.BitIncrement(min);
+        }
+
+        return min;
+    }
+
+    private static float GetEmplacementPositionMax(int emplacement)
+    {
+        var max = emplacement + 0.5f;
+        if (emplacement >= 0)
+        {
+            max = MathF.BitDecrement(max);
+        }
+
+        return max;
     }
 }

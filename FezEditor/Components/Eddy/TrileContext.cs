@@ -479,7 +479,8 @@ internal sealed class TrileContext : BaseContext
         }
 
         var centroid = ComputeSelectionCentroid();
-        if (Eddy.Gizmo.Translate(ref centroid, maxDelta: 0.5f))
+        var bounds = ComputeSelectionPositionBounds();
+        if (Eddy.Gizmo.Translate(ref centroid, bounds))
         {
             var delta = centroid - ComputeSelectionCentroid();
             foreach (var emplacement in _selectedCursor.Emplacements.ToList())
@@ -490,7 +491,7 @@ internal sealed class TrileContext : BaseContext
                     continue;
                 }
 
-                active.Position = ClampPositionInsideEmplacement(active.Position.ToXna() + delta, emplacement).ToRepacker();
+                active.Position = (active.Position.ToXna() + delta).ClampWithinEmplacement(emplacement).ToRepacker();
                 ApplyActiveInstance(emplacement, active);
             }
         }
@@ -526,12 +527,6 @@ internal sealed class TrileContext : BaseContext
         }
     }
 
-    private static Vector3 ClampPositionInsideEmplacement(Vector3 position, TrileEmplacement emplacement)
-    {
-        var cellMin = new Vector3(emplacement.X, emplacement.Y, emplacement.Z);
-        return Vector3.Clamp(position, cellMin - new Vector3(0.5f), cellMin + new Vector3(1.5f));
-    }
-
     private Vector3 ComputeSelectionCentroid()
     {
         if (_selectedCursor.Emplacements.Count == 0)
@@ -545,6 +540,29 @@ internal sealed class TrileContext : BaseContext
             .Aggregate(Vector3.Zero, (current, inst) => current + inst!.Position.ToXna());
 
         return sum / _selectedCursor.Emplacements.Count;
+    }
+
+    private BoundingBox ComputeSelectionPositionBounds()
+    {
+        if (_selectedCursor.Emplacements.Count == 0)
+        {
+            return new BoundingBox(Vector3.Zero, Vector3.Zero);
+        }
+
+        var sumMin = Vector3.Zero;
+        var sumMax = Vector3.Zero;
+
+        foreach (var emplacement in _selectedCursor.Emplacements)
+        {
+            var bounds = Mathz.GetEmplacementPositionBounds(emplacement);
+            sumMin += bounds.Min;
+            sumMax += bounds.Max;
+        }
+
+        return new BoundingBox(
+            sumMin / _selectedCursor.Emplacements.Count,
+            sumMax / _selectedCursor.Emplacements.Count
+        );
     }
 
     private void UpdateRotate()
@@ -1405,7 +1423,7 @@ internal sealed class TrileContext : BaseContext
         {
             using (Eddy.History.BeginScope("Edit Trile Position", EddyContext.Trile))
             {
-                instance.Position = ClampPositionInsideEmplacement(position, emplacement).ToRepacker();
+                instance.Position = position.ClampWithinEmplacement(emplacement).ToRepacker();
             }
         }
 
@@ -1525,7 +1543,7 @@ internal sealed class TrileContext : BaseContext
                              Level.Triles.TryGetValue(e, out var ti) && ti.TrileId != InvalidId))
                 {
                     var inst = Level.Triles[emp];
-                    inst.Position = ClampPositionInsideEmplacement(inst.Position.ToXna() + delta, emp).ToRepacker();
+                    inst.Position = (inst.Position.ToXna() + delta).ClampWithinEmplacement(emp).ToRepacker();
                 }
             }
         }
