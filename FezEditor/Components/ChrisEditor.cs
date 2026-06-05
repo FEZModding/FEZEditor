@@ -230,25 +230,19 @@ public class ChrisEditor : EditorComponent, IChrisEditor
                 ImGui.SetNextItemWidth(-1);
                 if (ImGui.InputText("##TrileSetName", ref name, 255))
                 {
-                    using (History.BeginScope("Rename Trile Set"))
-                    {
-                        subject.Name = name;
-                    }
+                    subject.Name = name;
                 }
 
                 // Toolbar
                 {
                     if (ImGui.Button($"{Lucide.Plus}"))
                     {
-                        using (History.BeginScope("Add Trile"))
-                        {
-                            var newId = subject.AddDefaultTrile();
-                            _selectedTriles.Clear();
-                            _selectedTriles.Add(newId);
-                            _currentTrile = newId;
-                            subject.Id = newId;
-                            SwitchTrileSubject();
-                        }
+                        var newId = subject.AddDefaultTrile();
+                        _selectedTriles.Clear();
+                        _selectedTriles.Add(newId);
+                        _currentTrile = newId;
+                        subject.Id = newId;
+                        SwitchTrileSubject();
                     }
 
                     if (ImGui.IsItemHovered())
@@ -262,15 +256,12 @@ public class ChrisEditor : EditorComponent, IChrisEditor
                     ImGui.BeginDisabled(_selectedTriles.Count == 0);
                     if (ImGui.Button($"{Lucide.Minus}"))
                     {
-                        using (History.BeginScope("Remove Trile"))
-                        {
-                            var nextId = subject.RemoveTriles(_selectedTriles);
-                            _selectedTriles.Clear();
-                            _selectedTriles.Add(nextId);
-                            _currentTrile = nextId;
-                            subject.Id = nextId;
-                            SwitchTrileSubject();
-                        }
+                        var nextId = subject.RemoveTriles(_selectedTriles);
+                        _selectedTriles.Clear();
+                        _selectedTriles.Add(nextId);
+                        _currentTrile = nextId;
+                        subject.Id = nextId;
+                        SwitchTrileSubject();
                     }
 
                     if (ImGui.IsItemHovered())
@@ -286,15 +277,12 @@ public class ChrisEditor : EditorComponent, IChrisEditor
                     ImGui.BeginDisabled(_selectedTriles.Count == 0);
                     if (ImGui.Button($"{Lucide.Copy}"))
                     {
-                        using (History.BeginScope("Copy Triles"))
-                        {
-                            var newId = subject.CopyTriles(_selectedTriles);
-                            _selectedTriles.Clear();
-                            _selectedTriles.Add(newId);
-                            _currentTrile = newId;
-                            subject.Id = newId;
-                            SwitchTrileSubject();
-                        }
+                        var newId = subject.CopyTriles(_selectedTriles);
+                        _selectedTriles.Clear();
+                        _selectedTriles.Add(newId);
+                        _currentTrile = newId;
+                        subject.Id = newId;
+                        SwitchTrileSubject();
                     }
 
                     if (ImGui.IsItemHovered())
