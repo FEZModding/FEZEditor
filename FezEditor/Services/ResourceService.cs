@@ -107,7 +107,9 @@ public class ResourceService : IDisposable
 
     public string GetRelativePath(string absolutePath)
     {
-        return absolutePath.WithoutBaseDirectory(RootPath).Replace('\\', '/');
+        return absolutePath.Equals(RootPath)
+            ? string.Empty
+            : absolutePath.WithoutBaseDirectory(RootPath).Replace('\\', '/');
     }
 
     public bool IsReadonlyPath(string path)
