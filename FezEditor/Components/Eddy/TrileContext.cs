@@ -1384,6 +1384,17 @@ internal sealed class TrileContext : BaseContext
         var trile = _set!.Triles[instance.TrileId];
         ImGui.Text($"Trile: {trile.Name} (ID={instance.TrileId})");
 
+        if (CanCreateGroupFromSelection())
+        {
+            if (ImGui.Button($"{Lucide.Group} Group"))
+            {
+                CreateSelectedGroup();
+                return;
+            }
+
+            ImGui.Separator();
+        }
+
         var empArray = new[] { emplacement.X, emplacement.Y, emplacement.Z };
         ImGui.BeginDisabled();
         ImGui.InputInt3("Emplacement", ref empArray[0]);
@@ -1990,7 +2001,7 @@ internal sealed class TrileContext : BaseContext
             .Where(e => Level.Triles.TryGetValue(e, out var ti) && ti.TrileId != InvalidId)
             .ToList();
 
-        return selectedTriles.Count > 1 && selectedTriles.All(e => !_emplacementGroups.ContainsKey(e));
+        return selectedTriles.Count > 0 && selectedTriles.All(e => !_emplacementGroups.ContainsKey(e));
     }
 
     private void CreateSelectedGroup()
@@ -2000,7 +2011,7 @@ internal sealed class TrileContext : BaseContext
             .Where(e => !_emplacementGroups.ContainsKey(e))
             .ToList();
 
-        if (selectedTriles.Count < 2)
+        if (selectedTriles.Count < 1)
         {
             return;
         }
