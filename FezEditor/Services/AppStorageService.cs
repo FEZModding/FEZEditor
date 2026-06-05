@@ -38,20 +38,19 @@ public class AppStorageService : IDisposable
 
     private Settings _data = new();
 
-    private readonly Game _game;
+    private readonly FezEditor _editor;
 
-    public AppStorageService(Game game)
+    public AppStorageService(FezEditor editor)
     {
-        _game = game;
+        _editor = editor;
         Directory.CreateDirectory(CacheDir);
         Load();
-        game.Window.ClientSizeChanged += OnClientSizeChanged;
+        LoadWindowState();
     }
 
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-        _game.Window.ClientSizeChanged -= OnClientSizeChanged;
         SaveWindowState();
         Save();
     }
@@ -122,47 +121,35 @@ public class AppStorageService : IDisposable
         Save();
     }
 
-    private void OnClientSizeChanged(object? sender, EventArgs e)
-    {
-        var flags = SDL.SDL_GetWindowFlags(_game.Window.Handle);
-        if ((flags & SDL.SDL_WindowFlags.SDL_WINDOW_MAXIMIZED) == 0)
-        {
-            SDL.SDL_GetWindowSize(_game.Window.Handle, out var width, out var height);
-            _data = _data with
-            {
-                Window = _data.Window with
-                {
-                    Width = width,
-                    Height = height
-                }
-            };
-        }
-    }
-
     private void SaveWindowState()
     {
-        var maximized = (SDL.SDL_GetWindowFlags(_game.Window.Handle) & SDL.SDL_WindowFlags.SDL_WINDOW_MAXIMIZED) != 0;
+        var flags = SDL.SDL_GetWindowFlags(_editor.Window.Handle);
+        var maximized = (flags & SDL.SDL_WindowFlags.SDL_WINDOW_MAXIMIZED) != 0;
+        var window = _data.Window;
+
+        if (!maximized)
+        {
+            var bounds = _editor.Window.ClientBounds;
+            window.Width = bounds.Width;
+            window.Height = bounds.Height;
+        }
+
         _data = _data with
         {
-            Window = _data.Window with
-            {
-                IsMaximized = maximized
-            }
+            Window = window,
+            IsWindowMaximized = maximized
         };
     }
 
-    public void LoadWindowState(GraphicsDeviceManager gdm)
+    private void LoadWindowState()
     {
-        SDL.SDL_SetWindowSize(_game.Window.Handle, _data.Window.Width, _data.Window.Height);
-        if (_data.Window.IsMaximized)
+        _editor.DeviceManager.PreferredBackBufferWidth = _data.Window.Width;
+        _editor.DeviceManager.PreferredBackBufferHeight = _data.Window.Height;
+        _editor.DeviceManager.ApplyChanges();
+        if (_data.IsWindowMaximized)
         {
-            SDL.SDL_MaximizeWindow(_game.Window.Handle);
+            SDL.SDL_MaximizeWindow(_editor.Window.Handle);
         }
-
-        SDL.SDL_GetWindowSizeInPixels(_game.Window.Handle, out var pixelWidth, out var pixelHeight);
-        gdm.PreferredBackBufferWidth = pixelWidth > 0 ? pixelWidth : _data.Window.Width;
-        gdm.PreferredBackBufferHeight = pixelHeight > 0 ? pixelHeight : _data.Window.Height;
-        gdm.ApplyChanges();
     }
 
     public static void ClearCache()

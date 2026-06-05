@@ -21,7 +21,7 @@ public class FezEditor : Game
 
     public const string Commit = ThisAssembly.Git.Commit;
 
-    private readonly GraphicsDeviceManager _deviceManager;
+    public GraphicsDeviceManager DeviceManager { get; }
 
     private AppStorageService _appStorage = null!;
 
@@ -58,7 +58,7 @@ public class FezEditor : Game
 
     private FezEditor()
     {
-        _deviceManager = new GraphicsDeviceManager(this)
+        DeviceManager = new GraphicsDeviceManager(this)
         {
             PreferredBackBufferWidth = 1280,
             PreferredBackBufferHeight = 720,
@@ -91,8 +91,6 @@ public class FezEditor : Game
         this.AddComponent(new FileBrowser(this));
         this.AddComponent(new MainLayout(this));
         _editor.OpenEditor(new WelcomeSplash(this));
-
-        _appStorage.LoadWindowState(_deviceManager);
         base.Initialize();
     }
 

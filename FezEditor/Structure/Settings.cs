@@ -17,11 +17,13 @@ public record Settings
 
     public WindowSize Window { get; init; } = new(1280, 720);
 
+    public bool IsWindowMaximized { get; init; } = false;
+
     public Color[] PaintPalette { get; init; } = Array.Empty<Color>();
 
     public float? DisplayScale { get; init; } // null - automatic
 
-    public record RecentProvider(string Path, string Kind);
+    public record struct RecentProvider(string Path, string Kind);
 
-    public record WindowSize(int Width, int Height, bool IsMaximized = false);
+    public record struct WindowSize(int Width, int Height);
 }
