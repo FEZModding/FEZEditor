@@ -775,6 +775,17 @@ internal sealed class TrileContext : BaseContext
 
         #endregion
 
+        if (TryGetFreshHoveredTrile(out var fresh))
+        {
+            _hoveredCursor.Emplacements.Clear();
+            _hoveredCursor.Emplacements.Add(fresh.Emplacement);
+            _hoveredCursor.Face = fresh.Face;
+            _hoveredCursor.GroupId = _emplacementGroups.TryGetValue(fresh.Emplacement, out var freshGroupId)
+                ? freshGroupId
+                : null;
+            Eddy.HoveredContext = EddyContext.Trile;
+        }
+
         #region Hologram pose
 
         if (_hoveredCursor is { Emplacement: not null, Face: not null })
@@ -1766,6 +1777,31 @@ internal sealed class TrileContext : BaseContext
     protected override bool IsContextAllowed(EddyContext context)
     {
         return context == EddyContext.Trile;
+    }
+
+    private bool TryGetFreshHoveredTrile(out (TrileEmplacement Emplacement, FaceOrientation Face) result)
+    {
+        result = default;
+        if (!Eddy.IsViewportHovered)
+        {
+            return false;
+        }
+
+        var ray = Eddy.Scene.Viewport.Unproject(ImGuiX.GetMousePos(), Eddy.Gizmo.Viewport);
+        var hit = Eddy.Scene.Raycast(ray);
+        if (!hit.HasValue || !hit.Value.Actor.TryGetComponent<TrilesMesh>(out var mesh) || mesh == null)
+        {
+            return false;
+        }
+
+        if (hit.Value.Index >= mesh.InstanceCount)
+        {
+            return false;
+        }
+
+        result.Emplacement = mesh.GetEmplacement(hit.Value.Index);
+        result.Face = Mathz.DetermineFace(mesh.GetBounds().ElementAt(hit.Value.Index), ray, hit.Value.Distance);
+        return true;
     }
 
     public override void Dispose()
