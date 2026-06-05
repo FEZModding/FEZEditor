@@ -610,20 +610,22 @@ public static class ImGuiX
     {
         const ImGuiChildFlags flags = ImGuiChildFlags.Border | ImGuiChildFlags.AutoResizeY;
         var hash = label.GetHashCode();
-        var list = items.Value;
+        var source = items.Value;
+        List<T>? edited = null;
 
         var changed = false;
         ImGui.Text(label);
         ImGui.SameLine();
 
-        var count = "item" + (list.Count is > 1 or 0 ? "s" : "");
-        var header = $"List ({list.Count} {count})###ListHeader_{hash}";
+        var count = "item" + (source.Count is > 1 or 0 ? "s" : "");
+        var header = $"List ({source.Count} {count})###ListHeader_{hash}";
         if (ImGui.CollapsingHeader(header))
         {
             if (BeginChild($"##Child_{hash}", Vector2.Zero, flags))
             {
                 if (BeginListBox($"##ListBox_{hash}", new Vector2(-1, 0)))
                 {
+                    var list = edited ?? source;
                     for (var i = 0; i < list.Count; i++)
                     {
                         ImGui.PushID(i);
@@ -632,6 +634,7 @@ public static class ImGuiX
                         var item = list[i];
                         if (renderItem(i, ref item))
                         {
+                            list = edited ??= new List<T>(source);
                             list[i] = item;
                             changed = true;
                         }
@@ -639,6 +642,7 @@ public static class ImGuiX
                         ImGui.SameLine();
                         if (ImGui.Button(Lucide.X))
                         {
+                            list = edited ??= new List<T>(source);
                             list.RemoveAt(i);
                             i--;
                             changed = true;
@@ -652,6 +656,7 @@ public static class ImGuiX
 
                 if (ImGui.Button($"{Lucide.Plus} Add"))
                 {
+                    var list = edited ??= new List<T>(source);
                     list.Add(createNew());
                     changed = true;
                 }
@@ -662,7 +667,7 @@ public static class ImGuiX
 
         if (changed)
         {
-            items = new Dirty<List<T>>(list, true);
+            items = new Dirty<List<T>>(edited!, true);
         }
 
         return changed;
@@ -672,20 +677,22 @@ public static class ImGuiX
     {
         const ImGuiChildFlags flags = ImGuiChildFlags.Border | ImGuiChildFlags.AutoResizeY;
         var hash = label.GetHashCode();
-        var array = items.Value;
+        var source = items.Value;
+        T[]? edited = null;
 
         var changed = false;
         ImGui.Text(label);
         ImGui.SameLine();
 
-        var count = "item" + (array.Length is > 1 or 0 ? "s" : "");
-        var header = $"Array ({array.Length} {count})###ArrayHeader_{hash}";
+        var count = "item" + (source.Length is > 1 or 0 ? "s" : "");
+        var header = $"Array ({source.Length} {count})###ArrayHeader_{hash}";
         if (ImGui.CollapsingHeader(header))
         {
             if (BeginChild($"##Child_{hash}", Vector2.Zero, flags))
             {
                 if (BeginListBox($"##ListBox_{hash}", new Vector2(-1, 0)))
                 {
+                    var array = edited ?? source;
                     for (var i = 0; i < array.Length; i++)
                     {
                         ImGui.PushID(i);
@@ -694,6 +701,7 @@ public static class ImGuiX
                         var item = array[i];
                         if (renderItem(i, ref item))
                         {
+                            array = edited ??= (T[])source.Clone();
                             array[i] = item;
                             changed = true;
                         }
@@ -701,10 +709,9 @@ public static class ImGuiX
                         ImGui.SameLine();
                         if (ImGui.Button(Lucide.X))
                         {
-                            var newArray = new T[array.Length - 1];
-                            Array.Copy(array, 0, newArray, 0, i);
-                            Array.Copy(array, i + 1, newArray, i, array.Length - i - 1);
-                            array = newArray;
+                            edited = new T[array.Length - 1];
+                            Array.Copy(array, 0, edited, 0, i);
+                            Array.Copy(array, i + 1, edited, i, array.Length - i - 1);
                             changed = true;
                             ImGui.PopID();
                             break;
@@ -718,8 +725,10 @@ public static class ImGuiX
 
                 if (ImGui.Button($"{Lucide.Plus} Add"))
                 {
+                    var array = edited ?? source;
                     Array.Resize(ref array, array.Length + 1);
                     array[^1] = createNew();
+                    edited = array;
                     changed = true;
                 }
 
@@ -729,7 +738,7 @@ public static class ImGuiX
 
         if (changed)
         {
-            items = new Dirty<T[]>(array, true);
+            items = new Dirty<T[]>(edited!, true);
         }
 
         return changed;
@@ -746,20 +755,22 @@ public static class ImGuiX
     {
         const ImGuiChildFlags flags = ImGuiChildFlags.Border | ImGuiChildFlags.AutoResizeY;
         var hash = label.GetHashCode();
-        var dict = items.Value;
+        var source = items.Value;
+        Dictionary<TKey, TValue>? edited = null;
 
         var changed = false;
         ImGui.Text(label);
         ImGui.SameLine();
 
-        var count = "key" + (dict.Count is > 1 or 0 ? "s" : "");
-        var header = $"Dictionary ({dict.Count} {count})###DictionaryHeader_{hash}";
+        var count = "key" + (source.Count is > 1 or 0 ? "s" : "");
+        var header = $"Dictionary ({source.Count} {count})###DictionaryHeader_{hash}";
         if (ImGui.CollapsingHeader(header))
         {
             if (BeginChild($"##Child_{hash}", Vector2.Zero, flags))
             {
                 if (BeginListBox($"##ListBox_{hash}", new Vector2(-1, 0)))
                 {
+                    var dict = edited ?? source;
                     var keys = dict.Keys.ToList();
 
                     for (var i = 0; i < keys.Count; i++)
@@ -772,6 +783,7 @@ public static class ImGuiX
 
                         if (renderItem(key, ref value))
                         {
+                            dict = edited ??= new Dictionary<TKey, TValue>(source);
                             dict[key] = value;
                             changed = true;
                         }
@@ -779,6 +791,7 @@ public static class ImGuiX
                         ImGui.SameLine();
                         if (ImGui.Button(Lucide.X))
                         {
+                            dict = edited ??= new Dictionary<TKey, TValue>(source);
                             dict.Remove(key);
                             changed = true;
                         }
@@ -796,8 +809,10 @@ public static class ImGuiX
 
                 if (renderNewKey(ref newKey))
                 {
+                    var dict = edited ?? source;
                     if (!dict.ContainsKey(newKey))
                     {
+                        dict = edited ??= new Dictionary<TKey, TValue>(source);
                         dict.Add(newKey, createDefaultValue());
                         changed = true;
                     }
@@ -809,7 +824,7 @@ public static class ImGuiX
 
         if (changed)
         {
-            items = new Dirty<Dictionary<TKey, TValue>>(dict, true);
+            items = new Dirty<Dictionary<TKey, TValue>>(edited!, true);
         }
 
         return changed;
