@@ -18,7 +18,24 @@
     </ItemGroup>
 
     <Copy SourceFiles="@(ContentFiles)"
-          DestinationFiles="@(ContentFiles->'$(OutputPath)Content\%(RecursiveDir)%(Filename)%(Extension)')"
+          DestinationFiles="@(ContentFiles->'$(OutputPath)Content/%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true"
+          OverwriteReadOnlyFiles="true"/>
+  </Target>
+
+  <!-- Debug publish: Copy to publish folder -->
+  <Target Name="PublishContentDebug" AfterTargets="Publish" DependsOnTargets="CompileShaders" Condition="'$(Configuration)' == 'Debug'">
+    <ReadLinesFromFile File="$(MSBuildThisFileDirectory).ignore" Condition="Exists('$(MSBuildThisFileDirectory).ignore')">
+      <Output TaskParameter="Lines" ItemName="PublishIgnorePatterns"/>
+    </ReadLinesFromFile>
+
+    <ItemGroup>
+      <PublishContentFiles Include="$(MSBuildThisFileDirectory)**\*.*"
+                           Exclude="$(MSBuildThisFileDirectory).ignore;$(MSBuildThisFileDirectory)**\*.fx;$(MSBuildThisFileDirectory)**\*.targets;@(PublishIgnorePatterns->'$(MSBuildThisFileDirectory)%(Identity)', ';')"/>
+    </ItemGroup>
+
+    <Copy SourceFiles="@(PublishContentFiles)"
+          DestinationFiles="@(PublishContentFiles->'$(PublishDir)Content/%(RecursiveDir)%(Filename)%(Extension)')"
           SkipUnchangedFiles="true"
           OverwriteReadOnlyFiles="true"/>
   </Target>
