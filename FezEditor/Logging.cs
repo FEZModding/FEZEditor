@@ -11,14 +11,20 @@ public static class Logging
     private const string LogTemplate =
         "({Timestamp:HH:mm:ss.fff}) {Level:u4} [{SourceContext}] {Message:lj}{NewLine}{Exception}";
 
-    public static void Initialize(LogEventLevel level = LogEventLevel.Information)
+#if DEBUG
+    public static LogEventLevel Level { get; set; } = LogEventLevel.Debug;
+#else
+    public static LogEventLevel Level { get; set; } = LogEventLevel.Information;
+#endif
+
+    public static void Initialize()
     {
         var logFile = Path.Combine(AppStorageService.BaseDir, "Logs",
-            $"[{DateTime.Now:yyyy-MM-ddTHH-mm-ss}] {level} Log.txt");
+            $"[{DateTime.Now:yyyy-MM-ddTHH-mm-ss}] {Level} Log.txt");
 
         CleanOldLogFiles(logFile);
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Is(level)
+            .MinimumLevel.Is(Level)
             .WriteTo.Console(outputTemplate: LogTemplate)
             .WriteTo.File(logFile, outputTemplate: LogTemplate)
             .CreateLogger();

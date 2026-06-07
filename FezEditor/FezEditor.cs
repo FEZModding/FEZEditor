@@ -41,8 +41,8 @@ public class FezEditor : Game
 
     private static void Main(string[] args)
     {
-        var parsedArgs = Args.Parse(args);
-        Logging.Initialize(parsedArgs.LogLevel);
+        Args.Parse(args);
+        Logging.Initialize();
         Environment.SetEnvironmentVariable("FNA3D_FORCE_DRIVER", "OpenGL");
         Environment.SetEnvironmentVariable("FNA_GRAPHICS_ENABLE_HIGHDPI", "1");
         try

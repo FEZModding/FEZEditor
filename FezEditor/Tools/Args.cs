@@ -3,15 +3,11 @@ using Serilog.Events;
 
 namespace FezEditor.Tools;
 
-public class Args
+public static class Args
 {
-    public LogEventLevel LogLevel { get; private set; } = LogEventLevel.Information;
-
-    public static Args Parse(string[] args)
+    public static void Parse(string[] args)
     {
-        var result = new Args();
         var queue = new Queue<string>(args);
-
         while (queue.Count > 0)
         {
             switch (queue.Dequeue().ToLower(CultureInfo.InvariantCulture))
@@ -19,13 +15,11 @@ public class Args
                 case "--log-level":
                     if (queue.Count > 0 && Enum.TryParse<LogEventLevel>(queue.Dequeue(), true, out var level))
                     {
-                        result.LogLevel = level;
+                        Logging.Level = level;
                     }
 
                     break;
             }
         }
-
-        return result;
     }
 }
