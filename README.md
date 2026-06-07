@@ -1,34 +1,48 @@
-# <img src="Content/Icon.png" alt="icon" width="42"/> FEZEditor
+# <img src=".github/images/Logo.png" alt="icon" width="42"/> FEZEditor
 
-## A Modding Tool for FEZ
+## A Modding Tool for FEZ game
 
-[![Showcase of level editing](https://img.youtube.com/vi/bksXuaovHVk/maxresdefault.jpg)](https://youtu.be/bksXuaovHVk?si=VkoavjHpnpSEzVkE)
+![Rowy Bay](.github/images/Thumbnail.png)
+
+*A custom **Rowy Bay** level opened in the **Eddy** level editor.*
 
 ## Overview
 
-FEZEditor is a GUI tool created for managing and modding FEZ's assets.
+FEZEditor is a cross-platform GUI tool for exploring, managing, and modding FEZ game assets.
 
-> [!WARNING]
-> FEZEditor is in a pre-release state!
->
-> The editor currently saves assets in FEZRepacker's format only!
-> Refer asset mod creation here: https://fezmodding.github.io/wiki/guides/create_asset_mod
+It can open original game PAK files, extracted asset directories, and mod projects.
+
+The editor provides specialized tools for viewing and editing levels, art objects, trile sets, world maps, skies,
+localization, save files, and other game resources.
+
+It also supports extracting assets and exporting levels as GLTF dioramas.
+
+## User Guide
+
+Available at [FEZModding Wiki](https://fezmodding.github.io/wiki/editor).
 
 ## Cloning
 
-Clone the repository with flag `--recurse-submodules`.
-
-If you have already cloned the project, use this:
+Clone the repository and its submodules:
 
 ```bash
-git submodule update --init
+git clone --recurse-submodules <repository-url>
+```
+
+If you have already cloned the repository:
+
+```bash
+git submodule update --init --recursive
 ```
 
 ## Building
 
 ### Prerequisites
 
-- [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+- [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) is required for `Debug` builds.
+
+> [!NOTE]
+> `Release` builds are self-contained and do not require the .NET SDK to be installed on the target machine.
 
 > [!NOTE]
 > The `fxc` shader compiler is now included in this repository.
@@ -56,7 +70,7 @@ dotnet publish -c Release -r osx-arm64  # macOS
 ### Content Packaging
 
 - **Debug**: assets are copied to `Content/` next to the executable.
-- **Release**: assets are bundled into `Content.pkz`, copied to the publishing directory on `dotnet publish`.
+- **Release**: assets are bundled inside the executable.
 
 ## Features
 
@@ -80,17 +94,6 @@ dotnet publish -c Release -r osx-arm64  # macOS
 * `RickViewer`: Sound effects
 * `PhilExporter`: Exporting levels as GLTF dioramas
 
-## Screenshots
-
-|                                                |                                             |
-|------------------------------------------------|---------------------------------------------|
-| <img src="Docs/EddyEditor.png" alt="Eddy"/>    | <img src="Docs/Diorama.png" alt="Diorama"/> |
-| <img src="Docs/ChrisEditor.png" alt="Chris"/>  | <img src="Docs/JadeEditor.png" alt="Jade"/> |
-| <img src="Docs/TexViewer.png" alt="Tex"/>      | <img src="Docs/LukeEditor.png" alt="Luke"/> |
-| <img src="Docs/ZuEditor.png" alt="Zu"/>        | <img src="Docs/PoEditor.png" alt="Po"/>    |
-| <img src="Docs/SallyEditor.png" alt="Sally"/>  | <img src="Docs/MuEditor.png" alt="Mu"/>     |
-| <img src="Docs/DiezEditor.png" alt="Diez"/>    | <img src="Docs/RickViewer.png" alt="Rick"/> |
-
 ## Documentation
 
 Refer to [FEZModding Wiki](https://fezmodding.github.io/wiki/game/) for FEZ assets specifications (incomplete).
@@ -112,3 +115,4 @@ This project uses:
 
 * [FEZModding folks](https://github.com/FEZModding) for providing modding materials and tools.
 * [Godot contributors](https://github.com/godotengine/godot) for saving hours of headaches when creating a PoC.
+* [Krzyhau](https://github.com/Krzyhau) for his contributions and splash screen art work!
