@@ -33,17 +33,7 @@ internal class DefaultContext : BaseContext
     {
         if (Eddy.Visuals.IsDirty)
         {
-            if (_pickablesActor?.TryGetComponent<PickableBounds>(out var bounds) ?? false)
-            {
-                var actors = Eddy.Visuals.Value.HasFlag(EddyVisuals.PickableBounds)
-                    ? Eddy.Scene.GetChildren(Eddy.Scene.Root)
-                    : Enumerable.Empty<Actor>();
-
-                var children = actors
-                    .SelectMany(a => Eddy.Scene.GetChildren(a));
-
-                bounds?.Visualize(children);
-            }
+            UpdatePickableBounds();
 
             if (_skyActor?.HasComponent<SkyVisualizer>() ?? false)
             {
@@ -367,6 +357,8 @@ internal class DefaultContext : BaseContext
 
     public override void PartialRevisualize(EddyContext context)
     {
+        UpdatePickableBounds();
+
         if (_boundsActor!.TryGetComponent<BoundsMesh>(out var boundsMesh))
         {
             boundsMesh!.Size = Level.Size.ToXna();
@@ -439,7 +431,7 @@ internal class DefaultContext : BaseContext
             visualizer.Initialize(Eddy.Scene, Eddy.Camera, Eddy.Clock);
             visualizer.LevelSize = Level.Size.ToXna();
             visualizer.Visualize(_sky);
-            visualizer.VisualizeShadows(_sky.Name, _sky.Shadows);
+            visualizer.VisualizeShadows(_sky.Name, _sky.Shadows.EmptyIfNull());
         }
 
         #endregion
@@ -460,11 +452,20 @@ internal class DefaultContext : BaseContext
 
     public void PostVisualize()
     {
+        #region Pickable bounds
+
+        _pickablesActor = Eddy.Scene.CreateActor();
+        _pickablesActor.Name = "Pickable Bounds";
+        _pickablesActor.AddComponent<PickableBounds>();
+        UpdatePickableBounds();
+
+        #endregion
+
         #region Cloud Shadows
 
         if (_skyActor?.TryGetComponent<SkyVisualizer>(out var visualizer) ?? false)
         {
-            visualizer?.VisualizeShadows(_sky!.Name, _sky.Shadows);
+            visualizer?.VisualizeShadows(_sky!.Name, _sky.Shadows.EmptyIfNull());
         }
 
         #endregion
@@ -507,6 +508,18 @@ internal class DefaultContext : BaseContext
     protected override bool IsContextAllowed(EddyContext context)
     {
         return context == EddyContext.Default;
+    }
+
+    private void UpdatePickableBounds()
+    {
+        if (_pickablesActor != null && _pickablesActor.TryGetComponent<PickableBounds>(out var bounds) && bounds != null)
+        {
+            var actors = Eddy.Visuals.Value.HasFlag(EddyVisuals.PickableBounds)
+                ? Eddy.Scene.GetChildren(Eddy.Scene.Root).SelectMany(Eddy.Scene.GetChildren)
+                : Enumerable.Empty<Actor>();
+
+            bounds.Visualize(actors);
+        }
     }
 
     public override void Dispose()
