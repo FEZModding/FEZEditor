@@ -34,14 +34,11 @@ public class WelcomeSplash : EditorComponent
 
     private readonly ResourceService _resourceService;
 
-    private readonly ConfirmWindow _confirm;
-
     public WelcomeSplash(Game game) : base(game, "Welcome!")
     {
         _appStorageService = game.GetService<AppStorageService>();
         _editorService = game.GetService<EditorService>();
         _resourceService = game.GetService<ResourceService>();
-        Game.AddComponent(_confirm = new ConfirmWindow(game));
     }
 
     public override void LoadContent()
@@ -52,6 +49,12 @@ public class WelcomeSplash : EditorComponent
 
     public override void Draw()
     {
+        if (_resourceExtractor != null)
+        {
+            // Yield to the extractor modal
+            return;
+        }
+
         ImGui.OpenPopup("##welcome");
 
         ImGuiX.SetNextWindowCentered(ImGuiCond.Always);
@@ -214,12 +217,6 @@ public class WelcomeSplash : EditorComponent
         }
 
         ImGui.PopStyleColor();
-    }
-
-    public override void Dispose()
-    {
-        base.Dispose();
-        Game.RemoveComponent(_confirm);
     }
 
     private void ExtractPaksAndOpenDirectory(string[] sources, string[] targets)
