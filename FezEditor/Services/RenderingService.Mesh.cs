@@ -27,7 +27,7 @@ public partial class RenderingService
     {
         var rid = AllocateRid(typeof(MeshData));
         _meshes[rid] = new MeshData();
-        Logger.Debug("Mesh created {0}", rid);
+        Logger.Verbose("Mesh created {0}", rid);
         return rid;
     }
 
@@ -36,7 +36,7 @@ public partial class RenderingService
         var data = GetResource(_meshes, mesh);
         DisposeBuffers(data);
         data.Surfaces.Clear();
-        Logger.Debug("Mesh {0} cleared", mesh);
+        Logger.Verbose("Mesh {0} cleared", mesh);
     }
 
     public void MeshAddSurface(Rid mesh, PrimitiveType primitive, MeshSurface surface, Rid? material = null)
@@ -45,7 +45,7 @@ public partial class RenderingService
         UpdateSurfaceEntry(surfaceEntry, surface);
         var data = GetResource(_meshes, mesh);
         data.Surfaces.Add(surfaceEntry);
-        Logger.Debug("Mesh {0} surface added ({1} total), primitive={2}", mesh, data.Surfaces.Count, primitive);
+        Logger.Verbose("Mesh {0} surface added ({1} total), primitive={2}", mesh, data.Surfaces.Count, primitive);
     }
 
     public void MeshUpdateSurface(Rid mesh, int surfaceIdx, MeshSurface surface)

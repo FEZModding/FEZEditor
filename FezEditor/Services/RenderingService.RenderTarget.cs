@@ -36,7 +36,7 @@ public partial class RenderingService
                 GraphicsDevice.PresentationParameters.DepthStencilFormat)
         };
 
-        Logger.Debug("RenderTarget created {0} ({1}x{2})", rid, w, h);
+        Logger.Verbose("RenderTarget created {0} ({1}x{2})", rid, w, h);
         return rid;
     }
 
@@ -76,7 +76,7 @@ public partial class RenderingService
         data.Target = new RenderTarget2D(GraphicsDevice, width, height, false,
             GraphicsDevice.PresentationParameters.BackBufferFormat,
             GraphicsDevice.PresentationParameters.DepthStencilFormat);
-        Logger.Debug("RenderTarget {0} resized to {1}x{2}", rt, width, height);
+        Logger.Verbose("RenderTarget {0} resized to {1}x{2}", rt, width, height);
     }
 
     public void RenderTargetSetClearColor(Rid rt, Color color)
@@ -95,7 +95,7 @@ public partial class RenderingService
             Width = w,
             Height = h
         };
-        Logger.Debug("Backbuffer created {0} ({1}x{2})", rid, w, h);
+        Logger.Verbose("Backbuffer created {0} ({1}x{2})", rid, w, h);
         return rid;
     }
 

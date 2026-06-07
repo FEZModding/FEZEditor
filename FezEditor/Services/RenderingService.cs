@@ -177,7 +177,7 @@ public partial class RenderingService : IDisposable
             if (RemoveResource(_renderTargets, rid, out var rt))
             {
                 DisposeRenderTarget(rt!);
-                Logger.Debug("Freed RenderTarget {0}", rid);
+                Logger.Verbose("Freed RenderTarget {0}", rid);
             }
         }
         else if (rid.Type == typeof(WorldData))
@@ -185,7 +185,7 @@ public partial class RenderingService : IDisposable
             if (RemoveResource(_worlds, rid, out var world))
             {
                 DisposeInstanceTree(world!.Root);
-                Logger.Debug("Freed World {0}", rid);
+                Logger.Verbose("Freed World {0}", rid);
             }
         }
         else if (rid.Type == typeof(InstanceData))
@@ -193,13 +193,13 @@ public partial class RenderingService : IDisposable
             if (_instances.ContainsKey(rid))
             {
                 DisposeInstanceTree(rid);
-                Logger.Debug("Freed Instance {0}", rid);
+                Logger.Verbose("Freed Instance {0}", rid);
             }
         }
         else if (rid.Type == typeof(CameraData))
         {
             RemoveResource(_cameras, rid, out _);
-            Logger.Debug("Freed Camera {0}", rid);
+            Logger.Verbose("Freed Camera {0}", rid);
         }
         else if (rid.Type == typeof(MeshData))
         {
@@ -207,7 +207,7 @@ public partial class RenderingService : IDisposable
             {
                 DisposeBuffers(mesh!);
                 InvalidateMultiMesh(rid);
-                Logger.Debug("Freed Mesh {0}", rid);
+                Logger.Verbose("Freed Mesh {0}", rid);
             }
         }
         else if (rid.Type == typeof(MaterialData))
@@ -216,7 +216,7 @@ public partial class RenderingService : IDisposable
             {
                 material!.Effect?.Dispose();
                 InvalidateMaterial(rid);
-                Logger.Debug("Freed Material {0}", rid);
+                Logger.Verbose("Freed Material {0}", rid);
             }
         }
         else if (rid.Type == typeof(MultiMeshData))
@@ -225,7 +225,7 @@ public partial class RenderingService : IDisposable
             {
                 mm!.InstanceBuffer?.Dispose();
                 mm.InstanceDeclaration?.Dispose();
-                Logger.Debug("Freed MultiMesh {0}", rid);
+                Logger.Verbose("Freed MultiMesh {0}", rid);
             }
         }
     }

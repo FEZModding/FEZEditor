@@ -31,7 +31,7 @@ public partial class RenderingService
     {
         var rid = AllocateRid(typeof(MultiMeshData));
         _multiMeshes[rid] = new MultiMeshData();
-        Logger.Debug("MultiMesh created {0}", rid);
+        Logger.Verbose("MultiMesh created {0}", rid);
         return rid;
     }
 
@@ -91,7 +91,7 @@ public partial class RenderingService
         data.InstanceDeclaration = new VertexDeclaration(offset, elements);
         data.InstanceBuffer =
             new DynamicVertexBuffer(GraphicsDevice, data.InstanceDeclaration, instances, BufferUsage.WriteOnly);
-        Logger.Debug("MultiMesh {0} allocated {1} instance(s), dataType={2}", multiMesh, instances, dataType);
+        Logger.Verbose("MultiMesh {0} allocated {1} instance(s), dataType={2}", multiMesh, instances, dataType);
     }
 
     public void MultiMeshDeallocate(Rid multiMesh)
@@ -100,7 +100,7 @@ public partial class RenderingService
         data.InstanceBuffer?.Dispose();
         data.InstanceDeclaration?.Dispose();
         _multiMeshes[multiMesh] = new MultiMeshData();
-        Logger.Debug("MultiMesh {0} deallocated", multiMesh);
+        Logger.Verbose("MultiMesh {0} deallocated", multiMesh);
     }
 
     public int MultiMeshGetInstanceCount(Rid multiMesh)
