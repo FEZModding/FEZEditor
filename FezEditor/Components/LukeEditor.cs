@@ -581,18 +581,18 @@ public class LukeEditor : EditorComponent
     {
         var changed = false;
 
-        if (ImGui.CollapsingHeader("Layers", ImGuiTreeNodeFlags.DefaultOpen))
+        if (ImGui.CollapsingHeader("Sky Layers", ImGuiTreeNodeFlags.DefaultOpen))
         {
             if (ImGui.Button($"{Lucide.Plus} Add##AddLayer"))
             {
                 var rootPath = $"Skies/{_sky.Name}/";
                 ResourceService.RequestAssetPathFromUser(
-                    title: "Select Layer Texture",
+                    title: "Select Sky Layer Texture",
                     text: "Pick a texture for the new sky layer:",
                     rootPath: rootPath,
                     onProvided: picked =>
                     {
-                        using (History.BeginScope("Add Layer"))
+                        using (History.BeginScope("Add Sky Layer"))
                         {
                             _sky.Layers.Add(new SkyLayer { Name = picked[rootPath.Length..] });
                             _revisualize = true;
@@ -603,7 +603,7 @@ public class LukeEditor : EditorComponent
             for (var i = 0; i < _sky.Layers.Count; i++)
             {
                 var layer = _sky.Layers[i];
-                var label = string.IsNullOrEmpty(layer.Name) ? $"Layer {i}" : layer.Name;
+                var label = string.IsNullOrEmpty(layer.Name) ? $"Sky Layer {i}" : layer.Name;
 
                 ImGui.PushID(i);
 
@@ -616,7 +616,7 @@ public class LukeEditor : EditorComponent
                     var inFront = layer.InFront;
                     if (ImGui.Checkbox("In Front", ref inFront))
                     {
-                        using (History.BeginScope("Edit Layer In Front"))
+                        using (History.BeginScope("Edit Sky Layer In Front"))
                         {
                             layer.InFront = inFront;
                             changed = true;
@@ -626,7 +626,7 @@ public class LukeEditor : EditorComponent
                     var opacity = layer.Opacity;
                     if (ImGui.DragFloat("Opacity", ref opacity, 0.01f, 0f, 1f))
                     {
-                        using (History.BeginScope("Edit Layer Opacity"))
+                        using (History.BeginScope("Edit Sky Layer Opacity"))
                         {
                             layer.Opacity = opacity;
                             changed = true;
@@ -636,7 +636,7 @@ public class LukeEditor : EditorComponent
                     var fogTint = layer.FogTint;
                     if (ImGui.DragFloat("Fog Tint", ref fogTint, 0.01f, 0f, 1f))
                     {
-                        using (History.BeginScope("Edit Layer Fog Tint"))
+                        using (History.BeginScope("Edit Sky Layer Fog Tint"))
                         {
                             layer.FogTint = fogTint;
                             changed = true;
@@ -645,7 +645,7 @@ public class LukeEditor : EditorComponent
 
                     if (ImGui.Button($"{Lucide.Trash2} Remove"))
                     {
-                        using (History.BeginScope("Remove Layer"))
+                        using (History.BeginScope("Remove Sky Layer"))
                         {
                             _sky.Layers.RemoveAt(i);
                             changed = true;
