@@ -29,7 +29,7 @@ public class JadeEditor : EditorComponent
 
     private bool _pendingRevisualize;
 
-    private bool _showProperties = true;
+    private bool _showProperties;
 
     private bool _showTree;
 

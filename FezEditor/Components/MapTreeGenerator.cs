@@ -82,7 +82,7 @@ public class MapTreeGenerator : DrawableGameComponent
 
     private string _status = "";
 
-    private State _state = State.Processing;
+    private State _state = State.SelectingRoot;
 
     private State _previousState = State.Disposed;
 
@@ -113,7 +113,7 @@ public class MapTreeGenerator : DrawableGameComponent
 
     public override void Draw(GameTime gameTime)
     {
-        if (_state == State.Disposed)
+        if (_state is State.Disposed or State.SelectingRoot)
         {
             return;
         }
@@ -454,6 +454,7 @@ public class MapTreeGenerator : DrawableGameComponent
     private enum State
     {
         Disposed,
+        SelectingRoot,
         Processing,
         Complete
     }
