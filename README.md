@@ -116,3 +116,4 @@ This project uses:
 * [FEZModding folks](https://github.com/FEZModding) for providing modding materials and tools.
 * [Godot contributors](https://github.com/godotengine/godot) for saving hours of headaches when creating a PoC.
 * [Krzyhau](https://github.com/Krzyhau) for his contributions and splash screen art work!
+* [Michael Romero](https://github.com/halogenica) for his insperational [FezViewer](https://halogenica.net/tools/fez-viewer/) tool.
