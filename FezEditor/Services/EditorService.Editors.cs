@@ -13,16 +13,16 @@ namespace FezEditor.Services;
 
 public partial class EditorService
 {
-    private static readonly Dictionary<string, Type> AssetTypes = new()
+    public static readonly IReadOnlyDictionary<string, Type> AssetTypes = new Dictionary<string, Type>()
     {
         ["Art Object"] = typeof(ArtObject),
-        ["Text Storage"] = typeof(TextStorage),
-        ["Font"] = typeof(FezFont),
+        ["Localization Text"] = typeof(TextStorage),
+        ["Sprite Font"] = typeof(FezFont),
         ["Level"] = typeof(Level),
-        ["Map"] = typeof(MapTree),
+        ["World Map"] = typeof(MapTree),
         ["NPC Metadata"] = typeof(NpcMetadata),
         ["Sky"] = typeof(Sky),
-        ["Song"] = typeof(TrackedSong),
+        ["Tracked Song"] = typeof(TrackedSong),
         ["Trile Set"] = typeof(TrileSet)
     };
 
@@ -48,11 +48,6 @@ public partial class EditorService
         };
     }
 
-    public static IEnumerable<KeyValuePair<string, Type>> GetAssetTypes()
-    {
-        return AssetTypes;
-    }
-
     public static string GetExtensionForType(Type assetType)
     {
         if (assetType == typeof(TrackedSong)) return "fezsong.json";
@@ -65,6 +60,33 @@ public partial class EditorService
         if (assetType == typeof(Sky)) return "fezsky.json";
         if (assetType == typeof(NpcMetadata)) return "feznpc.json";
         throw new InvalidOperationException();
+    }
+
+    public static string GetFileIcon(string extension)
+    {
+        if (string.IsNullOrEmpty(extension))
+        {
+            return Lucide.FileQuestionMark;
+        }
+
+        return extension switch
+        {
+            ".fezanim.json" => AtIcons.Film,
+            ".fezao.glb" => AtIcons.Pyramid,
+            ".fezlvl.json" => AtIcons.Tilemap,
+            ".fezmap.json" => AtIcons.Globe,
+            ".feznpc.json" => AtIcons.Human,
+            ".fezsky.json" => AtIcons.SunCloud,
+            ".fezsong.json" => AtIcons.NoteDouble,
+            ".feztxt.json" => AtIcons.Text,
+            ".fezts.glb" => AtIcons.Tileset,
+            ".fezfont.json" or ".fezfont.png" => AtIcons.Font,
+            ".fxc" => AtIcons.Checkerboard,
+            ".ogg" or ".wav" => AtIcons.Speaker,
+            ".png" => AtIcons.Image,
+            ".gif" => AtIcons.Film,
+            _ => Lucide.FileBox
+        };
     }
 
     public void CreateAndSaveAsset(Type assetType, string relativePath, string defaultName)

@@ -316,7 +316,7 @@ public class FileBrowser : DrawableGameComponent
                 }
                 else
                 {
-                    icon = GetFileIcon(node.Extension);
+                    icon = EditorService.GetFileIcon(node.Extension);
                 }
 
                 var label = $"{icon} {node.Name}";
@@ -413,18 +413,22 @@ public class FileBrowser : DrawableGameComponent
             return;
         }
 
-        if (flatten)
+        if (ImGui.BeginMenu($"{Lucide.FilePlusCorner} Create New Asset..."))
         {
-            DrawNewAssetMenuItems("New ", node.Path);
-        }
-        else
-        {
-            if (ImGui.BeginMenu($"{Lucide.FilePlusCorner} Create New Asset..."))
+            foreach (var (name, type) in EditorService.AssetTypes)
             {
-                DrawNewAssetMenuItems(string.Empty, node.Path);
-                ImGui.EndMenu();
+                var extension = "." + EditorService.GetExtensionForType(type);
+                if (ImGui.MenuItem($"{EditorService.GetFileIcon(extension)} {name}"))
+                {
+                    ShowCreateDialog(node.Path, type);
+                }
             }
 
+            ImGui.EndMenu();
+        }
+
+        if (!flatten)
+        {
             var shortcut = _inputService.GetActionBinding(InputActions.FileBrowserCopyRelativePath);
             if (ImGui.MenuItem($"{Lucide.Copy} Copy Relative Path", shortcut))
             {
@@ -476,17 +480,6 @@ public class FileBrowser : DrawableGameComponent
         if (ImGui.MenuItem($"{Lucide.Copy} Copy to mod"))
         {
             _resourceService.CopyFromReference(node.Path);
-        }
-    }
-
-    private void DrawNewAssetMenuItems(string prefix, string basePath)
-    {
-        foreach (var (name, type) in EditorService.GetAssetTypes())
-        {
-            if (ImGui.MenuItem(prefix + name))
-            {
-                ShowCreateDialog(basePath, type);
-            }
         }
     }
 
@@ -769,33 +762,6 @@ public class FileBrowser : DrawableGameComponent
                 stack.Push(node.Children[i]);
             }
         }
-    }
-
-    private static string GetFileIcon(string extension)
-    {
-        if (string.IsNullOrEmpty(extension))
-        {
-            return Lucide.FileQuestionMark;
-        }
-
-        return extension switch
-        {
-            ".fezanim.json" => AtIcons.Film,
-            ".fezao.glb" => AtIcons.Pyramid,
-            ".fezlvl.json" => AtIcons.Tilemap,
-            ".fezmap.json" => AtIcons.Globe,
-            ".feznpc.json" => AtIcons.Human,
-            ".fezsky.json" => AtIcons.SunCloud,
-            ".fezsong.json" => AtIcons.NoteDouble,
-            ".feztxt.json" => AtIcons.Text,
-            ".fezts.glb" => AtIcons.Tileset,
-            ".fezfont.png" => AtIcons.Font,
-            ".fxc" => AtIcons.Checkerboard,
-            ".ogg" or ".wav" => AtIcons.Speaker,
-            ".png" => AtIcons.Image,
-            ".gif" => AtIcons.Film,
-            _ => Lucide.FileBox
-        };
     }
 
     private class FileNode
