@@ -19,7 +19,7 @@ It also supports extracting assets and exporting levels as GLTF dioramas.
 
 ## User Guide
 
-Available at [FEZModding Wiki](https://fezmodding.github.io/wiki/editor).
+Will be available at [FEZModding Wiki](https://fezmodding.github.io/wiki/editor) soon.
 
 ## Cloning
 
