@@ -1,6 +1,7 @@
 ﻿using FezEditor.Actors;
 using FezEditor.Structure;
 using FezEditor.Tools;
+using FEZRepacker.Core.Definitions.Game.Common;
 using FEZRepacker.Core.Definitions.Game.Level;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
@@ -69,7 +70,10 @@ internal class GomezContext : BaseContext
         if (Eddy.InstanceBrowser.Select(out var sel) && sel.context == EddyContext.Gomez)
         {
             Eddy.InstanceBrowser.Consume();
-            Eddy.FocusOn(Level.StartingFace.Id.ToXna().ToVector3() + Vector3.Up);
+            if (Level.StartingFace != null)
+            {
+                Eddy.FocusOn(Level.StartingFace.Id.ToXna().ToVector3() + Vector3.Up);
+            }
         }
     }
 
@@ -154,7 +158,7 @@ internal class GomezContext : BaseContext
 
     private void UpdateTranslate()
     {
-        if (!_selected)
+        if (!_selected || Level.StartingFace == null)
         {
             return;
         }
@@ -182,7 +186,7 @@ internal class GomezContext : BaseContext
 
     private void UpdateRotate()
     {
-        if (!_selected)
+        if (!_selected || Level.StartingFace == null)
         {
             return;
         }
@@ -226,7 +230,23 @@ internal class GomezContext : BaseContext
             return;
         }
 
-        ImGui.Text("Gomez (Starting Position)");
+        ImGui.SetNextItemWidth(-1);
+        if (ImGuiX.NullableToggleButton("Starting Face", Level.StartingFace))
+        {
+            var shouldAdd = Level.StartingFace == null;
+            var actionName = shouldAdd ? "Add " : "Remove";
+            using (Eddy.History.BeginScope($"{actionName} Gomez Starting Face", EddyContext.Gomez))
+            {
+                Level.StartingFace = shouldAdd
+                    ? new TrileFace { Face = FaceOrientation.Front, Id = new TrileEmplacement() }
+                    : null;
+            }
+        }
+
+        if (Level.StartingFace == null)
+        {
+            return;
+        }
 
         var emplacement = Level.StartingFace.Id;
         var empValues = new[] { emplacement.X, emplacement.Y, emplacement.Z };
@@ -253,8 +273,16 @@ internal class GomezContext : BaseContext
     {
         if (context == EddyContext.Gomez && _gomezActor != null)
         {
-            _gomezActor.Transform.Position = Level.StartingFace.Id.ToXna().ToVector3() + Vector3.Up;
-            _gomezActor.Transform.Rotation = Level.StartingFace.Face.AsQuaternion();
+            if (Level.StartingFace != null)
+            {
+                _gomezActor.Transform.Position = Level.StartingFace.Id.ToXna().ToVector3() + Vector3.Up;
+                _gomezActor.Transform.Rotation = Level.StartingFace.Face.AsQuaternion();
+            }
+            else
+            {
+                _gomezActor.Transform.Position = Vector3.Zero;
+                _gomezActor.Transform.Rotation = Quaternion.Identity;
+            }
         }
     }
 
@@ -263,9 +291,13 @@ internal class GomezContext : BaseContext
         TeardownVisualization();
         _gomezActor = CreateSubActor();
         _gomezActor.Name = "Gomez";
-        _gomezActor.Transform.Position = Level.StartingFace.Id.ToXna().ToVector3() + Vector3.Up;
-        _gomezActor.Transform.Rotation = Level.StartingFace.Face.AsQuaternion();
         _gomezActor.AddComponent<GomezMesh>();
+
+        if (Level.StartingFace != null)
+        {
+            _gomezActor.Transform.Position = Level.StartingFace.Id.ToXna().ToVector3() + Vector3.Up;
+            _gomezActor.Transform.Rotation = Level.StartingFace.Face.AsQuaternion();
+        }
     }
 
     protected override bool IsContextAllowed(EddyContext context)

@@ -173,8 +173,20 @@ public class EddyEditor : EditorComponent, IEddyEditor
             gizmo.Camera = _cameraActor.GetComponent<Camera>();
         }
 
-        var gomezPos = _level.StartingFace.Id.ToXna().ToVector3() + (Vector3.Up * 1.5f);
-        var approachDir = _level.StartingFace.Face.AsVector();
+        Vector3 gomezPos;
+        Vector3 approachDir;
+
+        if (_level.StartingFace != null)
+        {
+            gomezPos = _level.StartingFace.Id.ToXna().ToVector3() + (Vector3.Up * 1.5f);
+            approachDir = _level.StartingFace.Face.AsVector();
+        }
+        else
+        {
+            gomezPos = _level.Size.ToXna() / 2f;
+            approachDir = Vector3.Forward;
+        }
+
         _cameraActor.GetComponent<FirstPersonControl>().FocusOn(gomezPos, approachDir, 10f);
     }
 
@@ -559,7 +571,8 @@ public class EddyEditor : EditorComponent, IEddyEditor
                 edited |= ImGui.CheckboxFlags("Overlapped Triles", ref visuals, (int)EddyVisuals.OverlappedTriles);
                 edited |= ImGui.CheckboxFlags("Art Objects", ref visuals, (int)EddyVisuals.ArtObjects);
                 edited |= ImGui.CheckboxFlags("Background Planes", ref visuals, (int)EddyVisuals.BackgroundPlanes);
-                edited |= ImGui.CheckboxFlags("Non-Playable Characters", ref visuals, (int)EddyVisuals.NonPlayableCharacters);
+                edited |= ImGui.CheckboxFlags("Non-Playable Characters", ref visuals,
+                    (int)EddyVisuals.NonPlayableCharacters);
                 edited |= ImGui.CheckboxFlags("Gomez", ref visuals, (int)EddyVisuals.Gomez);
                 edited |= ImGui.CheckboxFlags("Liquid", ref visuals, (int)EddyVisuals.Liquid);
                 edited |= ImGui.CheckboxFlags("Sky", ref visuals, (int)EddyVisuals.Sky);
