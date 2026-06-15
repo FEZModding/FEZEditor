@@ -53,6 +53,7 @@ public class FezEditor : Game
         catch (Exception e)
         {
             Logger.Fatal(e, "Unhandled Exception");
+            throw;
         }
     }
 
