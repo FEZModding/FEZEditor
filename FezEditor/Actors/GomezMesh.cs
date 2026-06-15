@@ -59,7 +59,7 @@ public class GomezMesh : ActorComponent, IPickable
         _rendering.MaterialSetBlendMode(_backMaterial, BlendMode.AlphaBlend);
 
         _frontTexture = content.Load<Texture2D>("Gomez/GomezFront");
-        var frontSheet = content.LoadJson<SpriteData>("Gomez/GomezFront");
+        var frontSheet = content.LoadJson<SpriteData>("Gomez/GomezFrontFrames");
         _frontFrames = frontSheet.ToFrameList();
         _rendering.MaterialAssignBaseTexture(_frontMaterial, _frontTexture);
 

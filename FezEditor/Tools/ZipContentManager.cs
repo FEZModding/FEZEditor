@@ -50,16 +50,28 @@ public class ZipContentManager : ContentManager, IContentManager
             return entry.Open();
         }
 
-        foreach (var entry1 in _archive.Entries)
+        foreach (var candidate in _archive.Entries)
         {
-            var path = Path.ChangeExtension(entry1.FullName, null);
-            if (path.Equals(assetName, StringComparison.Ordinal))
+            var path = Path.ChangeExtension(candidate.FullName, null);
+            if (!path.Equals(assetName, StringComparison.Ordinal))
             {
-                return entry1.Open();
+                continue;
             }
+
+            if (entry != null)
+            {
+                throw new FileNotFoundException($"Asset name is ambiguous in content bundle: {assetName}");
+            }
+
+            entry = candidate;
         }
 
-        throw new FileNotFoundException();
+        if (entry == null)
+        {
+            throw new FileNotFoundException($"Asset not found in content bundle: {assetName}");
+        }
+
+        return entry.Open();
     }
 
     protected override Stream OpenStream(string assetName)
