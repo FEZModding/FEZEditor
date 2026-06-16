@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026.06.1 - 2026-06-16
+
+#### Fixes
+
+- `EddyEditor`: Properly handle nullable Gomez starting face
+- `Content`: Fix ambiguous asset lookup in ZipContentManager
+
 ## 2026.06 - 2026-06-14
 
 Fezzing Through!
