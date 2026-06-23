@@ -1,79 +1,64 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using FezEditor.Tools;
 
 namespace FezEditor.Structure;
 
 public class History : IDisposable
 {
-    private const int MaxHistorySize = byte.MaxValue;
-
-    private readonly JsonSerializerOptions _jsonOptions = new()
+    private static readonly JsonSerializerOptions JsonOptions = new()
     {
         IncludeFields = true,
-        WriteIndented = false
+        WriteIndented = false,
+        Converters = { new TrileEmplacementConverter() }
     };
+
+    private static readonly Change EmptyChange = new(string.Empty, string.Empty);
+
+    private const int MaxHistorySize = byte.MaxValue;
 
     private readonly LinkedList<UndoOperation> _undoStack = new();
 
     private readonly LinkedList<UndoOperation> _redoStack = new();
 
-    private readonly HashSet<object> _tracked = new();
+    private object _tracked = null!;
+
+    private Type TrackedType
+    {
+        get
+        {
+            if (_tracked == null)
+            {
+                throw new InvalidOperationException("Cannot use history before tracking an object!");
+            }
+
+            return _tracked.GetType();
+        }
+    }
 
     public bool CanUndo => _undoStack.Count > 0;
 
     public bool CanRedo => _redoStack.Count > 0;
 
-    public int UndoCount => _undoStack.Count;
-
-    public int RedoCount => _redoStack.Count;
-
-    public event Action<object?>? StateChanged;
-
-    public void RegisterConverter(JsonConverter converter)
-    {
-        _jsonOptions.Converters.Add(converter);
-    }
+    public event Action<Change>? StateChanged;
 
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-        foreach (var uo in _undoStack)
-        {
-            uo.States.Clear();
-        }
-
-        foreach (var uo in _redoStack)
-        {
-            uo.States.Clear();
-        }
-
         _undoStack.Clear();
         _redoStack.Clear();
-        _tracked.Clear();
     }
 
     public void Track(object target)
     {
-        _tracked.Add(target);
-    }
-
-    public void Untrack(object target)
-    {
-        _tracked.Remove(target);
-    }
-
-    public void TrackRange(IEnumerable<object> targets)
-    {
-        foreach (var target in targets)
-        {
-            _tracked.Add(target);
-        }
+        _tracked = target;
     }
 
     public IDisposable BeginScope(string name, object? tag = null)
     {
-        return new Scope(this, name, tag);
+        // TODO: Remove tag param later, leave it for now for less refactoring
+        return new Scope(this, name);
     }
 
     public void Undo()
@@ -83,17 +68,18 @@ public class History : IDisposable
             return;
         }
 
-        var op = _undoStack.Last!.Value;
+        var after = _undoStack.Last!.Value;
         _undoStack.RemoveLast();
 
-        _redoStack.AddLast(CaptureState(op.Name, op.Tag));
+        var before = CaptureState(after.Name);
+        _redoStack.AddLast(before);
         if (_redoStack.Count > MaxHistorySize)
         {
             _redoStack.RemoveFirst();
         }
 
-        Restore(op);
-        StateChanged?.Invoke(op.Tag);
+        Restore(after);
+        StateChanged?.Invoke(new Change(before.Json, after.Json));
     }
 
     public void Redo()
@@ -103,78 +89,58 @@ public class History : IDisposable
             return;
         }
 
-        var op = _redoStack.Last!.Value;
+        var after = _redoStack.Last!.Value;
         _redoStack.RemoveLast();
 
-        _undoStack.AddLast(CaptureState(op.Name, op.Tag));
+        var before = CaptureState(after.Name);
+        _undoStack.AddLast(before);
         if (_undoStack.Count > MaxHistorySize)
         {
             _undoStack.RemoveFirst();
         }
 
-        Restore(op);
-        StateChanged?.Invoke(op.Tag);
+        Restore(after);
+        StateChanged?.Invoke(new Change(before.Json, after.Json));
     }
 
     public void Clear()
     {
         _undoStack.Clear();
         _redoStack.Clear();
-        StateChanged?.Invoke(null);
+        StateChanged?.Invoke(EmptyChange);
     }
 
-    private UndoOperation CaptureState(string name, object? tag)
+    private UndoOperation CaptureState(string name)
     {
-        var states = new Dictionary<object, (Type type, string Json)>();
-        foreach (var target in _tracked)
-        {
-            var json = JsonSerializer.Serialize(target, target.GetType(), _jsonOptions);
-            states[target] = (target.GetType(), json);
-        }
-
-        return new UndoOperation(name, tag, states);
+        var json = JsonSerializer.Serialize(_tracked, TrackedType, JsonOptions);
+        return new UndoOperation(name, json);
     }
 
     private void Restore(UndoOperation op)
     {
-        foreach (var (target, (type, json)) in op.States)
+        var restored = JsonSerializer.Deserialize(op.Json, TrackedType, JsonOptions)!;
+        foreach (var property in TrackedType.GetProperties())
         {
-            var restored = JsonSerializer.Deserialize(json, type, _jsonOptions)!;
-
-            var targetType = target.GetType();
-            foreach (var prop in targetType.GetProperties())
+            if (property is { CanRead: true, CanWrite: true } &&
+                property.GetCustomAttribute<JsonIgnoreAttribute>() == null)
             {
-                if (prop is { CanRead: true, CanWrite: true }
-                    && prop.GetCustomAttribute<JsonIgnoreAttribute>() == null)
-                {
-                    prop.SetValue(target, prop.GetValue(restored));
-                }
+                property.SetValue(_tracked, property.GetValue(restored));
             }
+        }
 
-            foreach (var field in targetType.GetFields())
+        foreach (var field in TrackedType.GetFields())
+        {
+            if (!field.IsInitOnly &&
+                field.GetCustomAttribute<JsonIgnoreAttribute>() == null)
             {
-                if (!field.IsInitOnly
-                    && field.GetCustomAttribute<JsonIgnoreAttribute>() == null)
-                {
-                    field.SetValue(target, field.GetValue(restored));
-                }
+                field.SetValue(_tracked, field.GetValue(restored));
             }
         }
     }
 
     private void Push(UndoOperation before, UndoOperation after)
     {
-        var hasChanges = false;
-        foreach (var (target, (_, jsonBefore)) in before.States)
-        {
-            if (after.States.TryGetValue(target, out var afterState) && jsonBefore != afterState.Json)
-            {
-                hasChanges = true;
-                break;
-            }
-        }
-
-        if (!hasChanges)
+        if (before.Json.Equals(after.Json))
         {
             return;
         }
@@ -186,20 +152,23 @@ public class History : IDisposable
         }
 
         _redoStack.Clear();
-        StateChanged?.Invoke(before.Tag);
+        StateChanged?.Invoke(new Change(before.Json, after.Json));
     }
+
+    public sealed record Change(string BeforeJson, string AfterJson);
 
     private sealed class Scope : IDisposable
     {
         private readonly History _service;
+
         private readonly UndoOperation _before;
-        private readonly object? _tag;
+
         private bool _disposed;
 
-        internal Scope(History service, string name, object? tag)
+        internal Scope(History service, string name)
         {
             _service = service;
-            _before = service.CaptureState(name, _tag = tag);
+            _before = service.CaptureState(name);
         }
 
         public void Dispose()
@@ -210,10 +179,10 @@ public class History : IDisposable
             }
 
             _disposed = true;
-            var after = _service.CaptureState(_before.Name, _tag);
+            var after = _service.CaptureState(_before.Name);
             _service.Push(_before, after);
         }
     }
 
-    private record UndoOperation(string Name, object? Tag, Dictionary<object, (Type type, string Json)> States);
+    private sealed record UndoOperation(string Name, string Json);
 }

@@ -93,9 +93,8 @@ public class EddyEditor : EditorComponent, IEddyEditor
         AssetBrowser = new AssetBrowser(game);
         InstanceBrowser = new InstanceBrowser(level, AssetBrowser);
         _scriptBrowser = new ScriptBrowser(game, level, this);
-        History.RegisterConverter(new TrileEmplacementConverter());
         History.Track(level);
-        History.StateChanged += tag => _revisualizeContext = tag is EddyContext ctx ? ctx : SelectedContext;
+        History.StateChanged += _ => _revisualizeContext = SelectedContext; // BUG: Eddy may be broken from there
     }
 
     public override void Update(GameTime gameTime)
