@@ -1,4 +1,4 @@
-﻿using FezEditor.Services;
+using FezEditor.Services;
 using FezEditor.Structure;
 using FezEditor.Tools;
 using FEZRepacker.Core.Definitions.Game.Level;
@@ -175,8 +175,7 @@ public class TrilesMesh : ActorComponent, IPickable
 
     public void RemoveOverlapInstance(TrileEmplacement emplacement, int index)
     {
-        _overlaps.Remove((emplacement, index));
-        _instancesDirty = true;
+        _instancesDirty |= _overlaps.Remove((emplacement, index));
     }
 
     public void ClearOverlapInstancesAt(TrileEmplacement emplacement)
@@ -227,7 +226,7 @@ public class TrilesMesh : ActorComponent, IPickable
 
     public void RemoveInstance(TrileEmplacement emplacement)
     {
-        _instancesDirty = _instances.Remove(emplacement);
+        _instancesDirty |= _instances.Remove(emplacement);
         FreeDisplacement(emplacement);
     }
 

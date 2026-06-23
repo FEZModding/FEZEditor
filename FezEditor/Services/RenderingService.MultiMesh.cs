@@ -1,4 +1,4 @@
-﻿using FezEditor.Structure;
+using FezEditor.Structure;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -85,6 +85,12 @@ public partial class RenderingService
             elements[1 + i] = new VertexElement(offset, VertexElementFormat.Vector4,
                 VertexElementUsage.TextureCoordinate, 2 + i);
             offset += 16; // sizeof(Vector4)
+        }
+
+        if (instances <= 0)
+        {
+            Logger.Verbose("MultiMesh {0} allocated {1} instance(s), dataType={2}", multiMesh, instances, dataType);
+            return;
         }
 
         // Allocate instance buffer.
@@ -176,7 +182,13 @@ public partial class RenderingService
             return;
         }
 
-        if (mm!.InstanceBuffer == null || mm.InstanceDeclaration == null)
+        var visible = mm!.VisibleInstances < 0 ? mm.InstanceCount : mm.VisibleInstances;
+        if (visible <= 0)
+        {
+            return;
+        }
+
+        if (mm.InstanceBuffer == null || mm.InstanceDeclaration == null)
         {
             throw new InvalidOperationException($"MultiMesh {multiMeshRid} was not allocated.");
         }
@@ -200,8 +212,7 @@ public partial class RenderingService
             }
         }
 
-        var visible = mm.VisibleInstances < 0 ? mm.InstanceCount : mm.VisibleInstances;
-        if (visible <= 0 || mm.TemplatePrimitiveCount <= 0)
+        if (mm.TemplatePrimitiveCount <= 0)
         {
             return;
         }
