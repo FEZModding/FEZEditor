@@ -53,6 +53,10 @@ public sealed class CursorSystem : EddySystem
                 DrawHoveredPathWaypoint(waypoint);
                 break;
 
+            case InstanceId.BackgroundPlane bgPlane:
+                DrawHoveredBackgroundPlane(bgPlane);
+                break;
+
             case { } instance:
                 DrawHoveredInstance(instance);
                 break;
@@ -75,7 +79,8 @@ public sealed class CursorSystem : EddySystem
 
             case SelectionState.Instance instance:
                 DrawSelectedVolumes(instance.Selected.Where(id => id is InstanceId.Volume));
-                DrawSelectedInstances(instance.Selected.Where(id => id is not InstanceId.Volume).ToList());
+                DrawSelectedBackgroundPlanes(instance.Selected.Where(id => id is InstanceId.BackgroundPlane).ToList());
+                DrawSelectedInstances(instance.Selected.Where(id => id is not InstanceId.Volume and not InstanceId.BackgroundPlane).ToList());
                 break;
         }
 
@@ -290,6 +295,65 @@ public sealed class CursorSystem : EddySystem
                 pathMesh.WaypointColors[i] = PathColor;
             }
         }
+    }
+
+    #endregion
+
+    #region Background Planes
+
+    private void DrawHoveredBackgroundPlane(InstanceId.BackgroundPlane instance)
+    {
+        var hoverSurfaces = new[] {
+            BuildWireframe(instance, HoverColor),
+            BuildBackgroundPlaneBackQuad(instance)
+        }.Where(s => s.HasValue).Select(s => s!.Value).ToList();
+        if (hoverSurfaces.Count > 0)
+        {
+            _cursor.SetHoverSurfaces(hoverSurfaces, HoverColor);
+        }
+
+        TintInstances([instance], HoverColor);
+    }
+
+    private void DrawSelectedBackgroundPlanes(IEnumerable<InstanceId> instances)
+    {
+        var planeInstances = instances.OfType<InstanceId.BackgroundPlane>().ToList();
+
+        var selectionSurfaces = planeInstances
+            .SelectMany(id => new[] { BuildWireframe(id, SelectionColor), BuildBackgroundPlaneBackQuad(id) })
+            .Where(s => s.HasValue)
+            .Select(s => s!.Value)
+            .ToList();
+
+        if (selectionSurfaces.Count > 0)
+        {
+            _cursor.SetSelectionSurfaces(selectionSurfaces, SelectionColor);
+        }
+
+        TintInstances(planeInstances, SelectionColor);
+    }
+
+    private (MeshSurface, PrimitiveType)? BuildBackgroundPlaneBackQuad(InstanceId instance)
+    {
+        if (!Eddy.Registry.TryGetActor(instance, out var actor) ||
+            !actor.TryGetComponent<BackgroundPlaneMesh>(out var mesh))
+        {
+            return null;
+        }
+
+        if (mesh!.DoubleSided)
+        {
+            return null;
+        }
+
+        var surface = MeshSurface.CreateQuad(mesh.PlaneSize * actor.Transform.Scale);
+        var rotationMatrix = Matrix.CreateFromQuaternion(actor.Transform.Rotation);
+        for (var i = 0; i < surface.Vertices.Length; i++)
+        {
+            surface.Vertices[i] = Vector3.Transform(surface.Vertices[i], rotationMatrix) + actor.Transform.Position;
+        }
+
+        return (surface, PrimitiveType.TriangleList);
     }
 
     #endregion
