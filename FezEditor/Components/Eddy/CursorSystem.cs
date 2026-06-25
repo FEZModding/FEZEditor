@@ -97,7 +97,7 @@ public sealed class CursorSystem : EddySystem
         }
 
         var face = Eddy.Hovered is { Instance: InstanceId.Trile, Face: var fo } ? fo : FaceOrientation.Top;
-        var center = instance.Position.ToXna() + new Vector3(0.5f);
+        var center = GetCurrentOverlapLayerTrilePosition(instance) + new Vector3(0.5f);
         var origin = center + (face.AsVector() * (0.5f + CursorMesh.OverlayOffset));
         var surface = MeshSurface.CreateFaceQuad(Vector3.One, origin, face);
         _cursor.SetHoverSurfaces([(surface, PrimitiveType.TriangleList)], HoverColor);
@@ -110,13 +110,26 @@ public sealed class CursorSystem : EddySystem
             .Where(emplacement => Level.Triles.ContainsKey(emplacement))
             .Select(emplacement =>
             {
-                var center = Level.Triles[emplacement].Position.ToXna() + new Vector3(0.5f);
+                var center = GetCurrentOverlapLayerTrilePosition(Level.Triles[emplacement]) + new Vector3(0.5f);
                 var origin = center + (normal * (0.5f + CursorMesh.OverlayOffset));
                 var surface = MeshSurface.CreateFaceQuad(Vector3.One, origin, face);
                 return (surface, PrimitiveType.TriangleList);
             });
 
         _cursor.SetSelectionSurfaces(surfaces, SelectionColor);
+    }
+
+    private Vector3 GetCurrentOverlapLayerTrilePosition(TrileInstance trile)
+    {
+        if (Eddy.OverlapIndex > 0)
+        {
+            var slot = Eddy.OverlapIndex - 1;
+            if (trile.OverlappedTriles != null && slot < trile.OverlappedTriles.Count)
+            {
+                return trile.OverlappedTriles[slot].Position.ToXna();
+            }
+        }
+        return trile.Position.ToXna();
     }
 
     private void DrawPaintHologram()

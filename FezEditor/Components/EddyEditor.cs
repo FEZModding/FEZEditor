@@ -37,7 +37,16 @@ public class EddyEditor : EditorComponent
 
     public ViewMode CurrentView { get; private set; } = ViewMode.Perspective;
 
-    public int OverlapIndex { get; set; } // 0 is main layer
+    public int OverlapIndex
+    {
+        get;
+        set
+        {
+            field = Math.Max(0, value);
+            Selected = new SelectionState.Empty();
+            VisualizeAllOverlappedTriles();
+        }
+    } // 0 is main layer
 
     public bool ShowAssetBrowser { get; set; }
 
@@ -341,6 +350,19 @@ public class EddyEditor : EditorComponent
         foreach (var instanceId in Registry.Instances)
         {
             Visualize(instanceId);
+        }
+    }
+
+    public void VisualizeAllOverlappedTriles()
+    {
+        foreach (var (emplacement, trile) in _level.Triles)
+        {
+            if (trile.OverlappedTriles == null) continue;
+            for (var i = 0; i < trile.OverlappedTriles.Count; i++)
+            {
+                var overlap = trile.OverlappedTriles[i];
+                Visualize(new InstanceId.TrileOverlapChange(emplacement, i, overlap, overlap));
+            }
         }
     }
 

@@ -142,7 +142,7 @@ public class ToolbarSystem : EddySystem
 
             if (ImGui.InputInt("##Layer", ref overlapIndex))
             {
-                Eddy.OverlapIndex = Math.Max(0, overlapIndex);
+                Eddy.OverlapIndex = overlapIndex;
             }
         }
 
