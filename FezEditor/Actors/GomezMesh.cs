@@ -8,10 +8,8 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace FezEditor.Actors;
 
-public class GomezMesh : ActorComponent, IPickable
+public class GomezMesh : ActorComponent, IPickable, ITinted
 {
-    public bool Pickable { get; set; } = true;
-
     public Color Tint { get; set; } = Color.Transparent;
 
     private readonly RenderingService _rendering;

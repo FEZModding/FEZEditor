@@ -125,6 +125,7 @@ public class ChrisEditor : EditorComponent, IChrisEditor
         {
             _collisionActor = _scene.CreateActor();
             _collisionActor.AddComponent<TrileCollisionMesh>();
+            _collisionActor.Visible = false;
         }
         {
             _boundsActor = _scene.CreateActor();
@@ -589,12 +590,11 @@ public class ChrisEditor : EditorComponent, IChrisEditor
 
         if (_context is TrileSetContext)
         {
-            var collision = _collisionActor.GetComponent<TrileCollisionMesh>();
-            var icon = collision.Visible ? Lucide.EyeOff : Lucide.Eye;
+            var icon = _collisionActor.Visible ? Lucide.EyeOff : Lucide.Eye;
             ImGui.SameLine();
             if (ImGui.Button(icon))
             {
-                collision.Visible = !collision.Visible;
+                _collisionActor.Visible = !_collisionActor.Visible;
             }
 
             if (ImGui.IsItemHovered())

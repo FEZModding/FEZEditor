@@ -76,7 +76,7 @@ public class Gizmo : ActorComponent
 
     public Camera Camera { get; set; } = null!;
 
-    public Vector2 Viewport { get; set; }
+    public Vector2 ViewportPosition { get; set; }
 
     public bool DragStarted { get; private set; }
 
@@ -417,8 +417,8 @@ public class Gizmo : ActorComponent
 
     private float ComputeGizmoScale(Vector3 origin)
     {
-        var p0 = Camera.Project(origin, Viewport);
-        var p1 = Camera.Project(origin + Camera.InverseView.Up, Viewport);
+        var p0 = Camera.Project(origin, ViewportPosition);
+        var p1 = Camera.Project(origin + Camera.InverseView.Up, ViewportPosition);
         var pixelsPerUnit = MathF.Abs(p0.Y - p1.Y);
         if (pixelsPerUnit < 0.001f)
         {
@@ -430,7 +430,7 @@ public class Gizmo : ActorComponent
 
     private Ray GetMouseRay()
     {
-        return Camera.Unproject(ImGuiX.GetMousePos(), Viewport);
+        return Camera.Unproject(ImGuiX.GetMousePos(), ViewportPosition);
     }
 
     private static Handle HitTestTranslate(Ray ray, Vector3 origin, float scale)

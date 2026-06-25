@@ -14,8 +14,6 @@ public class VolumeMesh : ActorComponent, IPickable
 
     public Color Color { get; set; } = Color.White;
 
-    public bool Pickable { get; set; } = true;
-
     public bool IsBlackHole { get; set; }
 
     private readonly RenderingService _rendering;

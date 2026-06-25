@@ -16,12 +16,12 @@ public class FarawayPreviewer : DrawableGameComponent
 {
     private static readonly ILogger Logger = Logging.Create<FarawayPreviewer>();
 
-    private static readonly (string Label, EddyEditor.ViewMode Mode, float Yaw)[] Viewpoints =
+    private static readonly (string Label, ViewMode Mode, float Yaw)[] Viewpoints =
     [
-        ("Front", EddyEditor.ViewMode.Front, 0f),
-        ("Right", EddyEditor.ViewMode.Right, MathHelper.PiOver2),
-        ("Back", EddyEditor.ViewMode.Back, MathHelper.Pi),
-        ("Left", EddyEditor.ViewMode.Left, -MathHelper.PiOver2)
+        ("Front", ViewMode.Front, 0f),
+        ("Right", ViewMode.Right, MathHelper.PiOver2),
+        ("Back", ViewMode.Back, MathHelper.Pi),
+        ("Left", ViewMode.Left, -MathHelper.PiOver2)
     ];
 
     public bool IsExporting => _state is State.WaitFrame or State.Capturing;
@@ -53,8 +53,8 @@ public class FarawayPreviewer : DrawableGameComponent
         _eddy = eddy;
         _resources = game.GetService<ResourceService>();
 
-        _savedVisuals = eddy.Visuals.Value;
-        _savedRtSize = _eddy.Scene.Viewport.GetSize();
+        _savedVisuals = eddy.Visuals;
+        _savedRtSize = _eddy.Viewport.GetSize();
 
         _eddy.Visuals = EddyVisuals.Preview;
         _eddy.SwitchToOrtho(Viewpoints[0].Mode, Viewpoints[0].Yaw);
@@ -175,30 +175,30 @@ public class FarawayPreviewer : DrawableGameComponent
         _pendingExport = kind;
         _state = State.WaitFrame;
 
-        _savedRtSize = _eddy.Scene.Viewport.GetSize();
+        _savedRtSize = _eddy.Viewport.GetSize();
         if (kind == ExportKind.FarawayThumb)
         {
-            _eddy.Scene.Viewport.SetSize(512, 512);
-            _eddy.Scene.Viewport.SetClearColor(new Color(255, 0, 255)); // magenta chroma-key
+            _eddy.Viewport.SetSize(512, 512);
+            _eddy.Viewport.SetClearColor(new Color(255, 0, 255)); // magenta chroma-key
             _eddy.Visuals = EddyVisuals.Preview & ~EddyVisuals.Sky;
         }
         else
         {
-            _eddy.Scene.Viewport.SetSize(128, 128);
-            _eddy.Scene.Viewport.SetClearColor(Color.Black);
+            _eddy.Viewport.SetSize(128, 128);
+            _eddy.Viewport.SetClearColor(Color.Black);
             _eddy.Visuals = EddyVisuals.Preview;
         }
     }
 
     private void RestoreRt()
     {
-        _eddy.Scene.Viewport.SetClearColor(Color.Black);
-        _eddy.Scene.Viewport.SetSize(_savedRtSize.W, _savedRtSize.H);
+        _eddy.Viewport.SetClearColor(Color.Black);
+        _eddy.Viewport.SetSize(_savedRtSize.W, _savedRtSize.H);
     }
 
     private void Capture()
     {
-        if (_eddy.Scene.Viewport.GetTexture() is not RenderTarget2D texture)
+        if (_eddy.Viewport.GetTexture() is not RenderTarget2D texture)
         {
             Logger.Warning("Render target texture is null, skipping capture");
             return;

@@ -20,17 +20,9 @@ public class TrileCollisionMesh : ActorComponent
         FaceOrientation.Left
     };
 
-    public bool Visible
-    {
-        get => _rendering.InstanceIsVisible(_instance);
-        set => _rendering.InstanceSetVisibility(_instance, value);
-    }
-
     private readonly List<InstanceData> _instances = new();
 
     private readonly RenderingService _rendering;
-
-    private readonly Rid _instance;
 
     private readonly Rid _mesh;
 
@@ -43,13 +35,11 @@ public class TrileCollisionMesh : ActorComponent
     public TrileCollisionMesh(Game game, Actor actor) : base(game, actor)
     {
         _rendering = game.GetService<RenderingService>();
-        _instance = _rendering.InstanceCreate(actor.InstanceRid);
         _mesh = _rendering.MeshCreate();
         _material = _rendering.MaterialCreate();
         _multiMesh = _rendering.MultiMeshCreate();
         _rendering.MultiMeshSetMesh(_multiMesh, _mesh);
-        _rendering.InstanceSetMultiMesh(_instance, _multiMesh);
-        _rendering.InstanceSetVisibility(_instance, false);
+        _rendering.InstanceSetMultiMesh(actor.InstanceRid, _multiMesh);
     }
 
     public override void Dispose()
@@ -58,7 +48,6 @@ public class TrileCollisionMesh : ActorComponent
         _rendering.FreeRid(_material);
         _rendering.FreeRid(_multiMesh);
         _rendering.FreeRid(_mesh);
-        _rendering.FreeRid(_instance);
     }
 
     public override void LoadContent(IContentManager content)

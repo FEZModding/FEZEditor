@@ -30,8 +30,6 @@ public class TrilesMesh : ActorComponent, IPickable
 
     public bool HasGeometry { get; private set; }
 
-    public bool Pickable { get; set; } = true;
-
     public bool Displacements
     {
         set
@@ -99,9 +97,9 @@ public class TrilesMesh : ActorComponent, IPickable
         _rendering.FreeRid(_material);
     }
 
-    public void Visualize(TrileSet trileSet, int id)
+    public void Visualize(Trile? trile, RTexture2D textureAtlas)
     {
-        if (trileSet.Triles.TryGetValue(id, out var trile))
+        if (trile != null)
         {
             _size = trile.Size.ToXna();
             HasGeometry = trile.Geometry.Indices.Length > 0;
@@ -115,7 +113,7 @@ public class TrilesMesh : ActorComponent, IPickable
         if (HasGeometry)
         {
             _texture?.Dispose();
-            _texture = RepackerExtensions.ConvertToTexture2D(trileSet.TextureAtlas);
+            _texture = RepackerExtensions.ConvertToTexture2D(textureAtlas);
             _rendering.MaterialAssignBaseTexture(_material, _texture);
             _rendering.MaterialSetDepthBias(_material, 0f, 0f);
 

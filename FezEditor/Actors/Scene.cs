@@ -94,9 +94,9 @@ public class Scene : IDisposable
 
         foreach (var actor in _actors)
         {
-            if (actor.TryGetComponent<IPickable>(out var pickable) && (pickable?.Pickable ?? false))
+            if (actor.Visible && actor.TryGetComponent<IPickable>(out var pickable))
             {
-                var hit = pickable.Pick(ray);
+                var hit = pickable!.Pick(ray);
                 if (hit?.Distance < nearestDist)
                 {
                     nearestDist = hit.Value.Distance;
@@ -114,9 +114,9 @@ public class Scene : IDisposable
 
         foreach (var actor in _actors)
         {
-            if (actor.TryGetComponent<IPickable>(out var pickable) && (pickable?.Pickable ?? false))
+            if (actor.Visible && actor.TryGetComponent<IPickable>(out var pickable))
             {
-                var hit = pickable.Pick(ray);
+                var hit = pickable!.Pick(ray);
                 if (hit.HasValue)
                 {
                     hits.Add(new RaycastHit(actor, hit.Value.Distance, hit.Value.Index));
@@ -140,7 +140,7 @@ public class Scene : IDisposable
 
     public void Update(GameTime gameTime)
     {
-        foreach (var actor in _actors.Where(a => a.Active))
+        foreach (var actor in _actors)
         {
             actor.Update(gameTime);
         }

@@ -7,10 +7,8 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace FezEditor.Actors;
 
-public class ArtObjectMesh : ActorComponent, IPickable
+public class ArtObjectMesh : ActorComponent, IPickable, ITinted
 {
-    public bool Pickable { get; set; } = true;
-
     public Color Tint { get; set; } = Color.Transparent;
 
     private readonly RenderingService _rendering;

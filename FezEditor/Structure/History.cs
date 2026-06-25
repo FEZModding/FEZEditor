@@ -55,9 +55,8 @@ public class History : IDisposable
         _tracked = target;
     }
 
-    public IDisposable BeginScope(string name, object? tag = null)
+    public IDisposable BeginScope(string name)
     {
-        // TODO: Remove tag param later, leave it for now for less refactoring
         return new Scope(this, name);
     }
 

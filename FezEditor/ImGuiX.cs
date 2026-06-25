@@ -945,6 +945,57 @@ public static class ImGuiX
         return ImGui.Button($"{buttonText}##{label}");
     }
 
+    public static void DrawCursorThumbnail(Texture2D thumb, string label)
+    {
+        var drawList = ImGui.GetForegroundDrawList(ImGui.GetMainViewport());
+        var drawMin = ImGui.GetMousePos() + new NVector2(12f, 12f);
+        var drawMax = drawMin + new NVector2(32f, 32f);
+
+        drawList.AddImage(ImGuiX.Bind(thumb), drawMin, drawMax);
+
+        var textSize = ImGui.CalcTextSize(label);
+        var padding = new NVector2(4f, 2f);
+
+        var labelMin = new NVector2(
+            drawMin.X + ((drawMax.X - drawMin.X - textSize.X) * 0.5f) - padding.X,
+            drawMax.Y + 2f
+        );
+
+        var labelMax = labelMin + textSize + (padding * 2f);
+        drawList.AddRectFilled(
+            labelMin,
+            labelMax,
+            ImGui.GetColorU32(new NVector4(0f, 0f, 0f, 0.75f))
+        );
+
+        drawList.AddText(
+            labelMin + padding,
+            ImGui.GetColorU32(new NVector4(1f, 1f, 1f, 1f)),
+            label
+        );
+    }
+
+    public static void DrawCursorLabel(string text)
+    {
+        var drawList = ImGui.GetForegroundDrawList(ImGui.GetMainViewport());
+
+        var mousePos = ImGui.GetMousePos();
+        var drawPos = mousePos + new NVector2(12f, 12f);
+        var padding = new NVector2(4f, 2f);
+
+        drawList.AddRectFilled(
+            drawPos - padding,
+            drawPos + ImGui.CalcTextSize(text) + padding,
+            ImGui.GetColorU32(ImGuiCol.PopupBg)
+        );
+
+        drawList.AddText(
+            drawPos,
+            ImGui.GetColorU32(ImGuiCol.Text),
+            text
+        );
+    }
+
     #endregion
 
     #region Fonts

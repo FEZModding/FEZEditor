@@ -7,11 +7,9 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace FezEditor.Actors;
 
-public class NpcMesh : ActorComponent, IPickable
+public class NpcMesh : ActorComponent, IPickable, ITinted
 {
     public Dirty<string> CurrentAnimation { get; set; } = new("");
-
-    public bool Pickable { get; set; } = true;
 
     public bool Billboard { get; set; } = true;
 

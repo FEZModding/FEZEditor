@@ -273,4 +273,22 @@ public static class Mathz
 
         return max;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static TrileEmplacement Add(this TrileEmplacement a, TrileEmplacement b)
+    {
+        return new TrileEmplacement(a.X + b.X, a.Y + b.Y, a.Z + b.Z);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static TrileEmplacement Sub(this TrileEmplacement a, TrileEmplacement b)
+    {
+        return new TrileEmplacement(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static RVector3 AsVector(this TrileEmplacement a)
+    {
+        return new RVector3(a.X, a.Y, a.Z);
+    }
 }

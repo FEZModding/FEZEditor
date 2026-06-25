@@ -8,7 +8,7 @@ using PrimitiveType = Microsoft.Xna.Framework.Graphics.PrimitiveType;
 
 namespace FezEditor.Actors;
 
-public class BackgroundPlaneMesh : ActorComponent, IPickable
+public class BackgroundPlaneMesh : ActorComponent, IPickable, ITinted
 {
     private const float DepthBiasOrthographic = -1e-7f;
 
@@ -43,8 +43,6 @@ public class BackgroundPlaneMesh : ActorComponent, IPickable
     public Color Color { get; set; } = Color.White;
 
     public float Opacity { get; set; } = 1.0f;
-
-    public bool Pickable { get; set; } = true;
 
     public Color Tint { get; set; } = Color.Transparent;
 

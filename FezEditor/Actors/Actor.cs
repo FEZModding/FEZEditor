@@ -10,8 +10,6 @@ public class Actor : IDisposable
 {
     public Transform Transform { get; private set; }
 
-    public bool Active { get; set; } = true;
-
     public bool Visible { get; set; } = true;
 
     public string Name { get; set; } = "Actor";
@@ -74,7 +72,7 @@ public class Actor : IDisposable
         return _components.OfType<T>().FirstOrDefault();
     }
 
-    public bool RemoveComponent<T>() where T : IComponent
+    public void RemoveComponent<T>() where T : IComponent
     {
         if (typeof(T) == typeof(Transform))
         {
@@ -84,11 +82,11 @@ public class Actor : IDisposable
         var component = _components.OfType<T>().FirstOrDefault();
         if (component is null)
         {
-            return false;
+            return;
         }
 
         component.Dispose();
-        return _components.Remove(component);
+        _components.Remove(component);
     }
 
     public void Update(GameTime gameTime)
@@ -120,6 +118,6 @@ public class Actor : IDisposable
 
     public override string ToString()
     {
-        return $"{{Name: {Name}}}";
+        return $"{{{Name}}}";
     }
 }
