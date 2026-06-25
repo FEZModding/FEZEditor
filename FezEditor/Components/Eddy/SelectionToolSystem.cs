@@ -21,7 +21,7 @@ public class SelectionToolSystem : EddySystem
             Status.AddHints(
                 ("LMB", "Select"),
                 ("Shift+LMB", "Add to Selection"),
-                ("Alt+LMB", "Cycle Selection") // Handled by RaycastSystem
+                ("Alt+LMB", "Cycle Selection")
             );
         }
 
@@ -37,6 +37,15 @@ public class SelectionToolSystem : EddySystem
         if (ImGui.IsKeyPressed(ImGuiKey.Escape))
         {
             Eddy.Selected = new SelectionState.Empty();
+            return;
+        }
+
+        if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.GetIO().KeyAlt)
+        {
+            if (Eddy.Hovered is { } h && Eddy.Frame.AllowsSelection)
+            {
+                SelectCandidate(h.Instance, h.Face, false);
+            }
             return;
         }
 

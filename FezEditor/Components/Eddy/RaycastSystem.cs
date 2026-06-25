@@ -42,13 +42,17 @@ public class RaycastSystem : EddySystem
             return;
         }
 
-        _index = Math.Min(_index, _hits.Length - 1);
-        if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.GetIO().KeyAlt)
+        _index = 0;
+        if (ImGui.GetIO().KeyAlt)
         {
-            _index = (_index + 1) % _hits.Length;
+            var selectedIndex = FindSelectionCycleIndex();
+            if (selectedIndex >= 0)
+            {
+                _index = (selectedIndex + 1) % _hits.Length;
+            }
         }
 
-        var hit = ResolveHit();
+        var hit = ResolveHit(_index);
         Eddy.Hovered = hit.HasValue ? (hit.Value.Instance, hit.Value.Face ?? FaceOrientation.Top) : null;
         Eddy.HoveredTrile = ResolveHoveredTrile();
     }
@@ -88,12 +92,41 @@ public class RaycastSystem : EddySystem
         ImGuiX.DrawStats(position - new Vector2(0, (lineHeight * stats.Count) + 8), stats);
     }
 
-    private (InstanceId Instance, FaceOrientation? Face, TrileEmplacement? Emplacement)? ResolveHit()
+    private int FindSelectionCycleIndex()
     {
-        if (Hit is not { } hit)
+        for (var i = 0; i < _hits.Length; i++)
+        {
+            var hit = ResolveHit(i);
+            if (hit.HasValue && IsInstanceSelected(hit.Value.Instance))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private bool IsInstanceSelected(InstanceId instance)
+    {
+        return (instance, Eddy.Selected) switch
+        {
+            (InstanceId.Trile t, SelectionState.Trile s) => s.Selected.Contains(t.Emplacement),
+            (InstanceId.TrileGroup g, SelectionState.TrileGroup s) => s.Selected.Contains(g.Id),
+            (InstanceId id, SelectionState.Instance s) => s.Selected.Contains(id),
+            (InstanceId.PathWaypoint wp, SelectionState.Path s) =>
+                wp.PathId == s.Selected && s.Waypoints.Contains(wp.Index),
+            _ => false
+        };
+    }
+
+    private (InstanceId Instance, FaceOrientation? Face, TrileEmplacement? Emplacement)? ResolveHit(int index)
+    {
+        if (index >= _hits.Length)
         {
             return null;
         }
+
+        var hit = _hits[index];
 
         if (hit.Actor.TryGetComponent<TrilesMesh>(out var trilesMesh) && trilesMesh != null)
         {
