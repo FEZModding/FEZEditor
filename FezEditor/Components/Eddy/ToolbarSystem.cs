@@ -1,5 +1,6 @@
 using FezEditor.Components.Eddy;
 using FezEditor.Structure;
+using FezEditor.Tools;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
 
@@ -145,6 +146,52 @@ public class ToolbarSystem : EddySystem
             }
         }
 
+        ImGui.SameLine();
+        ImGui.TextDisabled("|");
+
+        ImGui.SameLine();
+        {
+            ImGui.BeginDisabled(Eddy.ShowProperties);
+            if (ImGui.Button($"{Lucide.FileAxis3d}"))
+            {
+                var options = new FileDialog.Options
+                {
+                    Title = "Export level diorama",
+                    DefaultLocation = Path.Combine(Resources.GetFullPath(""), $"{Level.Name}.glb"),
+                    Filters = [new FileDialog.Filter("GLB file", "glb")]
+                };
+
+                FileDialog.Show(
+                    FileDialog.Type.SaveFile,
+                    files => Game.AddComponent(new PhilExporter(Game, Level, files[0])),
+                    options
+                );
+            }
+
+            ImGui.EndDisabled();
+
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip("Export Level as Diorama");
+            }
+        }
+
+        ImGui.SameLine();
+        {
+            ImGui.BeginDisabled(Eddy.ShowFarAwayPreviewer);
+            if (ImGui.Button($"{Lucide.ScanEye}"))
+            {
+                Eddy.ShowFarAwayPreviewer = true;
+            }
+
+            ImGui.EndDisabled();
+
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip("Generate level preview");
+            }
+        }
+
         var text = $"{Lucide.EllipsisVertical} {Eddy.CurrentView}";
         var viewButtonWidth = ImGui.CalcTextSize(text).X + (ImGui.GetStyle().FramePadding.X * 2);
         ImGui.SameLine(ImGui.GetContentRegionMax().X - viewButtonWidth);
@@ -158,10 +205,12 @@ public class ToolbarSystem : EddySystem
         {
             ImGui.SeparatorText($"{Lucide.Camera} Projections");
             {
+                ImGui.BeginDisabled(Eddy.ShowFarAwayPreviewer);
                 if (ImGui.Button("Perspective View"))
                 {
                     Eddy.SwitchToPerspective();
                 }
+                ImGui.EndDisabled();
 
                 if (ImGui.Button("Front View"))
                 {
@@ -240,7 +289,7 @@ public class ToolbarSystem : EddySystem
             }
         }
 
-        ImGui.BeginDisabled(!active && !Eddy.IsToolEnabled(tool));
+        ImGui.BeginDisabled(!(active || Eddy.IsToolEnabled(tool)) || Eddy.ShowFarAwayPreviewer);
         if (ImGui.Button($"{icon}##{typeof(T).Name}"))
         {
             Eddy.Tool = tool;

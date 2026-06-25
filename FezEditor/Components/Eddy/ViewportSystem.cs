@@ -1,5 +1,4 @@
 using FezEditor.Actors;
-using FezEditor.Services;
 using FezEditor.Structure;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
@@ -52,16 +51,15 @@ public class ViewportSystem : EddySystem
 
         var position = ImGuiX.GetItemRectMin();
         var hovered = ImGui.IsItemHovered(hoverFlags);
+        var faraway = Eddy.ShowFarAwayPreviewer;
 
         Eddy.Frame = new ViewportFrame(
             position,
-            size,
-            hovered,
-            hovered && !ImGui.IsMouseDragging(ImGuiMouseButton.Right),
-            hovered && !ImGui.IsMouseDragging(ImGuiMouseButton.Left)
+            hovered && !ImGui.IsMouseDragging(ImGuiMouseButton.Right) && !faraway,
+            hovered && !ImGui.IsMouseDragging(ImGuiMouseButton.Left) && !faraway
         );
 
-        Input.IsViewportHovered = Eddy.Frame.AllowsSelection;
+        Input.IsViewportHovered = Eddy.Frame.AllowsSelection || faraway;
         _gizmo.ViewportPosition = Eddy.Frame.Position;
 
         _orientation.Draw(position + new Vector2(size.X - 8f, 8f));

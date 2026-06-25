@@ -193,20 +193,6 @@ public class MenuBar : DrawableGameComponent
 
             if (ImGui.BeginMenu("Editor"))
             {
-                if (_editorService.ActiveEditor is EddyEditor eddy)
-                {
-                    ImGui.SeparatorText("Eddy");
-                    if (ImGui.MenuItem("Export Level as Diorama..."))
-                    {
-                        eddy.ExportAsDiorama();
-                    }
-
-                    if (ImGui.MenuItem("Level Previewer..."))
-                    {
-                        eddy.ShowFarawayPreviewer();
-                    }
-                }
-
                 if (_resourceService.GetModReferencePaths().Count > 0)
                 {
                     ImGui.SeparatorText("Mod");

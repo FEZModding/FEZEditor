@@ -49,6 +49,12 @@ public class EddyEditor : EditorComponent
 
     public bool ShowRaycastDebug { get; set; }
 
+    public bool ShowFarAwayPreviewer
+    {
+        get => _farAwayPreviewer.IsOpen;
+        set => _farAwayPreviewer.SetOpen(value);
+    }
+
     public ViewportFrame Frame { get; set; }
 
     public PickingState Picked { get; set; } = new PickingState.None();
@@ -60,8 +66,6 @@ public class EddyEditor : EditorComponent
     public (InstanceId.Trile Trile, FaceOrientation Face)? HoveredTrile { get; set; }
 
     public AssetEntry? SelectedEntry { get; private set; }
-
-    public SceneViewport Viewport => _scene.Viewport;
 
     public IReadOnlyList<AssetEntry> RecentEntries => _recentEntries;
 
@@ -78,6 +82,8 @@ public class EddyEditor : EditorComponent
     private Actor _gizmoActor = null!;
 
     private PerspectiveState _savedPerspectiveState;
+
+    private FarAwayPreviewSystem _farAwayPreviewer = null!;
 
     private readonly List<EddySystem> _tools = new();
 
@@ -191,6 +197,7 @@ public class EddyEditor : EditorComponent
             var gizmo = _gizmoActor.GetComponent<Gizmo>();
             AddSystems(_interfaces,
                 new ToolbarSystem(),
+                _farAwayPreviewer = new FarAwayPreviewSystem(_scene),
                 new ViewportSystem(_scene, _clock, orientation, gizmo),
                 new InstanceInspectorSystem(),
                 new AssetBrowserSystem(),
@@ -250,6 +257,8 @@ public class EddyEditor : EditorComponent
 
     public override void Draw()
     {
+        _farAwayPreviewer.BeforeDraw();
+
         foreach (var system in _interfaces)
         {
             system.Draw();
@@ -378,28 +387,6 @@ public class EddyEditor : EditorComponent
     {
         return tool is ToolState.Select or ToolState.Paint or ToolState.Pick ||
                _tools.Any(system => system.IsToolEnabled(tool));
-    }
-
-    public void ShowFarawayPreviewer()
-    {
-        if (!Game.Components.OfType<FarawayPreviewer>().Any())
-        {
-            Game.AddComponent(new FarawayPreviewer(Game, _level, this));
-        }
-    }
-
-    public void ExportAsDiorama()
-    {
-        FileDialog.Show(FileDialog.Type.SaveFile, files =>
-        {
-            var exporter = new PhilExporter(Game, _level, files[0]);
-            Game.AddComponent(exporter);
-        }, new FileDialog.Options
-        {
-            Title = "Export level diorama",
-            DefaultLocation = Path.Combine(ResourceService.GetFullPath(""), $"{_level.Name}.glb"),
-            Filters = [new FileDialog.Filter("GLB file", "glb")]
-        });
     }
 
     private void Sync(History.Change change)

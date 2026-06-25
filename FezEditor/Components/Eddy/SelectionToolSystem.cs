@@ -16,11 +16,14 @@ public class SelectionToolSystem : EddySystem
 
         #region Display hints
 
-        Status.AddHints(
-            ("LMB", "Select"),
-            ("Shift+LMB", "Add to Selection"),
-            ("Alt+LMB", "Cycle Selection") // Handled by RaycastSystem
-        );
+        if (Eddy.Frame.AllowsSelection)
+        {
+            Status.AddHints(
+                ("LMB", "Select"),
+                ("Shift+LMB", "Add to Selection"),
+                ("Alt+LMB", "Cycle Selection") // Handled by RaycastSystem
+            );
+        }
 
         if (Eddy.Hovered?.Instance is InstanceId.Trile)
         {
