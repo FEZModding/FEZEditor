@@ -197,7 +197,7 @@ public class Gizmo : ActorComponent
         if (_activeHandle is Handle.TranslateX or Handle.TranslateY or Handle.TranslateZ
             or Handle.PlaneXz or Handle.PlaneXy or Handle.PlaneYz)
         {
-            if (leftDown)
+            if (leftDown && !leftClicked)
             {
                 var ray = GetMouseRay();
                 var hitPoint = RayPlaneIntersect(ray, _dragPlaneOrigin, _dragPlaneNormal);
@@ -286,7 +286,7 @@ public class Gizmo : ActorComponent
         DragEnded = false;
         if (_activeHandle is Handle.ScaleX or Handle.ScaleY or Handle.ScaleZ or Handle.ScaleCenter)
         {
-            if (leftDown)
+            if (leftDown && !leftClicked)
             {
                 var hitPoint = RayPlaneIntersect(GetMouseRay(), _dragPlaneOrigin, _dragPlaneNormal);
                 if (hitPoint.HasValue)
@@ -357,7 +357,7 @@ public class Gizmo : ActorComponent
             DragEnded = false;
             if (_activeHandle == Handle.Face)
             {
-                if (leftDown)
+                if (leftDown && !leftClicked)
                 {
                     var hitPoint = RayPlaneIntersect(GetMouseRay(), _dragPlaneOrigin, _dragPlaneNormal);
                     if (hitPoint.HasValue)
