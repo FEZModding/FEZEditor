@@ -6,16 +6,14 @@ namespace FezEditor.Components;
 
 public class NotSupportedComponent : EditorComponent
 {
-    private readonly Type _type;
-
-    public NotSupportedComponent(Game game, string title, Type type) : base(game, title)
+    public NotSupportedComponent(Game game, string title) : base(game, title)
     {
-        _type = type;
     }
 
     public override void Draw()
     {
-        var text = $"{Lucide.TriangleAlert} There's no editor for {_type.Name} asset!";
+        var extension = ResourceService.GetExtension(Title);
+        var text = $"{Lucide.TriangleAlert} Editing or previewing is not supported for this asset: {Title}{extension}";
         ImGuiX.SetTextCentered(text);
         ImGui.Text(text);
     }

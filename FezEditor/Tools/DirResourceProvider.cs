@@ -100,7 +100,14 @@ internal class DirResourceProvider : IResourceProvider
             throw new FileNotFoundException(info.FullName);
         }
 
-        return (T)FormatConversion.Deconvert(bundles.First())!;
+        try
+        {
+            return (T)FormatConversion.Deconvert(bundles.First())!;
+        }
+        catch (FormatConversionException ex)
+        {
+            throw new NotSupportedException(path, ex);
+        }
     }
 
     public void Save<T>(string path, T asset) where T : class

@@ -95,8 +95,17 @@ public partial class EditorService
         }
 
         _storageService.AddRecentFile(_resourceService.RootPath, path);
-        var asset = _resourceService.Load<object>(path);
-        var newEditor = CreateEditorFor(asset, path);
+        EditorComponent newEditor;
+        try
+        {
+            var asset = _resourceService.Load<object>(path);
+            newEditor = CreateEditorFor(asset, path);
+        }
+        catch (NotSupportedException)
+        {
+            Logger.Warning("No editor found for {0}", path);
+            newEditor = new NotSupportedComponent(_game, path);
+        }
 
         _tracking.Add(newEditor, new EditorTracking(path, false));
         OpenEditor(newEditor);

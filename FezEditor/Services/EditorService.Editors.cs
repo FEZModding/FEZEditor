@@ -44,7 +44,7 @@ public partial class EditorService
             RTexture2D texture => new TexViewer(_game, path, texture),
             RAnimatedTexture animatedTexture => new TexViewer(_game, path, animatedTexture),
             NpcMetadata npc => new MuEditor(_game, path, npc),
-            _ => new NotSupportedComponent(_game, path, asset.GetType())
+            _ => throw new InvalidOperationException()
         };
     }
 
@@ -85,7 +85,7 @@ public partial class EditorService
             ".ogg" or ".wav" => AtIcons.Speaker,
             ".png" => AtIcons.Image,
             ".gif" => AtIcons.Film,
-            _ => Lucide.FileBox
+            _ => Lucide.FileQuestionMark
         };
     }
 

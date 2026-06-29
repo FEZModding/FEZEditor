@@ -303,6 +303,7 @@ public class FileBrowser : DrawableGameComponent
 
                 // Choose icon based on node type
                 string? icon;
+                var disabled = false;
                 if (node.IsDirectory)
                 {
                     if (node is { IsReference: true, Path: "References" })
@@ -317,10 +318,24 @@ public class FileBrowser : DrawableGameComponent
                 else
                 {
                     icon = EditorService.GetFileIcon(node.Extension);
+                    disabled = icon == Lucide.FileQuestionMark;
+                }
+
+                if (disabled)
+                {
+                    unsafe
+                    {
+                        ImGui.PushStyleColor(ImGuiCol.Text, *ImGui.GetStyleColorVec4(ImGuiCol.TextDisabled));
+                    }
                 }
 
                 var label = $"{icon} {node.Name}";
                 var nodeOpen = ImGui.TreeNodeEx($"{node.Path}##{node.Path}", nodeFlags, label);
+
+                if (disabled)
+                {
+                    ImGui.PopStyleColor();
+                }
 
                 // Update open state for next frame
                 if (node.IsDirectory)
