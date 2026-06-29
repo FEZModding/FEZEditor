@@ -94,8 +94,8 @@ public class MapTreeContext : IDisposable
         {
             if (!layout.ContainsKey(node))
             {
-                _scene.DestroyActor(_nodeActors[node].Mesh);
                 _scene.DestroyActor(_nodeActors[node].Icons);
+                _scene.DestroyActor(_nodeActors[node].Mesh);
                 _nodeActors.Remove(node);
             }
         }
@@ -129,8 +129,8 @@ public class MapTreeContext : IDisposable
                 _scene.DestroyActor(link);
             }
 
-            _scene.DestroyActor(actors.Mesh);
             _scene.DestroyActor(actors.Icons);
+            _scene.DestroyActor(actors.Mesh);
         }
 
         _nodeActors.Clear();
