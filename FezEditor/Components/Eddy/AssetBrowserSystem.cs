@@ -296,12 +296,16 @@ public class AssetBrowserSystem : EddySystem
 
         foreach (var file in Resources.Files)
         {
-            if (file.StartsWith("Art Objects/", StringComparison.OrdinalIgnoreCase))
+            var extension = Resources.GetExtension(file);
+            if (file.StartsWith("Art Objects/", StringComparison.OrdinalIgnoreCase) ||
+                extension.Equals(".fezao.glb", StringComparison.OrdinalIgnoreCase))
             {
-                var extension = Resources.GetExtension(file);
                 if (!extension.Equals(".png", StringComparison.OrdinalIgnoreCase))
                 {
-                    _entries.Add(new AssetEntry.ArtObject(file["Art Objects/".Length..]));
+                    var name = file.StartsWith("Art Objects/", StringComparison.OrdinalIgnoreCase)
+                        ? file["Art Objects/".Length..]
+                        : file;
+                    _entries.Add(new AssetEntry.ArtObject(name));
                 }
             }
             else if (file.StartsWith("Background Planes/", StringComparison.OrdinalIgnoreCase))

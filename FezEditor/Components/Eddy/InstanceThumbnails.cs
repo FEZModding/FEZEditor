@@ -25,6 +25,7 @@ public sealed class InstanceThumbnails : IDisposable
         _resources = resources;
         _level = level;
         _trileSet = trileSet;
+        _resources.ThumbnailsReady += ClearSharedThumbnails;
         s_instanceCount++;
     }
 
@@ -75,31 +76,52 @@ public sealed class InstanceThumbnails : IDisposable
             return thumbnail;
         }
 
-        var overridePath = fromTrileSet ? "Trile Sets/" + _level.TrileSetName : null;
-        var lastWrite = _resources.GetLastWriteTimeUtc(overridePath ?? assetPath);
+        var sourcePath = fromTrileSet ? "Trile Sets/" + _level.TrileSetName : assetPath;
+        var lastWrite = _resources.GetLastWriteTimeUtc(ResolveSourcePath(sourcePath));
         var cacheProbe = new Thumbnailer(assetPath, lastWrite);
 
         if (cacheProbe.TryLoad(out var cached) && cached != null)
         {
             thumbnail = RepackerExtensions.ConvertToTexture2D(cached);
-        }
-        else
-        {
-            thumbnail = _placeholder;
+            SharedThumbnails[assetPath] = thumbnail;
+            return thumbnail;
         }
 
-        SharedThumbnails[assetPath] = thumbnail;
-        return thumbnail;
+        return _placeholder;
+    }
+
+    private string ResolveSourcePath(string canonicalPath)
+    {
+        if (_resources.Exists(canonicalPath))
+        {
+            return canonicalPath;
+        }
+
+        var slash = canonicalPath.IndexOf('/');
+        if (slash >= 0)
+        {
+            var unprefixedPath = canonicalPath[(slash + 1)..];
+            if (_resources.Exists(unprefixedPath))
+            {
+                return unprefixedPath;
+            }
+        }
+
+        return canonicalPath;
     }
 
     public void Dispose()
     {
+        _resources.ThumbnailsReady -= ClearSharedThumbnails;
         s_instanceCount--;
-        if (s_instanceCount > 0)
+        if (s_instanceCount < 1)
         {
-            return;
+            ClearSharedThumbnails();
         }
+    }
 
+    private void ClearSharedThumbnails()
+    {
         foreach (var texture in SharedThumbnails.Values)
         {
             if (texture != _placeholder)

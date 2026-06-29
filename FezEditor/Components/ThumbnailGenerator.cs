@@ -19,7 +19,7 @@ public class ThumbnailGenerator : DrawableGameComponent
 
     private readonly ResourceService _resources;
 
-    private readonly Dictionary<CollisionType, RTexture2D> _collisionTextures = new();
+    private static readonly Dictionary<CollisionType, RTexture2D> CollisionTextures = new();
 
     private float _progress;
 
@@ -34,24 +34,28 @@ public class ThumbnailGenerator : DrawableGameComponent
     public ThumbnailGenerator(Game game) : base(game)
     {
         _resources = game.GetService<ResourceService>();
-        _ = ProcessAsync();
     }
 
     protected override void LoadContent()
     {
-        var content = Game.GetService<ContentService>().Get(this);
-        foreach (var collision in Enum.GetValues<CollisionType>())
+        if (CollisionTextures.Count == 0)
         {
-            var texture = content.Load<Texture2D>($"Textures/{collision}");
-            var data = new byte[texture.Width * texture.Height * 4];
-            texture.GetData(data);
-            _collisionTextures[collision] = new RTexture2D
+            var content = Game.GetService<ContentService>().Global;
+            foreach (var collision in Enum.GetValues<CollisionType>())
             {
-                Width = texture.Width,
-                Height = texture.Height,
-                TextureData = data
-            };
+                var texture = content.Load<Texture2D>($"Textures/{collision}");
+                var data = new byte[texture.Width * texture.Height * 4];
+                texture.GetData(data);
+                CollisionTextures[collision] = new RTexture2D
+                {
+                    Width = texture.Width,
+                    Height = texture.Height,
+                    TextureData = data
+                };
+            }
         }
+
+        _ = ProcessAsync();
     }
 
     public override void Update(GameTime gameTime)
@@ -145,29 +149,32 @@ public class ThumbnailGenerator : DrawableGameComponent
         foreach (var file in _resources.Files.ToArray())
         {
             ct.ThrowIfCancellationRequested();
-            if (file.StartsWith("Trile Sets/", StringComparison.OrdinalIgnoreCase))
+            var extension = _resources.GetExtension(file);
+            if (file.StartsWith("Trile Sets/", StringComparison.OrdinalIgnoreCase) ||
+                extension.Equals(".fezts.glb", StringComparison.OrdinalIgnoreCase))
             {
                 var lastWrite = _resources.GetLastWriteTimeUtc(file);
                 var trileNames = _resources.GetTrileSetList(file);
                 foreach (var name in trileNames.Values)
                 {
-                    if (!new Thumbnailer($"{file}/{name}", lastWrite).HasInCache())
+                    var entry = new Entry(file, AssetType.Trile, name);
+                    if (!new Thumbnailer(entry.CachePath, lastWrite).IsCacheCurrent())
                     {
-                        entries.Enqueue(new Entry(file, AssetType.Trile, name));
+                        entries.Enqueue(entry);
                     }
                 }
             }
-            else if (file.StartsWith("Art Objects/", StringComparison.OrdinalIgnoreCase))
+            else if (file.StartsWith("Art Objects/", StringComparison.OrdinalIgnoreCase) ||
+                     extension.Equals(".fezao.glb", StringComparison.OrdinalIgnoreCase))
             {
-                var extension = _resources.GetExtension(file);
-                if (!extension.EndsWith(".png"))
+                if (!extension.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
                 {
-                    entries.Enqueue(new Entry(file, AssetType.ArtObject));
+                    EnqueueIfStale(entries, new Entry(file, AssetType.ArtObject));
                 }
             }
             else if (file.StartsWith("Background Planes/", StringComparison.OrdinalIgnoreCase))
             {
-                entries.Enqueue(new Entry(file, AssetType.BackgroundPlane));
+                EnqueueIfStale(entries, new Entry(file, AssetType.BackgroundPlane));
             }
             else if (file.StartsWith("Character Animations/", StringComparison.OrdinalIgnoreCase) &&
                      !file.Contains("Metadata", StringComparison.OrdinalIgnoreCase))
@@ -179,7 +186,7 @@ public class ThumbnailGenerator : DrawableGameComponent
                     var folder = $"Character Animations/{remainder[..slashIndex]}";
                     if (npcFolders.Add(folder))
                     {
-                        entries.Enqueue(new Entry(folder, AssetType.NonPlayableCharacter));
+                        EnqueueIfStale(entries, new Entry(folder, AssetType.NonPlayableCharacter));
                     }
                 }
             }
@@ -196,11 +203,11 @@ public class ThumbnailGenerator : DrawableGameComponent
             var entry = entries.Dequeue();
             try
             {
-                var lastWrite = _resources.GetLastWriteTimeUtc(entry.Path);
+                var lastWrite = GetLastWriteTimeUtc(entry);
                 var cachePath = entry.CachePath;
 
                 var cacheProbe = new Thumbnailer(cachePath, lastWrite);
-                if (cacheProbe.HasInCache())
+                if (cacheProbe.IsCacheCurrent())
                 {
                     Logger.Debug("Thumbnail for {0} already cached", cachePath);
                     processed++;
@@ -238,7 +245,7 @@ public class ThumbnailGenerator : DrawableGameComponent
                                 thumbnailer = new Thumbnailer(cachePath, lastWrite, trile, cachedTrileSet.TextureAtlas);
                             }
                             else if (trile.Faces.TryGetValue(FaceOrientation.Front, out var collisionType) &&
-                                     _collisionTextures.TryGetValue(collisionType, out var collisionTex))
+                                     CollisionTextures.TryGetValue(collisionType, out var collisionTex))
                             {
                                 thumbnailer = new Thumbnailer(cachePath, lastWrite, collisionTex);
                             }
@@ -308,9 +315,33 @@ public class ThumbnailGenerator : DrawableGameComponent
         }
     }
 
+    private void EnqueueIfStale(Queue<Entry> entries, Entry entry)
+    {
+        var lastWrite = GetLastWriteTimeUtc(entry);
+        if (!new Thumbnailer(entry.CachePath, lastWrite).IsCacheCurrent())
+        {
+            entries.Enqueue(entry);
+        }
+    }
+
+    private DateTime GetLastWriteTimeUtc(Entry entry)
+    {
+        if (entry.Type != AssetType.NonPlayableCharacter)
+        {
+            return _resources.GetLastWriteTimeUtc(entry.Path);
+        }
+
+        var prefix = entry.Path + "/";
+        return _resources.Files
+            .Where(file => file.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            .Select(_resources.GetLastWriteTimeUtc)
+            .DefaultIfEmpty(DateTime.MinValue)
+            .Max();
+    }
+
     protected override void Dispose(bool disposing)
     {
-        Game.GetService<ContentService>().Unload(this);
+        _cts?.Cancel();
         _cts?.Dispose();
         base.Dispose(disposing);
     }
@@ -324,6 +355,25 @@ public class ThumbnailGenerator : DrawableGameComponent
 
     private readonly record struct Entry(string Path, AssetType Type, string? TrileName = null)
     {
-        public string CachePath => TrileName != null ? $"{Path}/{TrileName}" : Path;
+        public string CachePath
+        {
+            get
+            {
+                var prefix = Type switch
+                {
+                    AssetType.Trile => "Trile Sets/",
+                    AssetType.ArtObject => "Art Objects/",
+                    AssetType.BackgroundPlane => "Background Planes/",
+                    AssetType.NonPlayableCharacter => "Character Animations/",
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+
+                var path = Path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                    ? Path
+                    : prefix + Path;
+
+                return TrileName != null ? $"{path}/{TrileName}" : path;
+            }
+        }
     }
 }

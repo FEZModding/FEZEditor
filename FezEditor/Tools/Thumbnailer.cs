@@ -81,22 +81,10 @@ public class Thumbnailer
         }
     }
 
-    public void Delete()
+    public bool IsCacheCurrent()
     {
-        AppStorageService.DeleteCacheFile(_thumbPath);
-        AppStorageService.DeleteCacheFile(_metaPath);
-    }
-
-    public bool HasInCache()
-    {
-        return AppStorageService.HasCacheFile(_thumbPath) && AppStorageService.HasCacheFile(_metaPath);
-    }
-
-    public bool TryLoad(out RTexture2D? texture)
-    {
-        if (!HasInCache())
+        if (!AppStorageService.HasCacheFile(_thumbPath) || !AppStorageService.HasCacheFile(_metaPath))
         {
-            texture = null;
             return false;
         }
 
@@ -112,7 +100,12 @@ public class Thumbnailer
             meta = null;
         }
 
-        if (meta == null || meta.LastWrite != _lastWrite)
+        return meta != null && meta.LastWrite == _lastWrite;
+    }
+
+    public bool TryLoad(out RTexture2D? texture)
+    {
+        if (!IsCacheCurrent())
         {
             texture = null;
             return false;

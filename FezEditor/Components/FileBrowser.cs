@@ -40,7 +40,7 @@ public class FileBrowser : DrawableGameComponent
 
     private ThumbnailGenerator? _thumbnailGenerator;
 
-    private bool _thumbnailsGenerated;
+    private bool _thumbnailScanPending;
 
     private enum SortMode
     {
@@ -62,6 +62,8 @@ public class FileBrowser : DrawableGameComponent
 
     protected override void Dispose(bool disposing)
     {
+        _resourceService.ProviderChanged -= UpdateNodeTree;
+        _thumbnailGenerator?.Dispose();
         Game.RemoveComponent(_confirmWindow);
         Game.RemoveComponent(_editWindow);
         base.Dispose(disposing);
@@ -583,7 +585,6 @@ public class FileBrowser : DrawableGameComponent
     public void RegenerateThumbnails()
     {
         AppStorageService.ClearCache();
-        _thumbnailsGenerated = false;
         UpdateNodeTree();
     }
 
@@ -591,22 +592,39 @@ public class FileBrowser : DrawableGameComponent
     {
         if (_resourceService.HasNoProvider)
         {
-            _thumbnailsGenerated = false;
+            _thumbnailScanPending = false;
+            _thumbnailGenerator?.Dispose();
         }
-        else if (_thumbnailGenerator == null && !_thumbnailsGenerated)
+        else
         {
-            _thumbnailGenerator = new ThumbnailGenerator(Game);
-            _thumbnailGenerator.Disposed += (_, _) =>
-            {
-                _thumbnailGenerator = null;
-                _thumbnailsGenerated = true;
-                _resourceService.NotifyThumbnailsReady();
-            };
-            Game.AddComponent(_thumbnailGenerator);
+            QueueThumbnailScan();
         }
 
         BuildNodeTree();
         SortAllNodes();
+    }
+
+    private void QueueThumbnailScan()
+    {
+        if (_thumbnailGenerator != null)
+        {
+            _thumbnailScanPending = true;
+            return;
+        }
+
+        _thumbnailGenerator = new ThumbnailGenerator(Game);
+        _thumbnailGenerator.Disposed += (_, _) =>
+        {
+            _thumbnailGenerator = null;
+            _resourceService.NotifyThumbnailsReady();
+            if (_thumbnailScanPending && !_resourceService.HasNoProvider)
+            {
+                _thumbnailScanPending = false;
+                QueueThumbnailScan();
+            }
+        };
+
+        Game.AddComponent(_thumbnailGenerator);
     }
 
     private void BuildNodeTree()
