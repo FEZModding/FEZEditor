@@ -853,13 +853,7 @@ public class ScriptBrowserSystem : EddySystem
                                     a.Operation = opNames[oi];
                                     var newActionDef = actionEntry!.Actions[oi];
                                     var expectedCount = newActionDef.Parameters.Length;
-                                    var newArgs = new string[expectedCount];
-                                    for (var i = 0; i < expectedCount; i++)
-                                    {
-                                        newArgs[i] = i < a.Arguments.Length ? a.Arguments[i] : "";
-                                    }
-
-                                    a.Arguments = newArgs;
+                                    a.Arguments = TrimArguments(a.Arguments.Take(expectedCount).ToArray());
                                 }
                             }
 
@@ -908,28 +902,24 @@ public class ScriptBrowserSystem : EddySystem
 
                 if (currentActionDef is { Parameters.Length: > 0 })
                 {
-                    if (a.Arguments.Length != currentActionDef.Parameters.Length)
-                    {
-                        var synced = new string[currentActionDef.Parameters.Length];
-                        for (var i = 0; i < synced.Length; i++)
-                        {
-                            synced[i] = i < a.Arguments.Length ? a.Arguments[i] : "";
-                        }
-
-                        a.Arguments = synced;
-                    }
-
                     ImGui.SeparatorText("Arguments");
 
                     for (var i = 0; i < currentActionDef.Parameters.Length; i++)
                     {
                         var param = currentActionDef.Parameters[i];
-                        var arg = a.Arguments[i];
+                        var arg = i < a.Arguments.Length ? a.Arguments[i] : "";
                         if (ImGui.InputText($"{param.Name}##{i}", ref arg, 255))
                         {
                             using (Eddy.History.BeginScope($"Change Action Argument [{param.Name}]"))
                             {
-                                a.Arguments[i] = arg;
+                                var arguments = a.Arguments;
+                                if (arguments.Length <= i)
+                                {
+                                    Array.Resize(ref arguments, i + 1);
+                                }
+
+                                arguments[i] = arg;
+                                a.Arguments = TrimArguments(arguments);
                             }
                         }
                     }
@@ -949,6 +939,22 @@ public class ScriptBrowserSystem : EddySystem
         }
 
         ImGui.EndDisabled();
+    }
+
+    private static string[] TrimArguments(string[] arguments)
+    {
+        var length = arguments.Length;
+        while (length > 0 && string.IsNullOrEmpty(arguments[length - 1]))
+        {
+            length--;
+        }
+
+        if (length != arguments.Length)
+        {
+            Array.Resize(ref arguments, length);
+        }
+
+        return arguments;
     }
 
     private static T Clone<T>(T obj) where T : class
