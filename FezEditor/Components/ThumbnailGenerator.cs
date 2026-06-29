@@ -142,7 +142,7 @@ public class ThumbnailGenerator : DrawableGameComponent
     {
         var entries = new Queue<Entry>();
         var npcFolders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var file in _resources.Files)
+        foreach (var file in _resources.Files.ToArray())
         {
             ct.ThrowIfCancellationRequested();
             if (file.StartsWith("Trile Sets/", StringComparison.OrdinalIgnoreCase))
