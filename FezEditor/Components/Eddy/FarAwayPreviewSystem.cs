@@ -1,4 +1,5 @@
 using FezEditor.Actors;
+using FezEditor.Services;
 using ImGuiNET;
 using Microsoft.Xna.Framework.Graphics;
 using Serilog;
@@ -14,6 +15,8 @@ public class FarAwayPreviewSystem : EddySystem
 
     public bool IsOpen => _state != State.Closed;
 
+    public bool IsExporting => _state == State.WaitFrame;
+
     public void SetOpen(bool open)
     {
         if (open)
@@ -25,7 +28,6 @@ public class FarAwayPreviewSystem : EddySystem
 
             _savedVisuals = Eddy.Visuals;
             _savedRtSize = _scene.Viewport.GetSize();
-            Eddy.Visuals = EddyVisuals.Preview;
             Eddy.SwitchToOrtho(ViewMode.Front, 0f);
             _closeRequested = false;
             _state = State.Idle;
@@ -38,6 +40,8 @@ public class FarAwayPreviewSystem : EddySystem
 
     private readonly Scene _scene;
 
+    private readonly EditorService _editors;
+
     private EddyVisuals _savedVisuals;
 
     private (int W, int H) _savedRtSize;
@@ -48,9 +52,10 @@ public class FarAwayPreviewSystem : EddySystem
 
     private bool _closeRequested;
 
-    public FarAwayPreviewSystem(Scene scene)
+    public FarAwayPreviewSystem(Scene scene, EditorService editors)
     {
         _scene = scene;
+        _editors = editors;
     }
 
     public override void Update()
@@ -71,16 +76,7 @@ public class FarAwayPreviewSystem : EddySystem
 
         if (_state == State.WaitFrame)
         {
-            _state = State.Capturing;
-            return;
-        }
-
-        if (_state == State.Capturing)
-        {
             Capture();
-            _state = State.Idle;
-            RestoreRt();
-            Eddy.Visuals = EddyVisuals.Preview;
             if (_closeRequested)
             {
                 Close();
@@ -145,7 +141,6 @@ public class FarAwayPreviewSystem : EddySystem
         _pendingExport = kind;
         _state = State.WaitFrame;
 
-        _savedRtSize = _scene.Viewport.GetSize();
         if (kind == ExportKind.FarawayThumb)
         {
             _scene.Viewport.SetSize(512, 512);
@@ -158,18 +153,12 @@ public class FarAwayPreviewSystem : EddySystem
             _scene.Viewport.SetClearColor(Color.Black);
             Eddy.Visuals = EddyVisuals.Preview;
         }
-    }
 
-    private void RestoreRt()
-    {
-        _scene.Viewport.SetClearColor(Color.Black);
-        _scene.Viewport.SetSize(_savedRtSize.W, _savedRtSize.H);
+        Eddy.VisualizeAll();
     }
 
     private void Close()
     {
-        RestoreRt();
-        Eddy.Visuals = _savedVisuals;
         Eddy.SwitchToPerspective();
         _closeRequested = false;
         _state = State.Closed;
@@ -197,61 +186,55 @@ public class FarAwayPreviewSystem : EddySystem
         var pixels = new Color[texture.Width * texture.Height];
         texture.GetData(pixels);
 
-        string outputPath;
-        if (_pendingExport == ExportKind.FarawayThumb)
+        var assetPath = _pendingExport == ExportKind.FarawayThumb
+            ? $"Other Textures/faraway_thumbs/{Level.Name} ({Eddy.CurrentView})"
+            : $"Other Textures/map_screens/{Level.Name}";
+
+        var outputPath = Resources.GetFullPath(assetPath);
+        if (!Path.HasExtension(outputPath))
         {
-            var dir = Resources.GetFullPath("Other Textures/faraway_thumbs");
-            Directory.CreateDirectory(dir);
-            outputPath = Path.Combine(dir, $"{Level.Name} ({Eddy.CurrentView}).png");
-        }
-        else
-        {
-            var dir = Resources.GetFullPath("Other Textures/map_screens");
-            Directory.CreateDirectory(dir);
-            outputPath = Path.Combine(dir, $"{Level.Name}.png");
+            outputPath += ".png";
         }
 
-        _ = Task.Run(() =>
+        var dir = Path.GetDirectoryName(outputPath)!;
+        Directory.CreateDirectory(dir);
+
+        var rgba = new byte[texture.Width * texture.Height * 4];
+        for (var i = 0; i < pixels.Length; i++)
         {
-            try
-            {
-                var rgba = new byte[texture.Width * texture.Height * 4];
-                for (var i = 0; i < pixels.Length; i++)
-                {
-                    var c = pixels[i];
-                    if (_pendingExport == ExportKind.FarawayThumb && c is { R: > 200, G: < 50, B: > 200 })
-                    {
-                        rgba[(i * 4) + 0] = 0;
-                        rgba[(i * 4) + 1] = 0;
-                        rgba[(i * 4) + 2] = 0;
-                        rgba[(i * 4) + 3] = 0;
-                    }
-                    else
-                    {
-                        rgba[(i * 4) + 0] = c.R;
-                        rgba[(i * 4) + 1] = c.G;
-                        rgba[(i * 4) + 2] = c.B;
-                        rgba[(i * 4) + 3] = 255;
-                    }
-                }
+            var color = pixels[i];
+            var chromaKey = _pendingExport == ExportKind.FarawayThumb && color is { R: > 200, G: < 50, B: > 200 };
+            rgba[(i * 4) + 0] = chromaKey ? (byte)0 : color.R;
+            rgba[(i * 4) + 1] = chromaKey ? (byte)0 : color.G;
+            rgba[(i * 4) + 2] = chromaKey ? (byte)0 : color.B;
+            rgba[(i * 4) + 3] = chromaKey ? (byte)0 : color.A;
+        }
 
-                using var image = Image.LoadPixelData<Rgba32>(rgba, texture.Width, texture.Height);
-                image.SaveAsPng(outputPath);
+        try
+        {
+            using var image = Image.LoadPixelData<Rgba32>(rgba, texture.Width, texture.Height);
+            image.SaveAsPng(outputPath);
+            Logger.Information("Saved {0}", assetPath);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, "Failed to save capture");
+        }
 
-                Logger.Information("Saved {0}", outputPath);
-            }
-            catch (Exception ex)
-            {
-                Logger.Error(ex, "Failed to save capture");
-            }
-        });
+        _scene.Viewport.SetClearColor(Color.Black);
+        _scene.Viewport.SetSize(_savedRtSize.W, _savedRtSize.H);
+        Eddy.Visuals = _savedVisuals;
+        Eddy.VisualizeAll();
+
+        Resources.Refresh();
+        _editors.OpenEditorFor(assetPath);
+        _state = State.Idle;
     }
 
     private enum State
     {
         Idle,
         WaitFrame,
-        Capturing,
         Closed
     }
 

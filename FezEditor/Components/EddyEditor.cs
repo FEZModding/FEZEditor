@@ -1,5 +1,6 @@
 using FezEditor.Actors;
 using FezEditor.Components.Eddy;
+using FezEditor.Services;
 using FezEditor.Structure;
 using FezEditor.Tools;
 using FEZRepacker.Core.Definitions.Game.Common;
@@ -77,6 +78,8 @@ public class EddyEditor : EditorComponent
     public AssetEntry? SelectedEntry { get; private set; }
 
     public IReadOnlyList<AssetEntry> RecentEntries => _recentEntries;
+
+    public bool IsPreviewCapturing => _farAwayPreviewer.IsExporting;
 
     private readonly Level _level;
 
@@ -204,9 +207,10 @@ public class EddyEditor : EditorComponent
         {
             var orientation = _cameraActor.GetComponent<OrientationGizmo>();
             var gizmo = _gizmoActor.GetComponent<Gizmo>();
+            var editors = Game.GetService<EditorService>();
             AddSystems(_interfaces,
                 new ToolbarSystem(),
-                _farAwayPreviewer = new FarAwayPreviewSystem(_scene),
+                _farAwayPreviewer = new FarAwayPreviewSystem(_scene, editors),
                 new ViewportSystem(_scene, _clock, orientation, gizmo),
                 new InstanceInspectorSystem(),
                 new AssetBrowserSystem(),

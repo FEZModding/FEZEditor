@@ -318,6 +318,12 @@ public class ResourceService : IDisposable
         _assetPickWindow.Accepted = onProvided;
     }
 
+    public void Refresh()
+    {
+        _provider!.Refresh();
+        ProviderChanged?.Invoke();
+    }
+
     public void Dispose()
     {
         GC.SuppressFinalize(this);

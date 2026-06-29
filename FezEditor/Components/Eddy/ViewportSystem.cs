@@ -25,6 +25,14 @@ public class ViewportSystem : EddySystem
 
     public override void Draw()
     {
+        if (Eddy.IsPreviewCapturing)
+        {
+            const string text = "Capturing...";
+            ImGuiX.SetTextCentered(text);
+            ImGui.Text(text);
+            return;
+        }
+
         var size = ImGuiX.GetContentRegionAvail();
         var w = (int)size.X;
         var h = (int)size.Y;
