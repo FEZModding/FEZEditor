@@ -31,4 +31,15 @@ public static class NullableExtensions
     {
         return instance ?? [];
     }
+
+    public static IDictionary<TKey, TValue>? NullIfEmpty<TKey, TValue>(this IDictionary<TKey, TValue> instance)
+    {
+        return instance is not { Count: > 0 } ? instance : null;
+    }
+
+    public static IDictionary<TKey, TValue> EmptyIfNull<TKey, TValue>(this IDictionary<TKey, TValue>? instance)
+        where TKey : notnull
+    {
+        return instance ?? new OrderedDictionary<TKey, TValue>();
+    }
 }

@@ -132,48 +132,73 @@ public class NpcSystem : EddySystem
             }
         }
 
-        var speech = new Dirty<List<SpeechLine>>(npc.Speech);
+        var speech = new Dirty<List<SpeechLine>>(npc.Speech.EmptyIfNull());
         if (ImGuiX.EditableList("Speech", ref speech, RenderSpeechLine, () => new SpeechLine()))
         {
             using (Eddy.History.BeginScope("Edit NPC Speech"))
             {
-                npc.Speech = speech;
+                npc.Speech = speech.Value.NullIfEmpty();
             }
         }
 
         // NpcAction is not IEquatable, so int key is being used
         var actions = new Dirty<Dictionary<int, NpcActionContent>>(
-            npc.Actions.ToDictionary(kv => (int)kv.Key, kv => kv.Value));
+            npc.Actions.EmptyIfNull().ToDictionary(kv => (int)kv.Key, kv => kv.Value));
 
         if (ImGuiX.EditableDict("Actions", ref actions, RenderNpcActionContent, RenderNewContent,
                 () => new NpcActionContent()))
         {
             using (Eddy.History.BeginScope("Edit NPC Actions"))
             {
-                npc.Actions = actions.Value.ToDictionary(kv => (NpcAction)kv.Key, kv => kv.Value);
+                npc.Actions = actions.Value.Count != 0
+                    ? actions.Value.ToDictionary(kv => (NpcAction)kv.Key, kv => kv.Value)
+                    : null;
             }
         }
     }
 
-    private static bool RenderSpeechLine(int index, ref SpeechLine item)
+    private bool RenderSpeechLine(int index, ref SpeechLine item)
     {
         ImGui.TextDisabled(index + ":");
         var edited = false;
+
         {
             var text = item.Text;
-            edited |= ImGui.InputText("Text##sl" + index, ref text, 255);
-            item.Text = text;
+            if (ImGui.InputText("Text##sl" + index, ref text, 255))
+            {
+                item.Text = text;
+                edited = true;
+            }
         }
+
+        if (ImGuiX.NullableToggleButton("Override Content", item.OverrideContent))
+        {
+            var shouldAdd = item.OverrideContent == null;
+            var actionName = shouldAdd ? "Add" : "Remove";
+            using (Eddy.History.BeginScope($"{actionName} NPC Override Content"))
+            {
+                item.OverrideContent = shouldAdd ? new NpcActionContent() : null;
+                edited = true;
+            }
+        }
+
+        if (item.OverrideContent != null)
         {
             var animationName = item.OverrideContent.AnimationName;
-            edited |= ImGui.InputText("Animation Name##sl1" + index, ref animationName, 255);
-            item.OverrideContent.AnimationName = animationName;
-        }
-        {
+            if (ImGui.InputText("Animation Name##sl1" + index, ref animationName, 255))
+            {
+                item.OverrideContent.AnimationName = animationName;
+                edited = true;
+            }
+
             var soundName = item.OverrideContent.SoundName;
-            edited |= ImGui.InputText("Sound Name##sl2" + index, ref soundName, 255);
-            item.OverrideContent.SoundName = soundName;
+            if (ImGui.InputText("Sound Name##sl2" + index, ref soundName, 255))
+            {
+                item.OverrideContent.SoundName = soundName;
+                edited = true;
+            }
         }
+
         return edited;
     }
 
