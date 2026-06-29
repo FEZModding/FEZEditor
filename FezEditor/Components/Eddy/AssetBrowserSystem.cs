@@ -55,8 +55,7 @@ public class AssetBrowserSystem : EddySystem
             DrawFilter();
             ImGui.Separator();
 
-            var footerHeight = ImGui.GetFrameHeightWithSpacing() + ImGui.GetStyle().ItemSpacing.Y;
-            if (ImGui.BeginChild("##Content", new NVector2(0, -footerHeight)))
+            if (ImGui.BeginChild("##Content"))
             {
                 if (_entries.Count > 0 && ImGui.BeginTabBar("##AssetTabs"))
                 {
@@ -178,7 +177,7 @@ public class AssetBrowserSystem : EddySystem
         }
     }
 
-    private unsafe void DrawGrid(IReadOnlyList<AssetEntry> entries)
+    private void DrawGrid(IReadOnlyList<AssetEntry> entries)
     {
         var availWidth = ImGui.GetContentRegionAvail().X;
         var columns = Math.Max((int)(availWidth / CellSize), 1);
@@ -189,111 +188,93 @@ public class AssetBrowserSystem : EddySystem
             return;
         }
 
-        // Scroll to the selected entry when the table first appears
-        var selectedIndex = -1;
-        for (var k = 0; k < entries.Count; k++)
+        var scrollToSelected = ImGui.IsWindowAppearing();
+
+        for (var row = 0; row < totalRows; row++)
         {
-            if (entries[k] == Eddy.SelectedEntry)
+            ImGui.TableNextRow(ImGuiTableRowFlags.None, RowHeight);
+
+            for (var col = 0; col < columns; col++)
             {
-                selectedIndex = k;
-                break;
-            }
-        }
-
-        if (selectedIndex >= 0 && ImGui.IsWindowAppearing())
-        {
-            var selectedRow = selectedIndex / columns;
-            ImGui.SetScrollY(selectedRow * RowHeight);
-        }
-
-        var clipper = new ImGuiListClipperPtr(ImGuiNative.ImGuiListClipper_ImGuiListClipper());
-        clipper.Begin(totalRows, RowHeight);
-
-        while (clipper.Step())
-        {
-            for (var row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
-            {
-                ImGui.TableNextRow(ImGuiTableRowFlags.None, RowHeight);
-
-                for (var col = 0; col < columns; col++)
+                var i = (row * columns) + col;
+                if (i >= entries.Count)
                 {
-                    var i = (row * columns) + col;
-                    if (i >= entries.Count)
-                    {
-                        break;
-                    }
-
-                    ImGui.TableSetColumnIndex(col);
-
-                    var entry = entries[i];
-                    var isSelected = Eddy.SelectedEntry == entry;
-                    var texture = Eddy.Thumbnails.Get(entry);
-                    var cellWidth = ImGui.GetColumnWidth();
-
-                    ImGui.PushID(i);
-
-                    // Compute thumbnail size preserving aspect ratio
-                    var aspect = (float)texture.Width / texture.Height;
-                    float thumbW, thumbH;
-                    if (aspect >= 1f)
-                    {
-                        thumbW = ThumbSize;
-                        thumbH = ThumbSize / aspect;
-                    }
-                    else
-                    {
-                        thumbH = ThumbSize;
-                        thumbW = ThumbSize * aspect;
-                    }
-
-                    // Center thumbnail within the cell
-                    var padX = (cellWidth - thumbW) * 0.5f;
-                    var padY = (ThumbSize - thumbH) * 0.5f;
-                    var cursor = ImGui.GetCursorPos();
-                    var cellScreenPos = ImGui.GetCursorScreenPos();
-                    ImGui.SetCursorPos(new NVector2(cursor.X + padX, cursor.Y + padY));
-                    ImGuiX.Image(texture, new Vector2(thumbW, thumbH));
-
-                    // Highlight selected asset on top of thumbnail
-                    if (isSelected)
-                    {
-                        var dl = ImGui.GetWindowDrawList();
-                        var highlightMax = new NVector2(cellScreenPos.X + ThumbSize, cellScreenPos.Y + ThumbSize);
-                        var color = Color.LightGray with { A = 128 }; // 50%
-                        dl.AddRectFilled(cellScreenPos, highlightMax, color.PackedValue);
-                    }
-
-                    // Restore cursor for the invisible click target over the whole cell
-                    ImGui.SetCursorPos(cursor);
-                    if (ImGui.InvisibleButton("##sel", new NVector2(cellWidth, ThumbSize)))
-                    {
-                        Eddy.Tool = Eddy.PickAndPaint(entry);
-                    }
-
-                    if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
-                    {
-                        Eddy.Tool = Eddy.PickAndPaint(entry);
-                    }
-
-                    // Label wrapped and centered below thumbnail
-                    ImGui.PushTextWrapPos(ImGui.GetCursorPosX() + cellWidth);
-                    var textSize = ImGui.CalcTextSize(entry.DisplayName, true);
-                    var labelPad = (cellWidth - textSize.X) * 0.5f;
-                    if (labelPad > 0)
-                    {
-                        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + labelPad);
-                    }
-
-                    ImGui.TextUnformatted(entry.DisplayName);
-                    ImGui.PopTextWrapPos();
-
-                    ImGui.PopID();
+                    break;
                 }
+
+                ImGui.TableSetColumnIndex(col);
+
+                var entry = entries[i];
+                var isSelected = Eddy.SelectedEntry == entry;
+                var texture = Eddy.Thumbnails.Get(entry);
+                var cellWidth = ImGui.GetColumnWidth();
+
+                ImGui.PushID(i);
+
+                // Compute thumbnail size preserving aspect ratio
+                var aspect = (float)texture.Width / texture.Height;
+                float thumbW, thumbH;
+                if (aspect >= 1f)
+                {
+                    thumbW = ThumbSize;
+                    thumbH = ThumbSize / aspect;
+                }
+                else
+                {
+                    thumbH = ThumbSize;
+                    thumbW = ThumbSize * aspect;
+                }
+
+                // Center thumbnail within the cell
+                var padX = (cellWidth - thumbW) * 0.5f;
+                var padY = (ThumbSize - thumbH) * 0.5f;
+                var cursor = ImGui.GetCursorPos();
+                var cellScreenPos = ImGui.GetCursorScreenPos();
+                ImGui.SetCursorPos(new NVector2(cursor.X + padX, cursor.Y + padY));
+                ImGuiX.Image(texture, new Vector2(thumbW, thumbH));
+
+                // Highlight selected asset on top of thumbnail
+                if (isSelected)
+                {
+                    var dl = ImGui.GetWindowDrawList();
+                    var highlightMax = new NVector2(cellScreenPos.X + ThumbSize, cellScreenPos.Y + ThumbSize);
+                    var color = Color.LightGray with { A = 128 }; // 50%
+                    dl.AddRectFilled(cellScreenPos, highlightMax, color.PackedValue);
+                }
+
+                // Restore cursor for the invisible click target over the whole cell
+                ImGui.SetCursorPos(cursor);
+                if (ImGui.InvisibleButton("##sel", new NVector2(cellWidth, ThumbSize)))
+                {
+                    Eddy.Tool = Eddy.PickAndPaint(entry);
+                }
+
+                if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+                {
+                    Eddy.Tool = Eddy.PickAndPaint(entry);
+                }
+
+                // Label wrapped and centered below thumbnail
+                ImGui.PushTextWrapPos(ImGui.GetCursorPosX() + cellWidth);
+                var textSize = ImGui.CalcTextSize(entry.DisplayName, true);
+                var labelPad = (cellWidth - textSize.X) * 0.5f;
+                if (labelPad > 0)
+                {
+                    ImGui.SetCursorPosX(ImGui.GetCursorPosX() + labelPad);
+                }
+
+                ImGui.TextUnformatted(entry.DisplayName);
+                ImGui.PopTextWrapPos();
+
+                if (isSelected && scrollToSelected)
+                {
+                    ImGui.SetScrollHereY(0.5f);
+                }
+
+                ImGui.PopID();
             }
         }
 
-        clipper.End();
-        clipper.Destroy();
         ImGui.EndTable();
     }
 

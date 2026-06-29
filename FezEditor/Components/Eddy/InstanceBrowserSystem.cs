@@ -11,10 +11,6 @@ public class InstanceBrowserSystem : EddySystem
 
     private const float CellSize = ThumbSize + CellSpacing;
 
-    private const float LabelHeight = 20f;
-
-    private const float RowHeight = CellSize + LabelHeight;
-
     public override void Draw()
     {
         if (!Eddy.ShowInstanceBrowser)
@@ -108,6 +104,9 @@ public class InstanceBrowserSystem : EddySystem
         var availWidth = ImGui.GetContentRegionAvail().X;
         var columns = Math.Max((int)(availWidth / CellSize), 1);
         var totalRows = (instances.Count + columns - 1) / columns;
+        var style = ImGui.GetStyle();
+        var rowHeight = ThumbSize + (style.FramePadding.Y * 2) + style.ItemSpacing.Y +
+                        ImGui.GetTextLineHeight() + (style.CellPadding.Y * 2);
 
         if (!ImGui.BeginTable($"##{tabLabel}grid", columns,
                 ImGuiTableFlags.ScrollY | ImGuiTableFlags.SizingStretchSame))
@@ -117,13 +116,13 @@ public class InstanceBrowserSystem : EddySystem
         }
 
         var clipper = new ImGuiListClipperPtr(ImGuiNative.ImGuiListClipper_ImGuiListClipper());
-        clipper.Begin(totalRows, RowHeight);
+        clipper.Begin(totalRows, rowHeight);
 
         while (clipper.Step())
         {
             for (var row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
             {
-                ImGui.TableNextRow(ImGuiTableRowFlags.None, RowHeight);
+                ImGui.TableNextRow(ImGuiTableRowFlags.None, rowHeight);
 
                 for (var col = 0; col < columns; col++)
                 {
