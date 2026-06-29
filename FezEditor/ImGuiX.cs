@@ -804,7 +804,7 @@ public static class ImGuiX
 
                 // New entry input
                 TKey newKey = default!;
-                ImGui.Button($"{Lucide.Plus} Add New Key");
+                ImGui.Text("Edit to add a new key:");
                 ImGui.SameLine();
 
                 if (renderNewKey(ref newKey))

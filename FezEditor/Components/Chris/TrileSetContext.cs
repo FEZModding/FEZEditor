@@ -339,7 +339,9 @@ internal class TrileSetContext : IContext
 
         var face = (int)Enum.Parse<FaceOrientation>(key);
         var faces = Enum.GetNames<FaceOrientation>();
-        return ImGui.Combo("##item", ref face, faces, faces.Length);
+        var changed = ImGui.Combo("##item", ref face, faces, faces.Length);
+        key = ((FaceOrientation)face).ToString();
+        return changed;
     }
 
     public IDictionary<FaceOrientation, CollisionType> GetTrileCollision()
