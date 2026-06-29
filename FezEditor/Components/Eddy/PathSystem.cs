@@ -93,8 +93,8 @@ public class PathSystem : EddySystem
             return;
         }
 
-        var label = string.Empty;
-        MovementPath? path = null;
+        string label;
+        MovementPath? path;
 
         switch (instanceId)
         {
@@ -111,12 +111,9 @@ public class PathSystem : EddySystem
                     path = Level.Groups[gp.GroupId].Path!;
                     break;
                 }
-        }
 
-        if (path == null)
-        {
-            ImGui.TextDisabled("No path selected.");
-            return;
+            default:
+                return;
         }
 
         ImGui.Text(label);
