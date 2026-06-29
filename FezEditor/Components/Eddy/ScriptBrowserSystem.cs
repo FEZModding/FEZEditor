@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Globalization;
+using System.Text.Json;
 using FezEditor.Scripting;
 using FezEditor.Structure;
 using FezEditor.Tools;
@@ -10,8 +11,6 @@ namespace FezEditor.Components.Eddy;
 
 public class ScriptBrowserSystem : EddySystem
 {
-    private static readonly string[] NoEvents = new[] { "(no events)" };
-
     private const int Columns = 4;
 
     private const float RowHeight = 48f;
@@ -385,31 +384,53 @@ public class ScriptBrowserSystem : EddySystem
     private void DrawEntityFields(Entity entity, ref string dependentField, string scopeLabel)
     {
         var typeNames = Array.ConvertAll(ScriptingApi.Entries, e => e.TypeName);
-        var typeIdx = Math.Max(0, Array.IndexOf(typeNames, entity.Type));
+        var typeIdx = Array.IndexOf(typeNames, entity.Type);
+        var currentType = typeIdx >= 0 ? typeNames[typeIdx] : "";
 
-        if (ImGui.Combo("Entity Type", ref typeIdx, typeNames, typeNames.Length))
+        if (ImGui.BeginCombo("Entity Type", currentType))
         {
-            using (Eddy.History.BeginScope($"Change {scopeLabel} Entity Type"))
+            for (var i = 0; i < typeNames.Length; i++)
             {
-                entity.Type = typeNames[typeIdx];
-                dependentField = "";
-                var newEntry = FindEntry(entity.Type);
-                if (newEntry is { IsStatic: true })
+                var selected = i == typeIdx;
+                if (ImGui.Selectable(typeNames[i], selected))
                 {
-                    entity.Identifier = null;
+                    using (Eddy.History.BeginScope($"Change {scopeLabel} Entity Type"))
+                    {
+                        entity.Type = typeNames[i];
+                        dependentField = "";
+                        entity.Identifier = null;
+                    }
+                }
+
+                if (selected)
+                {
+                    ImGui.SetItemDefaultFocus();
                 }
             }
+
+            ImGui.EndCombo();
         }
 
         var entry = FindEntry(entity.Type);
         if (entry is not { IsStatic: true })
         {
-            var id = entity.Identifier ?? 0;
-            if (ImGui.InputInt("Identifier", ref id))
+            var id = entity.Identifier?.ToString(CultureInfo.InvariantCulture) ?? "";
+            if (ImGui.InputText("Identifier", ref id, 11, ImGuiInputTextFlags.CharsDecimal))
             {
-                using (Eddy.History.BeginScope($"Change {scopeLabel} Entity Identifier"))
+                int? identifier = null;
+                var isValid = id.Length == 0;
+                if (!isValid && int.TryParse(id, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed))
                 {
-                    entity.Identifier = id;
+                    identifier = parsed;
+                    isValid = true;
+                }
+
+                if (isValid)
+                {
+                    using (Eddy.History.BeginScope($"Change {scopeLabel} Entity Identifier"))
+                    {
+                        entity.Identifier = identifier;
+                    }
                 }
             }
 
@@ -525,8 +546,8 @@ public class ScriptBrowserSystem : EddySystem
 
                 if (eventNames.Length > 0)
                 {
-                    var eventIdx = Math.Max(0, Array.IndexOf(eventNames, t.Event));
-                    var currentEvent = eventIdx < eventNames.Length ? eventNames[eventIdx] : "";
+                    var eventIdx = Array.IndexOf(eventNames, t.Event);
+                    var currentEvent = eventIdx >= 0 ? eventNames[eventIdx] : "";
                     if (ImGui.BeginCombo("Event", currentEvent))
                     {
                         for (var ei = 0; ei < eventNames.Length; ei++)
@@ -557,10 +578,7 @@ public class ScriptBrowserSystem : EddySystem
                 }
                 else
                 {
-                    ImGui.BeginDisabled();
-                    var noEventsIdx = 0;
-                    ImGui.Combo("Event", ref noEventsIdx, NoEvents, NoEvents.Length);
-                    ImGui.EndDisabled();
+                    DrawEmptyCombo("Event");
                 }
             }
 
@@ -658,8 +676,8 @@ public class ScriptBrowserSystem : EddySystem
 
                 if (propNames.Length > 0)
                 {
-                    var propIdx = Math.Max(0, Array.IndexOf(propNames, c.Property));
-                    var currentProp = propIdx < propNames.Length ? propNames[propIdx] : "";
+                    var propIdx = Array.IndexOf(propNames, c.Property);
+                    var currentProp = propIdx >= 0 ? propNames[propIdx] : "";
                     if (ImGui.BeginCombo("Property", currentProp))
                     {
                         for (var pi = 0; pi < propNames.Length; pi++)
@@ -688,17 +706,33 @@ public class ScriptBrowserSystem : EddySystem
                         ImGui.EndCombo();
                     }
                 }
+                else
+                {
+                    DrawEmptyCombo("Property");
+                }
 
                 // Display symbols parallel to Enum.GetNames order
-                var operatorNames = Enum.GetNames<ComparisonOperator>();
-                var operatorDisplays = new[] { "?", "==", ">", ">=", "<", "<=", "!=" };
-                var operatorIdx = Math.Max(0, Array.IndexOf(operatorNames, c.Operator.ToString()));
-                if (ImGui.Combo("Operator", ref operatorIdx, operatorDisplays, operatorDisplays.Length))
+                if (ImGui.BeginCombo("Operator", c.Operator.Stringify()))
                 {
-                    using (Eddy.History.BeginScope("Change Condition Operator"))
+                    var operators = Enum.GetValues<ComparisonOperator>();
+                    for (var i = 0; i < operators.Length; i++)
                     {
-                        c.Operator = Enum.Parse<ComparisonOperator>(operatorNames[operatorIdx]);
+                        var selected = i == Array.IndexOf(operators, c.Operator);
+                        if (ImGui.Selectable(operators[i].Stringify(), selected))
+                        {
+                            using (Eddy.History.BeginScope("Change Condition Operator"))
+                            {
+                                c.Operator = operators[i];
+                            }
+                        }
+
+                        if (selected)
+                        {
+                            ImGui.SetItemDefaultFocus();
+                        }
                     }
+
+                    ImGui.EndCombo();
                 }
 
                 var value = c.Value;
@@ -805,8 +839,8 @@ public class ScriptBrowserSystem : EddySystem
 
                 if (opNames.Length > 0)
                 {
-                    var opIdx = Math.Max(0, Array.IndexOf(opNames, a.Operation));
-                    var currentOp = opIdx < opNames.Length ? opNames[opIdx] : "";
+                    var opIdx = Array.IndexOf(opNames, a.Operation);
+                    var currentOp = opIdx >= 0 ? opNames[opIdx] : "";
                     if (ImGui.BeginCombo("Operation", currentOp))
                     {
                         for (var oi = 0; oi < opNames.Length; oi++)
@@ -843,6 +877,10 @@ public class ScriptBrowserSystem : EddySystem
 
                         ImGui.EndCombo();
                     }
+                }
+                else
+                {
+                    DrawEmptyCombo("Operation");
                 }
 
                 var killSwitch = a.Killswitch;
@@ -900,6 +938,17 @@ public class ScriptBrowserSystem : EddySystem
 
             ImGui.EndChild();
         }
+    }
+
+    private static void DrawEmptyCombo(string label)
+    {
+        ImGui.BeginDisabled();
+        if (ImGui.BeginCombo(label, ""))
+        {
+            ImGui.EndCombo();
+        }
+
+        ImGui.EndDisabled();
     }
 
     private static T Clone<T>(T obj) where T : class

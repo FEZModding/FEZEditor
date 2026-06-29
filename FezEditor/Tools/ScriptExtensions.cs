@@ -4,26 +4,35 @@ namespace FezEditor.Tools;
 
 public static class ScriptExtensions
 {
-    private static readonly Dictionary<ComparisonOperator, string> OperatorLookup = new()
+    public static string Stringify(this ComparisonOperator @operator)
     {
-        [ComparisonOperator.None] = "?",
-        [ComparisonOperator.Equal] = "==",
-        [ComparisonOperator.GreaterEqual] = ">=",
-        [ComparisonOperator.LessEqual] = "<=",
-        [ComparisonOperator.Greater] = ">",
-        [ComparisonOperator.Less] = "<",
-        [ComparisonOperator.NotEqual] = "!="
-    };
+        return @operator switch
+        {
+            ComparisonOperator.None => "?",
+            ComparisonOperator.Equal => "==",
+            ComparisonOperator.GreaterEqual => ">=",
+            ComparisonOperator.LessEqual => "<=",
+            ComparisonOperator.Greater => ">",
+            ComparisonOperator.Less => "<",
+            ComparisonOperator.NotEqual => "!=",
+            _ => throw new ArgumentOutOfRangeException(nameof(@operator), @operator, null)
+        };
+    }
 
     private static string ToPropertyIdentifier(Entity entity, string property)
     {
+        if (string.IsNullOrEmpty(entity.Type))
+        {
+            return "?";
+        }
+
         var output = entity.Type;
         if (entity.Identifier.HasValue)
         {
             output += $"[{entity.Identifier.Value}]";
         }
 
-        output += $".{property}";
+        output += string.IsNullOrEmpty(property) ? ".?" : $".{property}";
         return output;
     }
 
@@ -35,7 +44,7 @@ public static class ScriptExtensions
     public static string Stringify(this ScriptCondition condition)
     {
         var output = ToPropertyIdentifier(condition.Object, condition.Property);
-        output += $" {OperatorLookup[condition.Operator]} {condition.Value}";
+        output += $" {condition.Operator.Stringify()} {condition.Value}";
         return output;
     }
 
