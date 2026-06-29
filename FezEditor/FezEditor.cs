@@ -5,6 +5,7 @@ using FezEditor.Tools;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using SDL3;
 using Serilog;
 
 namespace FezEditor;
@@ -97,6 +98,7 @@ public class FezEditor : Game
 
     protected override void Update(GameTime gameTime)
     {
+        SyncBackBuffer();
         _input.Update();
         base.Update(gameTime);
     }
@@ -113,6 +115,22 @@ public class FezEditor : Game
     {
         this.RemoveServices();
         base.Dispose(disposing);
+    }
+
+    private void SyncBackBuffer()
+    {
+        // FNA can miss the initial resize when the window launches unfocused
+        if (SDL.SDL_GetWindowSizeInPixels(Window.Handle, out var width, out var height) &&
+            width > 0 && height > 0)
+        {
+            var presentation = GraphicsDevice.PresentationParameters;
+            if (presentation.BackBufferWidth != width || presentation.BackBufferHeight != height)
+            {
+                DeviceManager.PreferredBackBufferWidth = width;
+                DeviceManager.PreferredBackBufferHeight = height;
+                DeviceManager.ApplyChanges();
+            }
+        }
     }
 
     static FezEditor()
