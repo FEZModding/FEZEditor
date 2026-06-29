@@ -35,7 +35,8 @@ internal class DirResourceProvider : IResourceProvider
 
     public string GetExtension(string path)
     {
-        return _files.GetValueOrDefault(path)?.FullName.GetExtension() ?? "";
+        var fullName = _files.GetValueOrDefault(path)?.FullName;
+        return fullName != null ? GetFullExtension(fullName) : string.Empty;
     }
 
     public string GetFullPath(string path)
@@ -173,10 +174,10 @@ internal class DirResourceProvider : IResourceProvider
         _files.Clear();
         foreach (var file in _directory.EnumerateFiles("*", SearchOption.AllDirectories))
         {
-            var path = file.FullName.WithoutBaseDirectory(_directory.FullName);
+            var path = Path.GetRelativePath(_directory.FullName, file.FullName);
             if (Path.HasExtension(path))
             {
-                path = path.Replace(path.GetExtension(), "");
+                path = path.Replace(GetFullExtension(path), "");
             }
 
             var normalizedPath = path.Replace('\\', '/');
@@ -188,5 +189,12 @@ internal class DirResourceProvider : IResourceProvider
     {
         GC.SuppressFinalize(this);
         _files.Clear();
+    }
+
+    private static string GetFullExtension(string path)
+    {
+        var fileName = Path.GetFileName(path).AsSpan();
+        var dot = fileName.IndexOf('.');
+        return dot >= 0 ? fileName[dot..].ToString() : string.Empty;
     }
 }
