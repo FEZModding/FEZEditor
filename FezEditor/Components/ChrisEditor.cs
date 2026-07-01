@@ -734,7 +734,7 @@ public class ChrisEditor : EditorComponent, IChrisEditor
         {
             var collision = _collisionActor.GetComponent<TrileCollisionMesh>();
             collision.ClearInstanceData();
-            collision.AddInstanceData(Vector3.Zero, subject.GetTrileCollision(), Obj.Size);
+            collision.AddInstanceData(Vector3.Zero, subject.GetTrileCollision(), Obj.Size, Obj.Size - Vector3.One, 2);
             _collisionActor.Transform.Position = -Obj.Offset;
             subject.FlushThumbnail(Obj);
         }

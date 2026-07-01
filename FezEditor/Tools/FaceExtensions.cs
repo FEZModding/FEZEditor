@@ -15,6 +15,14 @@ public static class FaceExtensions
         FaceOrientation.Down
     };
 
+    public static readonly FaceOrientation[] SidesOnly = new[]
+    {
+        FaceOrientation.Front,
+        FaceOrientation.Right,
+        FaceOrientation.Back,
+        FaceOrientation.Left
+    };
+
     public static FaceOrientation OrientationFromDirection(Vector3 direction)
     {
         if (direction == Vector3.Forward)
@@ -78,8 +86,10 @@ public static class FaceExtensions
         return face switch
         {
             FaceOrientation.Front => Quaternion.Identity, // +Z, no rotation
-            FaceOrientation.Back => Quaternion.CreateFromAxisAngle(Vector3.Up, MathF.PI), // -Z, 180° around Y
-            FaceOrientation.Right => Quaternion.CreateFromAxisAngle(Vector3.Up, MathHelper.PiOver2), // +X, 90° around Y
+            FaceOrientation.Back => Quaternion.CreateFromAxisAngle(Vector3.Up,
+                MathF.PI), // -Z, 180° around Y
+            FaceOrientation.Right => Quaternion.CreateFromAxisAngle(Vector3.Up,
+                MathHelper.PiOver2), // +X, 90° around Y
             FaceOrientation.Left => Quaternion.CreateFromAxisAngle(Vector3.Up,
                 -MathHelper.PiOver2), // -X, -90° around Y
             FaceOrientation.Top => Quaternion.CreateFromAxisAngle(Vector3.Right,
@@ -136,5 +146,22 @@ public static class FaceExtensions
             FaceOrientation.Top => Vector3.Right,
             _ => Vector3.Zero
         };
+    }
+
+    public static FaceOrientation RotateBy(this FaceOrientation face, byte phi)
+    {
+        if (phi >= SidesOnly.Length)
+        {
+            return face;
+        }
+
+        var index = Array.IndexOf(SidesOnly, face);
+        if (index < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(face), face, "Side orientations only");
+        }
+
+        var rotation = phi - 2;
+        return SidesOnly[(index + rotation + SidesOnly.Length) % SidesOnly.Length];
     }
 }

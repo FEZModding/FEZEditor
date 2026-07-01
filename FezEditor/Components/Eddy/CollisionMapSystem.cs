@@ -37,7 +37,8 @@ public class CollisionMapSystem : EddySystem
         foreach (var instance in Level.Triles.Values.Where(ti => ti.TrileId != EddyEditor.InvalidId))
         {
             var trile = Eddy.TrileSet.Triles[instance.TrileId];
-            mesh.AddInstanceData(instance.Position.ToXna(), trile.Faces, trile.Size.ToXna());
+            mesh.AddInstanceData(instance.Position.ToXna(), trile.Faces, trile.Size.ToXna(),
+                trile.Offset.ToXna(), instance.PhiLight);
 
             foreach (var overlapped in instance.OverlappedTriles.EmptyIfNull())
             {
@@ -45,7 +46,8 @@ public class CollisionMapSystem : EddySystem
                 {
                     var overlappedTrile = Eddy.TrileSet.Triles[overlapped.TrileId];
                     mesh.AddInstanceData(
-                        overlapped.Position.ToXna(), overlappedTrile.Faces, overlappedTrile.Size.ToXna());
+                        overlapped.Position.ToXna(), overlappedTrile.Faces, overlappedTrile.Size.ToXna(),
+                        overlappedTrile.Offset.ToXna(), overlapped.PhiLight);
                 }
             }
         }

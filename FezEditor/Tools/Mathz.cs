@@ -12,6 +12,16 @@ public static class Mathz
 
     public static readonly Color TransparentBlack = Color.Black with { A = 0 };
 
+    public static readonly Vector3 EmplacementCenter = new(0.5f);
+
+    public static readonly Quaternion[] PhiAngles =
+    [
+        Quaternion.CreateFromAxisAngle(Vector3.Up, -MathF.Tau / 2f),
+        Quaternion.CreateFromAxisAngle(Vector3.Up, -MathF.Tau / 4f),
+        Quaternion.Identity,
+        Quaternion.CreateFromAxisAngle(Vector3.Up, MathF.Tau / 4f)
+    ];
+
     public const float TrixelSize = 1f / 16f;
 
     private const float Deg2Rad = MathF.PI / 180f;
@@ -290,5 +300,21 @@ public static class Mathz
     public static RVector3 AsVector(this TrileEmplacement a)
     {
         return new RVector3(a.X, a.Y, a.Z);
+    }
+
+    public static Quaternion GetTrileRotation(byte phi)
+    {
+        return phi < PhiAngles.Length ? PhiAngles[phi] : Quaternion.Identity;
+    }
+
+    public static Vector3 GetTrileCenter(Vector3 position, Vector3 offset, byte phi)
+    {
+        var rotatedOffset = Vector3.Transform(offset, GetTrileRotation(phi));
+        return position + new Vector3(0.5f) + (rotatedOffset / 2f);
+    }
+
+    public static Vector3 GetTrileTransformedSize(Vector3 size, byte phi)
+    {
+        return phi is 1 or 3 ? new Vector3(size.Z, size.Y, size.X) : size;
     }
 }

@@ -1,6 +1,7 @@
 using FezEditor.Services;
 using FezEditor.Structure;
 using FezEditor.Tools;
+using FEZRepacker.Core.Definitions.Game.Common;
 using FEZRepacker.Core.Definitions.Game.Level;
 using FEZRepacker.Core.Definitions.Game.TrileSet;
 using Microsoft.Xna.Framework;
@@ -10,23 +11,11 @@ namespace FezEditor.Actors;
 
 public class TrilesMesh : ActorComponent, IPickable
 {
-    public static readonly Quaternion[] PhiAngles = new[]
-    {
-        Quaternion.CreateFromAxisAngle(Vector3.Up, -MathF.Tau / 2f),
-        Quaternion.CreateFromAxisAngle(Vector3.Up, -MathF.Tau / 4f),
-        Quaternion.CreateFromAxisAngle(Vector3.Up, +MathF.Tau * 0f),
-        Quaternion.CreateFromAxisAngle(Vector3.Up, +MathF.Tau / 4f)
-    };
-
-    public static readonly Vector3 EmplacementCenter = new(0.5f);
-
     private const float DepthBias = -1e-4f;
 
     private const float SlopeScaleDepthBias = 0f;
 
     public int InstanceCount => _instances.Count;
-
-    public int OverlapCount => _overlaps.Count;
 
     public bool HasGeometry { get; private set; }
 
@@ -61,11 +50,13 @@ public class TrilesMesh : ActorComponent, IPickable
 
     private Texture2D? _texture;
 
-    private Texture2D? _emptyTexture;
-
     private bool _instancesDirty;
 
     private Vector3 _size;
+
+    private Vector3 _offset;
+
+    private Vector4 _collisionTypes;
 
     internal TrilesMesh(Game game, Actor actor) : base(game, actor)
     {
@@ -83,7 +74,13 @@ public class TrilesMesh : ActorComponent, IPickable
     {
         var effect = content.Load<Effect>("Effects/TrilesMesh");
         _rendering.MaterialAssignEffect(_material, effect);
-        _emptyTexture = content.Load<Texture2D>("Textures/Empty");
+
+        foreach (var collision in Enum.GetValues<CollisionType>())
+        {
+            var texture = content.Load<Texture2D>($"Textures/{collision}");
+            _rendering.MaterialShaderSetParam(_material, $"{collision}Texture", texture);
+        }
+
         _rendering.MaterialAssignEffect(_displacementMaterial, _rendering.BasicEffectVertexColor);
         _rendering.MaterialSetCullMode(_displacementMaterial, CullMode.None);
     }
@@ -102,11 +99,21 @@ public class TrilesMesh : ActorComponent, IPickable
         if (trile != null)
         {
             _size = trile.Size.ToXna();
+            _offset = trile.Offset.ToXna();
+            _collisionTypes = new Vector4
+            {
+                X = (float)trile.Faces[FaceOrientation.Front],
+                Y = (float)trile.Faces[FaceOrientation.Right],
+                Z = (float)trile.Faces[FaceOrientation.Back],
+                W = (float)trile.Faces[FaceOrientation.Left]
+            };
             HasGeometry = trile.Geometry.Indices.Length > 0;
         }
         else
         {
             _size = Vector3.One;
+            _offset = Vector3.Zero;
+            _collisionTypes = Vector4.Zero;
             HasGeometry = false;
         }
 
@@ -122,14 +129,21 @@ public class TrilesMesh : ActorComponent, IPickable
         }
         else
         {
-            _rendering.MaterialAssignBaseTexture(_material, _emptyTexture!);
             _rendering.MaterialSetDepthBias(_material, DepthBias, SlopeScaleDepthBias);
+            var faces = new List<MeshSurface>(trile!.Faces.Count);
+            foreach (var face in trile.Faces.Keys)
+            {
+                var fallback = MeshSurface.CreateFaceQuad(_size, face);
+                fallback.Translate(_offset / 2f);
+                faces.Add(fallback);
+            }
 
-            var fallback = MeshSurface.CreateTexturedBox(_size);
-            _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, fallback, _material);
+            var fallbackMesh = MeshSurface.CreateMergedMesh(faces.ToArray());
+            _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, fallbackMesh, _material);
         }
 
         var wireframe = MeshSurface.CreateWireframeBox(_size, Color.Magenta);
+        wireframe.Translate(_offset / 2f);
         _rendering.MeshAddSurface(_displacementMesh, PrimitiveType.LineList, wireframe, _displacementMaterial);
     }
 
@@ -140,15 +154,16 @@ public class TrilesMesh : ActorComponent, IPickable
 
     public void SetInstanceData(TrileEmplacement emplacement, Vector3 position, byte phi)
     {
-        _instances[emplacement] = new InstanceData(position, phi, Mathz.TransparentBlack);
+        _instances[emplacement] =
+            new InstanceData(position, phi, Mathz.TransparentBlack, !HasGeometry, _collisionTypes);
         _instancesDirty = true;
 
         FreeDisplacement(emplacement);
         if (IsOffsetInsideEmplacement(position, emplacement))
         {
             var instance = _rendering.InstanceCreate(Actor.InstanceRid);
-            var pos = new Vector3(emplacement.X, emplacement.Y, emplacement.Z) + EmplacementCenter;
-            var rot = PhiAngles[phi];
+            var pos = new Vector3(emplacement.X, emplacement.Y, emplacement.Z) + Mathz.EmplacementCenter;
+            var rot = Mathz.GetTrileRotation(phi);
             _rendering.InstanceSetMesh(instance, _displacementMesh);
             _rendering.InstanceSetPosition(instance, pos);
             _rendering.InstanceSetRotation(instance, rot);
@@ -167,7 +182,7 @@ public class TrilesMesh : ActorComponent, IPickable
 
     public void SetOverlapInstanceData(TrileEmplacement emplacement, int index, Vector3 position, byte phi, Color tint)
     {
-        _overlaps[(emplacement, index)] = new InstanceData(position, phi, tint);
+        _overlaps[(emplacement, index)] = new InstanceData(position, phi, tint, !HasGeometry, _collisionTypes);
         _instancesDirty = true;
     }
 
@@ -176,22 +191,14 @@ public class TrilesMesh : ActorComponent, IPickable
         _instancesDirty |= _overlaps.Remove((emplacement, index));
     }
 
-    public void ClearOverlapInstancesAt(TrileEmplacement emplacement)
-    {
-        foreach (var key in _overlaps.Keys.Where(k => k.Item1.Equals(emplacement)).ToList())
-        {
-            _overlaps.Remove(key);
-            _instancesDirty = true;
-        }
-    }
-
     public IEnumerable<BoundingBox> GetBounds()
     {
         for (var i = 0; i < _instances.Count; i++)
         {
             var (_, instance) = _instances.GetAt(i);
-            var position = instance.Position + EmplacementCenter;
-            var rotation = PhiAngles[instance.Phi];
+            var phi = (byte)instance.Phi;
+            var position = Mathz.GetTrileCenter(instance.Position, _offset, phi);
+            var rotation = Mathz.GetTrileRotation(phi);
             yield return Mathz.ComputeBoundingBox(position, rotation, Vector3.One, _size);
         }
     }
@@ -228,17 +235,6 @@ public class TrilesMesh : ActorComponent, IPickable
         FreeDisplacement(emplacement);
     }
 
-    public void ClearInstances()
-    {
-        _overlaps.Clear();
-        _instances.Clear();
-        _instancesDirty = true;
-        foreach (var emplacement in _displacements.Keys.ToList())
-        {
-            FreeDisplacement(emplacement);
-        }
-    }
-
     private void FreeDisplacement(TrileEmplacement emplacement)
     {
         if (_displacements.Remove(emplacement, out var displacement))
@@ -271,17 +267,22 @@ public class TrilesMesh : ActorComponent, IPickable
         }
     }
 
-    private readonly record struct InstanceData(Vector3 Position, int Phi, Color Tint)
+    private readonly record struct InstanceData(
+        Vector3 Position,
+        int Phi,
+        Color Tint,
+        bool CollisionVisual,
+        Vector4 CollisionTypes)
     {
         public Matrix ToStride()
         {
-            var quaternion = Phi is >= 0 and <= 3 ? PhiAngles[Phi] : Quaternion.Identity;
+            var quaternion = Mathz.GetTrileRotation((byte)Phi);
             var tint = Tint.ToVector4();
             return new Matrix(
-                Position.X, Position.Y, Position.Z, 0f,
+                Position.X, Position.Y, Position.Z, CollisionVisual ? 1f : 0f,
                 quaternion.X, quaternion.Y, quaternion.Z, quaternion.W,
                 tint.X, tint.Y, tint.Z, tint.W,
-                0f, 0f, 0f, 0f
+                CollisionTypes.X, CollisionTypes.Y, CollisionTypes.Z, CollisionTypes.W
             );
         }
     }

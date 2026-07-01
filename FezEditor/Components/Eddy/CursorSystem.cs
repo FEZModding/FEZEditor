@@ -135,7 +135,7 @@ public sealed class CursorSystem : EddySystem
             _cursor.UpdateHologram(Eddy.TrileSet, tool.Id);
         }
 
-        var position = hovered.Trile.Emplacement.ToXna().ToVector3() + TrilesMesh.EmplacementCenter;
+        var position = hovered.Trile.Emplacement.ToXna().ToVector3() + Mathz.EmplacementCenter;
         if (ImGui.GetIO().KeyShift)
         {
             position += hovered.Face.AsVector();
@@ -149,7 +149,7 @@ public sealed class CursorSystem : EddySystem
             _ => 0
         });
 
-        _cursor.SetHologramPose(position, TrilesMesh.PhiAngles[phi]);
+        _cursor.SetHologramPose(position, Mathz.PhiAngles[phi]);
     }
 
     private byte GetHoveredPhi(TrileEmplacement emplacement)

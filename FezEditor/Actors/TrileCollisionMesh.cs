@@ -12,14 +12,6 @@ public class TrileCollisionMesh : ActorComponent
 {
     private const float OverlayOversize = 1.025f;
 
-    private static readonly FaceOrientation[] Sides = new[]
-    {
-        FaceOrientation.Front,
-        FaceOrientation.Right,
-        FaceOrientation.Back,
-        FaceOrientation.Left
-    };
-
     private readonly List<InstanceData> _instances = new();
 
     private readonly RenderingService _rendering;
@@ -68,19 +60,24 @@ public class TrileCollisionMesh : ActorComponent
         _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, quad, _material);
     }
 
-    public void AddInstanceData(Vector3 position, IDictionary<FaceOrientation, CollisionType> collision, Vector3 size)
+    public void AddInstanceData(
+        Vector3 position,
+        IDictionary<FaceOrientation, CollisionType> collision,
+        Vector3 size,
+        Vector3 offset,
+        byte phi)
     {
-        position += size / 2f;
-        size *= OverlayOversize;
+        position = Mathz.GetTrileCenter(position, offset, phi);
+        size = Mathz.GetTrileTransformedSize(size, phi) * OverlayOversize;
 
-        foreach (var face in Sides)
+        foreach (var face in FaceExtensions.SidesOnly)
         {
             if (!collision.TryGetValue(face, out var type))
             {
                 throw new KeyNotFoundException($"Missing {face} face");
             }
 
-            _instances.Add(new InstanceData(position, size, face, type));
+            _instances.Add(new InstanceData(position, size, face.RotateBy(phi), type));
             _instancesDirty = true;
         }
     }
