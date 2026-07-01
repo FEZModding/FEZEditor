@@ -153,12 +153,17 @@ public class TrileSystem : EddySystem
 
     private void DrawSingleProperties(InstanceId.Trile i)
     {
-        var instance = Level.Triles[i.Emplacement];
+        var instance = Eddy.GetActiveTrile(i.Emplacement);
+        if (instance == null)
+        {
+            return;
+        }
+
         var trile = Eddy.TrileSet.Triles[instance.TrileId];
         ImGui.Text($"Trile: {trile.Name} (ID={instance.TrileId})");
 
         var emplacementsGroups = Level.GetEmplacementGroups();
-        if (!emplacementsGroups.ContainsKey(i.Emplacement))
+        if (Eddy.OverlapIndex == 0 && !emplacementsGroups.ContainsKey(i.Emplacement))
         {
             if (ImGui.Button($"{Lucide.Group} Group"))
             {
@@ -187,7 +192,9 @@ public class TrileSystem : EddySystem
             _positionScope ??= Eddy.History.BeginScope("Edit Trile Position");
             var before = instance.Clone();
             instance.Position = position.ClampWithinEmplacement(i.Emplacement).ToRepacker();
-            Visualize(new InstanceId.TrileChange(i.Emplacement, before, instance.Clone()));
+            var after = instance.Clone();
+            VisualizeActiveTrile(i.Emplacement, before, after);
+            VisualizeCollisionMap();
         }
 
         if (ImGui.IsItemDeactivatedAfterEdit())
@@ -202,7 +209,11 @@ public class TrileSystem : EddySystem
         {
             using (Eddy.History.BeginScope("Edit Trile Rotation"))
             {
+                var before = instance.Clone();
                 instance.PhiLight = (byte)phi;
+                var after = instance.Clone();
+                VisualizeActiveTrile(i.Emplacement, before, after);
+                VisualizeCollisionMap();
             }
         }
 
@@ -279,8 +290,8 @@ public class TrileSystem : EddySystem
     private void DrawMultiProperties(HashSet<InstanceId.Trile> instances)
     {
         var triles = instances
-            .Where(e => Level.Triles.TryGetValue(e.Emplacement, out var ti) && ti.TrileId != EddyEditor.InvalidId)
-            .Select(e => Level.Triles[e.Emplacement])
+            .Select(e => (Id: e, Trile: Eddy.GetActiveTrile(e.Emplacement)))
+            .Where(e => e.Trile != null)
             .ToList();
 
         if (triles.Count == 0)
@@ -291,7 +302,7 @@ public class TrileSystem : EddySystem
         ImGui.Text($"{triles.Count} triles selected");
 
         var emplacementsGroups = Level.GetEmplacementGroups();
-        if (instances.All(i => !emplacementsGroups.ContainsKey(i.Emplacement)))
+        if (Eddy.OverlapIndex == 0 && instances.All(i => !emplacementsGroups.ContainsKey(i.Emplacement)))
         {
             if (ImGui.Button($"{Lucide.Group} Group"))
             {
@@ -325,13 +336,21 @@ public class TrileSystem : EddySystem
             var trileSelection = (SelectionState.Trile)Eddy.Selected;
             foreach (var emplacement in trileSelection.Selected)
             {
-                var instance = Level.Triles[emplacement];
+                var instance = Eddy.GetActiveTrile(emplacement);
+                if (instance == null)
+                {
+                    continue;
+                }
+
                 var before = instance.Clone();
                 instance.Position = (instance.Position.ToXna() + delta)
                     .ClampWithinEmplacement(emplacement)
                     .ToRepacker();
-                Visualize(new InstanceId.TrileChange(emplacement, before, instance.Clone()));
+                var after = instance.Clone();
+                VisualizeActiveTrile(emplacement, before, after);
             }
+
+            VisualizeCollisionMap();
         }
 
         if (ImGui.IsItemDeactivatedAfterEdit())
@@ -341,22 +360,28 @@ public class TrileSystem : EddySystem
             _multiPositionScope = null;
         }
 
-        var allSameFace = triles.All(i => i.PhiLight == triles[0].PhiLight);
-        var face = allSameFace ? triles[0].PhiLight : -1;
+        var allSameFace = triles.All(i => i.Trile!.PhiLight == triles[0].Trile!.PhiLight);
+        var face = allSameFace ? triles[0].Trile!.PhiLight : -1;
         if (ImGui.Combo("Rotation", ref face, Rotations, Rotations.Length))
         {
             using (Eddy.History.BeginScope("Edit Trile Rotation"))
             {
-                foreach (var trile in triles)
+                foreach (var (id, trile) in triles)
                 {
-                    trile.PhiLight = (byte)face;
+                    var active = trile!;
+                    var before = active.Clone();
+                    active.PhiLight = (byte)face;
+                    var after = active.Clone();
+                    VisualizeActiveTrile(id.Emplacement, before, after);
                 }
+
+                VisualizeCollisionMap();
             }
         }
 
         ImGui.SeparatorText("Actor Settings");
-        var anyWithout = triles.Any(i => i.ActorSettings == null);
-        var anyWith = triles.Any(i => i.ActorSettings != null);
+        var anyWithout = triles.Any(i => i.Trile!.ActorSettings == null);
+        var anyWith = triles.Any(i => i.Trile!.ActorSettings != null);
 
         if (anyWithout)
         {
@@ -364,9 +389,9 @@ public class TrileSystem : EddySystem
             {
                 using (Eddy.History.BeginScope("Add ActorSettings"))
                 {
-                    foreach (var trile in triles.Where(i => i.ActorSettings == null))
+                    foreach (var (_, trile) in triles.Where(i => i.Trile!.ActorSettings == null))
                     {
-                        trile.ActorSettings = new TrileInstanceActorSettings();
+                        trile!.ActorSettings = new TrileInstanceActorSettings();
                     }
                 }
             }
@@ -383,9 +408,9 @@ public class TrileSystem : EddySystem
             {
                 using (Eddy.History.BeginScope("Remove ActorSettings"))
                 {
-                    foreach (var trile in triles.Where(i => i.ActorSettings != null))
+                    foreach (var (_, trile) in triles.Where(i => i.Trile!.ActorSettings != null))
                     {
-                        trile.ActorSettings = null;
+                        trile!.ActorSettings = null;
                     }
                 }
             }
@@ -581,6 +606,19 @@ public class TrileSystem : EddySystem
                 ImGui.SetTooltip("Delete this Path");
             }
         }
+    }
+
+    private void VisualizeActiveTrile(TrileEmplacement emplacement, TrileInstance before, TrileInstance after)
+    {
+        Visualize(Eddy.OverlapIndex == 0
+            ? new InstanceId.TrileChange(emplacement, before, after)
+            : new InstanceId.TrileOverlapChange(emplacement, Eddy.OverlapIndex - 1, before, after));
+    }
+
+    private void VisualizeCollisionMap()
+    {
+        Eddy.Visualize(new InstanceId.CollisionMap());
+        Eddy.Visualize(new InstanceId.PickableBounds());
     }
 
     private static bool RenderItem(int index, ref bool item)

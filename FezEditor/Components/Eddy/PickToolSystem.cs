@@ -15,10 +15,11 @@ public class PickToolSystem : EddySystem
             return;
         }
 
-        Status.AddHints(
-            ("LMB", "Pick Asset"),
-            ("Alt+LMB", "Cycle Pick")
-        );
+        Status.AddHints(("LMB", "Pick Asset"));
+        if (Eddy.Hovered?.Instance is not InstanceId.Trile and not InstanceId.TrileGroup)
+        {
+            Status.AddHints(("Alt+LMB", "Cycle Pick"));
+        }
 
         _hovered = Eddy.Hovered?.Instance switch
         {
@@ -55,10 +56,15 @@ public class PickToolSystem : EddySystem
         }
     }
 
-    private AssetEntry.Trile ResolveTrileAsset(TrileEmplacement emplacement)
+    private AssetEntry.Trile? ResolveTrileAsset(TrileEmplacement emplacement)
     {
-        var id = Level.Triles[emplacement].TrileId;
-        var name = Eddy.TrileSet.Triles[id].Name;
+        var id = Eddy.GetActiveTrile(emplacement)?.TrileId ?? EddyEditor.InvalidId;
+        if (id == EddyEditor.InvalidId || !Eddy.TrileSet.Triles.TryGetValue(id, out var trile))
+        {
+            return null;
+        }
+
+        var name = trile.Name;
         var path = Level.TrileSetName + "/" + name;
         return new AssetEntry.Trile(name, path, id);
     }

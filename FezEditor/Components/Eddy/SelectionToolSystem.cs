@@ -20,9 +20,13 @@ public class SelectionToolSystem : EddySystem
         {
             Status.AddHints(
                 ("LMB", "Select"),
-                ("Shift+LMB", "Add to Selection"),
-                ("Alt+LMB", "Cycle Selection")
+                ("Shift+LMB", "Add to Selection")
             );
+
+            if (Eddy.Hovered?.Instance is not InstanceId.Trile and not InstanceId.TrileGroup)
+            {
+                Status.AddHints(("Alt+LMB", "Cycle Selection"));
+            }
         }
 
         if (Eddy.Hovered?.Instance is InstanceId.Trile)
@@ -208,12 +212,15 @@ public class SelectionToolSystem : EddySystem
                 for (var z = min.Z; z <= max.Z; z++)
                 {
                     var emp = new TrileEmplacement(x, y, z);
-                    if (!Level.Triles.ContainsKey(emp))
+                    if (Eddy.GetActiveTrile(emp) == null)
                     {
                         continue;
                     }
 
-                    var siblings = Level.GetGroupSiblingEmplacements(emp);
+                    var siblings = Eddy.OverlapIndex == 0
+                        ? Level.GetGroupSiblingEmplacements(emp)
+                        : [];
+
                     if (siblings.Count == 0)
                     {
                         if (!selected.Contains(emp))

@@ -43,12 +43,13 @@ public class RaycastSystem : EddySystem
         }
 
         _index = 0;
-        if (ImGui.GetIO().KeyAlt)
+        var first = ResolveHit(0);
+        if (ImGui.GetIO().KeyAlt && first?.Instance is not InstanceId.Trile and not InstanceId.TrileGroup)
         {
             var selectedIndex = FindSelectionCycleIndex();
             if (selectedIndex >= 0)
             {
-                _index = (selectedIndex + 1) % _hits.Length;
+                _index = FindNextSelectionCycleIndex(selectedIndex);
             }
         }
 
@@ -97,13 +98,28 @@ public class RaycastSystem : EddySystem
         for (var i = 0; i < _hits.Length; i++)
         {
             var hit = ResolveHit(i);
-            if (hit.HasValue && IsInstanceSelected(hit.Value.Instance))
+            if (hit is { Instance: not InstanceId.Trile and not InstanceId.TrileGroup } &&
+                IsInstanceSelected(hit.Value.Instance))
             {
                 return i;
             }
         }
 
         return -1;
+    }
+
+    private int FindNextSelectionCycleIndex(int selectedIndex)
+    {
+        for (var offset = 1; offset < _hits.Length; offset++)
+        {
+            var index = (selectedIndex + offset) % _hits.Length;
+            if (ResolveHit(index)?.Instance is not null and not InstanceId.Trile and not InstanceId.TrileGroup)
+            {
+                return index;
+            }
+        }
+
+        return selectedIndex;
     }
 
     private bool IsInstanceSelected(InstanceId instance)
@@ -144,8 +160,13 @@ public class RaycastSystem : EddySystem
             var bounds = trilesMesh.GetBounds().ElementAt(hit.Index);
             var face = Mathz.DetermineFace(bounds, _ray, hit.Distance);
 
+            if (Eddy.GetActiveTrile(emplacement) == null)
+            {
+                return null;
+            }
+
             var groups = Level.GetEmplacementGroups();
-            InstanceId instance = groups.TryGetValue(emplacement, out var group)
+            InstanceId instance = Eddy.OverlapIndex == 0 && groups.TryGetValue(emplacement, out var group)
                 ? new InstanceId.TrileGroup(group)
                 : new InstanceId.Trile(emplacement);
 
@@ -184,7 +205,8 @@ public class RaycastSystem : EddySystem
                 hit.Index < trilesMesh.InstanceCount)
             {
                 var emplacement = trilesMesh.GetEmplacement(hit.Index);
-                if (Level.Triles.ContainsKey(emplacement))
+                if (Level.Triles.TryGetValue(emplacement, out var trile) &&
+                    trile.TrileId != EddyEditor.InvalidId)
                 {
                     var bounds = trilesMesh.GetBounds().ElementAt(hit.Index);
                     var face = Mathz.DetermineFace(bounds, _ray, hit.Distance);

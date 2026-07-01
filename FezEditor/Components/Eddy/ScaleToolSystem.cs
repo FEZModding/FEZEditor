@@ -19,6 +19,11 @@ public class ScaleToolSystem : EddySystem
 
     public override void Update()
     {
+        if (Eddy is { OverlapIndex: > 0, Selected: SelectionState.Trile or SelectionState.TrileGroup })
+        {
+            return;
+        }
+
         if (Eddy.Tool is not ToolState.Scale tool)
         {
             return;
@@ -44,8 +49,8 @@ public class ScaleToolSystem : EddySystem
     {
         return tool is ToolState.Scale && Eddy.Selected switch
         {
-            SelectionState.Trile { Selected.Count: > 0 } => true,
-            SelectionState.TrileGroup { Selected.Count: > 0 } => true,
+            SelectionState.Trile { Selected.Count: > 0 } => Eddy.OverlapIndex == 0,
+            SelectionState.TrileGroup { Selected.Count: > 0 } => Eddy.OverlapIndex == 0,
             SelectionState.Instance i => i.Selected.Any(id => id is InstanceId.ArtObject or
                 InstanceId.BackgroundPlane or
                 InstanceId.Volume),

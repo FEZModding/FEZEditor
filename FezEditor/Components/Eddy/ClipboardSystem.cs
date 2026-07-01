@@ -147,9 +147,11 @@ public class ClipboardSystem : EddySystem
                 {
                     foreach (var emplacement in t.Selected)
                     {
-                        if (Level.Triles.TryGetValue(emplacement, out var trile))
+                        if (Eddy.GetActiveTrile(emplacement) is { } trile)
                         {
-                            clipboard.Triles.Add(emplacement, Clone(trile));
+                            var instance = Clone(trile);
+                            instance.OverlappedTriles = null;
+                            clipboard.Triles.Add(emplacement, instance);
                         }
                     }
 
@@ -197,13 +199,39 @@ public class ClipboardSystem : EddySystem
                 var target = source.Add(offset);
                 var instance = Clone(trile);
                 instance.Position = target.ToXna().ToVector3().ToRepacker();
-                Level.Triles[target] = instance;
-                changedTriles.Add(new InstanceId.Trile(target));
+                instance.OverlappedTriles = null;
 
-                if (clipboard.Triles.IndexOf(source) == 0)
+                if (Eddy.OverlapIndex == 0)
                 {
-                    anchor = target;
+                    if (Level.Triles.TryGetValue(target, out var existing))
+                    {
+                        instance.OverlappedTriles = existing.OverlappedTriles;
+                    }
+
+                    Level.Triles[target] = instance;
                 }
+                else if (Level.Triles.TryGetValue(target, out var main))
+                {
+                    var slot = Eddy.OverlapIndex - 1;
+                    main.OverlappedTriles ??= [];
+                    while (main.OverlappedTriles.Count <= slot)
+                    {
+                        main.OverlappedTriles.Add(new TrileInstance
+                        {
+                            TrileId = EddyEditor.InvalidId,
+                            Position = main.Position
+                        });
+                    }
+
+                    main.OverlappedTriles[slot] = instance;
+                }
+                else
+                {
+                    continue;
+                }
+
+                changedTriles.Add(new InstanceId.Trile(target));
+                anchor ??= target;
             }
         }
 
@@ -214,7 +242,7 @@ public class ClipboardSystem : EddySystem
         var changedGroups = new HashSet<InstanceId.TrileGroup>();
         var changedInstances = new HashSet<InstanceId>();
 
-        if (clipboard.TrileGroups.Count != 0)
+        if (Eddy.OverlapIndex == 0 && clipboard.TrileGroups.Count != 0)
         {
             var offset = ComputeTrilePasteOffset(clipboard);
             foreach (var sourceGroup in clipboard.TrileGroups.Values)
@@ -336,8 +364,22 @@ public class ClipboardSystem : EddySystem
                                 trile.OverlappedTriles != null &&
                                 slot < trile.OverlappedTriles.Count)
                             {
-                                trile.OverlappedTriles.RemoveAt(slot);
-                                trile.OverlappedTriles = trile.OverlappedTriles.NullIfEmpty();
+                                trile.OverlappedTriles[slot] = new TrileInstance
+                                {
+                                    TrileId = EddyEditor.InvalidId,
+                                    Position = trile.Position
+                                };
+
+                                while (trile.OverlappedTriles is { Count: > 0 } overlaps &&
+                                       overlaps[^1].TrileId == EddyEditor.InvalidId)
+                                {
+                                    overlaps.RemoveAt(overlaps.Count - 1);
+                                }
+
+                                if (trile.OverlappedTriles is { } remaining)
+                                {
+                                    trile.OverlappedTriles = remaining.NullIfEmpty();
+                                }
                             }
                         }
 

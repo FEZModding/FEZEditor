@@ -105,7 +105,7 @@ public class RotateToolSystem : EddySystem
     private Vector3 ComputeTrileCentroid(SelectionState.Trile selection)
     {
         var instances = selection.Selected
-            .Select(GetActiveTrile)
+            .Select(Eddy.GetActiveTrile)
             .Where(ti => ti != null)
             .ToList();
 
@@ -116,7 +116,7 @@ public class RotateToolSystem : EddySystem
 
     private void RotateTrile(TrileEmplacement emplacement)
     {
-        var active = GetActiveTrile(emplacement);
+        var active = Eddy.GetActiveTrile(emplacement);
         if (active == null)
         {
             return;
@@ -131,27 +131,6 @@ public class RotateToolSystem : EddySystem
             : new InstanceId.TrileOverlapChange(emplacement, Eddy.OverlapIndex - 1, before, after);
 
         Eddy.Visualize(instance);
-    }
-
-    private TrileInstance? GetActiveTrile(TrileEmplacement emplacement)
-    {
-        if (!Level.Triles.TryGetValue(emplacement, out var trile))
-        {
-            return null;
-        }
-
-        if (Eddy.OverlapIndex < 1)
-        {
-            return trile;
-        }
-
-        var slot = Eddy.OverlapIndex - 1;
-        if (trile.OverlappedTriles == null || slot >= trile.OverlappedTriles.Count)
-        {
-            return null;
-        }
-
-        return trile.OverlappedTriles[slot];
     }
 
     #endregion

@@ -357,7 +357,7 @@ public class EddyEditor : EditorComponent
         }
     }
 
-    public void VisualizeAllOverlappedTriles()
+    private void VisualizeAllOverlappedTriles()
     {
         foreach (var (emplacement, trile) in _level.Triles)
         {
@@ -368,6 +368,26 @@ public class EddyEditor : EditorComponent
                 Visualize(new InstanceId.TrileOverlapChange(emplacement, i, overlap, overlap));
             }
         }
+    }
+
+    internal TrileInstance? GetActiveTrile(TrileEmplacement emplacement)
+    {
+        if (!_level.Triles.TryGetValue(emplacement, out var trile))
+        {
+            return null;
+        }
+
+        if (OverlapIndex == 0)
+        {
+            return trile.TrileId == InvalidId ? null : trile;
+        }
+
+        var slot = OverlapIndex - 1;
+        return trile.OverlappedTriles != null &&
+               slot < trile.OverlappedTriles.Count &&
+               trile.OverlappedTriles[slot].TrileId != InvalidId
+            ? trile.OverlappedTriles[slot]
+            : null;
     }
 
     public void Visualize(InstanceId instanceId)
