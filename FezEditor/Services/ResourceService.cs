@@ -22,18 +22,68 @@ public class ResourceService : IDisposable
 
     public event Action? ModOpenedFirstTime;
 
-    public bool HasNoProvider => _provider == null;
+    public bool HasNoProvider
+    {
+        get
+        {
+            lock (_providerLock)
+            {
+                return _provider == null;
+            }
+        }
+    }
 
-    public bool IsReadonly => _provider?.IsReadonly ?? true;
+    public bool IsReadonly
+    {
+        get
+        {
+            lock (_providerLock)
+            {
+                return _provider?.IsReadonly ?? true;
+            }
+        }
+    }
 
-    public string RootPath => _provider?.RootPath ?? string.Empty;
+    public string RootPath
+    {
+        get
+        {
+            lock (_providerLock)
+            {
+                return _provider?.RootPath ?? string.Empty;
+            }
+        }
+    }
 
-    public IEnumerable<string> Files => _provider?.Files ?? Enumerable.Empty<string>();
-    public IEnumerable<string> VirtualFiles => _provider is ModResourceProvider mod ? mod.VirtualFiles : Files;
+    public IEnumerable<string> Files
+    {
+        get
+        {
+            lock (_providerLock)
+            {
+                return _provider?.Files.ToArray() ?? [];
+            }
+        }
+    }
+
+    public IEnumerable<string> VirtualFiles
+    {
+        get
+        {
+            lock (_providerLock)
+            {
+                return _provider is ModResourceProvider mod
+                    ? mod.VirtualFiles.ToArray()
+                    : _provider?.Files.ToArray() ?? [];
+            }
+        }
+    }
 
     private AssetPickWindow? _assetPickWindow;
 
     private IResourceProvider? _provider;
+
+    private readonly Lock _providerLock = new();
 
     private readonly IContentManager _content;
 
@@ -50,31 +100,55 @@ public class ResourceService : IDisposable
 
     private void OnGameActivated(object? o, EventArgs eventArgs)
     {
-        if (_provider != null)
+        var refreshed = false;
+        lock (_providerLock)
         {
-            _provider.Refresh();
+            if (_provider != null)
+            {
+                _provider.Refresh();
+                refreshed = true;
+            }
+        }
+
+        if (refreshed)
+        {
             ProviderChanged?.Invoke();
         }
     }
 
     public void OpenProvider(IResourceProvider provider)
     {
-        CloseProvider();
-        _provider = provider;
+        var rootPath = provider.RootPath;
+        var fileCount = provider.Files.Count();
+        IResourceProvider? previous;
+        lock (_providerLock)
+        {
+            previous = _provider;
+            _provider = provider;
+            _cache.Clear();
+        }
+
+        previous?.Dispose();
         ProviderReset?.Invoke();
         ProviderChanged?.Invoke();
         Logger.Information("Opened {0} at {1} with {2} file(s)",
             provider.GetType().Name,
-            _provider.RootPath,
-            provider.Files.Count()
+            rootPath,
+            fileCount
         );
     }
 
     public void CloseProvider()
     {
-        _cache.Clear();
-        _provider?.Dispose();
-        _provider = null;
+        IResourceProvider? provider;
+        lock (_providerLock)
+        {
+            provider = _provider;
+            _provider = null;
+            _cache.Clear();
+        }
+
+        provider?.Dispose();
         ProviderReset?.Invoke();
         ProviderChanged?.Invoke();
         Logger.Information("Provider closed");
@@ -82,27 +156,42 @@ public class ResourceService : IDisposable
 
     public Stream OpenStream(string path, string extension)
     {
-        return _provider!.OpenStream(path, extension);
+        lock (_providerLock)
+        {
+            return _provider!.OpenStream(path, extension);
+        }
     }
 
     public bool Exists(string path)
     {
-        return _provider?.Exists(path) ?? false;
+        lock (_providerLock)
+        {
+            return _provider?.Exists(path) ?? false;
+        }
     }
 
     public string GetExtension(string path)
     {
-        return _provider?.GetExtension(path) ?? string.Empty;
+        lock (_providerLock)
+        {
+            return _provider?.GetExtension(path) ?? string.Empty;
+        }
     }
 
     public string GetFullPath(string path)
     {
-        return _provider?.GetFullPath(path) ?? string.Empty;
+        lock (_providerLock)
+        {
+            return _provider?.GetFullPath(path) ?? string.Empty;
+        }
     }
 
     public DateTime GetLastWriteTimeUtc(string path)
     {
-        return _provider?.GetLastWriteTimeUtc(path) ?? DateTime.MinValue;
+        lock (_providerLock)
+        {
+            return _provider?.GetLastWriteTimeUtc(path) ?? DateTime.MinValue;
+        }
     }
 
     public string GetRelativePath(string absolutePath)
@@ -113,38 +202,44 @@ public class ResourceService : IDisposable
 
     public bool IsReadonlyPath(string path)
     {
-        return _provider?.IsReadonlyPath(path) ?? true;
+        lock (_providerLock)
+        {
+            return _provider?.IsReadonlyPath(path) ?? true;
+        }
     }
 
     public T Load<T>(string path) where T : class
     {
-        if (path.Contains("SaveSlot", StringComparison.OrdinalIgnoreCase))
+        lock (_providerLock)
         {
-            using var stream = _provider!.OpenStream(path, string.Empty);
-            var saveData = SaveData.Read(stream);
-            Logger.Information("Loaded save data - {0}", path);
-            return (saveData as T)!;
-        }
+            if (path.Contains("SaveSlot", StringComparison.OrdinalIgnoreCase))
+            {
+                using var stream = _provider!.OpenStream(path, string.Empty);
+                var saveData = SaveData.Read(stream);
+                Logger.Information("Loaded save data - {0}", path);
+                return (saveData as T)!;
+            }
 
-        if (_provider!.GetExtension(path) == ".ogg")
-        {
-            var stream = _provider!.OpenStream(path, ".ogg");
-            var oggContainer = new VorbisSoundContainer(stream, leaveOpen: false);
-            Logger.Information("Loaded *.ogg file as SoundEffect - {0}", path);
-            return (oggContainer as T)!;
-        }
+            if (_provider!.GetExtension(path) == ".ogg")
+            {
+                var stream = _provider!.OpenStream(path, ".ogg");
+                var oggContainer = new VorbisSoundContainer(stream, leaveOpen: false);
+                Logger.Information("Loaded *.ogg file as SoundEffect - {0}", path);
+                return (oggContainer as T)!;
+            }
 
-        path = path.Replace('\\', '/');
-        if (_cache.TryGetValue(path, out var reference) && reference.TryGetTarget(out var cached))
-        {
-            Logger.Debug("Cache hit - {0} ({1})", path, cached.GetType().Name);
-            return (T)cached;
-        }
+            path = path.Replace('\\', '/');
+            if (_cache.TryGetValue(path, out var reference) && reference.TryGetTarget(out var cached))
+            {
+                Logger.Debug("Cache hit - {0} ({1})", path, cached.GetType().Name);
+                return (T)cached;
+            }
 
-        var asset = _provider!.Load<T>(path);
-        _cache[path] = new WeakReference<object>(asset);
-        Logger.Information("Loaded - {0} ({1})", path, asset.GetType().Name);
-        return asset;
+            var asset = _provider!.Load<T>(path);
+            _cache[path] = new WeakReference<object>(asset);
+            Logger.Information("Loaded - {0} ({1})", path, asset.GetType().Name);
+            return asset;
+        }
     }
 
     public SaveData LoadSaveDataFromContent(string path)
@@ -157,41 +252,47 @@ public class ResourceService : IDisposable
 
     public Dictionary<int, string> GetTrileSetList(string path)
     {
-        try
+        lock (_providerLock)
         {
-            var trileSet = _provider!.Load<TrileSet>(path);
-            return trileSet.Triles.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Name);
-        }
-        catch
-        {
-            return new Dictionary<int, string>();
+            try
+            {
+                var trileSet = _provider!.Load<TrileSet>(path);
+                return trileSet.Triles.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Name);
+            }
+            catch
+            {
+                return new Dictionary<int, string>();
+            }
         }
     }
 
     public Dictionary<string, RAnimatedTexture> LoadAnimations(string path)
     {
-        if (_cache.TryGetValue(path, out var weakRef) && weakRef.TryGetTarget(out var cached))
+        lock (_providerLock)
         {
-            Logger.Debug("Cache hit animations - {0}", path);
-            return (Dictionary<string, RAnimatedTexture>)cached;
-        }
-
-        var animations = new Dictionary<string, RAnimatedTexture>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var file in _provider!.Files)
-        {
-            if (file.StartsWith(path, StringComparison.OrdinalIgnoreCase) &&
-                !file.Contains("Metadata", StringComparison.OrdinalIgnoreCase))
+            if (_cache.TryGetValue(path, out var weakRef) && weakRef.TryGetTarget(out var cached))
             {
-                var name = file[(path.Length + 1)..];
-                var asset = _provider!.Load<RAnimatedTexture>(file);
-                animations.Add(name, asset);
+                Logger.Debug("Cache hit animations - {0}", path);
+                return (Dictionary<string, RAnimatedTexture>)cached;
             }
-        }
 
-        _cache[path] = new WeakReference<object>(animations);
-        Logger.Information("Loaded animations - {0}", path);
-        return animations;
+            var animations = new Dictionary<string, RAnimatedTexture>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var file in _provider!.Files)
+            {
+                if (file.StartsWith(path, StringComparison.OrdinalIgnoreCase) &&
+                    !file.Contains("Metadata", StringComparison.OrdinalIgnoreCase))
+                {
+                    var name = file[(path.Length + 1)..];
+                    var asset = _provider!.Load<RAnimatedTexture>(file);
+                    animations.Add(name, asset);
+                }
+            }
+
+            _cache[path] = new WeakReference<object>(animations);
+            Logger.Information("Loaded animations - {0}", path);
+            return animations;
+        }
     }
 
     public void Save(string path, object asset)
@@ -205,42 +306,61 @@ public class ResourceService : IDisposable
             return;
         }
 
-        _provider!.Save(path, asset);
-        InvalidateCacheFor(path);
-        _provider.Refresh();
+        lock (_providerLock)
+        {
+            _provider!.Save(path, asset);
+            _cache.Remove(path);
+            _provider.Refresh();
+        }
+
         ProviderChanged?.Invoke();
         Logger.Information("Saved - {0}", path);
     }
 
     public void Duplicate(string path)
     {
-        _provider!.Duplicate(path);
-        _provider.Refresh();
+        lock (_providerLock)
+        {
+            _provider!.Duplicate(path);
+            _provider.Refresh();
+        }
+
         ProviderChanged?.Invoke();
         Logger.Information("Duplicated - {0}", path);
     }
 
     public void Move(string path, string newPath)
     {
-        _provider!.Move(path, newPath);
-        InvalidateCacheFor(path);
-        _provider.Refresh();
+        lock (_providerLock)
+        {
+            _provider!.Move(path, newPath);
+            _cache.Remove(path);
+            _provider.Refresh();
+        }
+
         ProviderChanged?.Invoke();
         Logger.Information("Moved - {0} -> {1}", path, newPath);
     }
 
     public void Delete(string path)
     {
-        _provider!.Remove(path);
-        InvalidateCacheFor(path);
-        _provider.Refresh();
+        lock (_providerLock)
+        {
+            _provider!.Remove(path);
+            _cache.Remove(path);
+            _provider.Refresh();
+        }
+
         ProviderChanged?.Invoke();
         Logger.Information("Deleted - {0}", path);
     }
 
     public void InvalidateCacheFor(string path)
     {
-        _cache.Remove(path);
+        lock (_providerLock)
+        {
+            _cache.Remove(path);
+        }
     }
 
     public void OpenInFileManager(string path)
@@ -275,30 +395,51 @@ public class ResourceService : IDisposable
 
     public IReadOnlyList<string> GetModReferencePaths()
     {
-        if (_provider is ModResourceProvider mod)
+        lock (_providerLock)
         {
-            return mod.References
-                .Select(r => r.RootPath)
-                .ToList();
-        }
+            if (_provider is ModResourceProvider mod)
+            {
+                return mod.References
+                    .Select(r => r.RootPath)
+                    .ToList();
+            }
 
-        return new List<string>();
+            return [];
+        }
     }
 
     public void UpdateModReferences(IEnumerable<string> paths)
     {
-        if (_provider is ModResourceProvider mod)
+        var updated = false;
+        lock (_providerLock)
         {
-            mod.UpdateReferences(paths);
+            if (_provider is ModResourceProvider mod)
+            {
+                mod.UpdateReferences(paths);
+                updated = true;
+            }
+        }
+
+        if (updated)
+        {
             ProviderChanged?.Invoke();
         }
     }
 
     public void CopyFromReference(string path)
     {
-        if (_provider is ModResourceProvider mod)
+        var copied = false;
+        lock (_providerLock)
         {
-            mod.CopyToMod(path);
+            if (_provider is ModResourceProvider mod)
+            {
+                mod.CopyToMod(path);
+                copied = true;
+            }
+        }
+
+        if (copied)
+        {
             ProviderChanged?.Invoke();
             Logger.Information("Copied from reference - {0}", path);
         }
@@ -320,15 +461,26 @@ public class ResourceService : IDisposable
 
     public void Refresh()
     {
-        _provider!.Refresh();
+        lock (_providerLock)
+        {
+            _provider!.Refresh();
+        }
+
         ProviderChanged?.Invoke();
     }
 
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-        _cache.Clear();
-        _provider?.Dispose();
+        IResourceProvider? provider;
+        lock (_providerLock)
+        {
+            provider = _provider;
+            _provider = null;
+            _cache.Clear();
+        }
+
+        provider?.Dispose();
         _game.Activated -= OnGameActivated;
 
         if (_assetPickWindow != null)

@@ -4,7 +4,6 @@ using FezEditor.Tools;
 using FEZRepacker.Core.Definitions.Game.ArtObject;
 using FEZRepacker.Core.Definitions.Game.Common;
 using FEZRepacker.Core.Definitions.Game.TrileSet;
-using ImGuiNET;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -19,21 +18,20 @@ public class ThumbnailGenerator : DrawableGameComponent
 
     private readonly ResourceService _resources;
 
+    private readonly StatusService _statusService;
+
     private static readonly Dictionary<CollisionType, RTexture2D> CollisionTextures = new();
 
-    private float _progress;
-
-    private string _status = "";
-
-    private State _state = State.Processing;
-
-    private State _previousState = State.Disposed;
-
     private CancellationTokenSource? _cts;
+
+    private int _complete;
+
+    private bool _disposed;
 
     public ThumbnailGenerator(Game game) : base(game)
     {
         _resources = game.GetService<ResourceService>();
+        _statusService = game.GetService<StatusService>();
     }
 
     protected override void LoadContent()
@@ -60,89 +58,51 @@ public class ThumbnailGenerator : DrawableGameComponent
 
     public override void Update(GameTime gameTime)
     {
-        if (_state == State.Disposed)
+        if (Volatile.Read(ref _complete) != 0)
         {
             Game.RemoveComponent(this);
         }
     }
 
-    public override void Draw(GameTime gameTime)
+    public void Cancel()
     {
-        if (_state == State.Disposed)
+        try
         {
-            return;
+            _cts?.Cancel();
         }
-
-        if (_state == State.Complete && _previousState == State.Disposed)
+        catch (ObjectDisposedException)
         {
-            // completed before first draw - nothing to show
-            _state = State.Disposed;
-            return;
-        }
-
-        const string popup = "Thumbnails";
-        if (_state != _previousState)
-        {
-            ImGui.OpenPopup(popup);
-            _previousState = _state;
-        }
-
-        var isOpen = true;
-        ImGuiX.SetNextWindowCentered(ImGuiCond.Always);
-        if (ImGui.BeginPopupModal(popup, ref isOpen, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoCollapse))
-        {
-            switch (_state)
-            {
-                case State.Processing:
-                    ImGui.Text(_status);
-                    ImGuiX.ProgressBar(_progress, new Vector2(400, 0), $"{_progress * 100:F1}%");
-                    break;
-
-                case State.Complete:
-                    _state = State.Disposed;
-                    ImGui.CloseCurrentPopup();
-                    break;
-            }
-
-            ImGui.EndPopup();
-        }
-
-        if (!isOpen)
-        {
-            _state = State.Disposed;
+            // The worker completed between reading and cancelling the source.
         }
     }
 
     private async Task ProcessAsync()
     {
-        _cts = new CancellationTokenSource();
-        _state = State.Processing;
-        _status = "Processing thumbnails...";
-        _progress = 0f;
+        var cts = new CancellationTokenSource();
+        _cts = cts;
+        using var activity = _statusService.BeginActivity("Scanning thumbnails...");
 
         try
         {
-            var ct = _cts.Token;
-            await Task.Run(() => ProcessInternal(ct), ct);
-            _status = "Generation complete!";
-            _progress = 1.0f;
+            await Task.Run(() => ProcessInternal(cts.Token, activity), cts.Token);
         }
         catch (OperationCanceledException)
         {
-            _status = "Generation cancelled";
+            Logger.Debug("Thumbnail generation cancelled");
         }
         catch (Exception ex)
         {
-            _status = $"Error: {ex.Message}";
             Logger.Error(ex, "Thumbnail generation failed");
         }
         finally
         {
-            _state = State.Complete;
+            _cts = null;
+            cts.Dispose();
+            Volatile.Write(ref _complete, 1);
         }
     }
 
-    private void ProcessInternal(CancellationToken ct)
+    private void ProcessInternal(CancellationToken ct, StatusActivityHandle activity)
     {
         var entries = new Queue<Entry>();
         var npcFolders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -194,6 +154,7 @@ public class ThumbnailGenerator : DrawableGameComponent
 
         var processed = 0;
         var total = entries.Count;
+        activity.Report(total == 0 ? "Thumbnails are up to date" : $"Generating thumbnails (0/{total})", 0f);
         TrileSet? cachedTrileSet = null;
         string? cachedTrileSetPath = null;
 
@@ -211,7 +172,7 @@ public class ThumbnailGenerator : DrawableGameComponent
                 {
                     Logger.Debug("Thumbnail for {0} already cached", cachePath);
                     processed++;
-                    _progress = (float)processed / total;
+                    ReportProgress(activity, processed, total);
                     continue;
                 }
 
@@ -302,17 +263,28 @@ public class ThumbnailGenerator : DrawableGameComponent
                         throw new InvalidOperationException();
                 }
 
-                var thumbnail = thumbnailer.Generate();
-                thumbnailer.Save(thumbnail);
+                if (thumbnailer != null)
+                {
+                    var thumbnail = thumbnailer.Generate();
+                    thumbnailer.Save(thumbnail);
+                }
 
                 processed++;
-                _progress = (float)processed / total;
+                ReportProgress(activity, processed, total);
             }
             catch (Exception e)
             {
                 Logger.Warning(e, "Failed to generate thumbnail for {0}", entry.CachePath);
+                processed++;
+                ReportProgress(activity, processed, total);
             }
         }
+    }
+
+    private static void ReportProgress(StatusActivityHandle activity, int processed, int total)
+    {
+        var progress = total == 0 ? 1f : (float)processed / total;
+        activity.Report($"Generating thumbnails ({processed}/{total})", progress);
     }
 
     private void EnqueueIfStale(Queue<Entry> entries, Entry entry)
@@ -341,16 +313,12 @@ public class ThumbnailGenerator : DrawableGameComponent
 
     protected override void Dispose(bool disposing)
     {
-        _cts?.Cancel();
-        _cts?.Dispose();
-        base.Dispose(disposing);
-    }
-
-    private enum State
-    {
-        Disposed,
-        Processing,
-        Complete
+        if (!_disposed)
+        {
+            _disposed = true;
+            Cancel();
+            base.Dispose(disposing);
+        }
     }
 
     private readonly record struct Entry(string Path, AssetType Type, string? TrileName = null)

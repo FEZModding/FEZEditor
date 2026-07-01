@@ -269,13 +269,6 @@ public class MenuBar : DrawableGameComponent
                 ImGui.EndMenu();
             }
 
-            {
-                var label = $"{FezEditor.Version} ({FezEditor.Commit})";
-                var labelWidth = ImGui.CalcTextSize(label).X;
-                ImGui.SetCursorPosX(ImGui.GetWindowWidth() - labelWidth - ImGui.GetStyle().WindowPadding.X);
-                ImGui.TextDisabled(label);
-            }
-
             ImGui.EndMainMenuBar();
         }
     }

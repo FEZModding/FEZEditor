@@ -42,6 +42,8 @@ public class FileBrowser : DrawableGameComponent
 
     private bool _thumbnailScanPending;
 
+    private bool _disposing;
+
     private enum SortMode
     {
         NameAscending,
@@ -62,6 +64,7 @@ public class FileBrowser : DrawableGameComponent
 
     protected override void Dispose(bool disposing)
     {
+        _disposing = true;
         _resourceService.ProviderChanged -= UpdateNodeTree;
         _thumbnailGenerator?.Dispose();
         Game.RemoveComponent(_confirmWindow);
@@ -593,7 +596,7 @@ public class FileBrowser : DrawableGameComponent
         if (_resourceService.HasNoProvider)
         {
             _thumbnailScanPending = false;
-            _thumbnailGenerator?.Dispose();
+            _thumbnailGenerator?.Cancel();
         }
         else
         {
@@ -609,6 +612,7 @@ public class FileBrowser : DrawableGameComponent
         if (_thumbnailGenerator != null)
         {
             _thumbnailScanPending = true;
+            _thumbnailGenerator.Cancel();
             return;
         }
 
@@ -616,6 +620,11 @@ public class FileBrowser : DrawableGameComponent
         _thumbnailGenerator.Disposed += (_, _) =>
         {
             _thumbnailGenerator = null;
+            if (_disposing)
+            {
+                return;
+            }
+
             _resourceService.NotifyThumbnailsReady();
             if (_thumbnailScanPending && !_resourceService.HasNoProvider)
             {

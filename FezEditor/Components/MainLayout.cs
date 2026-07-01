@@ -22,6 +22,8 @@ public class MainLayout : DrawableGameComponent
 
     private bool _loadNextUpdate;
 
+    private bool _confirmPending;
+
     public MainLayout(Game game) : base(game)
     {
         _editorService = Game.GetService<EditorService>();
@@ -82,10 +84,7 @@ public class MainLayout : DrawableGameComponent
                 // Right pane - Editor tabs + Status bar
                 ImGuiX.BeginChild("RightPane", Vector2.Zero);
                 {
-                    var hasHints = _statusService.Hints.Count > 0;
-                    var statusBarHeight = hasHints
-                        ? ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.Y + 1
-                        : 0f;
+                    var statusBarHeight = ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.Y + 1;
 
                     ImGuiX.BeginChild("EditorArea", new Vector2(0, -statusBarHeight));
                     if (_editorService.Editors.Any())
@@ -168,32 +167,53 @@ public class MainLayout : DrawableGameComponent
 
     private void DrawStatusBar()
     {
+        var activity = _statusService.CurrentActivity;
         var hints = _statusService.Hints;
-        if (hints.Count == 0)
-        {
-            return;
-        }
+        var hintText = string.Join(" | ", hints.Select(hint => $"{hint.Binding} - {hint.Label}"));
+        var statusText = activity == null || string.IsNullOrEmpty(hintText)
+            ? activity?.Text ?? hintText
+            : $"{activity.Text} | {hintText}";
 
         ImGui.Separator();
         if (ImGuiX.BeginChild("StatusBar", Vector2.Zero, ImGuiChildFlags.None, ImGuiWindowFlags.NoScrollbar))
         {
-            for (var i = 0; i < hints.Count; i++)
+            var version = $"{FezEditor.Version} ({FezEditor.Commit})";
+            var versionWidth = ImGui.CalcTextSize(version).X;
+            var versionX = ImGui.GetWindowWidth() - versionWidth - ImGui.GetStyle().WindowPadding.X;
+            var progressWidth = activity?.Progress != null ? 160f : 0f;
+            var progressSpacing = progressWidth > 0 ? 8f : 0f;
+            var textWidth = versionX - ImGui.GetCursorPosX() - progressWidth - progressSpacing - 16f;
+            var visibleStatus = Ellipsize(statusText, textWidth);
+            var drewLeftContent = false;
+
+            if (!string.IsNullOrEmpty(visibleStatus))
             {
-                var (binding, label) = hints[i];
-                ImGui.Text(binding + " - " + label);
-                if (i < hints.Count - 1)
-                {
-                    ImGui.SameLine(0, 16);
-                    ImGui.TextDisabled("|");
-                    ImGui.SameLine(0, 4);
-                }
+                ImGui.TextUnformatted(visibleStatus);
+                drewLeftContent = true;
             }
+
+            if (activity?.Progress is { } progress)
+            {
+                if (drewLeftContent)
+                {
+                    ImGui.SameLine(0, progressSpacing);
+                }
+
+                ImGuiX.ProgressBar(progress, new Vector2(progressWidth, 0), $"{progress * 100:F0}%");
+                drewLeftContent = true;
+            }
+
+            if (drewLeftContent)
+            {
+                ImGui.SameLine();
+            }
+
+            ImGui.SetCursorPosX(versionX);
+            ImGui.TextDisabled(version);
         }
 
         ImGui.EndChild();
     }
-
-    private bool _confirmPending;
 
     private void SaveAndCloseEditor(EditorComponent editor)
     {
@@ -224,5 +244,41 @@ public class MainLayout : DrawableGameComponent
         {
             _confirmPending = false;
         };
+    }
+
+    private static string Ellipsize(string text, float maxWidth)
+    {
+        if (string.IsNullOrEmpty(text) || maxWidth <= 0f)
+        {
+            return string.Empty;
+        }
+
+        if (ImGui.CalcTextSize(text).X <= maxWidth)
+        {
+            return text;
+        }
+
+        const string ellipsis = "...";
+        if (ImGui.CalcTextSize(ellipsis).X > maxWidth)
+        {
+            return string.Empty;
+        }
+
+        var low = 0;
+        var high = text.Length;
+        while (low < high)
+        {
+            var length = (low + high + 1) / 2;
+            if (ImGui.CalcTextSize(text[..length] + ellipsis).X <= maxWidth)
+            {
+                low = length;
+            }
+            else
+            {
+                high = length - 1;
+            }
+        }
+
+        return text[..low].TrimEnd() + ellipsis;
     }
 }
