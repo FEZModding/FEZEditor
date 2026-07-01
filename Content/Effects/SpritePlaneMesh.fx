@@ -2,7 +2,9 @@
 
 float DoubleSided;      // boolean
 float Fullbright;       // boolean
+float Animated;         // boolean
 float4 Tint;
+float4 AnimationFrame;  // normalized offset (xy) and size (zw)
 
 struct VS_INPUT
 {
@@ -36,7 +38,14 @@ VS_OUTPUT VS(VS_INPUT input)
 
 float4 PS(VS_OUTPUT input, float vface : VFACE) : COLOR0
 {
-    float4 texColor = SAMPLE_TEXTURE(BaseTexture, input.TexCoord);
+    float2 texCoord = input.TexCoord;
+    if (Animated != 0.0)
+    {
+        float wrappedV = frac((texCoord.y - AnimationFrame.y) / AnimationFrame.w);
+        texCoord.y = wrappedV * AnimationFrame.w + AnimationFrame.y;
+    }
+
+    float4 texColor = SAMPLE_TEXTURE(BaseTexture, texCoord);
     float alpha = texColor.a * Material_Opacity;
     ApplyAlphaTest(alpha);
 

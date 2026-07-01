@@ -108,6 +108,7 @@ public class BackgroundPlaneMesh : ActorComponent, IPickable, ITinted
         _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface, _material);
 
         _frameCounter = 0;
+        _frameElapsed = TimeSpan.Zero;
         Animated = _frames.Count > 0;
     }
 
@@ -154,6 +155,14 @@ public class BackgroundPlaneMesh : ActorComponent, IPickable, ITinted
 
     public override void Update(GameTime gameTime)
     {
+        var animationFrame = new Vector4(0f, 0f, 1f, 1f);
+        var textureTransform = new Matrix(
+            ClampTexture || XTextureRepeat ? _transform.Scale.X : 1f, 0f, 0f, 0f,
+            0f, ClampTexture || YTextureRepeat ? _transform.Scale.Y : 1f, 0f, 0f,
+            0f, 0f, 1f, 0f,
+            0f, 0f, 0f, 0f
+        );
+
         if (Animated)
         {
             var currentFrame = _frames[_frameCounter];
@@ -161,12 +170,15 @@ public class BackgroundPlaneMesh : ActorComponent, IPickable, ITinted
 
             if (_frameElapsed >= currentFrame.Duration)
             {
-                var textureSize = new Vector2(_texture!.Width, _texture!.Height);
-                var transform = Mathz.CreateTextureTransform(currentFrame.Rectangle.ToXna(), textureSize);
-                _rendering.MaterialSetTextureTransform(_material, transform);
                 _frameCounter = (_frameCounter + 1) % _frames.Count;
                 _frameElapsed = TimeSpan.Zero;
+                currentFrame = _frames[_frameCounter];
             }
+
+            var textureSize = new Vector2(_texture!.Width, _texture.Height);
+            var frameTransform = Mathz.CreateTextureTransform(currentFrame.Rectangle.ToXna(), textureSize);
+            textureTransform *= frameTransform;
+            animationFrame = new Vector4(frameTransform.M41, frameTransform.M42, frameTransform.M11, frameTransform.M22);
         }
 
         if (Billboard)
@@ -181,11 +193,14 @@ public class BackgroundPlaneMesh : ActorComponent, IPickable, ITinted
             depthBias = PerspectiveDividend / (Camera.Far - Camera.Near);
         }
 
+        _rendering.MaterialSetTextureTransform(_material, textureTransform);
         _rendering.MaterialSetDepthBias(_material, depthBias, SlopeScaleDepthBias);
         _rendering.MaterialSetAlbedo(_material, Color * Opacity);
         _rendering.MaterialShaderSetParam(_material, "Tint", Tint.ToVector4());
         _rendering.MaterialShaderSetParam(_material, "DoubleSided", DoubleSided ? 1f : 0f);
         _rendering.MaterialShaderSetParam(_material, "Fullbright", Fullbright ? 1f : 0f);
+        _rendering.MaterialShaderSetParam(_material, "Animated", Animated ? 1f : 0f);
+        _rendering.MaterialShaderSetParam(_material, "AnimationFrame", animationFrame);
         _rendering.MaterialSetCullMode(_material, DoubleSided ? CullMode.None : CullMode.CullClockwiseFace);
         _rendering.MaterialSetBlendMode(_material, ResolveBlendMode());
         _rendering.MaterialSetSamplerState(_material, ResolveSamplerState());
