@@ -395,10 +395,9 @@ public class PhilExporter : DrawableGameComponent
                 NQuaternion.Identity,
                 levelSize / 2f);
 
-            var sideFaces = Enum.GetValues<FaceOrientation>().Where(fo => fo.IsSide()).ToArray();
-            for (var faceIndex = 0; faceIndex < sideFaces.Length; faceIndex++)
+            for (var faceIndex = 0; faceIndex < FaceExtensions.SidesOnly.Length; faceIndex++)
             {
-                var face = sideFaces[faceIndex];
+                var face = FaceExtensions.SidesOnly[faceIndex];
                 ct.ThrowIfCancellationRequested();
                 Advance($"Sky {face}");
 

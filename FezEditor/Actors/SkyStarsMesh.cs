@@ -17,7 +17,7 @@ public class SkyStarsMesh : SkyBaseMesh
     internal SkyStarsMesh(Game game, Actor actor) : base(game, actor)
     {
         var i = 0;
-        foreach (var face in Enum.GetValues<FaceOrientation>().Where(fo => fo.IsSide()))
+        foreach (var face in FaceExtensions.SidesOnly)
         {
             var instance = _rendering.InstanceCreate(Actor.InstanceRid);
             var mesh = _rendering.MeshCreate();

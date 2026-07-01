@@ -10,8 +10,7 @@ namespace FezEditor.Components.Eddy;
 
 public class TrileSystem : EddySystem
 {
-    private static readonly string[] Rotations = FaceExtensions.NaturalOrder
-        .Where(fo => fo.IsSide())
+    private static readonly string[] Rotations = FaceExtensions.SidesOnly
         .Select(fo => fo.ToString())
         .ToArray();
 

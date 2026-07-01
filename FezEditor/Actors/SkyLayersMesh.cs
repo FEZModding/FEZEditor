@@ -28,7 +28,7 @@ public class SkyLayersMesh : SkyBaseMesh
 
     internal SkyLayersMesh(Game game, Actor actor) : base(game, actor)
     {
-        foreach (var face in Enum.GetValues<FaceOrientation>().Where(fo => fo.IsSide()))
+        foreach (var face in FaceExtensions.SidesOnly)
         {
             _sides[face] = new List<LayerInstance>();
         }
