@@ -60,16 +60,29 @@ internal class DirResourceProvider : IResourceProvider
         }
 
         var bundles = FileBundle.BundleFilesAtPath(info.FullName);
-        foreach (var bundle in bundles)
+        try
         {
-            if (bundle.MainExtension.Equals(extension, StringComparison.OrdinalIgnoreCase) && bundle.Files.Count == 1)
+            foreach (var bundle in bundles)
             {
-                var file = bundle.Files[0];
-                return file.Data;
+                if (bundle.MainExtension.Equals(extension, StringComparison.OrdinalIgnoreCase) && bundle.Files.Count == 1)
+                {
+                    var file = bundle.Files[0];
+                    var output = new MemoryStream();
+                    file.Data.CopyTo(output);
+                    output.Position = 0;
+                    return output;
+                }
+            }
+
+            throw new FileNotFoundException(path);
+        }
+        finally
+        {
+            foreach (var bundle in bundles)
+            {
+                bundle.Dispose();
             }
         }
-
-        throw new FileNotFoundException(path);
     }
 
     public T Load<T>(string path) where T : class
@@ -96,18 +109,28 @@ internal class DirResourceProvider : IResourceProvider
         }
 
         var bundles = FileBundle.BundleFilesAtPath(info.FullName);
-        if (bundles.Count == 0)
-        {
-            throw new FileNotFoundException(info.FullName);
-        }
-
         try
         {
-            return (T)FormatConversion.Deconvert(bundles.First())!;
+            if (bundles.Count == 0)
+            {
+                throw new FileNotFoundException(info.FullName);
+            }
+
+            try
+            {
+                return (T)FormatConversion.Deconvert(bundles.First())!;
+            }
+            catch (FormatConversionException ex)
+            {
+                throw new NotSupportedException(path, ex);
+            }
         }
-        catch (FormatConversionException ex)
+        finally
         {
-            throw new NotSupportedException(path, ex);
+            foreach (var bundle in bundles)
+            {
+                bundle.Dispose();
+            }
         }
     }
 
