@@ -1,4 +1,5 @@
 ﻿using FezEditor.Services;
+using FezEditor.Structure;
 
 namespace FezEditor.Tools;
 
@@ -10,8 +11,9 @@ internal class ModResourceProvider : IResourceProvider
 
     public string RootPath => _inner.RootPath;
 
-    public IEnumerable<string> Files => _inner.Files.Union(_referenceFiles);
-    public IEnumerable<string> VirtualFiles => _inner.Files.Concat(_referenceVirtualFiles);
+    public IEnumerable<ResourceEntry> Entries => _inner.Entries.Union(_referenceEntries);
+
+    public IEnumerable<ResourceEntry> VirtualEntries => _inner.Entries.Concat(_referenceVirtualEntries);
 
     public IReadOnlyList<IResourceProvider> References => _references;
 
@@ -23,9 +25,9 @@ internal class ModResourceProvider : IResourceProvider
 
     private readonly Dictionary<string, IResourceProvider> _referenceLookup = new(StringComparer.OrdinalIgnoreCase);
 
-    private readonly List<string> _referenceFiles = new();
+    private readonly List<ResourceEntry> _referenceEntries = new();
 
-    private readonly List<string> _referenceVirtualFiles = new();
+    private readonly List<ResourceEntry> _referenceVirtualEntries = new();
 
     public ModResourceProvider(DirectoryInfo dir, AppStorageService storage)
     {
@@ -68,20 +70,38 @@ internal class ModResourceProvider : IResourceProvider
     private void RebuildReferenceLookup()
     {
         _referenceLookup.Clear();
-        _referenceFiles.Clear();
-        _referenceVirtualFiles.Clear();
+        _referenceEntries.Clear();
+        _referenceVirtualEntries.Clear();
 
+        var entryIndices = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         foreach (var reference in _references)
         {
-            foreach (var path in reference.Files)
+            foreach (var entry in reference.Entries)
             {
-                if (!_referenceLookup.ContainsKey(path))
+                ResourceEntry virtualEntry = entry switch
                 {
-                    _referenceFiles.Add(path);
-                    _referenceVirtualFiles.Add(ReferencesVirtualPathPrefix + path);
+                    ResourceEntry.File file => new ResourceEntry.File(
+                        ReferencesVirtualPathPrefix + file.Path, file.Extension),
+
+                    ResourceEntry.Directory directory => new ResourceEntry.Directory(
+                        ReferencesVirtualPathPrefix + directory.Path),
+
+                    _ => throw new InvalidOperationException()
+                };
+
+                if (entryIndices.TryGetValue(entry.Path, out var index))
+                {
+                    _referenceEntries[index] = entry;
+                    _referenceVirtualEntries[index] = virtualEntry;
+                }
+                else
+                {
+                    entryIndices[entry.Path] = _referenceEntries.Count;
+                    _referenceEntries.Add(entry);
+                    _referenceVirtualEntries.Add(virtualEntry);
                 }
 
-                _referenceLookup[path] = reference;
+                _referenceLookup[entry.Path] = reference;
             }
         }
     }
@@ -162,6 +182,16 @@ internal class ModResourceProvider : IResourceProvider
 
         _inner.Save(path, asset);
         RebuildReferenceLookup();
+    }
+
+    public void CreateDirectory(string path)
+    {
+        if (path.StartsWith(ReferencesVirtualPathPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new NotSupportedException();
+        }
+
+        _inner.CreateDirectory(path);
     }
 
     public void Move(string path, string newPath)

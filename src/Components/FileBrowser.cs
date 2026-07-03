@@ -433,6 +433,17 @@ public class FileBrowser : DrawableGameComponent
             return;
         }
 
+        var directoryPath = node.IsDirectory
+            ? node.Path
+            : node.Path.Contains('/')
+                ? node.Path[..node.Path.LastIndexOf('/')]
+                : string.Empty;
+
+        if (ImGui.MenuItem($"{Lucide.FolderPlus} Create New Directory..."))
+        {
+            ShowCreateDirectoryDialog(directoryPath);
+        }
+
         if (ImGui.BeginMenu($"{Lucide.FilePlusCorner} Create New Asset..."))
         {
             foreach (var (name, type) in EditorService.AssetTypes)
@@ -440,7 +451,7 @@ public class FileBrowser : DrawableGameComponent
                 var extension = "." + EditorService.GetExtensionForType(type);
                 if (ImGui.MenuItem($"{EditorService.GetFileIcon(extension)} {name}"))
                 {
-                    ShowCreateDialog(node.Path, type);
+                    ShowCreateDialog(directoryPath, type);
                 }
             }
 
@@ -468,7 +479,7 @@ public class FileBrowser : DrawableGameComponent
                 ShowRenameDialog(node.Path);
             }
 
-            if (ImGui.MenuItem($"{Lucide.Copy} Duplicate"))
+            if (!node.IsDirectory && ImGui.MenuItem($"{Lucide.Copy} Duplicate"))
             {
                 _resourceService.Duplicate(node.Path);
             }
@@ -493,6 +504,31 @@ public class FileBrowser : DrawableGameComponent
         {
             _resourceService.OpenInFileManager(node.Path);
         }
+    }
+
+    private void ShowCreateDirectoryDialog(string basePath)
+    {
+        var directoryName = "";
+        _editWindow.Title = "Create Directory";
+        _editWindow.Text = "Enter a directory name:";
+
+        _editWindow.EditValue = () =>
+        {
+            ImGui.InputText("##CreateDirectoryInput", ref directoryName, 256);
+            var validName = !string.IsNullOrWhiteSpace(directoryName) &&
+                            directoryName is not "." and not ".." &&
+                            Path.GetFileName(directoryName) == directoryName &&
+                            directoryName.IndexOfAny(Path.GetInvalidFileNameChars()) < 0;
+
+            var path = string.IsNullOrEmpty(basePath) ? directoryName : $"{basePath}/{directoryName}";
+            return validName && !Directory.Exists(_resourceService.GetFullPath(path));
+        };
+
+        _editWindow.Accepted = () =>
+        {
+            var path = string.IsNullOrEmpty(basePath) ? directoryName : $"{basePath}/{directoryName}";
+            _resourceService.CreateDirectory(path);
+        };
     }
 
     private void DrawReferenceContextMenu(FileNode node)
@@ -581,7 +617,7 @@ public class FileBrowser : DrawableGameComponent
             }
         }
 
-        node.MatchesFilter = anyChildMatches;
+        node.MatchesFilter = anyChildMatches || FuzzyMatch(node.Name, _filter);
         return anyChildMatches;
     }
 
@@ -661,52 +697,60 @@ public class FileBrowser : DrawableGameComponent
             [""] = _root
         };
 
-        foreach (var path in _resourceService.VirtualFiles)
+        foreach (var entry in _resourceService.Entries)
         {
-            var segments = path.Split('/');
-            var currentPath = "";
-
-            // Build directory nodes first
-            for (var i = 0; i < segments.Length - 1; i++)
+            if (entry is ResourceEntry.Directory)
             {
-                var parentPath = currentPath;
-                currentPath = string.IsNullOrEmpty(parentPath)
-                    ? segments[i]
-                    : $"{parentPath}/{segments[i]}";
-
-                if (!lookup.ContainsKey(currentPath))
-                {
-                    var parentNode = lookup[parentPath];
-                    var dirNode = new FileNode
-                    {
-                        Name = segments[i],
-                        Path = currentPath,
-                        IsDirectory = true,
-                        IsReference = currentPath.StartsWith("References", StringComparison.OrdinalIgnoreCase),
-                        Depth = parentNode.Depth + 1
-                    };
-
-                    parentNode.Children.Add(dirNode);
-                    lookup[currentPath] = dirNode;
-                }
+                AddDirectory(entry.Path);
+                continue;
             }
 
-            // Add the file node
-            var fileName = segments[^1];
-            var fileParentPath = string.Join('/', segments.Take(segments.Length - 1));
-            var parentNodeForFile = lookup[fileParentPath];
-
-            var fileNode = new FileNode
+            if (entry is ResourceEntry.File file)
             {
-                Name = fileName,
-                Path = path,
-                IsDirectory = false,
-                IsReference = currentPath.StartsWith("References", StringComparison.OrdinalIgnoreCase),
-                Depth = parentNodeForFile.Depth + 1,
-                Extension = _resourceService.GetExtension(path)
-            };
+                var segments = file.Path.Split('/');
+                var fileParentPath = string.Join('/', segments.Take(segments.Length - 1));
+                AddDirectory(fileParentPath);
 
-            parentNodeForFile.Children.Add(fileNode);
+                var parentNode = lookup[fileParentPath];
+                parentNode.Children.Add(new FileNode
+                {
+                    Name = segments[^1],
+                    Path = file.Path,
+                    IsDirectory = false,
+                    IsReference = file.Path.StartsWith("References/", StringComparison.OrdinalIgnoreCase),
+                    Depth = parentNode.Depth + 1,
+                    Extension = file.Extension
+                });
+            }
+        }
+
+        return;
+
+        void AddDirectory(string path)
+        {
+            var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            var currentPath = "";
+            foreach (var segment in segments)
+            {
+                var parentPath = currentPath;
+                currentPath = string.IsNullOrEmpty(parentPath) ? segment : $"{parentPath}/{segment}";
+                if (lookup.ContainsKey(currentPath))
+                {
+                    continue;
+                }
+
+                var parentNode = lookup[parentPath];
+                var dirNode = new FileNode
+                {
+                    Name = segment,
+                    Path = currentPath,
+                    IsDirectory = true,
+                    IsReference = currentPath.StartsWith("References", StringComparison.OrdinalIgnoreCase),
+                    Depth = parentNode.Depth + 1
+                };
+                parentNode.Children.Add(dirNode);
+                lookup[currentPath] = dirNode;
+            }
         }
     }
 

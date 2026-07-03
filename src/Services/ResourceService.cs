@@ -61,20 +61,20 @@ public class ResourceService : IDisposable
         {
             lock (_providerLock)
             {
-                return _provider?.Files.ToArray() ?? [];
+                return _provider?.Entries.OfType<ResourceEntry.File>().Select(f => f.Path).ToArray() ?? [];
             }
         }
     }
 
-    public IEnumerable<string> VirtualFiles
+    public IEnumerable<ResourceEntry> Entries
     {
         get
         {
             lock (_providerLock)
             {
                 return _provider is ModResourceProvider mod
-                    ? mod.VirtualFiles.ToArray()
-                    : _provider?.Files.ToArray() ?? [];
+                    ? mod.VirtualEntries.ToArray()
+                    : _provider?.Entries.ToArray() ?? [];
             }
         }
     }
@@ -119,7 +119,7 @@ public class ResourceService : IDisposable
     public void OpenProvider(IResourceProvider provider)
     {
         var rootPath = provider.RootPath;
-        var fileCount = provider.Files.Count();
+        var fileCount = provider.Entries.Count(re => re is ResourceEntry.File);
         IResourceProvider? previous;
         lock (_providerLock)
         {
@@ -277,8 +277,8 @@ public class ResourceService : IDisposable
             }
 
             var animations = new Dictionary<string, RAnimatedTexture>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var file in _provider!.Files)
+            var files = _provider!.Entries.Where(re => re is ResourceEntry.File).Select(f => f.Path);
+            foreach (var file in files)
             {
                 if (file.StartsWith(path, StringComparison.OrdinalIgnoreCase) &&
                     !file.Contains("Metadata", StringComparison.OrdinalIgnoreCase))
@@ -327,6 +327,18 @@ public class ResourceService : IDisposable
 
         ProviderChanged?.Invoke();
         Logger.Information("Duplicated - {0}", path);
+    }
+
+    public void CreateDirectory(string path)
+    {
+        lock (_providerLock)
+        {
+            _provider!.CreateDirectory(path);
+            _provider.Refresh();
+        }
+
+        ProviderChanged?.Invoke();
+        Logger.Information("Created directory - {0}", path);
     }
 
     public void Move(string path, string newPath)

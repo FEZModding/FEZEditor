@@ -1,4 +1,6 @@
-﻿namespace FezEditor.Tools;
+﻿using FezEditor.Structure;
+
+namespace FezEditor.Tools;
 
 public interface IResourceProvider : IDisposable
 {
@@ -6,7 +8,7 @@ public interface IResourceProvider : IDisposable
 
     string RootPath { get; }
 
-    IEnumerable<string> Files { get; }
+    IEnumerable<ResourceEntry> Entries { get; }
 
     bool Exists(string path);
 
@@ -19,6 +21,8 @@ public interface IResourceProvider : IDisposable
     T Load<T>(string path) where T : class;
 
     void Save<T>(string path, T asset) where T : class;
+
+    void CreateDirectory(string path);
 
     void Move(string path, string newPath);
 

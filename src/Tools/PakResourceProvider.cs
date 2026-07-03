@@ -1,4 +1,5 @@
-﻿using FEZRepacker.Core.FileSystem;
+﻿using FezEditor.Structure;
+using FEZRepacker.Core.FileSystem;
 using FEZRepacker.Core.XNB;
 
 namespace FezEditor.Tools;
@@ -9,7 +10,29 @@ internal class PakResourceProvider : IResourceProvider
 
     public string RootPath => _pakFile.FullName;
 
-    public IEnumerable<string> Files => _records.Keys;
+    public IEnumerable<ResourceEntry> Entries
+    {
+        get
+        {
+            var directories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var (path, extension) in _records)
+            {
+                var parent = path.Contains('/') ? path[..path.LastIndexOf('/')] : string.Empty;
+                while (!string.IsNullOrEmpty(parent))
+                {
+                    directories.Add(parent);
+                    parent = parent.Contains('/') ? parent[..parent.LastIndexOf('/')] : string.Empty;
+                }
+
+                yield return new ResourceEntry.File(path, extension);
+            }
+
+            foreach (var directory in directories)
+            {
+                yield return new ResourceEntry.Directory(directory);
+            }
+        }
+    }
 
     private readonly Dictionary<string, string> _records = new(StringComparer.OrdinalIgnoreCase);
 
@@ -82,6 +105,11 @@ internal class PakResourceProvider : IResourceProvider
     }
 
     public void Save<T>(string path, T asset) where T : class
+    {
+        throw new NotSupportedException();
+    }
+
+    public void CreateDirectory(string path)
     {
         throw new NotSupportedException();
     }
