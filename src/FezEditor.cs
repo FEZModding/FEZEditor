@@ -12,7 +12,7 @@ namespace FezEditor;
 
 public class FezEditor : Game
 {
-    private static readonly ILogger Logger = Logging.Create<FezEditor>();
+    private static ILogger Logger => Logging.Create<FezEditor>();
 
     public static readonly string Version;
 
@@ -24,26 +24,21 @@ public class FezEditor : Game
 
     public GraphicsDeviceManager DeviceManager { get; }
 
-    private AppStorageService _appStorage = null!;
-
     private ContentService _content = null!;
 
     private ImGuiService _imGui = null!;
 
     private RenderingService _rendering = null!;
 
-    private ResourceService _resources = null!;
-
     private InputService _input = null!;
-
-    private StatusService _status = null!;
 
     private EditorService _editor = null!;
 
-    private static void Main(string[] args)
+    private static int Main(string[] args)
     {
         Args.Parse(args);
         Logging.Initialize();
+        AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         Environment.SetEnvironmentVariable("FNA3D_FORCE_DRIVER", "OpenGL");
         Environment.SetEnvironmentVariable("FNA_GRAPHICS_ENABLE_HIGHDPI", "1");
         try
@@ -54,8 +49,15 @@ public class FezEditor : Game
         catch (Exception e)
         {
             Logger.Fatal(e, "Unhandled Exception");
-            throw;
+            return 1;
         }
+        finally
+        {
+            AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
+            Log.CloseAndFlush();
+        }
+
+        return 0;
     }
 
     private FezEditor()
@@ -78,13 +80,13 @@ public class FezEditor : Game
         Logger.Information("Scripts - {0} entities", ScriptingApi.Entries.Length); // inits collection
         RepackerExtensions.Gd = GraphicsDevice;
 
-        _appStorage = this.CreateService<AppStorageService>();
+        this.CreateService<AppStorageService>();
         _content = this.CreateService<ContentService>();
         _input = this.CreateService<InputService>();
         _imGui = this.CreateService<ImGuiService>();
         _rendering = this.CreateService<RenderingService>();
-        _resources = this.CreateService<ResourceService>();
-        _status = this.CreateService<StatusService>();
+        this.CreateService<ResourceService>();
+        this.CreateService<StatusService>();
         _editor = this.CreateService<EditorService>();
         Content = (ContentManager)_content.Global;
 
@@ -135,6 +137,7 @@ public class FezEditor : Game
 
     static FezEditor()
     {
+        // ReSharper disable once HeuristicUnreachableCode
         Version = ThisAssembly.Git.BaseVersion.Major + "." +
                   ThisAssembly.Git.BaseVersion.Minor +
                   (ThisAssembly.Git.BaseVersion.Patch != "0" ? "." + ThisAssembly.Git.BaseVersion.Patch : "");
@@ -151,5 +154,20 @@ public class FezEditor : Game
 
         SplashAuthors = metadata.OfType<System.Reflection.AssemblyMetadataAttribute>()
             .First(attr => attr.Key == "SplashAuthors").Value ?? string.Empty;
+    }
+
+    private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs args)
+    {
+        if (args.ExceptionObject is Exception exception)
+        {
+            Logger.Fatal(exception, "Unhandled Exception (terminating: {IsTerminating})", args.IsTerminating);
+        }
+        else
+        {
+            Logger.Fatal("Unhandled exception object: {@ExceptionObject} (terminating: {IsTerminating})",
+                args.ExceptionObject, args.IsTerminating);
+        }
+
+        Log.CloseAndFlush();
     }
 }
