@@ -80,11 +80,10 @@ public class ThumbnailGenerator : DrawableGameComponent
     {
         var cts = new CancellationTokenSource();
         _cts = cts;
-        using var activity = _statusService.BeginActivity("Scanning thumbnails...");
 
         try
         {
-            await Task.Run(() => ProcessInternal(cts.Token, activity), cts.Token);
+            await Task.Run(() => ProcessInternal(cts.Token), cts.Token);
         }
         catch (OperationCanceledException)
         {
@@ -102,41 +101,58 @@ public class ThumbnailGenerator : DrawableGameComponent
         }
     }
 
-    private void ProcessInternal(CancellationToken ct, StatusActivityHandle activity)
+    private void ProcessInternal(CancellationToken ct)
     {
+        var providerRoot = _resources.RootPath;
+        var previousSources = ThumbnailDatabase.GetProviderSources(providerRoot);
+        var sources = new Dictionary<string, ThumbnailDatabase.SourceRecord>(StringComparer.OrdinalIgnoreCase);
         var entries = new Queue<Entry>();
+        var pending = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         var npcFolders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var file in _resources.Files.ToArray())
+        var files = _resources.Files.ToArray();
+
+        foreach (var file in files)
         {
             ct.ThrowIfCancellationRequested();
+            var extension = string.Empty;
             try
             {
-                var extension = _resources.GetExtension(file);
+                extension = _resources.GetExtension(file);
                 if (file.StartsWith("Trile Sets/", StringComparison.OrdinalIgnoreCase) ||
                     extension.Equals(".fezts.glb", StringComparison.OrdinalIgnoreCase))
                 {
                     var lastWrite = _resources.GetLastWriteTimeUtc(file);
-                    var trileNames = _resources.GetTrileSetList(file);
-                    foreach (var name in trileNames.Values)
+                    var sourceKey = GetSourceKey(file, AssetType.Trile);
+                    List<string> thumbnailPaths;
+                    if (previousSources.TryGetValue(sourceKey, out var previous) &&
+                        previous.LastWrite == lastWrite)
                     {
-                        var entry = new Entry(file, AssetType.Trile, name);
-                        if (!new Thumbnailer(entry.CachePath, lastWrite).IsCacheCurrent())
-                        {
-                            entries.Enqueue(entry);
-                        }
+                        thumbnailPaths = previous.ThumbnailPaths;
                     }
+                    else
+                    {
+                        var trileNames = _resources.GetTrileSetList(file);
+                        thumbnailPaths = trileNames.Values
+                            .Select(name => new Entry(file, AssetType.Trile, lastWrite, sourceKey, name).CachePath)
+                            .ToList();
+                    }
+
+                    AddSource(previousSources, sources, entries, pending, sourceKey, file,
+                        AssetType.Trile, lastWrite, thumbnailPaths);
                 }
                 else if (file.StartsWith("Art Objects/", StringComparison.OrdinalIgnoreCase) ||
                          extension.Equals(".fezao.glb", StringComparison.OrdinalIgnoreCase))
                 {
                     if (!extension.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
                     {
-                        EnqueueIfStale(entries, new Entry(file, AssetType.ArtObject));
+                        AddSingleSource(previousSources, sources, entries, pending, file,
+                            AssetType.ArtObject, _resources.GetLastWriteTimeUtc(file));
                     }
                 }
                 else if (file.StartsWith("Background Planes/", StringComparison.OrdinalIgnoreCase))
                 {
-                    EnqueueIfStale(entries, new Entry(file, AssetType.BackgroundPlane));
+                    AddSingleSource(previousSources, sources, entries, pending, file,
+                        AssetType.BackgroundPlane, _resources.GetLastWriteTimeUtc(file));
                 }
                 else if (file.StartsWith("Character Animations/", StringComparison.OrdinalIgnoreCase) &&
                          !file.Contains("Metadata", StringComparison.OrdinalIgnoreCase))
@@ -148,7 +164,14 @@ public class ThumbnailGenerator : DrawableGameComponent
                         var folder = $"Character Animations/{remainder[..slashIndex]}";
                         if (npcFolders.Add(folder))
                         {
-                            EnqueueIfStale(entries, new Entry(folder, AssetType.NonPlayableCharacter));
+                            var prefix = folder + "/";
+                            var lastWrite = files
+                                .Where(candidate => candidate.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                                .Select(_resources.GetLastWriteTimeUtc)
+                                .DefaultIfEmpty(DateTime.MinValue)
+                                .Max();
+                            AddSingleSource(previousSources, sources, entries, pending, folder,
+                                AssetType.NonPlayableCharacter, lastWrite);
                         }
                     }
                 }
@@ -156,36 +179,54 @@ public class ThumbnailGenerator : DrawableGameComponent
             catch (Exception ex)
             {
                 Logger.Warning(ex, "Failed to inspect thumbnail source {0}", file);
+                var type = GetAssetType(file, extension);
+                if (type.HasValue)
+                {
+                    var sourceKey = GetSourceKey(file, type.Value);
+                    sources[sourceKey] = new ThumbnailDatabase.SourceRecord
+                    {
+                        LastWrite = _resources.GetLastWriteTimeUtc(file),
+                        Complete = true,
+                        Failed = true
+                    };
+                }
             }
         }
 
         var processed = 0;
         var total = entries.Count;
-        activity.Report(total == 0 ? "Thumbnails are up to date" : $"Generating thumbnails (0/{total})", 0f);
+        if (total == 0)
+        {
+            ThumbnailDatabase.SetProviderSources(providerRoot, sources);
+            ThumbnailDatabase.Flush();
+            return;
+        }
+
+        using var activity = _statusService.BeginActivity($"Generating thumbnails (0/{total})", 0f);
         TrileSet? cachedTrileSet = null;
         string? cachedTrileSetPath = null;
 
-        while (entries.Count > 0)
+        try
         {
-            ct.ThrowIfCancellationRequested();
-            var entry = entries.Dequeue();
-            try
+            while (entries.Count > 0)
             {
-                var lastWrite = GetLastWriteTimeUtc(entry);
-                var cachePath = entry.CachePath;
-
-                var cacheProbe = new Thumbnailer(cachePath, lastWrite);
-                if (cacheProbe.IsCacheCurrent())
+                ct.ThrowIfCancellationRequested();
+                var entry = entries.Dequeue();
+                try
                 {
-                    Logger.Debug("Thumbnail for {0} already cached", cachePath);
-                    processed++;
-                    ReportProgress(activity, processed, total);
-                    continue;
-                }
+                    var lastWrite = entry.LastWrite;
+                    var cachePath = entry.CachePath;
 
-                Thumbnailer? thumbnailer = null;
-                switch (entry.Type)
-                {
+                    var cacheProbe = new Thumbnailer(cachePath, lastWrite);
+                    if (cacheProbe.IsCacheCurrent())
+                    {
+                        Logger.Debug("Thumbnail for {0} already cached", cachePath);
+                        continue;
+                    }
+
+                    Thumbnailer? thumbnailer = null;
+                    switch (entry.Type)
+                    {
                     case AssetType.ArtObject:
                         {
                             var ao = _resources.Load<ArtObject>(entry.Path);
@@ -268,23 +309,39 @@ public class ThumbnailGenerator : DrawableGameComponent
 
                     default:
                         throw new InvalidOperationException();
-                }
+                    }
 
-                if (thumbnailer != null)
+                    if (thumbnailer != null)
+                    {
+                        var thumbnail = thumbnailer.Generate();
+                        thumbnailer.Save(thumbnail);
+                    }
+                    else
+                    {
+                        sources[entry.SourceKey].Failed = true;
+                    }
+                }
+                catch (Exception e)
                 {
-                    var thumbnail = thumbnailer.Generate();
-                    thumbnailer.Save(thumbnail);
+                    Logger.Warning(e, "Failed to generate thumbnail for {0}", entry.CachePath);
+                    sources[entry.SourceKey].Failed = true;
                 }
+                finally
+                {
+                    if (--pending[entry.SourceKey] == 0)
+                    {
+                        sources[entry.SourceKey].Complete = true;
+                    }
 
-                processed++;
-                ReportProgress(activity, processed, total);
+                    processed++;
+                    ReportProgress(activity, processed, total);
+                }
             }
-            catch (Exception e)
-            {
-                Logger.Warning(e, "Failed to generate thumbnail for {0}", entry.CachePath);
-                processed++;
-                ReportProgress(activity, processed, total);
-            }
+        }
+        finally
+        {
+            ThumbnailDatabase.SetProviderSources(providerRoot, sources);
+            ThumbnailDatabase.Flush();
         }
     }
 
@@ -294,28 +351,92 @@ public class ThumbnailGenerator : DrawableGameComponent
         activity.Report($"Generating thumbnails ({processed}/{total})", progress);
     }
 
-    private void EnqueueIfStale(Queue<Entry> entries, Entry entry)
+    private static void AddSingleSource(
+        Dictionary<string, ThumbnailDatabase.SourceRecord> previousSources,
+        Dictionary<string, ThumbnailDatabase.SourceRecord> sources,
+        Queue<Entry> entries,
+        Dictionary<string, int> pending,
+        string path,
+        AssetType type,
+        DateTime lastWrite)
     {
-        var lastWrite = GetLastWriteTimeUtc(entry);
-        if (!new Thumbnailer(entry.CachePath, lastWrite).IsCacheCurrent())
+        var sourceKey = GetSourceKey(path, type);
+        var thumbnailPath = new Entry(path, type, lastWrite, sourceKey).CachePath;
+        AddSource(previousSources, sources, entries, pending, sourceKey, path, type, lastWrite, [thumbnailPath]);
+    }
+
+    private static void AddSource(
+        Dictionary<string, ThumbnailDatabase.SourceRecord> previousSources,
+        Dictionary<string, ThumbnailDatabase.SourceRecord> sources,
+        Queue<Entry> entries,
+        Dictionary<string, int> pending,
+        string sourceKey,
+        string path,
+        AssetType type,
+        DateTime lastWrite,
+        List<string> thumbnailPaths)
+    {
+        var record = new ThumbnailDatabase.SourceRecord
         {
-            entries.Enqueue(entry);
+            LastWrite = lastWrite,
+            ThumbnailPaths = thumbnailPaths,
+            Complete = false
+        };
+        sources[sourceKey] = record;
+
+        var unchanged = previousSources.TryGetValue(sourceKey, out var previous) &&
+                        previous.LastWrite == lastWrite && previous.Complete;
+        if (unchanged && previous!.Failed)
+        {
+            record.Complete = true;
+            record.Failed = true;
+            return;
+        }
+
+        var stalePaths = thumbnailPaths
+            .Where(thumbnailPath => !unchanged || !new Thumbnailer(thumbnailPath, lastWrite).IsCacheCurrent())
+            .ToList();
+
+        if (stalePaths.Count == 0)
+        {
+            record.Complete = true;
+            return;
+        }
+
+        pending[sourceKey] = stalePaths.Count;
+        var basePath = new Entry(path, type, lastWrite, sourceKey).CachePath;
+        foreach (var thumbnailPath in stalePaths)
+        {
+            var trileName = type == AssetType.Trile ? thumbnailPath[(basePath.Length + 1)..] : null;
+            entries.Enqueue(new Entry(path, type, lastWrite, sourceKey, trileName));
         }
     }
 
-    private DateTime GetLastWriteTimeUtc(Entry entry)
+    private static string GetSourceKey(string path, AssetType type)
     {
-        if (entry.Type != AssetType.NonPlayableCharacter)
+        return $"{type}:{path}".Replace('\\', '/').ToLowerInvariant();
+    }
+
+    private static AssetType? GetAssetType(string path, string extension)
+    {
+        if (path.StartsWith("Trile Sets/", StringComparison.OrdinalIgnoreCase) ||
+            extension.Equals(".fezts.glb", StringComparison.OrdinalIgnoreCase))
         {
-            return _resources.GetLastWriteTimeUtc(entry.Path);
+            return AssetType.Trile;
         }
 
-        var prefix = entry.Path + "/";
-        return _resources.Files
-            .Where(file => file.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-            .Select(_resources.GetLastWriteTimeUtc)
-            .DefaultIfEmpty(DateTime.MinValue)
-            .Max();
+        if (path.StartsWith("Art Objects/", StringComparison.OrdinalIgnoreCase) ||
+            extension.Equals(".fezao.glb", StringComparison.OrdinalIgnoreCase))
+        {
+            return AssetType.ArtObject;
+        }
+
+        if (path.StartsWith("Background Planes/", StringComparison.OrdinalIgnoreCase))
+        {
+            return AssetType.BackgroundPlane;
+        }
+
+        return null;
     }
 
     protected override void Dispose(bool disposing)
@@ -328,7 +449,12 @@ public class ThumbnailGenerator : DrawableGameComponent
         }
     }
 
-    private readonly record struct Entry(string Path, AssetType Type, string? TrileName = null)
+    private readonly record struct Entry(
+        string Path,
+        AssetType Type,
+        DateTime LastWrite,
+        string SourceKey,
+        string? TrileName = null)
     {
         public string CachePath
         {

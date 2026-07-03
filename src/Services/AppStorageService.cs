@@ -1,5 +1,6 @@
 using System.Text.Json;
 using FezEditor.Structure;
+using FezEditor.Tools;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 using SDL3;
@@ -48,6 +49,7 @@ public class AppStorageService : IDisposable
     public void Dispose()
     {
         GC.SuppressFinalize(this);
+        ThumbnailDatabase.Flush();
         SaveWindowState();
         Save();
     }
@@ -151,6 +153,7 @@ public class AppStorageService : IDisposable
 
     public static void ClearCache()
     {
+        ThumbnailDatabase.Reset();
         foreach (var file in Directory.GetFiles(CacheDir))
         {
             File.Delete(file);
@@ -166,7 +169,7 @@ public class AppStorageService : IDisposable
     {
         try
         {
-            using var file = new FileStream(Path.Combine(CacheDir, filename), FileMode.OpenOrCreate, FileAccess.Write);
+            using var file = new FileStream(Path.Combine(CacheDir, filename), FileMode.Create, FileAccess.Write);
             stream.Seek(0, SeekOrigin.Begin);
             stream.CopyTo(file);
         }
@@ -192,6 +195,58 @@ public class AppStorageService : IDisposable
 
         memory.Seek(0, SeekOrigin.Begin);
         return memory;
+    }
+
+    public static bool TryLoadCacheJson<T>(string filename, out T? value)
+    {
+        value = default;
+        var path = Path.Combine(CacheDir, filename);
+        if (!File.Exists(path))
+        {
+            return false;
+        }
+
+        try
+        {
+            using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            value = JsonSerializer.Deserialize<T>(file, JsonOptions);
+            return value != null;
+        }
+        catch (Exception e)
+        {
+            Logger.Warning(e, "Unable to read cache database {0}", filename);
+            return false;
+        }
+    }
+
+    public static bool SaveCacheJson<T>(string filename, T value)
+    {
+        var path = Path.Combine(CacheDir, filename);
+        var temporaryPath = path + ".tmp";
+        try
+        {
+            using (var file = new FileStream(temporaryPath, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                JsonSerializer.Serialize(file, value, JsonOptions);
+            }
+
+            File.Move(temporaryPath, path, true);
+            return true;
+        }
+        catch (Exception e)
+        {
+            Logger.Error(e, "Unable to save cache database {0}", filename);
+            try
+            {
+                File.Delete(temporaryPath);
+            }
+            catch
+            {
+                // Preserve the original persistence error.
+            }
+
+            return false;
+        }
     }
 
     private void Save()

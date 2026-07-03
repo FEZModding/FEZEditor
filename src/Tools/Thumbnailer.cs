@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using FezEditor.Services;
 using FEZRepacker.Core.Definitions.Game.ArtObject;
 using FEZRepacker.Core.Definitions.Game.TrileSet;
@@ -18,9 +17,9 @@ public class Thumbnailer
 
     private readonly string _thumbPath;
 
-    private readonly string _metaPath;
-
     private readonly DateTime _lastWrite;
+
+    private readonly string _path;
 
     public Thumbnailer(string path, DateTime lastWrite, ArtObject ao) : this(path, lastWrite)
     {
@@ -71,36 +70,20 @@ public class Thumbnailer
     public Thumbnailer(string path, DateTime lastWrite)
     {
         _lastWrite = lastWrite;
+        _path = path;
         _source = new RTexture2D();
         {
             var normalizedPath = path.ToLowerInvariant().Replace('\\', '/');
             var hashBytes = MD5.HashData(Encoding.UTF8.GetBytes(normalizedPath));
             var hash = Convert.ToHexString(hashBytes).ToLowerInvariant();
             _thumbPath = $"thumb-{hash}.png";
-            _metaPath = Path.ChangeExtension(_thumbPath, ".json");
         }
     }
 
     public bool IsCacheCurrent()
     {
-        if (!AppStorageService.HasCacheFile(_thumbPath) || !AppStorageService.HasCacheFile(_metaPath))
-        {
-            return false;
-        }
-
-        ThumbMeta? meta;
-        try
-        {
-            using var stream = AppStorageService.LoadFromCache(_metaPath);
-            stream.Seek(0, SeekOrigin.Begin);
-            meta = JsonSerializer.Deserialize<ThumbMeta>(stream);
-        }
-        catch
-        {
-            meta = null;
-        }
-
-        return meta != null && meta.LastWrite == _lastWrite;
+        return AppStorageService.HasCacheFile(_thumbPath) &&
+               ThumbnailDatabase.IsThumbnailCurrent(_path, _lastWrite);
     }
 
     public bool TryLoad(out RTexture2D? texture)
@@ -151,16 +134,7 @@ public class Thumbnailer
 
         #endregion
 
-        #region Metadata
-
-        {
-            var meta = new ThumbMeta(_lastWrite, texture.Width, texture.Height);
-            using var stream = new MemoryStream();
-            JsonSerializer.Serialize(stream, meta);
-            AppStorageService.SaveToCache(_metaPath, stream);
-        }
-
-        #endregion
+        ThumbnailDatabase.SetThumbnailCurrent(_path, _lastWrite);
     }
 
     private static void SetOpaqueAlpha(byte[] data)
@@ -183,6 +157,4 @@ public class Thumbnailer
 
         return result;
     }
-
-    private record ThumbMeta(DateTime LastWrite, int Width, int Height); // last write datetime of asset
 }
