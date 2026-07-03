@@ -109,46 +109,53 @@ public class ThumbnailGenerator : DrawableGameComponent
         foreach (var file in _resources.Files.ToArray())
         {
             ct.ThrowIfCancellationRequested();
-            var extension = _resources.GetExtension(file);
-            if (file.StartsWith("Trile Sets/", StringComparison.OrdinalIgnoreCase) ||
-                extension.Equals(".fezts.glb", StringComparison.OrdinalIgnoreCase))
+            try
             {
-                var lastWrite = _resources.GetLastWriteTimeUtc(file);
-                var trileNames = _resources.GetTrileSetList(file);
-                foreach (var name in trileNames.Values)
+                var extension = _resources.GetExtension(file);
+                if (file.StartsWith("Trile Sets/", StringComparison.OrdinalIgnoreCase) ||
+                    extension.Equals(".fezts.glb", StringComparison.OrdinalIgnoreCase))
                 {
-                    var entry = new Entry(file, AssetType.Trile, name);
-                    if (!new Thumbnailer(entry.CachePath, lastWrite).IsCacheCurrent())
+                    var lastWrite = _resources.GetLastWriteTimeUtc(file);
+                    var trileNames = _resources.GetTrileSetList(file);
+                    foreach (var name in trileNames.Values)
                     {
-                        entries.Enqueue(entry);
+                        var entry = new Entry(file, AssetType.Trile, name);
+                        if (!new Thumbnailer(entry.CachePath, lastWrite).IsCacheCurrent())
+                        {
+                            entries.Enqueue(entry);
+                        }
+                    }
+                }
+                else if (file.StartsWith("Art Objects/", StringComparison.OrdinalIgnoreCase) ||
+                         extension.Equals(".fezao.glb", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!extension.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                    {
+                        EnqueueIfStale(entries, new Entry(file, AssetType.ArtObject));
+                    }
+                }
+                else if (file.StartsWith("Background Planes/", StringComparison.OrdinalIgnoreCase))
+                {
+                    EnqueueIfStale(entries, new Entry(file, AssetType.BackgroundPlane));
+                }
+                else if (file.StartsWith("Character Animations/", StringComparison.OrdinalIgnoreCase) &&
+                         !file.Contains("Metadata", StringComparison.OrdinalIgnoreCase))
+                {
+                    var remainder = file["Character Animations/".Length..];
+                    var slashIndex = remainder.IndexOf('/');
+                    if (slashIndex >= 0)
+                    {
+                        var folder = $"Character Animations/{remainder[..slashIndex]}";
+                        if (npcFolders.Add(folder))
+                        {
+                            EnqueueIfStale(entries, new Entry(folder, AssetType.NonPlayableCharacter));
+                        }
                     }
                 }
             }
-            else if (file.StartsWith("Art Objects/", StringComparison.OrdinalIgnoreCase) ||
-                     extension.Equals(".fezao.glb", StringComparison.OrdinalIgnoreCase))
+            catch (Exception ex)
             {
-                if (!extension.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
-                {
-                    EnqueueIfStale(entries, new Entry(file, AssetType.ArtObject));
-                }
-            }
-            else if (file.StartsWith("Background Planes/", StringComparison.OrdinalIgnoreCase))
-            {
-                EnqueueIfStale(entries, new Entry(file, AssetType.BackgroundPlane));
-            }
-            else if (file.StartsWith("Character Animations/", StringComparison.OrdinalIgnoreCase) &&
-                     !file.Contains("Metadata", StringComparison.OrdinalIgnoreCase))
-            {
-                var remainder = file["Character Animations/".Length..];
-                var slashIndex = remainder.IndexOf('/');
-                if (slashIndex >= 0)
-                {
-                    var folder = $"Character Animations/{remainder[..slashIndex]}";
-                    if (npcFolders.Add(folder))
-                    {
-                        EnqueueIfStale(entries, new Entry(folder, AssetType.NonPlayableCharacter));
-                    }
-                }
+                Logger.Warning(ex, "Failed to inspect thumbnail source {0}", file);
             }
         }
 
@@ -176,7 +183,7 @@ public class ThumbnailGenerator : DrawableGameComponent
                     continue;
                 }
 
-                Thumbnailer thumbnailer = null!;
+                Thumbnailer? thumbnailer = null;
                 switch (entry.Type)
                 {
                     case AssetType.ArtObject:
