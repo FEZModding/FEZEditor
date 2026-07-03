@@ -149,7 +149,42 @@ internal class PakResourceProvider : IResourceProvider
         {
             var normalizedPath = record.Path.Replace('\\', '/');
             var key = string.IsNullOrEmpty(_musicPrefix) ? normalizedPath : $"{_musicPrefix}{normalizedPath}";
-            _records[key] = record.FindExtension();
+            var extension = record.FindExtension();
+            if (extension != ".xnb")
+            {
+                _records[key] = extension;
+                return;
+            }
+
+            try
+            {
+                using var recordStream = record.Open();
+                var type = XnbSerializer.DeserializePrimaryContentTypeOnly(recordStream);
+                extension = type.Name switch
+                {
+                    "AnimatedTexture" => ".fezanim.json",
+                    "ArtObject" => ".fezao.glb",
+                    "Effect" => ".fxc",
+                    "Level" => ".fezlvl.json",
+                    "MapTree" => ".fezmap.json",
+                    "NpcMetadata" => ".feznpc.json",
+                    "Sky" => ".fezsky.json",
+                    "SoundEffect" => ".wav",
+                    "SpriteFont" => ".fezfont.png",
+                    "TextStorage" => ".feztxt.json",
+                    "Texture2D" => ".png",
+                    "TrackedSong" => ".fezsong.json",
+                    "TrileSet" => ".fezts.glb",
+                    _ => ".xnb"
+                };
+            }
+            catch
+            {
+                // Some XNB types are unsupported by the resource loader.
+                // Keep the container extension so the entry remains visible and loadable.
+            }
+
+            _records[key] = extension;
         }
     }
 
