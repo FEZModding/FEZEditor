@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $Root = Split-Path $PSScriptRoot -Parent
-$Project = Join-Path $Root "FezEditor\FezEditor.csproj"
+$Project = Join-Path $Root "src\FezEditor.csproj"
 $Dist = Join-Path $Root "publish"
 $Version = (Select-Xml -Path $Project -XPath "//Version").Node.InnerText
 
@@ -10,7 +10,7 @@ New-Item -ItemType Directory -Force -Path $Dist | Out-Null
 $Targets = @("win-x64", "linux-x64", "osx-arm64")
 foreach ($Rid in $Targets) {
     Write-Host "Publishing $Rid..."
-    $PublishDir = Join-Path $Root "FezEditor\bin\publish\$Rid"
+    $PublishDir = Join-Path $Root "src\bin\publish\$Rid"
 
     dotnet publish $Project -c Release -r $Rid -o $PublishDir
 
@@ -30,7 +30,7 @@ foreach ($Rid in $Targets) {
         Get-ChildItem -Path $PublishDir -Exclude "FEZEditor.app" | Move-Item -Destination $MacOS
 
         # Copy Info.plist with version substituted
-        $PlistSrc = Join-Path $Root "FezEditor\Info.plist"
+        $PlistSrc = Join-Path $Root "assets\Info.plist"
         $PlistDst = Join-Path $Contents "Info.plist"
         (Get-Content $PlistSrc) -replace '\$\(Version\)', $Version | Set-Content $PlistDst
 

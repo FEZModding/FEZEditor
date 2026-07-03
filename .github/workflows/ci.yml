@@ -36,10 +36,10 @@ jobs:
       - name: Compile shaders
         run: |
           wine wineboot --init
-          dotnet msbuild FXC/CompileShaders.targets -t:CompileShaders
+          dotnet msbuild build/CompileShaders.targets -t:CompileShaders
         env:
           WINEDEBUG: -all
           WINEPREFIX: /home/runner/.wine
 
       - name: Build
-        run: dotnet build FezEditor/FezEditor.csproj -c Debug
+        run: dotnet build src/FezEditor.csproj -c Debug

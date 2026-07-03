@@ -1,11 +1,12 @@
 <Project>
   <PropertyGroup>
-    <FxcDir>$(MSBuildThisFileDirectory)</FxcDir>
+    <FxcDir>$(MSBuildThisFileDirectory)..\tools\fxc\</FxcDir>
+    <AssetsDir>$(MSBuildThisFileDirectory)..\assets\</AssetsDir>
     <FxcExe Condition="'$(OS)' == 'Windows_NT'">$(FxcDir)fxc.exe</FxcExe>
   </PropertyGroup>
 
   <ItemGroup>
-    <ShaderFiles Include="$(FxcDir)..\Content\**\*.fx"/>
+    <ShaderFiles Include="$(AssetsDir)**\*.fx"/>
   </ItemGroup>
 
   <Target Name="CompileShaders"
@@ -13,7 +14,7 @@
           Inputs="@(ShaderFiles)"
           Outputs="@(ShaderFiles -> '%(RootDir)%(Directory)%(Filename).fxb')">
 
-    <Error Text="fxc.exe not found in FXC folder." Condition="!Exists('$(FxcDir)fxc.exe')" />
+    <Error Text="fxc.exe not found in tools/fxc." Condition="!Exists('$(FxcDir)fxc.exe')" />
 
     <!-- Windows: invoke fxc.exe directly per shader -->
     <Message Text="Compiling shader: %(ShaderFiles.FullPath)" Importance="High"

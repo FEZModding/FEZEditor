@@ -25,7 +25,7 @@ jobs:
       - name: Compile shaders
         run: |
           wine wineboot --init
-          dotnet msbuild FXC/CompileShaders.targets -t:CompileShaders
+          dotnet msbuild build/CompileShaders.targets -t:CompileShaders
         env:
           WINEDEBUG: -all
           WINEPREFIX: /home/runner/.wine
@@ -33,7 +33,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: shaders
-          path: Content/Effects/*.fxb
+          path: assets/Effects/*.fxb
 
   build:
     needs: shaders
@@ -61,11 +61,11 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: shaders
-          path: Content/Effects/
+          path: assets/Effects/
 
       - name: Publish
         run: >
-          dotnet publish FezEditor/FezEditor.csproj
+          dotnet publish src/FezEditor.csproj
           -c Release
           -r ${{ matrix.rid }}
           -o publish/
@@ -81,7 +81,7 @@ jobs:
           APP=publish/FEZEditor.app/Contents
           mkdir -p "$APP/MacOS" "$APP/Resources"
           find publish -maxdepth 1 -mindepth 1 ! -name FEZEditor.app -exec mv {} "$APP/MacOS/" \;
-          sed "s/\$(Version)/${{ github.ref_name }}/g" FezEditor/Info.plist > "$APP/Info.plist"
+          sed "s/\$(Version)/${{ github.ref_name }}/g" assets/Info.plist > "$APP/Info.plist"
 
       - name: Archive (macOS)
         if: startsWith(matrix.rid, 'osx-')

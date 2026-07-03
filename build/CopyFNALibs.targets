@@ -1,0 +1,43 @@
+<Project>
+  <PropertyGroup>
+    <NativeLibRoot>$(MSBuildThisFileDirectory)..\lib\fnalibs\</NativeLibRoot>
+    <_NativeRid Condition="'$(RuntimeIdentifier)' == 'win-x64'">win-x64</_NativeRid>
+    <_NativeRid Condition="'$(RuntimeIdentifier)' == 'linux-x64'">linux-x64</_NativeRid>
+    <_NativeRid Condition="'$(RuntimeIdentifier)' == 'osx-arm64'">macos-arm64</_NativeRid>
+
+    <!-- Fallback for local builds without a RuntimeIdentifier. -->
+    <_NativeRid Condition="'$(RuntimeIdentifier)' == '' AND $([MSBuild]::IsOSPlatform('Windows'))">win-x64</_NativeRid>
+    <_NativeRid Condition="'$(RuntimeIdentifier)' == '' AND $([MSBuild]::IsOSPlatform('Linux'))">linux-x64</_NativeRid>
+    <_NativeRid Condition="'$(RuntimeIdentifier)' == '' AND $([MSBuild]::IsOSPlatform('OSX'))">macos-arm64</_NativeRid>
+  </PropertyGroup>
+
+  <Target Name="ResolveFNALibs">
+    <Error
+      Text="No native FNA libraries are available for RuntimeIdentifier '$(RuntimeIdentifier)'."
+      Condition="'$(_NativeRid)' == ''" />
+    <Error Text="Native FNA library directory not found: $(NativeLibRoot)$(_NativeRid)"
+      Condition="!Exists('$(NativeLibRoot)$(_NativeRid)')" />
+    <ItemGroup>
+      <_FNALibs Include="$(NativeLibRoot)$(_NativeRid)\**\*.*" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="CopyFNALibs" AfterTargets="Build" DependsOnTargets="ResolveFNALibs">
+    <Copy SourceFiles="@(_FNALibs)"
+      DestinationFiles="@(_FNALibs->'$(OutputPath)%(RecursiveDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="PublishFNALibs" AfterTargets="Publish" DependsOnTargets="ResolveFNALibs">
+    <Copy SourceFiles="@(_FNALibs)"
+      DestinationFiles="@(_FNALibs->'$(PublishDir)%(RecursiveDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="CleanFNALibs" AfterTargets="Clean">
+    <ItemGroup Condition="'$(_NativeRid)' != '' AND Exists('$(NativeLibRoot)$(_NativeRid)')">
+      <_FNALibsToClean Include="$(NativeLibRoot)$(_NativeRid)\**\*.*" />
+    </ItemGroup>
+    <Delete Files="@(_FNALibsToClean->'$(OutputPath)%(RecursiveDir)%(Filename)%(Extension)')" />
+  </Target>
+</Project>

@@ -1,5 +1,5 @@
 @echo off
-cd /d "%~dp0..\Content\Effects"
+cd /d "%~dp0..\..\assets\Effects"
 for %%f in (*.fx) do (
     %~dp0fxc.exe /nologo /Vd /T fx_2_0 /Fo "%%~nf.fxb" "%%f"
 )

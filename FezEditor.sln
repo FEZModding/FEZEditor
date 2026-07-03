@@ -1,7 +1,7 @@
 ﻿Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FezEditor", "FezEditor\FezEditor.csproj", "{8D011A5D-A5E5-4CB1-9AE6-25A87F31D6A6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FezEditor", "src\FezEditor.csproj", "{8D011A5D-A5E5-4CB1-9AE6-25A87F31D6A6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FNA.Core", "FNA\FNA.Core.csproj", "{85D8FE6C-B616-433C-9A90-9A6552296167}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FNA.Core", "lib\FNA\FNA.Core.csproj", "{85D8FE6C-B616-433C-9A90-9A6552296167}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

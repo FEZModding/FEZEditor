@@ -2,10 +2,9 @@ This is fnalibs, an archive containing the native libraries used by FNA.
 
 These are the folders included:
 
-- x86: 32-bit Windows
-- x64: 64-bit Windows
-- lib64: Linux (64-bit only)
-- libaarch64: Linux ARM (64-bit only)
+- win-x64: 64-bit Windows
+- linux-x64: 64-bit Linux
+- macos-arm64: Apple silicon macOS
 
 The library dependency list is as follows:
 

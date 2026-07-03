@@ -67,11 +67,6 @@ dotnet publish -c Release -r osx-arm64  # macOS
 > In JetBrains Rider, ReSharper Build must be disabled to ensure assets are always up to date on every project build.
 > Go to `Settings > Build, Execution, Deployment > Toolset and Build` and uncheck `Use ReSharper Build`.
 
-### Content Packaging
-
-- **Debug**: assets are copied to `Content/` next to the executable.
-- **Release**: assets are bundled inside the executable.
-
 ## Features
 
 ### Asset Management

@@ -1,5 +1,10 @@
 <Project>
-  <Import Project="../FXC/CompileShaders.targets"/>
+  <Import Project="$(MSBuildThisFileDirectory)CompileShaders.targets"/>
+
+  <PropertyGroup>
+    <AssetsDir>$(MSBuildThisFileDirectory)..\assets\</AssetsDir>
+    <AssetExcludes>$(AssetsDir)**\*.fx;$(AssetsDir)**\*.fxh;$(AssetsDir)**\*.md;$(AssetsDir)Icon.ico;$(AssetsDir)Info.plist</AssetExcludes>
+  </PropertyGroup>
 
   <ItemGroup Condition="'$(Configuration)' == 'Release'">
     <EmbeddedResource Include="$(IntermediateOutputPath)ContentBundle"
@@ -8,13 +13,9 @@
 
   <!-- Debug: Copy to folder -->
   <Target Name="BundleContentDebug" AfterTargets="Build" DependsOnTargets="CompileShaders" Condition="'$(Configuration)' == 'Debug'">
-    <ReadLinesFromFile File="$(MSBuildThisFileDirectory).ignore" Condition="Exists('$(MSBuildThisFileDirectory).ignore')">
-      <Output TaskParameter="Lines" ItemName="IgnorePatterns"/>
-    </ReadLinesFromFile>
-
     <ItemGroup>
-      <ContentFiles Include="$(MSBuildThisFileDirectory)**\*.*"
-                    Exclude="$(MSBuildThisFileDirectory).ignore;$(MSBuildThisFileDirectory)**\*.fx;$(MSBuildThisFileDirectory)**\*.targets;@(IgnorePatterns->'$(MSBuildThisFileDirectory)%(Identity)', ';')"/>
+      <ContentFiles Include="$(AssetsDir)**\*.*"
+                    Exclude="$(AssetExcludes)"/>
     </ItemGroup>
 
     <Copy SourceFiles="@(ContentFiles)"
@@ -25,13 +26,9 @@
 
   <!-- Debug publish: Copy to publish folder -->
   <Target Name="PublishContentDebug" AfterTargets="Publish" DependsOnTargets="CompileShaders" Condition="'$(Configuration)' == 'Debug'">
-    <ReadLinesFromFile File="$(MSBuildThisFileDirectory).ignore" Condition="Exists('$(MSBuildThisFileDirectory).ignore')">
-      <Output TaskParameter="Lines" ItemName="PublishIgnorePatterns"/>
-    </ReadLinesFromFile>
-
     <ItemGroup>
-      <PublishContentFiles Include="$(MSBuildThisFileDirectory)**\*.*"
-                           Exclude="$(MSBuildThisFileDirectory).ignore;$(MSBuildThisFileDirectory)**\*.fx;$(MSBuildThisFileDirectory)**\*.targets;@(PublishIgnorePatterns->'$(MSBuildThisFileDirectory)%(Identity)', ';')"/>
+      <PublishContentFiles Include="$(AssetsDir)**\*.*"
+                           Exclude="$(AssetExcludes)"/>
     </ItemGroup>
 
     <Copy SourceFiles="@(PublishContentFiles)"
@@ -42,13 +39,9 @@
 
   <!-- Release: Bundle and embed into the editor assembly -->
   <Target Name="BundleContent" BeforeTargets="CreateManifestResourceNames" DependsOnTargets="CompileShaders" Condition="'$(Configuration)' == 'Release'">
-    <ReadLinesFromFile File="$(MSBuildThisFileDirectory).ignore" Condition="Exists('$(MSBuildThisFileDirectory).ignore')">
-      <Output TaskParameter="Lines" ItemName="IgnorePatterns"/>
-    </ReadLinesFromFile>
-
     <ItemGroup>
-      <ContentFiles Include="$(MSBuildThisFileDirectory)**\*.*"
-                    Exclude="$(MSBuildThisFileDirectory).ignore;$(MSBuildThisFileDirectory)**\*.fx;$(MSBuildThisFileDirectory)**\*.targets;@(IgnorePatterns->'$(MSBuildThisFileDirectory)%(Identity)', ';')"/>
+      <ContentFiles Include="$(AssetsDir)**\*.*"
+                    Exclude="$(AssetExcludes)"/>
     </ItemGroup>
 
     <Copy SourceFiles="@(ContentFiles)"
@@ -62,7 +55,7 @@
                   Overwrite="true"/>
 
     <ItemGroup>
-      <CompiledShaders Include="$(MSBuildThisFileDirectory)**\*.fxb"/>
+      <CompiledShaders Include="$(AssetsDir)**\*.fxb"/>
     </ItemGroup>
     <Delete Files="@(CompiledShaders)"/>
   </Target>
