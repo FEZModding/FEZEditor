@@ -15,15 +15,6 @@ public class LevelPropertiesSystem : EddySystem
             return;
         }
 
-        var name = Level.Name;
-        if (ImGui.InputText("Name", ref name, 255))
-        {
-            using (Eddy.History.BeginScope("Edit Level Name"))
-            {
-                Level.Name = name;
-            }
-        }
-
         var size = Level.Size.ToXna();
         if (ImGuiX.InputFloat3("Size", ref size))
         {

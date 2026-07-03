@@ -16,7 +16,14 @@ public class EddyEditor : EditorComponent
 
     public const int MaxRecentEntries = 10;
 
-    public override object Asset => _level;
+    public override object Asset
+    {
+        get
+        {
+            _level.Name = Path.GetFileName(Title);
+            return _level;
+        }
+    }
 
     public ToolState Tool
     {
@@ -108,6 +115,7 @@ public class EddyEditor : EditorComponent
     public EddyEditor(Game game, string title, Level level) : base(game, title)
     {
         _level = level;
+        _level.Name = Path.GetFileName(title);
         History.Track(level);
         History.StateChanged += Sync;
         ResourceService.ProviderReset += OnProviderReset;
