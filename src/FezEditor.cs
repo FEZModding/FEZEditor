@@ -14,6 +14,10 @@ public class FezEditor : Game
 {
     private static ILogger Logger => Logging.Create<FezEditor>();
 
+    public static GraphicsDeviceManager DeviceManager { get; private set; } = null!;
+
+    public static GameWindow GameWindow { get; private set; } = null!;
+
     public static readonly string Version;
 
     public static readonly string Authors;
@@ -21,8 +25,6 @@ public class FezEditor : Game
     public static readonly string SplashAuthors;
 
     public const string Commit = ThisAssembly.Git.Commit;
-
-    public GraphicsDeviceManager DeviceManager { get; }
 
     private ContentService _content = null!;
 
@@ -72,13 +74,13 @@ public class FezEditor : Game
         };
         IsMouseVisible = true;
         Window.AllowUserResizing = true;
+        GameWindow = Window;
     }
 
     protected override void Initialize()
     {
         Logger.Information("Version - {0} ({1})", Version, Commit);
         Logger.Information("Scripts - {0} entities", ScriptingApi.Entries.Length); // inits collection
-        RepackerExtensions.Gd = GraphicsDevice;
 
         this.CreateService<AppStorageService>();
         _content = this.CreateService<ContentService>();

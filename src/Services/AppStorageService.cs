@@ -38,11 +38,8 @@ public class AppStorageService : IDisposable
 
     private Settings _data = new();
 
-    private readonly FezEditor _editor;
-
     public AppStorageService(FezEditor editor)
     {
-        _editor = editor;
         Directory.CreateDirectory(CacheDir);
         Load();
         LoadWindowState();
@@ -123,13 +120,13 @@ public class AppStorageService : IDisposable
 
     private void SaveWindowState()
     {
-        var flags = SDL.SDL_GetWindowFlags(_editor.Window.Handle);
+        var flags = SDL.SDL_GetWindowFlags(FezEditor.GameWindow.Handle);
         var maximized = (flags & SDL.SDL_WindowFlags.SDL_WINDOW_MAXIMIZED) != 0;
         var window = _data.Window;
 
         if (!maximized)
         {
-            var bounds = _editor.Window.ClientBounds;
+            var bounds = FezEditor.GameWindow.ClientBounds;
             window.Width = bounds.Width;
             window.Height = bounds.Height;
         }
@@ -143,12 +140,12 @@ public class AppStorageService : IDisposable
 
     private void LoadWindowState()
     {
-        _editor.DeviceManager.PreferredBackBufferWidth = _data.Window.Width;
-        _editor.DeviceManager.PreferredBackBufferHeight = _data.Window.Height;
-        _editor.DeviceManager.ApplyChanges();
+        FezEditor.DeviceManager.PreferredBackBufferWidth = _data.Window.Width;
+        FezEditor.DeviceManager.PreferredBackBufferHeight = _data.Window.Height;
+        FezEditor.DeviceManager.ApplyChanges();
         if (_data.IsWindowMaximized)
         {
-            SDL.SDL_MaximizeWindow(_editor.Window.Handle);
+            SDL.SDL_MaximizeWindow(FezEditor.GameWindow.Handle);
         }
     }
 
@@ -163,15 +160,6 @@ public class AppStorageService : IDisposable
     public static bool HasCacheFile(string filename)
     {
         return File.Exists(Path.Combine(CacheDir, filename));
-    }
-
-    public static void DeleteCacheFile(string filename)
-    {
-        var path = Path.Combine(CacheDir, filename);
-        if (File.Exists(path))
-        {
-            File.Delete(path);
-        }
     }
 
     public static void SaveToCache(string filename, Stream stream)

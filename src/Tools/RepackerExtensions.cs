@@ -9,8 +9,6 @@ namespace FezEditor.Tools;
 
 public static class RepackerExtensions
 {
-    public static GraphicsDevice? Gd { private get; set; }
-
     public static MeshSurface ConvertToMesh(VertexInstance[] vertices, ushort[] indices)
     {
         return new MeshSurface
@@ -25,7 +23,8 @@ public static class RepackerExtensions
     public static Texture2D ConvertToTexture2D(RTexture2D texture)
     {
         var format = (SurfaceFormat)texture.Format; // formats used by FEZ do overlap - direct conversion is good enough
-        var tex2D = new Texture2D(Gd, texture.Width, texture.Height, false, format);
+        var gd = FezEditor.DeviceManager.GraphicsDevice;
+        var tex2D = new Texture2D(gd, texture.Width, texture.Height, false, format);
         var data = new byte[texture.TextureData.Length];
         Buffer.BlockCopy(texture.TextureData, 0, data, 0, texture.TextureData.Length);
         tex2D.SetData(data);
@@ -34,7 +33,8 @@ public static class RepackerExtensions
 
     public static Texture2D ConvertToTexture2D(RAnimatedTexture texture)
     {
-        var tex2D = new Texture2D(Gd, texture.AtlasWidth, texture.AtlasHeight, false, SurfaceFormat.Color);
+        var gd = FezEditor.DeviceManager.GraphicsDevice;
+        var tex2D = new Texture2D(gd, texture.AtlasWidth, texture.AtlasHeight, false, SurfaceFormat.Color);
         var data = new byte[texture.TextureData.Length];
         Buffer.BlockCopy(texture.TextureData, 0, data, 0, texture.TextureData.Length);
         tex2D.SetData(data);
@@ -43,7 +43,8 @@ public static class RepackerExtensions
 
     public static Texture2D ExtractColorToTexture2D(RTexture2D texture)
     {
-        var tex2D = new Texture2D(Gd, texture.Width, texture.Height, false, SurfaceFormat.Color);
+        var gd = FezEditor.DeviceManager.GraphicsDevice;
+        var tex2D = new Texture2D(gd, texture.Width, texture.Height, false, SurfaceFormat.Color);
         ExtractColorToTexture2D(texture, tex2D);
         return tex2D;
     }
@@ -67,7 +68,8 @@ public static class RepackerExtensions
 
     public static Texture2D ExtractEmissionToTexture2D(RTexture2D texture)
     {
-        var tex2D = new Texture2D(Gd, texture.Width, texture.Height, false, SurfaceFormat.Color);
+        var gd = FezEditor.DeviceManager.GraphicsDevice;
+        var tex2D = new Texture2D(gd, texture.Width, texture.Height, false, SurfaceFormat.Color);
         ExtractEmissionToTexture2D(texture, tex2D);
         return tex2D;
     }
