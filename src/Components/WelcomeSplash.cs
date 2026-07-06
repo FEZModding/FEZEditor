@@ -138,8 +138,9 @@ public class WelcomeSplash : EditorComponent
                     }
                 }
 
-                ImGui.EndChild();
             }
+
+            ImGui.EndChild();
 
             ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offsetX);
             if (ImGui.Button($"{Lucide.Package} Open PAK file", buttonWidth))

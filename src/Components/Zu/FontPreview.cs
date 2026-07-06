@@ -80,9 +80,9 @@ internal class FontPreview
                 dl.PopClipRect();
             }
 
-            ImGui.EndChild();
         }
 
+        ImGui.EndChild();
         ImGui.End();
     }
 

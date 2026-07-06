@@ -63,17 +63,17 @@ public class ZuEditor : EditorComponent
         if (ImGuiX.BeginChild("##Left", new Vector2(340f, 0), ImGuiChildFlags.Borders))
         {
             _properties.Draw();
-            ImGui.EndChild();
         }
 
+        ImGui.EndChild();
         ImGui.SameLine();
 
         if (ImGuiX.BeginChild("##Right", Vector2.Zero, ImGuiChildFlags.Borders))
         {
             _atlas.Draw();
-            ImGui.EndChild();
         }
 
+        ImGui.EndChild();
         ImGui.PopStyleVar();
 
         _preview.DrawWindow();

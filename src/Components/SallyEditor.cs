@@ -67,24 +67,25 @@ public class SallyEditor : EditorComponent
         if (ImGuiX.BeginChild("##Properties", new Vector2(width, 0), ImGuiChildFlags.Borders))
         {
             DrawProperties();
-            ImGui.EndChild();
         }
 
+        ImGui.EndChild();
         ImGui.SameLine();
 
         if (ImGuiX.BeginChild("##LevelList", new Vector2(width, 0), ImGuiChildFlags.Borders))
         {
             DrawLevelList();
-            ImGui.EndChild();
         }
 
+        ImGui.EndChild();
         ImGui.SameLine();
 
         if (ImGuiX.BeginChild("##LevelProperties", Vector2.Zero, ImGuiChildFlags.Borders))
         {
             DrawLevelProperties();
-            ImGui.EndChild();
         }
+
+        ImGui.EndChild();
 
         DrawRenameLevelModal();
         DrawDeleteLevelModal();
@@ -503,8 +504,9 @@ public class SallyEditor : EditorComponent
                 }
             }
 
-            ImGui.EndChild();
         }
+
+        ImGui.EndChild();
     }
 
     private Texture2D GetOrLoadIcon(string level)

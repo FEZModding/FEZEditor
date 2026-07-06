@@ -423,8 +423,9 @@ public class FileBrowser : DrawableGameComponent
             ImGui.PopStyleVar(2);
             _filter = _filter.Clean();
 
-            ImGui.EndChild();
         }
+
+        ImGui.EndChild();
     }
 
     private void DrawContextMenu(FileNode node, bool flatten)

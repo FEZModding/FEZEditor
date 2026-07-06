@@ -520,9 +520,9 @@ public static class ImGuiX
                 {
                     changed = true;
                 }
-
-                ImGui.EndChild();
             }
+
+            ImGui.EndChild();
         }
 
         if (changed)
@@ -581,9 +581,9 @@ public static class ImGuiX
                 {
                     changed = true;
                 }
-
-                ImGui.EndChild();
             }
+
+            ImGui.EndChild();
         }
 
         if (changed)
@@ -657,9 +657,9 @@ public static class ImGuiX
                     list.Add(createNew());
                     changed = true;
                 }
-
-                ImGui.EndChild();
             }
+
+            ImGui.EndChild();
         }
 
         if (changed)
@@ -728,9 +728,9 @@ public static class ImGuiX
                     edited = array;
                     changed = true;
                 }
-
-                ImGui.EndChild();
             }
+
+            ImGui.EndChild();
         }
 
         if (changed)
@@ -814,9 +814,9 @@ public static class ImGuiX
                         changed = true;
                     }
                 }
-
-                ImGui.EndChild();
             }
+
+            ImGui.EndChild();
         }
 
         if (changed)

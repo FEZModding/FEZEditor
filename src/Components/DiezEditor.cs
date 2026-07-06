@@ -65,25 +65,25 @@ public class DiezEditor : EditorComponent
         if (ImGuiX.BeginChild("SongProperties", new Vector2(width, 0), ImGuiChildFlags.Borders))
         {
             DrawSongProperties();
-            ImGui.EndChild();
         }
 
+        ImGui.EndChild();
         ImGui.SameLine();
 
         if (ImGuiX.BeginChild("OverlayLoops", new Vector2(width, 0), ImGuiChildFlags.Borders))
         {
             DrawLoopsList();
-            ImGui.EndChild();
         }
 
+        ImGui.EndChild();
         ImGui.SameLine();
 
         if (ImGuiX.BeginChild("LoopProperties", Vector2.Zero, ImGuiChildFlags.Borders))
         {
             DrawLoopProperties();
-            ImGui.EndChild();
         }
 
+        ImGui.EndChild();
         ImGui.PopStyleVar();
     }
 
@@ -171,8 +171,9 @@ public class DiezEditor : EditorComponent
                 }
             }
 
-            ImGui.EndChild();
         }
+
+        ImGui.EndChild();
     }
 
     private void DrawSongProperties()

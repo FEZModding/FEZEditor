@@ -238,25 +238,25 @@ public class ScriptBrowserSystem : EddySystem
             if (ImGuiX.BeginChild("##Triggers", new Vector2(width, 0), ImGuiChildFlags.Borders))
             {
                 DrawTriggers();
-                ImGui.EndChild();
             }
 
+            ImGui.EndChild();
             ImGui.SameLine();
 
             if (ImGuiX.BeginChild("##Conditions", new Vector2(width, 0), ImGuiChildFlags.Borders))
             {
                 DrawConditions();
-                ImGui.EndChild();
             }
 
+            ImGui.EndChild();
             ImGui.SameLine();
 
             if (ImGuiX.BeginChild("##Actions", Vector2.Zero, ImGuiChildFlags.Borders))
             {
                 DrawActions();
-                ImGui.EndChild();
             }
 
+            ImGui.EndChild();
             ImGui.End();
         }
 
@@ -521,9 +521,9 @@ public class ScriptBrowserSystem : EddySystem
                 }
             }
 
-            ImGui.EndChild();
         }
 
+        ImGui.EndChild();
         ImGui.Separator();
 
         if (ImGuiX.BeginChild("##TriggerForm", Vector2.Zero))
@@ -582,8 +582,9 @@ public class ScriptBrowserSystem : EddySystem
                 }
             }
 
-            ImGui.EndChild();
         }
+
+        ImGui.EndChild();
     }
 
     private void DrawConditions()
@@ -651,9 +652,9 @@ public class ScriptBrowserSystem : EddySystem
                 }
             }
 
-            ImGui.EndChild();
         }
 
+        ImGui.EndChild();
         ImGui.Separator();
 
         if (ImGuiX.BeginChild("##ConditionForm", Vector2.Zero))
@@ -745,8 +746,9 @@ public class ScriptBrowserSystem : EddySystem
                 }
             }
 
-            ImGui.EndChild();
         }
+
+        ImGui.EndChild();
     }
 
     private void DrawActions()
@@ -814,9 +816,9 @@ public class ScriptBrowserSystem : EddySystem
                 }
             }
 
-            ImGui.EndChild();
         }
 
+        ImGui.EndChild();
         ImGui.Separator();
 
         if (ImGuiX.BeginChild("##ActionForm", Vector2.Zero, ImGuiChildFlags.None, ImGuiWindowFlags.HorizontalScrollbar))
@@ -926,8 +928,9 @@ public class ScriptBrowserSystem : EddySystem
                 }
             }
 
-            ImGui.EndChild();
         }
+
+        ImGui.EndChild();
     }
 
     private static void DrawEmptyCombo(string label)

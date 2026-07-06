@@ -84,8 +84,9 @@ public class MuEditor : EditorComponent
             }
 
             ImGui.PopStyleVar();
-            ImGui.EndChild();
         }
+
+        ImGui.EndChild();
     }
 
     private static bool RenderNpcAction(int index, ref NpcAction item)

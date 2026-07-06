@@ -387,9 +387,9 @@ public class ChrisEditor : EditorComponent, IChrisEditor
                         }
                     }
 
-                    ImGui.EndChild();
                 }
 
+                ImGui.EndChild();
                 ImGui.End();
             }
         }

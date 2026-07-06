@@ -82,9 +82,9 @@ public class AssetBrowserSystem : ThumbnailBrowserSystem<AssetEntry>
                     ImGui.EndTabBar();
                 }
 
-                ImGui.EndChild();
             }
 
+            ImGui.EndChild();
             ImGui.End();
         }
 
