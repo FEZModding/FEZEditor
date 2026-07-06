@@ -235,7 +235,7 @@ public class ScriptBrowserSystem : EddySystem
             var availSize = ImGui.GetContentRegionAvail();
             var width = availSize.X / 3f;
 
-            if (ImGuiX.BeginChild("##Triggers", new Vector2(width, 0), ImGuiChildFlags.Border))
+            if (ImGuiX.BeginChild("##Triggers", new Vector2(width, 0), ImGuiChildFlags.Borders))
             {
                 DrawTriggers();
                 ImGui.EndChild();
@@ -243,7 +243,7 @@ public class ScriptBrowserSystem : EddySystem
 
             ImGui.SameLine();
 
-            if (ImGuiX.BeginChild("##Conditions", new Vector2(width, 0), ImGuiChildFlags.Border))
+            if (ImGuiX.BeginChild("##Conditions", new Vector2(width, 0), ImGuiChildFlags.Borders))
             {
                 DrawConditions();
                 ImGui.EndChild();
@@ -251,7 +251,7 @@ public class ScriptBrowserSystem : EddySystem
 
             ImGui.SameLine();
 
-            if (ImGuiX.BeginChild("##Actions", Vector2.Zero, ImGuiChildFlags.Border))
+            if (ImGuiX.BeginChild("##Actions", Vector2.Zero, ImGuiChildFlags.Borders))
             {
                 DrawActions();
                 ImGui.EndChild();

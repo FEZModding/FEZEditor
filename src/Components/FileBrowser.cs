@@ -178,7 +178,7 @@ public class FileBrowser : DrawableGameComponent
         {
             ImGui.SetNextItemWidth(-40);
             var filter = _filter.Value;
-            if (ImGui.InputTextWithHint("", "Filter Files", ref filter, 255))
+            if (ImGui.InputTextWithHint("##FileFilter", "Filter Files", ref filter, 255))
             {
                 _filter = filter;
             }
@@ -335,7 +335,8 @@ public class FileBrowser : DrawableGameComponent
                 }
 
                 var label = $"{icon} {node.Name}";
-                var nodeOpen = ImGui.TreeNodeEx($"{node.Path}##{node.Path}", nodeFlags, label);
+                var nodeKind = node.IsDirectory ? "Directory" : "File";
+                var nodeOpen = ImGui.TreeNodeEx($"##{nodeKind}:{node.Path}", nodeFlags, label);
 
                 if (disabled)
                 {

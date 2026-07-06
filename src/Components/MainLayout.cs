@@ -75,7 +75,7 @@ public class MainLayout : DrawableGameComponent
                 if (ShowFileBrowser)
                 {
                     ImGuiX.BeginChild("LeftPane", new Vector2(DefaultLeftPaneWidth, 0),
-                        ImGuiChildFlags.Border | ImGuiChildFlags.ResizeX);
+                        ImGuiChildFlags.Borders | ImGuiChildFlags.ResizeX);
                     _fileBrowser.Draw();
                     ImGui.EndChild();
                     ImGui.SameLine();

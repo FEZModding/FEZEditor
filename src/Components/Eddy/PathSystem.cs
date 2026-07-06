@@ -209,7 +209,7 @@ public class PathSystem : EddySystem
             if (isOpen)
             {
                 var isDeleted = false;
-                const ImGuiChildFlags flags = ImGuiChildFlags.Border |
+                const ImGuiChildFlags flags = ImGuiChildFlags.Borders |
                                               ImGuiChildFlags.AutoResizeY |
                                               ImGuiChildFlags.AutoResizeX;
                 if (ImGuiX.BeginChild($"##Segment_{i}", Vector2.Zero, flags))

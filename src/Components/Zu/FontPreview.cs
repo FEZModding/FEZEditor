@@ -66,7 +66,7 @@ internal class FontPreview
 
         ImGui.Separator();
 
-        if (ImGuiX.BeginChild("##PreviewCanvas", Vector2.Zero, ImGuiChildFlags.Border))
+        if (ImGuiX.BeginChild("##PreviewCanvas", Vector2.Zero, ImGuiChildFlags.Borders))
         {
             var canvasPos = ImGui.GetCursorScreenPos();
             var canvasSize = ImGui.GetContentRegionAvail();

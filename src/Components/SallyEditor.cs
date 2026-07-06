@@ -64,7 +64,7 @@ public class SallyEditor : EditorComponent
         var availSize = ImGui.GetContentRegionAvail();
         var width = availSize.X / 3f;
 
-        if (ImGuiX.BeginChild("##Properties", new Vector2(width, 0), ImGuiChildFlags.Border))
+        if (ImGuiX.BeginChild("##Properties", new Vector2(width, 0), ImGuiChildFlags.Borders))
         {
             DrawProperties();
             ImGui.EndChild();
@@ -72,7 +72,7 @@ public class SallyEditor : EditorComponent
 
         ImGui.SameLine();
 
-        if (ImGuiX.BeginChild("##LevelList", new Vector2(width, 0), ImGuiChildFlags.Border))
+        if (ImGuiX.BeginChild("##LevelList", new Vector2(width, 0), ImGuiChildFlags.Borders))
         {
             DrawLevelList();
             ImGui.EndChild();
@@ -80,7 +80,7 @@ public class SallyEditor : EditorComponent
 
         ImGui.SameLine();
 
-        if (ImGuiX.BeginChild("##LevelProperties", Vector2.Zero, ImGuiChildFlags.Border))
+        if (ImGuiX.BeginChild("##LevelProperties", Vector2.Zero, ImGuiChildFlags.Borders))
         {
             DrawLevelProperties();
             ImGui.EndChild();

@@ -166,7 +166,7 @@ public class AssetBrowserSystem : EddySystem
 
     private void DrawFilter()
     {
-        ImGui.InputTextWithHint("", "Filter assets...", ref _filterEntries, 255);
+        ImGui.InputTextWithHint("##AssetFilter", "Filter assets...", ref _filterEntries, 255);
         if (!string.IsNullOrEmpty(_filterEntries))
         {
             ImGui.SameLine();

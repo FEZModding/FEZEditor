@@ -194,7 +194,7 @@ public class ToolbarSystem : EddySystem
 
         var text = $"{Lucide.EllipsisVertical} {Eddy.CurrentView}";
         var viewButtonWidth = ImGui.CalcTextSize(text).X + (ImGui.GetStyle().FramePadding.X * 2);
-        ImGui.SameLine(ImGui.GetContentRegionMax().X - viewButtonWidth);
+        ImGui.SameLine(ImGui.GetContentRegionAvail().X - viewButtonWidth);
 
         if (ImGui.Button(text))
         {

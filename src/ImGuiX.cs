@@ -309,9 +309,6 @@ public static class ImGuiX
     public static Vector2 GetContentRegionAvail()
         => ImGui.GetContentRegionAvail().ToXna();
 
-    public static Vector2 GetContentRegionMax()
-        => ImGui.GetContentRegionMax().ToXna();
-
     public static Vector2 GetItemRectMin()
         => ImGui.GetItemRectMin().ToXna();
 
@@ -489,7 +486,7 @@ public static class ImGuiX
 
     public static bool TimeSpanInput(string label, ref TimeSpan timeSpan)
     {
-        const ImGuiChildFlags flags = ImGuiChildFlags.Border | ImGuiChildFlags.AutoResizeY;
+        const ImGuiChildFlags flags = ImGuiChildFlags.Borders | ImGuiChildFlags.AutoResizeY;
         var hours = timeSpan.Hours;
         var minutes = timeSpan.Minutes;
         var seconds = timeSpan.Seconds;
@@ -538,7 +535,7 @@ public static class ImGuiX
 
     public static bool DateTimeInput(string label, ref DateTime dateTime)
     {
-        const ImGuiChildFlags flags = ImGuiChildFlags.Border | ImGuiChildFlags.AutoResizeY;
+        const ImGuiChildFlags flags = ImGuiChildFlags.Borders | ImGuiChildFlags.AutoResizeY;
         var year = dateTime.Year;
         var month = dateTime.Month;
         var day = dateTime.Day;
@@ -608,7 +605,7 @@ public static class ImGuiX
 
     public static bool EditableList<T>(string label, ref Dirty<List<T>> items, RenderItem<T> renderItem, Func<T> createNew)
     {
-        const ImGuiChildFlags flags = ImGuiChildFlags.Border | ImGuiChildFlags.AutoResizeY;
+        const ImGuiChildFlags flags = ImGuiChildFlags.Borders | ImGuiChildFlags.AutoResizeY;
         var hash = label.GetHashCode();
         var source = items.Value;
         List<T>? edited = null;
@@ -675,7 +672,7 @@ public static class ImGuiX
 
     public static bool EditableArray<T>(string label, ref Dirty<T[]> items, RenderItem<T> renderItem, Func<T> createNew)
     {
-        const ImGuiChildFlags flags = ImGuiChildFlags.Border | ImGuiChildFlags.AutoResizeY;
+        const ImGuiChildFlags flags = ImGuiChildFlags.Borders | ImGuiChildFlags.AutoResizeY;
         var hash = label.GetHashCode();
         var source = items.Value;
         T[]? edited = null;
@@ -753,7 +750,7 @@ public static class ImGuiX
         RenderNewKey<TKey> renderNewKey,
         Func<TValue> createDefaultValue) where TKey : IEquatable<TKey>
     {
-        const ImGuiChildFlags flags = ImGuiChildFlags.Border | ImGuiChildFlags.AutoResizeY;
+        const ImGuiChildFlags flags = ImGuiChildFlags.Borders | ImGuiChildFlags.AutoResizeY;
         var hash = label.GetHashCode();
         var source = items.Value;
         Dictionary<TKey, TValue>? edited = null;

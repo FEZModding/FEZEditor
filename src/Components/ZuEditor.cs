@@ -60,7 +60,7 @@ public class ZuEditor : EditorComponent
     {
         ImGuiX.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(8, 8));
 
-        if (ImGuiX.BeginChild("##Left", new Vector2(340f, 0), ImGuiChildFlags.Border))
+        if (ImGuiX.BeginChild("##Left", new Vector2(340f, 0), ImGuiChildFlags.Borders))
         {
             _properties.Draw();
             ImGui.EndChild();
@@ -68,7 +68,7 @@ public class ZuEditor : EditorComponent
 
         ImGui.SameLine();
 
-        if (ImGuiX.BeginChild("##Right", Vector2.Zero, ImGuiChildFlags.Border))
+        if (ImGuiX.BeginChild("##Right", Vector2.Zero, ImGuiChildFlags.Borders))
         {
             _atlas.Draw();
             ImGui.EndChild();

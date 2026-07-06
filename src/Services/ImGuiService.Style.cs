@@ -90,7 +90,6 @@ public partial class ImGuiService
         style.Colors[(int)ImGuiCol.TableRowBgAlt] = new Vector4(1.0f, 1.0f, 1.0f, 0.06f);
         style.Colors[(int)ImGuiCol.TextSelectedBg] = new Vector4(0.8666667f, 0.8666667f, 0.8666667f, 0.35f);
         style.Colors[(int)ImGuiCol.DragDropTarget] = new Vector4(1.0f, 1.0f, 0.0f, 0.9f);
-        style.Colors[(int)ImGuiCol.NavHighlight] = new Vector4(0.6f, 0.6f, 0.6f, 1.0f);
         style.Colors[(int)ImGuiCol.NavWindowingHighlight] = new Vector4(1.0f, 1.0f, 1.0f, 0.7f);
         style.Colors[(int)ImGuiCol.NavWindowingDimBg] = new Vector4(0.8f, 0.8f, 0.8f, 0.2f);
         style.Colors[(int)ImGuiCol.ModalWindowDimBg] = new Vector4(0.8f, 0.8f, 0.8f, 0.35f);

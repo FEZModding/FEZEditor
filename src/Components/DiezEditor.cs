@@ -62,7 +62,7 @@ public class DiezEditor : EditorComponent
         var availSize = ImGui.GetContentRegionAvail();
         var width = availSize.X / 3f;
 
-        if (ImGuiX.BeginChild("SongProperties", new Vector2(width, 0), ImGuiChildFlags.Border))
+        if (ImGuiX.BeginChild("SongProperties", new Vector2(width, 0), ImGuiChildFlags.Borders))
         {
             DrawSongProperties();
             ImGui.EndChild();
@@ -70,7 +70,7 @@ public class DiezEditor : EditorComponent
 
         ImGui.SameLine();
 
-        if (ImGuiX.BeginChild("OverlayLoops", new Vector2(width, 0), ImGuiChildFlags.Border))
+        if (ImGuiX.BeginChild("OverlayLoops", new Vector2(width, 0), ImGuiChildFlags.Borders))
         {
             DrawLoopsList();
             ImGui.EndChild();
@@ -78,7 +78,7 @@ public class DiezEditor : EditorComponent
 
         ImGui.SameLine();
 
-        if (ImGuiX.BeginChild("LoopProperties", Vector2.Zero, ImGuiChildFlags.Border))
+        if (ImGuiX.BeginChild("LoopProperties", Vector2.Zero, ImGuiChildFlags.Borders))
         {
             DrawLoopProperties();
             ImGui.EndChild();
