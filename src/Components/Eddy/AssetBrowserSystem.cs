@@ -1,26 +1,18 @@
-﻿using FezEditor.Structure;
-using ImGuiNET;
+﻿using ImGuiNET;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace FezEditor.Components.Eddy;
 
-public class AssetBrowserSystem : EddySystem
+public class AssetBrowserSystem : ThumbnailBrowserSystem<AssetEntry>
 {
-    private const float ThumbSize = 64f;
+    private const float SelectionThumbSize = 64f;
 
     private const float RecentThumbSize = 48f;
 
-    private const float CellSpacing = 8f;
-
-    private const float CellSize = ThumbSize + CellSpacing;
-
-    private const float LabelHeight = 20f;
-
-    private const float RowHeight = CellSize + LabelHeight;
+    private const float TileSpacing = 10f;
 
     private readonly HashSet<AssetEntry> _entries = new();
-
-    private string _filterEntries = string.Empty;
 
     public override void Initialize()
     {
@@ -52,7 +44,7 @@ public class AssetBrowserSystem : EddySystem
             DrawSelectionBar();
             ImGui.Separator();
 
-            DrawFilter();
+            DrawBrowserToolbar("Filter assets...");
             ImGui.Separator();
 
             if (ImGui.BeginChild("##Content"))
@@ -75,13 +67,13 @@ public class AssetBrowserSystem : EddySystem
                                 .OrderBy(e => e.DisplayName, StringComparer.OrdinalIgnoreCase)
                                 .ToList();
 
-                            if (!string.IsNullOrEmpty(_filterEntries))
+                            if (!string.IsNullOrEmpty(FilterText))
                             {
                                 entries = entries.FindAll(ae =>
-                                    ae.DisplayName.Contains(_filterEntries, StringComparison.OrdinalIgnoreCase));
+                                    MatchesFilter(ae.DisplayName));
                             }
 
-                            DrawGrid(entries);
+                            DrawTileGrid("##AssetGrid", entries, scrollToSelection: true);
 
                             ImGui.EndTabItem();
                         }
@@ -120,14 +112,14 @@ public class AssetBrowserSystem : EddySystem
         }
 
         // Thumbnail row
-        const float barHeight = ThumbSize + (CellSpacing * 2);
+        const float barHeight = SelectionThumbSize + (TileSpacing * 2);
         ImGui.BeginChild("##SelectionBar", new NVector2(0, barHeight), ImGuiChildFlags.None,
             ImGuiWindowFlags.NoScrollbar);
 
         if (selected != null)
         {
             var selectedThumb = Eddy.Thumbnails.Get(selected);
-            ImGuiX.Image(selectedThumb, new Vector2(ThumbSize));
+            ImGuiX.Image(selectedThumb, new Vector2(SelectionThumbSize));
         }
 
         ImGui.SameLine();
@@ -164,118 +156,36 @@ public class AssetBrowserSystem : EddySystem
         ImGui.EndChild();
     }
 
-    private void DrawFilter()
+    protected override Texture2D GetThumbnail(AssetEntry item)
     {
-        ImGui.InputTextWithHint("##AssetFilter", "Filter assets...", ref _filterEntries, 255);
-        if (!string.IsNullOrEmpty(_filterEntries))
-        {
-            ImGui.SameLine();
-            if (ImGui.Button($"{Lucide.X}"))
-            {
-                _filterEntries = string.Empty;
-            }
-        }
+        return Eddy.Thumbnails.Get(item);
     }
 
-    private void DrawGrid(IReadOnlyList<AssetEntry> entries)
+    protected override string GetItemLabel(AssetEntry item)
     {
-        var availWidth = ImGui.GetContentRegionAvail().X;
-        var columns = Math.Max((int)(availWidth / CellSize), 1);
-        var totalRows = (entries.Count + columns - 1) / columns;
+        return item.DisplayName;
+    }
 
-        if (!ImGui.BeginTable("##grid", columns, ImGuiTableFlags.ScrollY | ImGuiTableFlags.SizingStretchSame))
+    protected override string GetStableId(AssetEntry entry)
+    {
+        return entry switch
         {
-            return;
-        }
+            AssetEntry.Trile trile => $"Trile:{trile.Id}:{trile.Path}",
+            AssetEntry.ArtObject artObject => $"ArtObject:{artObject.Name}",
+            AssetEntry.BackgroundPlane plane => $"BackgroundPlane:{plane.Name}",
+            AssetEntry.NonPlayableCharacter npc => $"NPC:{npc.Name}",
+            _ => entry.ToString()
+        };
+    }
 
-        var scrollToSelected = ImGui.IsWindowAppearing();
+    protected override bool IsSelected(AssetEntry item)
+    {
+        return Eddy.SelectedEntry == item;
+    }
 
-        for (var row = 0; row < totalRows; row++)
-        {
-            ImGui.TableNextRow(ImGuiTableRowFlags.None, RowHeight);
-
-            for (var col = 0; col < columns; col++)
-            {
-                var i = (row * columns) + col;
-                if (i >= entries.Count)
-                {
-                    break;
-                }
-
-                ImGui.TableSetColumnIndex(col);
-
-                var entry = entries[i];
-                var isSelected = Eddy.SelectedEntry == entry;
-                var texture = Eddy.Thumbnails.Get(entry);
-                var cellWidth = ImGui.GetColumnWidth();
-
-                ImGui.PushID(i);
-
-                // Compute thumbnail size preserving aspect ratio
-                var aspect = (float)texture.Width / texture.Height;
-                float thumbW, thumbH;
-                if (aspect >= 1f)
-                {
-                    thumbW = ThumbSize;
-                    thumbH = ThumbSize / aspect;
-                }
-                else
-                {
-                    thumbH = ThumbSize;
-                    thumbW = ThumbSize * aspect;
-                }
-
-                // Center thumbnail within the cell
-                var padX = (cellWidth - thumbW) * 0.5f;
-                var padY = (ThumbSize - thumbH) * 0.5f;
-                var cursor = ImGui.GetCursorPos();
-                var cellScreenPos = ImGui.GetCursorScreenPos();
-                ImGui.SetCursorPos(new NVector2(cursor.X + padX, cursor.Y + padY));
-                ImGuiX.Image(texture, new Vector2(thumbW, thumbH));
-
-                // Highlight selected asset on top of thumbnail
-                if (isSelected)
-                {
-                    var dl = ImGui.GetWindowDrawList();
-                    var highlightMax = new NVector2(cellScreenPos.X + ThumbSize, cellScreenPos.Y + ThumbSize);
-                    var color = Color.LightGray with { A = 128 }; // 50%
-                    dl.AddRectFilled(cellScreenPos, highlightMax, color.PackedValue);
-                }
-
-                // Restore cursor for the invisible click target over the whole cell
-                ImGui.SetCursorPos(cursor);
-                if (ImGui.InvisibleButton("##sel", new NVector2(cellWidth, ThumbSize)))
-                {
-                    Eddy.Tool = Eddy.PickAndPaint(entry);
-                }
-
-                if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
-                {
-                    Eddy.Tool = Eddy.PickAndPaint(entry);
-                }
-
-                // Label wrapped and centered below thumbnail
-                ImGui.PushTextWrapPos(ImGui.GetCursorPosX() + cellWidth);
-                var textSize = ImGui.CalcTextSize(entry.DisplayName, true);
-                var labelPad = (cellWidth - textSize.X) * 0.5f;
-                if (labelPad > 0)
-                {
-                    ImGui.SetCursorPosX(ImGui.GetCursorPosX() + labelPad);
-                }
-
-                ImGui.TextUnformatted(entry.DisplayName);
-                ImGui.PopTextWrapPos();
-
-                if (isSelected && scrollToSelected)
-                {
-                    ImGui.SetScrollHereY(0.5f);
-                }
-
-                ImGui.PopID();
-            }
-        }
-
-        ImGui.EndTable();
+    protected override void Activate(AssetEntry item)
+    {
+        Eddy.Tool = Eddy.PickAndPaint(item);
     }
 
     private void OnProviderChanged()

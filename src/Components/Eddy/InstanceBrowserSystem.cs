@@ -1,15 +1,14 @@
 ﻿using ImGuiNET;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace FezEditor.Components.Eddy;
 
-public class InstanceBrowserSystem : EddySystem
+public class InstanceBrowserSystem : ThumbnailBrowserSystem<InstanceId>
 {
-    private const float ThumbSize = 64f;
+    private int _visibleCount;
 
-    private const float CellSpacing = 8f;
-
-    private const float CellSize = ThumbSize + CellSpacing;
+    private int _totalCount;
 
     public override void Draw()
     {
@@ -24,6 +23,11 @@ public class InstanceBrowserSystem : EddySystem
         var isOpen = Eddy.ShowInstanceBrowser;
         if (ImGui.Begin("Instance Browser", ref isOpen, flags))
         {
+            DrawBrowserToolbar("Filter instances...");
+            ImGui.Separator();
+
+            _visibleCount = 0;
+            _totalCount = 0;
             if (ImGui.BeginTabBar("##InstanceTabs"))
             {
                 {
@@ -78,6 +82,9 @@ public class InstanceBrowserSystem : EddySystem
                 ImGui.EndTabBar();
             }
 
+            ImGui.Separator();
+            ImGui.TextDisabled($"{_visibleCount} visible / {_totalCount} total");
+
             ImGui.End();
         }
 
@@ -87,92 +94,69 @@ public class InstanceBrowserSystem : EddySystem
         }
     }
 
-    private unsafe void DrawTab(string tabLabel, IReadOnlyList<InstanceId> instances)
+    private void DrawTab(string tabLabel, IReadOnlyList<InstanceId> instances)
     {
         if (!ImGui.BeginTabItem(tabLabel))
         {
             return;
         }
 
-        if (instances.Count == 0)
+        var filtered = FilterInstances(tabLabel, instances);
+        _visibleCount = filtered.Count;
+        _totalCount = instances.Count;
+
+        if (filtered.Count == 0)
         {
-            ImGui.TextDisabled("(none)");
+            ImGui.TextDisabled(instances.Count == 0 ? "(none)" : "No matching instances");
             ImGui.EndTabItem();
             return;
         }
 
-        var availWidth = ImGui.GetContentRegionAvail().X;
-        var columns = Math.Max((int)(availWidth / CellSize), 1);
-        var totalRows = (instances.Count + columns - 1) / columns;
-        var style = ImGui.GetStyle();
-        var rowHeight = ThumbSize + (style.FramePadding.Y * 2) + style.ItemSpacing.Y +
-                        ImGui.GetTextLineHeight() + (style.CellPadding.Y * 2);
-
-        if (!ImGui.BeginTable($"##{tabLabel}grid", columns,
-                ImGuiTableFlags.ScrollY | ImGuiTableFlags.SizingStretchSame))
-        {
-            ImGui.EndTabItem();
-            return;
-        }
-
-        var clipper = new ImGuiListClipperPtr(ImGuiNative.ImGuiListClipper_ImGuiListClipper());
-        clipper.Begin(totalRows, rowHeight);
-
-        while (clipper.Step())
-        {
-            for (var row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
-            {
-                ImGui.TableNextRow(ImGuiTableRowFlags.None, rowHeight);
-
-                for (var col = 0; col < columns; col++)
-                {
-                    var i = (row * columns) + col;
-                    if (i >= instances.Count)
-                    {
-                        break;
-                    }
-
-                    ImGui.TableSetColumnIndex(col);
-
-                    var instance = instances.ElementAt(i);
-                    var texture = Eddy.Thumbnails.Get(instance);
-                    var cellWidth = ImGui.GetColumnWidth();
-
-                    ImGui.PushID(i);
-
-                    var padX = (cellWidth - ThumbSize) * 0.5f;
-                    ImGui.SetCursorPosX(ImGui.GetCursorPosX() + padX);
-                    if (ImGuiX.ImageButton("##sel", texture, new Vector2(ThumbSize)))
-                    {
-                        if (Eddy.Picked is PickingState.Waiting)
-                        {
-                            Eddy.Picked = new PickingState.Picked(instance);
-                        }
-                        else
-                        {
-                            var selected = new HashSet<InstanceId> { instance };
-                            Eddy.Selected = new SelectionState.Instance(selected);
-                        }
-                    }
-
-                    var label = instance is InstanceId.Gomez ? "Gomez" : $"#{instance.GetId()}";
-                    var textSize = ImGui.CalcTextSize(label, true);
-                    var labelPad = (cellWidth - textSize.X) * 0.5f;
-                    if (labelPad > 0)
-                    {
-                        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + labelPad);
-                    }
-
-                    ImGui.TextUnformatted(label);
-
-                    ImGui.PopID();
-                }
-            }
-        }
-
-        clipper.End();
-        clipper.Destroy();
-        ImGui.EndTable();
+        var gridHeight = -(ImGui.GetTextLineHeightWithSpacing() * 2f);
+        DrawTileGrid($"##{tabLabel}Grid", filtered, new NVector2(0, gridHeight));
         ImGui.EndTabItem();
+    }
+
+    private List<InstanceId> FilterInstances(string tabLabel, IReadOnlyList<InstanceId> instances)
+    {
+        if (MatchesFilter(tabLabel))
+        {
+            return instances.ToList();
+        }
+
+        return instances
+            .Where(instance => MatchesFilter(GetItemLabel(instance), instance.ToString()))
+            .ToList();
+    }
+
+    protected override Texture2D GetThumbnail(InstanceId item)
+    {
+        return Eddy.Thumbnails.Get(item);
+    }
+
+    protected override string GetItemLabel(InstanceId item)
+    {
+        return item is InstanceId.Gomez ? "Gomez" : $"#{item.GetId()}";
+    }
+
+    protected override string GetStableId(InstanceId item)
+    {
+        return item.ToString();
+    }
+
+    protected override bool IsSelected(InstanceId item)
+    {
+        return Eddy.Selected is SelectionState.Instance selection && selection.Selected.Contains(item);
+    }
+
+    protected override void Activate(InstanceId item)
+    {
+        if (Eddy.Picked is PickingState.Waiting)
+        {
+            Eddy.Picked = new PickingState.Picked(item);
+            return;
+        }
+
+        Eddy.Selected = new SelectionState.Instance([item]);
     }
 }
