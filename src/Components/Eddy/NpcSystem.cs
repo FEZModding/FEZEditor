@@ -206,16 +206,21 @@ public class NpcSystem : EddySystem
     {
         ImGui.TextDisabled((NpcAction)key + ":");
         var edited = false;
+
+        var animationName = value.AnimationName.EmptyIfNull();
+        if (ImGui.InputText("Animation Name##npc1" + key, ref animationName, 255))
         {
-            var animationName = value.AnimationName;
-            edited |= ImGui.InputText("Animation Name##npc1" + key, ref animationName, 255);
-            value.AnimationName = animationName;
+            value.AnimationName = animationName.NullIfEmpty();
+            edited = true;
         }
+
+        var soundName = value.SoundName.EmptyIfNull();
+        if (ImGui.InputText("Sound Name##npc2" + key, ref soundName, 255))
         {
-            var soundName = value.SoundName;
-            edited |= ImGui.InputText("Sound Name##npc2" + key, ref soundName, 255);
-            value.SoundName = soundName;
+            value.SoundName = soundName.NullIfEmpty();
+            edited = true;
         }
+
         return edited;
     }
 
