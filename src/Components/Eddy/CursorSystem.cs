@@ -135,17 +135,24 @@ public sealed class CursorSystem : EddySystem
             _cursor.UpdateHologram(Eddy.TrileSet, tool.Id);
         }
 
-        var position = hovered.Trile.Emplacement.ToXna().ToVector3() + Mathz.EmplacementCenter;
-        if (ImGui.GetIO().KeyShift)
+        var target = hovered.Trile.Emplacement;
+        if (Eddy.OverlapIndex == 0 && ImGui.GetIO().KeyShift)
         {
-            position += hovered.Face.AsVector();
+            target = target.Add(new TrileEmplacement(hovered.Face.AsVector().ToRepacker()));
         }
 
+        if (Eddy.OverlapIndex > 0 && !Level.Triles.ContainsKey(target))
+        {
+            _cursor.ClearHologram();
+            return;
+        }
+
+        var position = target.ToXna().ToVector3() + Mathz.EmplacementCenter;
         var phi = (byte)(tool.RotationMode switch
         {
             PaintRotationMode.Fixed fixedRotation => fixedRotation.Phi,
             PaintRotationMode.Random randomRotation => randomRotation.LastPhi,
-            PaintRotationMode.Copy => GetHoveredPhi(hovered.Trile.Emplacement),
+            PaintRotationMode.Copy => GetHoveredPhi(target),
             _ => 0
         });
 

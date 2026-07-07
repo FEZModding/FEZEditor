@@ -2,6 +2,7 @@ using FezEditor.Services;
 using FezEditor.Structure;
 using FezEditor.Tools;
 using FEZRepacker.Core.Definitions.Game.TrileSet;
+using FEZRepacker.Core.Definitions.Game.Common;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -46,13 +47,24 @@ public sealed class CursorMesh : ActorComponent
         _rendering.MaterialSetCullMode(_selection.Material, CullMode.None);
         _rendering.MaterialSetBlendMode(_selection.Material, BlendMode.AlphaBlend);
 
-        _hologram.Empty = content.Load<Texture2D>("Textures/Empty");
         _hologram.Material = _rendering.MaterialCreate();
         _rendering.MaterialAssignEffect(_hologram.Material, _rendering.BasicEffectTextured);
         _rendering.MaterialSetCullMode(_hologram.Material, CullMode.None);
         _rendering.MaterialSetBlendMode(_hologram.Material, BlendMode.AlphaBlend);
         _rendering.MaterialSetDepthWrite(_hologram.Material, false);
         _rendering.MaterialSetAlbedo(_hologram.Material, Color.White with { A = 120 });
+
+        foreach (var collision in Enum.GetValues<CollisionType>())
+        {
+            var material = _rendering.MaterialCreate();
+            _rendering.MaterialAssignEffect(material, _rendering.BasicEffectTextured);
+            _rendering.MaterialSetCullMode(material, CullMode.None);
+            _rendering.MaterialSetBlendMode(material, BlendMode.AlphaBlend);
+            _rendering.MaterialSetDepthWrite(material, false);
+            _rendering.MaterialSetAlbedo(material, Color.White with { A = 120 });
+            _rendering.MaterialAssignBaseTexture(material, content.Load<Texture2D>($"Textures/{collision}"));
+            _hologram.CollisionMaterials[collision] = material;
+        }
     }
 
     public void SetHoverSurfaces(IEnumerable<(MeshSurface, PrimitiveType)> surfaces, Color color)
@@ -102,9 +114,13 @@ public sealed class CursorMesh : ActorComponent
         else
         {
             var size = trile?.Size.ToXna() ?? Vector3.One;
-            _rendering.MaterialAssignBaseTexture(_hologram.Material, _hologram.Empty);
-            var surface = MeshSurface.CreateTexturedBox(size);
-            _rendering.MeshAddSurface(_hologram.Mesh, PrimitiveType.TriangleList, surface, _hologram.Material);
+            foreach (var (face, collision) in trile?.Faces ?? new Dictionary<FaceOrientation, CollisionType>())
+            {
+                var surface = MeshSurface.CreateFaceQuad(size, face);
+                surface.Translate((trile?.Offset.ToXna() ?? Vector3.Zero) / 2f);
+                _rendering.MeshAddSurface(_hologram.Mesh, PrimitiveType.TriangleList, surface,
+                    _hologram.CollisionMaterials[collision]);
+            }
         }
     }
 
@@ -169,6 +185,10 @@ public sealed class CursorMesh : ActorComponent
         _rendering.FreeRid(_hologram.Instance);
         _rendering.FreeRid(_hologram.Mesh);
         _rendering.FreeRid(_hologram.Material);
+        foreach (var material in _hologram.CollisionMaterials.Values)
+        {
+            _rendering.FreeRid(material);
+        }
     }
 
     private struct MeshInstance()
@@ -184,7 +204,7 @@ public sealed class CursorMesh : ActorComponent
         public Rid Mesh = Rid.Invalid;
         public Rid Material = Rid.Invalid;
         public Texture2D? Texture = null!;
-        public Texture2D Empty = null!;
+        public readonly Dictionary<CollisionType, Rid> CollisionMaterials = new();
         public bool Visible = false;
     }
 }
