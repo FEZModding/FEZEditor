@@ -580,7 +580,8 @@ public class TrileSystem : EddySystem
                     };
                 }
 
-                Eddy.Selected = new SelectionState.Path(instance, []);
+                var pathInstance = new InstanceId.GroupPath(instance.Id);
+                Eddy.Selected = new SelectionState.Path(pathInstance, []);
             }
         }
         else
@@ -588,7 +589,8 @@ public class TrileSystem : EddySystem
             ImGui.TextDisabled($"{group.Path.Segments.Count} segment(s)");
             if (ImGui.Button("Edit Path##EditGroupPath"))
             {
-                Eddy.Selected = new SelectionState.Path(instance, []);
+                var pathInstance = new InstanceId.GroupPath(instance.Id);
+                Eddy.Selected = new SelectionState.Path(pathInstance, []);
             }
 
             ImGui.SameLine();
