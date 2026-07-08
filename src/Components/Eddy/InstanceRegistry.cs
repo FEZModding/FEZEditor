@@ -10,13 +10,16 @@ public sealed class InstanceActorRegistry
 
     private readonly Scene _scene;
 
+    private readonly Actor _parent;
+
     private readonly Dictionary<InstanceId, Actor> _actors = new();
 
     private readonly Dictionary<Actor, InstanceId> _instances = new();
 
-    public InstanceActorRegistry(Scene scene)
+    public InstanceActorRegistry(Scene scene, Actor parent)
     {
         _scene = scene;
+        _parent = parent;
     }
 
     public Actor GetOrCreateActor(InstanceId id)
@@ -26,7 +29,7 @@ public sealed class InstanceActorRegistry
             return actor;
         }
 
-        actor = _scene.CreateActor();
+        actor = _scene.CreateActor(_parent);
         _actors[id] = actor;
         _instances[actor] = id;
         return actor;

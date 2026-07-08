@@ -121,7 +121,6 @@ public class EddyEditor : EditorComponent
 
         {
             _scene = new Scene(Game, ContentManager);
-            Registry = new InstanceActorRegistry(_scene);
 
             _cameraActor = _scene.CreateActor();
             _cameraActor.Name = "Camera";
@@ -135,6 +134,16 @@ public class EddyEditor : EditorComponent
             camera.Near = 0.25f;
             camera.Far = 500f;
             orientation.UseFaceLabels = false;
+        }
+
+        #endregion
+
+        #region Setup an actor for visual instances
+
+        {
+            var instancesActor = _scene.CreateActor();
+            instancesActor.Name = "Instances";
+            Registry = new InstanceActorRegistry(_scene, instancesActor);
         }
 
         #endregion
@@ -229,7 +238,7 @@ public class EddyEditor : EditorComponent
             var cursor = _cursorActor.GetComponent<CursorMesh>();
             var gizmo = _gizmoActor.GetComponent<Gizmo>();
             AddSystems(_tools,
-                new RaycastSystem(_scene),
+                new RaycastSystem(_scene, gizmo),
                 new SelectionToolSystem(),
                 new ClipboardSystem(),
                 new PaintToolSystem(),
@@ -259,7 +268,7 @@ public class EddyEditor : EditorComponent
     public override void Update(GameTime gameTime)
     {
         StatusService.ClearHints();
-        _gizmoActor.GetComponent<Gizmo>().Hide();
+        _gizmoActor.Visible = false;
 
         foreach (var system in _tools)
         {

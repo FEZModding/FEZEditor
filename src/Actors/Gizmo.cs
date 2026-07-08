@@ -40,7 +40,7 @@ public class Gizmo : ActorComponent
 
     private static readonly Color ColorFaceDisabled = new(120, 120, 120);
 
-    private const float GizmoScreenSize = 80f; // desired on-screen size in pixels
+    private const float GizmoScreenSize = 96f; // desired on-screen size in pixels
 
     private const float ArrowShaftLength = 0.75f;
 
@@ -99,6 +99,14 @@ public class Gizmo : ActorComponent
     private readonly GizmoHandle _ring;
 
     private readonly GizmoHandle _face;
+
+    private VisualKind _visualKind = VisualKind.None;
+
+    private FaceOrientation? _faceOrientation;
+
+    private Handle? _coloredHoveredHandle;
+
+    private bool? _coloredFaceDisabled;
 
     private Handle _activeHandle = Handle.None;
 
@@ -231,7 +239,7 @@ public class Gizmo : ActorComponent
             _hoveredHandle = HitTestTranslate(GetMouseRay(), origin, gizmoScale);
         }
 
-        RebuildTranslateMesh(origin, gizmoScale);
+        RenderTranslateMesh(origin, gizmoScale);
         _wasLeftPressed = leftDown;
         return changed;
     }
@@ -247,7 +255,7 @@ public class Gizmo : ActorComponent
         var hitRing = HitTestRing(GetMouseRay(), origin, gizmoScale);
 
         _hoveredHandle = !clicked && hitRing ? Handle.Ring : Handle.None;
-        RebuildRingMesh(origin, gizmoScale);
+        RenderRingMesh(origin, gizmoScale);
 
         return clicked && hitRing;
     }
@@ -313,7 +321,7 @@ public class Gizmo : ActorComponent
             _hoveredHandle = HitTestScale(GetMouseRay(), origin, gizmoScale);
         }
 
-        RebuildScaleMesh(origin, gizmoScale);
+        RenderScaleMesh(origin, gizmoScale);
         _wasLeftPressed = leftDown;
         return changed;
     }
@@ -386,15 +394,9 @@ public class Gizmo : ActorComponent
             DragEnded = false;
         }
 
-        RebuildFaceMesh(origin, faceNormal, gizmoScale, disabled);
+        RenderFaceMesh(origin, face, gizmoScale, disabled);
         _wasLeftPressed = leftDown;
         return changed;
-    }
-
-    public void Hide()
-    {
-        _rendering.MeshClear(_mesh);
-        _rendering.InstanceSetVisibility(Actor.InstanceRid, false);
     }
 
     public override void Dispose()
@@ -708,84 +710,128 @@ public class Gizmo : ActorComponent
         };
     }
 
-    private void RebuildTranslateMesh(Vector3 origin, float scale)
+    private void RenderTranslateMesh(Vector3 origin, float scale)
     {
-        _rendering.MeshClear(_mesh);
+        if (_visualKind != VisualKind.Translate)
+        {
+            _rendering.MeshClear(_mesh);
+            _translateX.AddSurface(_rendering, _mesh, PrimitiveType.TriangleList);
+            _translateY.AddSurface(_rendering, _mesh, PrimitiveType.TriangleList);
+            _translateZ.AddSurface(_rendering, _mesh, PrimitiveType.TriangleList);
+            _planeXz.AddSurface(_rendering, _mesh, PrimitiveType.TriangleList);
+            _planeXy.AddSurface(_rendering, _mesh, PrimitiveType.TriangleList);
+            _planeYz.AddSurface(_rendering, _mesh, PrimitiveType.TriangleList);
+            _visualKind = VisualKind.Translate;
+            _faceOrientation = null;
+            _coloredHoveredHandle = null;
+        }
+
         Actor.Transform.Position = origin;
         Actor.Transform.Rotation = Quaternion.Identity;
         Actor.Transform.Scale = Vector3.One * scale;
 
-        _translateX.SetColor(_rendering, _hoveredHandle == Handle.TranslateX);
-        _translateY.SetColor(_rendering, _hoveredHandle == Handle.TranslateY);
-        _translateZ.SetColor(_rendering, _hoveredHandle == Handle.TranslateZ);
-        _planeXz.SetColor(_rendering, _hoveredHandle == Handle.PlaneXz);
-        _planeXy.SetColor(_rendering, _hoveredHandle == Handle.PlaneXy);
-        _planeYz.SetColor(_rendering, _hoveredHandle == Handle.PlaneYz);
+        if (_coloredHoveredHandle != _hoveredHandle)
+        {
+            _translateX.SetColor(_rendering, _hoveredHandle == Handle.TranslateX);
+            _translateY.SetColor(_rendering, _hoveredHandle == Handle.TranslateY);
+            _translateZ.SetColor(_rendering, _hoveredHandle == Handle.TranslateZ);
+            _planeXz.SetColor(_rendering, _hoveredHandle == Handle.PlaneXz);
+            _planeXy.SetColor(_rendering, _hoveredHandle == Handle.PlaneXy);
+            _planeYz.SetColor(_rendering, _hoveredHandle == Handle.PlaneYz);
+            _coloredHoveredHandle = _hoveredHandle;
+        }
 
-        _translateX.AddSurface(_rendering, _mesh, PrimitiveType.TriangleList);
-        _translateY.AddSurface(_rendering, _mesh, PrimitiveType.TriangleList);
-        _translateZ.AddSurface(_rendering, _mesh, PrimitiveType.TriangleList);
-        _planeXz.AddSurface(_rendering, _mesh, PrimitiveType.TriangleList);
-        _planeXy.AddSurface(_rendering, _mesh, PrimitiveType.TriangleList);
-        _planeYz.AddSurface(_rendering, _mesh, PrimitiveType.TriangleList);
-
-        _rendering.InstanceSetVisibility(Actor.InstanceRid, true);
+        Actor.Visible = true;
     }
 
-    private void RebuildRingMesh(Vector3 origin, float scale)
+    private void RenderRingMesh(Vector3 origin, float scale)
     {
-        _rendering.MeshClear(_mesh);
+        if (_visualKind != VisualKind.Rotate)
+        {
+            _rendering.MeshClear(_mesh);
+            _ring.AddSurface(_rendering, _mesh, PrimitiveType.TriangleList);
+            _visualKind = VisualKind.Rotate;
+            _faceOrientation = null;
+            _coloredHoveredHandle = null;
+        }
+
         Actor.Transform.Position = origin;
         Actor.Transform.Scale = Vector3.One * scale;
         Actor.Transform.Rotation = QuaternionFromTo(Vector3.UnitY, GetRingAxis(origin));
 
-        _ring.SetColor(_rendering, _hoveredHandle == Handle.Ring);
-        _ring.AddSurface(_rendering, _mesh, PrimitiveType.TriangleList);
+        if (_coloredHoveredHandle != _hoveredHandle)
+        {
+            _ring.SetColor(_rendering, _hoveredHandle == Handle.Ring);
+            _coloredHoveredHandle = _hoveredHandle;
+        }
 
-        _rendering.InstanceSetVisibility(Actor.InstanceRid, true);
+        Actor.Visible = true;
     }
 
-    private void RebuildScaleMesh(Vector3 origin, float gizmoScale)
+    private void RenderScaleMesh(Vector3 origin, float gizmoScale)
     {
-        _rendering.MeshClear(_mesh);
+        if (_visualKind != VisualKind.Scale)
+        {
+            _rendering.MeshClear(_mesh);
+            _scaleX.AddSurface(_rendering, _mesh, PrimitiveType.TriangleList);
+            _scaleY.AddSurface(_rendering, _mesh, PrimitiveType.TriangleList);
+            _scaleZ.AddSurface(_rendering, _mesh, PrimitiveType.TriangleList);
+            _scaleCenter.AddSurface(_rendering, _mesh, PrimitiveType.TriangleList);
+            _visualKind = VisualKind.Scale;
+            _faceOrientation = null;
+            _coloredHoveredHandle = null;
+        }
+
         Actor.Transform.Position = origin;
         Actor.Transform.Rotation = Quaternion.Identity;
         Actor.Transform.Scale = Vector3.One * gizmoScale;
 
-        _scaleX.SetColor(_rendering, _hoveredHandle == Handle.ScaleX);
-        _scaleY.SetColor(_rendering, _hoveredHandle == Handle.ScaleY);
-        _scaleZ.SetColor(_rendering, _hoveredHandle == Handle.ScaleZ);
-        _scaleCenter.SetColor(_rendering, _hoveredHandle == Handle.ScaleCenter);
+        if (_coloredHoveredHandle != _hoveredHandle)
+        {
+            _scaleX.SetColor(_rendering, _hoveredHandle == Handle.ScaleX);
+            _scaleY.SetColor(_rendering, _hoveredHandle == Handle.ScaleY);
+            _scaleZ.SetColor(_rendering, _hoveredHandle == Handle.ScaleZ);
+            _scaleCenter.SetColor(_rendering, _hoveredHandle == Handle.ScaleCenter);
+            _coloredHoveredHandle = _hoveredHandle;
+        }
 
-        _scaleX.AddSurface(_rendering, _mesh, PrimitiveType.TriangleList);
-        _scaleY.AddSurface(_rendering, _mesh, PrimitiveType.TriangleList);
-        _scaleZ.AddSurface(_rendering, _mesh, PrimitiveType.TriangleList);
-        _scaleCenter.AddSurface(_rendering, _mesh, PrimitiveType.TriangleList);
-
-        _rendering.InstanceSetVisibility(Actor.InstanceRid, true);
+        Actor.Visible = true;
     }
 
-    private void RebuildFaceMesh(Vector3 origin, Vector3 faceNormal, float scale, bool disabled = false)
+    private void RenderFaceMesh(Vector3 origin, FaceOrientation face, float scale, bool disabled = false)
     {
-        _rendering.MeshClear(_mesh);
+        if (_visualKind != VisualKind.Face || _faceOrientation != face)
+        {
+            _rendering.MeshClear(_mesh);
+            var arrow = MeshSurface.CreateArrow(face.AsVector(),
+                ArrowSidesTranslate, ArrowShaftLength, ArrowShaftRadius, ArrowTipLength, ArrowTipRadius);
+            _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, arrow, _face.Mat);
+            _visualKind = VisualKind.Face;
+            _faceOrientation = face;
+            _coloredHoveredHandle = null;
+            _coloredFaceDisabled = null;
+        }
+
         Actor.Transform.Position = origin;
         Actor.Transform.Rotation = Quaternion.Identity;
         Actor.Transform.Scale = Vector3.One * scale;
 
-        if (disabled)
+        if (_coloredHoveredHandle != _hoveredHandle || _coloredFaceDisabled != disabled)
         {
-            _rendering.MaterialSetAlbedo(_face.Mat, ColorFaceDisabled);
-        }
-        else
-        {
-            _face.SetColor(_rendering, _hoveredHandle == Handle.Face);
+            if (disabled)
+            {
+                _rendering.MaterialSetAlbedo(_face.Mat, ColorFaceDisabled);
+            }
+            else
+            {
+                _face.SetColor(_rendering, _hoveredHandle == Handle.Face);
+            }
+
+            _coloredHoveredHandle = _hoveredHandle;
+            _coloredFaceDisabled = disabled;
         }
 
-        var arrow = MeshSurface.CreateArrow(faceNormal,
-            ArrowSidesTranslate, ArrowShaftLength, ArrowShaftRadius, ArrowTipLength, ArrowTipRadius);
-        _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, arrow, _face.Mat);
-
-        _rendering.InstanceSetVisibility(Actor.InstanceRid, true);
+        Actor.Visible = true;
     }
 
     private static MeshSurface MakePlaneXz(float size, float dist)
@@ -879,11 +925,19 @@ public class Gizmo : ActorComponent
         Face
     }
 
+    private enum VisualKind
+    {
+        None,
+        Translate,
+        Rotate,
+        Scale,
+        Face
+    }
+
     private readonly struct GizmoHandle
     {
         public readonly Rid Mat;
-        public readonly MeshSurface? Mesh;
-
+        private readonly MeshSurface? _mesh;
         private readonly Color _normal;
         private readonly Color _bright;
 
@@ -895,7 +949,7 @@ public class Gizmo : ActorComponent
             r.MaterialSetBlendMode(Mat, blend);
             r.MaterialSetDepthTest(Mat, CompareFunction.Always);
             r.MaterialSetDepthWrite(Mat, false);
-            Mesh = mesh;
+            _mesh = mesh;
             _normal = normal;
             _bright = bright;
         }
@@ -907,9 +961,9 @@ public class Gizmo : ActorComponent
 
         public void AddSurface(RenderingService r, Rid mesh, PrimitiveType primitive)
         {
-            if (Mesh != null)
+            if (_mesh != null)
             {
-                r.MeshAddSurface(mesh, primitive, Mesh, Mat);
+                r.MeshAddSurface(mesh, primitive, _mesh, Mat);
             }
         }
 

@@ -13,20 +13,23 @@ public class RaycastSystem : EddySystem
 
     private readonly Scene _scene;
 
+    private readonly Gizmo _gizmo;
+
     private Ray _ray;
 
     private RaycastHit[] _hits = Array.Empty<RaycastHit>();
 
     private int _index;
 
-    public RaycastSystem(Scene scene)
+    public RaycastSystem(Scene scene, Gizmo gizmo)
     {
         _scene = scene;
+        _gizmo = gizmo;
     }
 
     public override void Update()
     {
-        if (!Eddy.Frame.AllowsRaycast)
+        if (!Eddy.Frame.AllowsRaycast || _gizmo.IsActive)
         {
             Eddy.Hovered = null;
             Eddy.HoveredTrile = null;
