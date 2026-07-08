@@ -90,6 +90,7 @@ public class FezEditor : Game
         this.CreateService<ResourceService>();
         this.CreateService<StatusService>();
         _editor = this.CreateService<EditorService>();
+        this.CreateService<HatLaunchService>();
         Content = (ContentManager)_content.Global;
 
         this.AddComponent(new TitleBar(this));

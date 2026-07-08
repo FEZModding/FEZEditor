@@ -23,6 +23,8 @@ public record Settings
 
     public float? DisplayScale { get; init; } // null - automatic
 
+    public string HatLauncherPath { get; init; } = "";
+
     public record struct RecentProvider(string Path, string Kind);
 
     public record struct WindowSize(int Width, int Height);

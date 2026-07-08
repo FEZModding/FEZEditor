@@ -193,6 +193,18 @@ public partial class EditorService
         return _tracking.TryGetValue(editor, out var tracking) && _resourceService.IsReadonlyPath(tracking.Path);
     }
 
+    public bool TryGetEditorPath(EditorComponent editor, out string path)
+    {
+        if (_tracking.TryGetValue(editor, out var tracking))
+        {
+            path = tracking.Path;
+            return true;
+        }
+
+        path = string.Empty;
+        return false;
+    }
+
     public bool HasAnyEditorUnsavedChanges()
     {
         return _tracking.Any(kv => kv.Value.HasChanges);

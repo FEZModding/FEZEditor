@@ -7,6 +7,8 @@ public class StatusService : IDisposable
 {
     public IReadOnlyList<(string Binding, string Label)> Hints => _hints;
 
+    public IReadOnlyList<(string Binding, string Label)> RightHints => _rightHints;
+
     public StatusActivity? CurrentActivity
     {
         get
@@ -20,6 +22,8 @@ public class StatusService : IDisposable
 
     private readonly List<(string Binding, string Label)> _hints = new();
 
+    private readonly List<(string Binding, string Label)> _rightHints = new();
+
     private readonly Lock _activityLock = new();
 
     private StatusActivity? _currentActivity;
@@ -29,11 +33,17 @@ public class StatusService : IDisposable
     public void ClearHints()
     {
         _hints.Clear();
+        _rightHints.Clear();
     }
 
     public void AddHints(params IEnumerable<(string binding, string label)> hints)
     {
         _hints.AddRange(hints);
+    }
+
+    public void AddRightHints(params IEnumerable<(string binding, string label)> hints)
+    {
+        _rightHints.AddRange(hints);
     }
 
     public StatusActivityHandle BeginActivity(string text, float? progress = null)
@@ -77,6 +87,7 @@ public class StatusService : IDisposable
     {
         GC.SuppressFinalize(this);
         _hints.Clear();
+        _rightHints.Clear();
         lock (_activityLock)
         {
             _currentActivity = null;

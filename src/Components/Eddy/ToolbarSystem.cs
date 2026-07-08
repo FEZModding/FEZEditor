@@ -1,4 +1,4 @@
-using FezEditor.Components.Eddy;
+using FezEditor.Services;
 using FezEditor.Structure;
 using FezEditor.Tools;
 using ImGuiNET;
@@ -8,6 +8,13 @@ namespace FezEditor.Components.Eddy;
 
 public class ToolbarSystem : EddySystem
 {
+    private HatLaunchService _hatLaunch = null!;
+
+    public override void Initialize()
+    {
+        _hatLaunch = Game.GetService<HatLaunchService>();
+    }
+
     public override void Draw()
     {
         DrawToolButton(Lucide.MousePointer2, new ToolState.Select());
@@ -148,6 +155,29 @@ public class ToolbarSystem : EddySystem
 
         ImGui.SameLine();
         ImGui.TextDisabled("|");
+
+        ImGui.SameLine();
+        {
+            var availability = _hatLaunch.GetAvailability(Eddy);
+            var icon = availability is HatAvailability.Unavailable ? Lucide.CircleOff : Lucide.PlayCircle;
+            ImGui.BeginDisabled(availability is HatAvailability.Unavailable);
+            if (ImGui.Button($"{icon}##LaunchHat"))
+            {
+                _hatLaunch.Launch(Eddy);
+            }
+
+            ImGui.EndDisabled();
+
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                ImGui.SetTooltip(availability switch
+                {
+                    HatAvailability.Available => "Launch Level in FEZ",
+                    HatAvailability.Unavailable u => u.Reason,
+                    _ => throw new ArgumentOutOfRangeException()
+                });
+            }
+        }
 
         ImGui.SameLine();
         {

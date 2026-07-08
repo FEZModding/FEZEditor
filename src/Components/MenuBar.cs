@@ -202,6 +202,21 @@ public class MenuBar : DrawableGameComponent
                     }
                 }
 
+                ImGui.SeparatorText("HAT");
+                if (ImGui.MenuItem("Locate HAT launcher..."))
+                {
+                    FileDialog.Show(FileDialog.Type.OpenFile, SetHatLauncherPath, new FileDialog.Options
+                    {
+                        Title = "Locate HAT launcher...",
+                        DefaultLocation = _storageService.HatLauncherPath,
+                        Filters =
+                        [
+                            new FileDialog.Filter("Executable files", "exe"),
+                            new FileDialog.Filter("All files", "*")
+                        ]
+                    });
+                }
+
                 ImGui.SeparatorText("Thumbnails");
                 var hasProvider = !_resourceService.HasNoProvider;
                 if (ImGui.MenuItem("Regenerate", null, false, hasProvider))
@@ -333,5 +348,14 @@ public class MenuBar : DrawableGameComponent
         {
             Game.Exit();
         };
+    }
+
+    private void SetHatLauncherPath(string[] files)
+    {
+        var path = files.FirstOrDefault();
+        if (!string.IsNullOrEmpty(path))
+        {
+            _storageService.HatLauncherPath = path;
+        }
     }
 }

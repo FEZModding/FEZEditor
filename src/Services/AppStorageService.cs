@@ -37,6 +37,16 @@ public class AppStorageService : IDisposable
         }
     }
 
+    public string HatLauncherPath
+    {
+        get => _data.HatLauncherPath;
+        set
+        {
+            _data = _data with { HatLauncherPath = value };
+            Save();
+        }
+    }
+
     private Settings _data = new();
 
     public AppStorageService(FezEditor editor)

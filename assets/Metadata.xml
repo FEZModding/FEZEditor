@@ -1,0 +1,9 @@
+<Metadata>
+   <Name>FEZEditor</Name>
+   <Description>A bridge for FEZEditor modding tool</Description>
+   <Author>zerocker</Author>
+   <Version>2026.06.1</Version>
+   <Dependencies>
+      <DependencyInfo Name="HAT" MinimumVersion="2.0.1"/>
+   </Dependencies>
+</Metadata>
