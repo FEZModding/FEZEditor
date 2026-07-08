@@ -107,15 +107,11 @@ public class MenuBar : DrawableGameComponent
                     {
                         foreach (var path in recentFiles!.ToArray())
                         {
-                            var name = path.Contains('/') ? path[(path.LastIndexOf('/') + 1)..] : path;
-                            if (ImGui.MenuItem(name))
+                            var extension = _resourceService.GetExtension(path);
+                            var icon = EditorService.GetFileIcon(extension);
+                            if (ImGui.MenuItem($"{icon} {path}"))
                             {
                                 _editorService.OpenEditorFor(path);
-                            }
-
-                            if (ImGui.IsItemHovered())
-                            {
-                                ImGui.SetTooltip(path);
                             }
                         }
 
