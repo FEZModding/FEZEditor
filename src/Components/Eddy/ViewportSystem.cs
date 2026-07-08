@@ -25,7 +25,7 @@ public class ViewportSystem : EddySystem
 
     public override void Draw()
     {
-        if (Eddy.IsPreviewCapturing)
+        if (Eddy.PreviewState.Current == FayAwayPreviewState.Exporting)
         {
             const string text = "Capturing...";
             ImGuiX.SetTextCentered(text);
@@ -59,7 +59,7 @@ public class ViewportSystem : EddySystem
 
         var position = ImGuiX.GetItemRectMin();
         var hovered = ImGui.IsItemHovered(hoverFlags);
-        var faraway = Eddy.ShowFarAwayPreviewer;
+        var faraway = Eddy.PreviewState.Current != FayAwayPreviewState.Closed;
 
         Eddy.Frame = new ViewportFrame(
             position,

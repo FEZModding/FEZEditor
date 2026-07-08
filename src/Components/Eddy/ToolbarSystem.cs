@@ -208,10 +208,10 @@ public class ToolbarSystem : EddySystem
 
         ImGui.SameLine();
         {
-            ImGui.BeginDisabled(Eddy.ShowFarAwayPreviewer);
+            ImGui.BeginDisabled(Eddy.PreviewState.Current != FayAwayPreviewState.Closed);
             if (ImGui.Button($"{Lucide.ScanEye}"))
             {
-                Eddy.ShowFarAwayPreviewer = true;
+                Eddy.SetPreviewState(FayAwayPreviewState.Opened);
             }
 
             ImGui.EndDisabled();
@@ -235,7 +235,7 @@ public class ToolbarSystem : EddySystem
         {
             ImGui.SeparatorText($"{Lucide.Camera} Projections");
             {
-                ImGui.BeginDisabled(Eddy.ShowFarAwayPreviewer);
+                ImGui.BeginDisabled(Eddy.PreviewState.Current != FayAwayPreviewState.Closed);
                 if (ImGui.Button("Perspective View"))
                 {
                     Eddy.SwitchToPerspective();
@@ -319,7 +319,7 @@ public class ToolbarSystem : EddySystem
             }
         }
 
-        ImGui.BeginDisabled(!(active || Eddy.IsToolEnabled(tool)) || Eddy.ShowFarAwayPreviewer);
+        ImGui.BeginDisabled(!(active || Eddy.IsToolEnabled(tool)) || Eddy.PreviewState.Current != FayAwayPreviewState.Closed);
         if (ImGui.Button($"{icon}##{typeof(T).Name}"))
         {
             Eddy.Tool = tool;

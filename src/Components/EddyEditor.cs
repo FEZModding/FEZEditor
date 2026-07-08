@@ -66,11 +66,7 @@ public class EddyEditor : EditorComponent
 
     public bool ShowRaycastDebug { get; set; }
 
-    public bool ShowFarAwayPreviewer
-    {
-        get => _farAwayPreviewer.IsOpen;
-        set => _farAwayPreviewer.SetOpen(value);
-    }
+    public (FayAwayPreviewState Current, FayAwayPreviewState Previous) PreviewState { get; private set; } // Closed
 
     public ViewportFrame Frame { get; set; }
 
@@ -85,8 +81,6 @@ public class EddyEditor : EditorComponent
     public AssetEntry? SelectedEntry { get; private set; }
 
     public IReadOnlyList<AssetEntry> RecentEntries => _recentEntries;
-
-    public bool IsPreviewCapturing => _farAwayPreviewer.IsExporting;
 
     private readonly Level _level;
 
@@ -218,7 +212,7 @@ public class EddyEditor : EditorComponent
             var editors = Game.GetService<EditorService>();
             AddSystems(_interfaces,
                 new ToolbarSystem(),
-                _farAwayPreviewer = new FarAwayPreviewSystem(_scene, editors),
+                _farAwayPreviewer = new FarAwayPreviewSystem(_scene, editors, _cameraActor),
                 new ViewportSystem(_scene, _clock, orientation, gizmo),
                 new InstanceInspectorSystem(),
                 new AssetBrowserSystem(),
@@ -441,6 +435,19 @@ public class EddyEditor : EditorComponent
     {
         return tool is ToolState.Select or ToolState.Paint or ToolState.Pick ||
                _tools.Any(system => system.IsToolEnabled(tool));
+    }
+
+    public void SetPreviewState(FayAwayPreviewState state)
+    {
+        if (PreviewState.Current != state)
+        {
+            PreviewState = (state, PreviewState.Current);
+        }
+    }
+
+    public void ConsumePreviewStateTransition()
+    {
+        PreviewState = (PreviewState.Current, PreviewState.Current);
     }
 
     private void Sync(History.Change change)

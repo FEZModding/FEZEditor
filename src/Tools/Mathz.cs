@@ -1,5 +1,4 @@
 ﻿using System.Runtime.CompilerServices;
-using FezEditor.Structure;
 using FEZRepacker.Core.Definitions.Game.Common;
 using FEZRepacker.Core.Definitions.Game.Level;
 using Microsoft.Xna.Framework;
@@ -316,5 +315,17 @@ public static class Mathz
     public static Vector3 GetTrileTransformedSize(Vector3 size, byte phi)
     {
         return phi is 1 or 3 ? new Vector3(size.Z, size.Y, size.X) : size;
+    }
+
+    public static int NextPowerOfTwo(int value)
+    {
+        value = Math.Max(1, value);
+        value--;
+        value |= value >> 1;
+        value |= value >> 2;
+        value |= value >> 4;
+        value |= value >> 8;
+        value |= value >> 16;
+        return value + 1;
     }
 }
