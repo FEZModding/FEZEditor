@@ -17,7 +17,7 @@ namespace FezEditor.Services;
 [UsedImplicitly]
 public partial class ImGuiService : IDisposable
 {
-    private static readonly ILogger Logger = Logging.Create<ImGuiService>();
+    private static readonly ILogger Logger = Log.ForContext<ImGuiService>();
 
     private static readonly Color ClearColor = new(0.2f, 0.2f, 0.294f);
 

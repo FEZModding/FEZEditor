@@ -12,7 +12,7 @@ namespace FezEditor.Services;
 [UsedImplicitly]
 public class ResourceService : IDisposable
 {
-    private static readonly ILogger Logger = Logging.Create<ResourceService>();
+    private static readonly ILogger Logger = Log.ForContext<ResourceService>();
 
     public event Action? ProviderChanged;
 

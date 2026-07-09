@@ -9,7 +9,7 @@ namespace FezEditor.Services;
 [UsedImplicitly]
 public partial class RenderingService : IDisposable
 {
-    private static readonly ILogger Logger = Logging.Create<RenderingService>();
+    private static readonly ILogger Logger = Log.ForContext<RenderingService>();
 
     public GraphicsDevice GraphicsDevice { get; }
 

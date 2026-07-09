@@ -15,7 +15,7 @@ public class AppStorageService : IDisposable
 
     private static readonly string CacheDir = Path.Combine(BaseDir, "Cache");
 
-    private static readonly ILogger Logger = Logging.Create<AppStorageService>();
+    private static readonly ILogger Logger = Log.ForContext<AppStorageService>();
 
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 

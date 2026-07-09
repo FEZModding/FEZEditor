@@ -8,7 +8,7 @@ namespace FezEditor.Tools;
 
 public class ZipContentManager : ContentManager, IContentManager
 {
-    private static readonly ILogger Logger = Logging.Create<ZipContentManager>();
+    private static readonly ILogger Logger = Log.ForContext<ZipContentManager>();
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {

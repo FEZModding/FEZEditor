@@ -11,7 +11,7 @@ namespace FezEditor.Services;
 [UsedImplicitly]
 public class HatLaunchService : IDisposable
 {
-    private static readonly ILogger Logger = Logging.Create<HatLaunchService>();
+    private static readonly ILogger Logger = Log.ForContext<HatLaunchService>();
 
     private const string LevelsPrefix = "Levels/";
 

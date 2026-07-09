@@ -7,7 +7,7 @@ namespace FezEditor.Tools;
 
 public class DirContentManager : ContentManager, IContentManager
 {
-    private static readonly ILogger Logger = Logging.Create<DirContentManager>();
+    private static readonly ILogger Logger = Log.ForContext<DirContentManager>();
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {

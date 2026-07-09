@@ -24,7 +24,7 @@ namespace FezEditor.Components;
 
 public class PhilExporter : DrawableGameComponent
 {
-    private static readonly ILogger Logger = Logging.Create<PhilExporter>();
+    private static readonly ILogger Logger = Log.ForContext<PhilExporter>();
 
     private static readonly NVector3 TrileEmplacementOffset = new(0.5f);
 

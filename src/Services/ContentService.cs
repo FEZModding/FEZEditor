@@ -8,7 +8,7 @@ namespace FezEditor.Services;
 [UsedImplicitly]
 public class ContentService : IDisposable
 {
-    private static readonly ILogger Logger = Logging.Create<ContentService>();
+    private static readonly ILogger Logger = Log.ForContext<ContentService>();
 
     private const string Root = "Content";
 

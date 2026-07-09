@@ -13,7 +13,7 @@ namespace FezEditor.Components.Eddy;
 
 public class FarAwayPreviewSystem : EddySystem
 {
-    private static readonly ILogger Logger = Logging.Create<FarAwayPreviewSystem>();
+    private static readonly ILogger Logger = Log.ForContext<FarAwayPreviewSystem>();
 
     private static readonly string[] ExportKindLabels = ["Faraway Thumbnail", "Map Screen"];
 

@@ -12,7 +12,7 @@ namespace FezEditor.Components;
 
 public class MapTreeGenerator : DrawableGameComponent
 {
-    private static readonly ILogger Logger = Logging.Create<MapTreeGenerator>();
+    private static readonly ILogger Logger = Log.ForContext<MapTreeGenerator>();
 
     private static readonly string[] UpLevels = new[]
     {

@@ -12,7 +12,7 @@ namespace FezEditor;
 
 public class FezEditor : Game
 {
-    private static ILogger Logger => Logging.Create<FezEditor>();
+    private static ILogger Logger => Log.ForContext<FezEditor>();
 
     public static GraphicsDeviceManager DeviceManager { get; private set; } = null!;
 

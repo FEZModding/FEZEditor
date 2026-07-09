@@ -3,13 +3,15 @@ using FezEditor.Services;
 using Microsoft.Xna.Framework;
 using Serilog;
 using Serilog.Events;
+using Serilog.Templates;
+using Serilog.Templates.Themes;
 
 namespace FezEditor;
 
 public static class Logging
 {
     private const string LogTemplate =
-        "({Timestamp:HH:mm:ss.fff}) {Level:u4} [{SourceContext}] {Message:lj}{NewLine}{Exception}";
+        "({UtcDateTime(@t):HH:mm:ss.fff}) {@l:u4} [{Substring(SourceContext, LastIndexOf(SourceContext, '.') + 1)}] {@m}\n{@x}";
 
 #if DEBUG
     public static LogEventLevel Level { get; set; } = LogEventLevel.Debug;
@@ -25,8 +27,8 @@ public static class Logging
         CleanOldLogFiles(logFile);
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Is(Level)
-            .WriteTo.Console(outputTemplate: LogTemplate)
-            .WriteTo.File(logFile, outputTemplate: LogTemplate)
+            .WriteTo.Console(formatter: new ExpressionTemplate(LogTemplate, theme: TemplateTheme.Literate))
+            .WriteTo.File(formatter: new ExpressionTemplate(LogTemplate), path: logFile)
             .CreateLogger();
 
         var logger = Log.ForContext("SourceContext", "FNA");
@@ -56,10 +58,5 @@ public static class Logging
         var name = Path.GetFileNameWithoutExtension(file);
         return DateTime.TryParseExact(name[1..20], "yyyy-MM-ddTHH-mm-ss",
             CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
-    }
-
-    public static ILogger Create<T>()
-    {
-        return Log.ForContext("SourceContext", typeof(T).Name);
     }
 }

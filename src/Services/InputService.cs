@@ -11,7 +11,7 @@ namespace FezEditor.Services;
 [UsedImplicitly]
 public class InputService
 {
-    private static readonly ILogger Logger = Logging.Create<InputService>();
+    private static readonly ILogger Logger = Log.ForContext<InputService>();
 
     public bool IsViewportHovered { private get; set; }
 

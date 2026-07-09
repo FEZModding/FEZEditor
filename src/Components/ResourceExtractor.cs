@@ -13,7 +13,7 @@ namespace FezEditor.Components;
 [UsedImplicitly]
 public class ResourceExtractor : DrawableGameComponent
 {
-    private static readonly ILogger Logger = Logging.Create<ResourceExtractor>();
+    private static readonly ILogger Logger = Log.ForContext<ResourceExtractor>();
 
     private readonly HashSet<string> _expectedPaks = ["Essentials.pak", "Music.pak", "Other.pak", "Updates.pak"];
 

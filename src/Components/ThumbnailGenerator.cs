@@ -14,7 +14,7 @@ namespace FezEditor.Components;
 [UsedImplicitly]
 public class ThumbnailGenerator : DrawableGameComponent
 {
-    private static readonly ILogger Logger = Logging.Create<ThumbnailGenerator>();
+    private static readonly ILogger Logger = Log.ForContext<ThumbnailGenerator>();
 
     private readonly ResourceService _resources;
 

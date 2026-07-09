@@ -10,7 +10,7 @@ namespace FezEditor.Components;
 
 public class WelcomeSplash : EditorComponent
 {
-    private static readonly ILogger Logger = Logging.Create<WelcomeSplash>();
+    private static readonly ILogger Logger = Log.ForContext<WelcomeSplash>();
 
     private static readonly Color BackgroundTint = Color.Black with { A = 102 };
 

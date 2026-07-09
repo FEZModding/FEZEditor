@@ -10,7 +10,7 @@ namespace FezEditor.Services;
 [UsedImplicitly]
 public partial class EditorService
 {
-    private static readonly ILogger Logger = Logging.Create<EditorService>();
+    private static readonly ILogger Logger = Log.ForContext<EditorService>();
 
     public event Action? ActiveEditorChanged;
 
