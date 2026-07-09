@@ -1,28 +1,15 @@
 ﻿using JetBrains.Annotations;
+using Microsoft.Xna.Framework;
+using FezEditor.Tools;
 
 namespace FezEditor.Services;
 
 [UsedImplicitly]
 public class StatusService : IDisposable
 {
-    public IReadOnlyList<(string Binding, string Label)> Hints => _hints;
+    private readonly AppStorageService _storageService;
 
-    public IReadOnlyList<(string Binding, string Label)> RightHints => _rightHints;
-
-    public StatusActivity? CurrentActivity
-    {
-        get
-        {
-            lock (_activityLock)
-            {
-                return _currentActivity;
-            }
-        }
-    }
-
-    private readonly List<(string Binding, string Label)> _hints = new();
-
-    private readonly List<(string Binding, string Label)> _rightHints = new();
+    private readonly List<StatusHint> _hints = new();
 
     private readonly Lock _activityLock = new();
 
@@ -30,20 +17,42 @@ public class StatusService : IDisposable
 
     private long _activityId;
 
+    public StatusService(Game game)
+    {
+        _storageService = game.GetService<AppStorageService>();
+    }
+
     public void ClearHints()
     {
         _hints.Clear();
-        _rightHints.Clear();
     }
 
-    public void AddHints(params IEnumerable<(string binding, string label)> hints)
+    public void AddHint(string binding, string label)
     {
-        _hints.AddRange(hints);
+        _hints.Add(new StatusHint(binding, label));
     }
 
-    public void AddRightHints(params IEnumerable<(string binding, string label)> hints)
+    public StatusSnapshot GetSnapshot()
     {
-        _rightHints.AddRange(hints);
+        StatusActivity? activity;
+        lock (_activityLock)
+        {
+            activity = _currentActivity;
+        }
+
+        var hatStatus = string.IsNullOrWhiteSpace(_storageService.HatLauncherPath)
+            ? "Not configured"
+            : File.Exists(_storageService.HatLauncherPath)
+                ? "Available"
+                : "Missing";
+
+        var appStatus = new List<StatusHint>
+        {
+            new("HAT", hatStatus),
+            new("", $"{FezEditor.Version} ({FezEditor.Commit})")
+        };
+
+        return new StatusSnapshot(_hints.ToArray(), appStatus, activity);
     }
 
     public StatusActivityHandle BeginActivity(string text, float? progress = null)
@@ -87,7 +96,6 @@ public class StatusService : IDisposable
     {
         GC.SuppressFinalize(this);
         _hints.Clear();
-        _rightHints.Clear();
         lock (_activityLock)
         {
             _currentActivity = null;
@@ -95,6 +103,13 @@ public class StatusService : IDisposable
         }
     }
 }
+
+public sealed record StatusHint(string Binding, string Label);
+
+public sealed record StatusSnapshot(
+    IReadOnlyList<StatusHint> Left,
+    IReadOnlyList<StatusHint> Right,
+    StatusActivity? Activity);
 
 public sealed record StatusActivity(string Text, float? Progress);
 

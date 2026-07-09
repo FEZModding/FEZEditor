@@ -37,7 +37,7 @@ public class MapPanControl : ActorComponent
 
     public override void Update(GameTime gameTime)
     {
-        _status.AddHints(("RMB", "Pan"));
+        _status.AddHint("RMB", "Pan");
         if (_focusTarget.HasValue)
         {
             var delta = (float)gameTime.ElapsedGameTime.TotalSeconds;

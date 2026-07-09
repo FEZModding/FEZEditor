@@ -129,9 +129,7 @@ internal class PickTool : TextureTool
 
     protected override void Act()
     {
-        StatusService.AddHints(
-            ("LMB", "Pick Color")
-        );
+        StatusService.AddHint("LMB", "Pick Color");
 
         if (!Chris.Hit.HasValue || !ImGui.IsMouseClicked(ImGuiMouseButton.Left) || !Chris.IsViewportHovered)
         {

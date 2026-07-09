@@ -15,10 +15,8 @@ internal class BucketTool : TextureTool
 
     protected override void Act()
     {
-        StatusService.AddHints(
-            ("LMB", "Fill"),
-            ("LMB + Drag", "Paint Region")
-        );
+        StatusService.AddHint("LMB", "Fill");
+        StatusService.AddHint("LMB + Drag", "Paint Region");
 
         if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {

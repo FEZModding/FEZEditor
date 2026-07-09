@@ -58,7 +58,7 @@ public class MapZoomControl : ActorComponent
 
     public override void Update(GameTime gameTime)
     {
-        _status.AddHints(("Scroll Wheel", "Cycle Zoom"));
+        _status.AddHint("Scroll Wheel", "Cycle Zoom");
         var targetSize = _sizeOverride ?? ComputeTargetSize();
         if (MathF.Abs(_camera.Size - targetSize) > 0.01f)
         {

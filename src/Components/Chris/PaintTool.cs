@@ -13,9 +13,7 @@ internal class PaintTool : TextureTool
 
     protected override void Act()
     {
-        StatusService.AddHints(
-            ("LMB", "Paint")
-        );
+        StatusService.AddHint("LMB", "Paint");
 
         if (!Chris.Hit.HasValue || !Chris.IsViewportHovered)
         {

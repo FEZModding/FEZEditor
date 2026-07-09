@@ -171,11 +171,9 @@ public class Gizmo : ActorComponent
 
     public bool Translate(ref Vector3 origin, BoundingBox? bounds = null)
     {
-        _status.AddHints(
-            ("LMB Drag", "Move X or Z"),
-            ("Alt+LMB Drag", "Move Y"),
-            ("Shift", "Snap to trile")
-        );
+        _status.AddHint("LMB Drag", "Move X or Z");
+        _status.AddHint("Alt+LMB Drag", "Move Y");
+        _status.AddHint("Shift", "Snap to trile");
 
         var gizmoScale = ComputeGizmoScale(origin);
         var changed = false;
@@ -246,9 +244,7 @@ public class Gizmo : ActorComponent
 
     public bool Rotate(Vector3 origin)
     {
-        _status.AddHints(
-            ("LMB", "Rotate 90°")
-        );
+        _status.AddHint("LMB", "Rotate 90°");
 
         var gizmoScale = ComputeGizmoScale(origin);
         var clicked = ImGui.IsMouseClicked(ImGuiMouseButton.Left);
@@ -262,9 +258,7 @@ public class Gizmo : ActorComponent
 
     public bool Scale(Vector3 origin, ref Vector3 scale)
     {
-        _status.AddHints(
-            ("LMB Drag", "Scale")
-        );
+        _status.AddHint("LMB Drag", "Scale");
 
         var gizmoScale = ComputeGizmoScale(origin);
         var changed = false;
@@ -328,9 +322,7 @@ public class Gizmo : ActorComponent
 
     public bool ScaleFace(Vector3 origin, FaceOrientation face, out float delta, bool disabled = false)
     {
-        _status.AddHints(
-            ("LMB Drag", "Add / Remove Trile")
-        );
+        _status.AddHint("LMB Drag", "Add / Remove Trile");
 
         delta = 0;
         var gizmoScale = ComputeGizmoScale(origin);

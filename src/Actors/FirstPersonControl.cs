@@ -49,12 +49,11 @@ public class FirstPersonControl : ActorComponent
         var l = _input.GetActionBinding(InputActions.MoveLeft);
         var b = _input.GetActionBinding(InputActions.MoveBackward);
         var r = _input.GetActionBinding(InputActions.MoveRight);
-        _status.AddHints(
-            (f + l + b + r, "Movement"),
-            ("RMB", "Look around"),
-            ("Scroll", $"Speed: {SpeedSteps[_speedIndex]}"),
-            ("Shift", "Speed boost")
-        );
+
+        _status.AddHint(f + l + b + r, "Movement");
+        _status.AddHint("RMB", "Look around");
+        _status.AddHint("Scroll", $"Speed: {SpeedSteps[_speedIndex]}");
+        _status.AddHint("Shift", "Speed boost");
 
         #endregion
 

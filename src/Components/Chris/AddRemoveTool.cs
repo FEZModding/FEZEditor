@@ -15,9 +15,7 @@ internal class AddRemoveTool : BaseTool
 
     protected override void Act()
     {
-        StatusService.AddHints(
-            ("LMB / Drag", Chris.CurrentTool == ChrisTool.Add ? "Add" : "Remove")
-        );
+        StatusService.AddHint("LMB / Drag", Chris.CurrentTool == ChrisTool.Add ? "Add" : "Remove");
 
         if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {

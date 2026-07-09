@@ -82,7 +82,7 @@ public class JadeEditor : EditorComponent
             return;
         }
 
-        StatusService.AddHints(("LMB", "Select Node"));
+        StatusService.AddHint("LMB", "Select Node");
         _scene.Update(gameTime);
     }
 

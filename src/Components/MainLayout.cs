@@ -14,11 +14,9 @@ public class MainLayout : DrawableGameComponent
 
     private readonly EditorService _editorService;
 
-    private readonly StatusService _statusService;
-
-    private readonly AppStorageService _storageService;
-
     private readonly FileBrowser _fileBrowser;
+
+    private readonly StatusBar _statusBar;
 
     private readonly ConfirmWindow _confirm;
 
@@ -29,9 +27,8 @@ public class MainLayout : DrawableGameComponent
     public MainLayout(Game game) : base(game)
     {
         _editorService = Game.GetService<EditorService>();
-        _statusService = Game.GetService<StatusService>();
-        _storageService = Game.GetService<AppStorageService>();
         _fileBrowser = Game.GetComponent<FileBrowser>();
+        _statusBar = Game.GetComponent<StatusBar>();
         Game.AddComponent(_confirm = new ConfirmWindow(game));
         DrawOrder = -1;
     }
@@ -147,8 +144,7 @@ public class MainLayout : DrawableGameComponent
                     }
 
                     ImGui.EndChild();
-
-                    DrawStatusBar();
+                    _statusBar.Draw();
                 }
 
                 ImGui.EndChild();
@@ -172,62 +168,6 @@ public class MainLayout : DrawableGameComponent
         ImGuiX.SetTextCentered(text);
         ImGui.Text(text);
         _loadNextUpdate = true;
-    }
-
-    private void DrawStatusBar()
-    {
-        var activity = _statusService.CurrentActivity;
-        var hints = _statusService.Hints;
-        _statusService.AddRightHints(
-            ("HAT", GetHatStatusText()),
-            ("", $"{FezEditor.Version} ({FezEditor.Commit})")
-        );
-        var rightHints = _statusService.RightHints;
-        var hintText = string.Join(" | ", hints.Select(hint => $"{hint.Binding} - {hint.Label}"));
-        var statusText = activity == null || string.IsNullOrEmpty(hintText)
-            ? activity?.Text ?? hintText
-            : $"{activity.Text} | {hintText}";
-
-        ImGui.Separator();
-        if (ImGuiX.BeginChild("StatusBar", Vector2.Zero, ImGuiChildFlags.None, ImGuiWindowFlags.NoScrollbar))
-        {
-            const float rightItemSpacing = 16f;
-            var rightItems = BuildRightStatusItems(rightHints, rightItemSpacing);
-            var rightContentX = rightItems.Count > 0
-                ? rightItems.Min(item => item.X)
-                : ImGui.GetWindowWidth() - ImGui.GetStyle().WindowPadding.X;
-            var progressWidth = activity?.Progress != null ? 160f : 0f;
-            var progressSpacing = progressWidth > 0 ? 8f : 0f;
-            var textWidth = rightContentX - ImGui.GetCursorPosX() - progressWidth - progressSpacing - 16f;
-            var visibleStatus = Ellipsize(statusText, textWidth);
-            var drewLeftContent = false;
-
-            if (!string.IsNullOrEmpty(visibleStatus))
-            {
-                ImGui.TextUnformatted(visibleStatus);
-                drewLeftContent = true;
-            }
-
-            if (activity?.Progress is { } progress)
-            {
-                if (drewLeftContent)
-                {
-                    ImGui.SameLine(0, progressSpacing);
-                }
-
-                ImGuiX.ProgressBar(progress, new Vector2(progressWidth, 0), $"{progress * 100:F0}%");
-                drewLeftContent = true;
-            }
-
-            if (drewLeftContent)
-            {
-                ImGui.SameLine();
-            }
-
-            DrawRightStatusItems(rightItems);
-        }
-
-        ImGui.EndChild();
     }
 
     private void SaveAndCloseEditor(EditorComponent editor)
@@ -260,101 +200,4 @@ public class MainLayout : DrawableGameComponent
             _confirmPending = false;
         };
     }
-
-    private string GetHatStatusText()
-    {
-        if (string.IsNullOrWhiteSpace(_storageService.HatLauncherPath))
-        {
-            return "Not configured";
-        }
-
-        return File.Exists(_storageService.HatLauncherPath)
-            ? "Available"
-            : "Missing";
-    }
-
-    private static List<RightStatusItem> BuildRightStatusItems(
-        IReadOnlyList<(string Binding, string Label)> hints,
-        float spacing)
-    {
-        var items = new List<RightStatusItem>();
-        var maxItemWidth = Math.Min(480f, ImGui.GetWindowWidth() * 0.35f);
-        var cursorX = ImGui.GetWindowWidth() - ImGui.GetStyle().WindowPadding.X;
-
-        for (var i = hints.Count - 1; i >= 0; i--)
-        {
-            var text = FormatStatusHint(hints[i]);
-            var visible = Ellipsize(text, maxItemWidth);
-            if (string.IsNullOrEmpty(visible))
-            {
-                continue;
-            }
-
-            var width = ImGui.CalcTextSize(visible).X;
-            cursorX -= width;
-            items.Add(new RightStatusItem(cursorX, visible, text));
-            cursorX -= spacing;
-        }
-
-        return items;
-    }
-
-    private static void DrawRightStatusItems(List<RightStatusItem> items)
-    {
-        var cursorY = ImGui.GetCursorPosY();
-        foreach (var item in items)
-        {
-            ImGui.SetCursorPos(new NVector2(item.X, cursorY));
-            ImGui.TextDisabled(item.VisibleText);
-            if (ImGui.IsItemHovered() && item.VisibleText != item.FullText)
-            {
-                ImGui.SetTooltip(item.FullText);
-            }
-        }
-    }
-
-    private static string FormatStatusHint((string Binding, string Label) hint)
-    {
-        return string.IsNullOrEmpty(hint.Binding)
-            ? hint.Label
-            : $"{hint.Binding} - {hint.Label}";
-    }
-
-    private static string Ellipsize(string text, float maxWidth)
-    {
-        if (string.IsNullOrEmpty(text) || maxWidth <= 0f)
-        {
-            return string.Empty;
-        }
-
-        if (ImGui.CalcTextSize(text).X <= maxWidth)
-        {
-            return text;
-        }
-
-        const string ellipsis = "...";
-        if (ImGui.CalcTextSize(ellipsis).X > maxWidth)
-        {
-            return string.Empty;
-        }
-
-        var low = 0;
-        var high = text.Length;
-        while (low < high)
-        {
-            var length = (low + high + 1) / 2;
-            if (ImGui.CalcTextSize(text[..length] + ellipsis).X <= maxWidth)
-            {
-                low = length;
-            }
-            else
-            {
-                high = length - 1;
-            }
-        }
-
-        return text[..low].TrimEnd() + ellipsis;
-    }
-
-    private readonly record struct RightStatusItem(float X, string VisibleText, string FullText);
 }

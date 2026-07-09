@@ -17,7 +17,7 @@ public class ClipboardSystem : EddySystem
 
         if (_clipboard != null)
         {
-            Status.AddHints(("Ctrl+V", "Paste"));
+            Status.AddHint("Ctrl+V", "Paste");
             if (ImGuiX.IsKeyShortcut(ImGuiKey.V))
             {
                 using (Eddy.History.BeginScope("Paste Selection"))
@@ -36,7 +36,7 @@ public class ClipboardSystem : EddySystem
 
         #region Delete
 
-        Status.AddHints(("Delete", "Erase"));
+        Status.AddHint("Delete", "Erase");
         if (ImGui.IsKeyPressed(ImGuiKey.Delete))
         {
             using (Eddy.History.BeginScope("Delete Selection"))
@@ -51,7 +51,7 @@ public class ClipboardSystem : EddySystem
 
         #region Copy
 
-        Status.AddHints(("Ctrl+C", "Copy"));
+        Status.AddHint("Ctrl+C", "Copy");
         if (ImGuiX.IsKeyShortcut(ImGuiKey.C))
         {
             _clipboard = CreateClipboard(Eddy.Selected);
@@ -61,7 +61,7 @@ public class ClipboardSystem : EddySystem
 
         #region Cut
 
-        Status.AddHints(("Ctrl+X", "Cut"));
+        Status.AddHint("Ctrl+X", "Cut");
         if (ImGuiX.IsKeyShortcut(ImGuiKey.X))
         {
             _clipboard = CreateClipboard(Eddy.Selected);

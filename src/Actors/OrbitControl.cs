@@ -39,7 +39,7 @@ public class OrbitControl : ActorComponent
 
     public override void Update(GameTime gameTime)
     {
-        _status.AddHints((UseRightMouseButton ? "RMB" : "MMB", "Orbit"));
+        _status.AddHint(UseRightMouseButton ? "RMB" : "MMB", "Orbit");
         CaptureMouseDelta captureMouseDelta = UseRightMouseButton
             ? _input.CaptureRightMouseDelta
             : _input.CaptureMiddleMouseDelta;
