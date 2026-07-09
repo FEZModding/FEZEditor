@@ -28,7 +28,7 @@ public partial class EditorService
 
     private EditorComponent? _pendingActiveEditor;
 
-    private readonly Dictionary<EditorComponent, EditorTracking> _tracking = new();
+    private readonly Dictionary<EditorComponent, (string Path, EditorState State)> _tracking = new();
 
     private readonly Game _game;
 
@@ -49,6 +49,7 @@ public partial class EditorService
         _resourceService = game.GetService<ResourceService>();
         _statusService = game.GetService<StatusService>();
         _storageService = game.GetService<AppStorageService>();
+        _resourceService.ProviderChanged += OnProviderChanged;
     }
 
     public void Update(GameTime gameTime)
@@ -107,7 +108,7 @@ public partial class EditorService
             newEditor = new NotSupportedComponent(_game, path);
         }
 
-        _tracking.Add(newEditor, new EditorTracking(path, false));
+        _tracking.Add(newEditor, (path, EditorState.Default));
         OpenEditor(newEditor);
     }
 
@@ -122,7 +123,7 @@ public partial class EditorService
             {
                 if (_tracking.TryGetValue(editor, out var tracking))
                 {
-                    tracking.HasChanges = true;
+                    tracking.State |= EditorState.HasChanges;
                     _tracking[editor] = tracking;
                     _resourceService.InvalidateCacheFor(tracking.Path);
                 }
@@ -185,12 +186,17 @@ public partial class EditorService
 
     public bool HasEditorUnsavedChanges(EditorComponent editor)
     {
-        return _tracking.TryGetValue(editor, out var tracking) && tracking.HasChanges;
+        return _tracking.TryGetValue(editor, out var tracking) && tracking.State.HasFlag(EditorState.HasChanges);
     }
 
     public bool IsEditorPathReadonly(EditorComponent editor)
     {
         return _tracking.TryGetValue(editor, out var tracking) && _resourceService.IsReadonlyPath(tracking.Path);
+    }
+
+    public bool IsEditorDeleted(EditorComponent editor)
+    {
+        return _tracking.TryGetValue(editor, out var tracking) && tracking.State.HasFlag(EditorState.IsDeleted);
     }
 
     public bool TryGetEditorPath(EditorComponent editor, out string path)
@@ -207,17 +213,17 @@ public partial class EditorService
 
     public bool HasAnyEditorUnsavedChanges()
     {
-        return _tracking.Any(kv => kv.Value.HasChanges);
+        return _tracking.Any(kv => kv.Value.State.HasFlag(EditorState.HasChanges));
     }
 
     public void SaveActiveEditorChanges()
     {
-        if (_tracking.TryGetValue(_activeEditor!, out var tracking) && tracking.HasChanges &&
+        if (_tracking.TryGetValue(_activeEditor!, out var tracking) &&
+            tracking.State.HasFlag(EditorState.HasChanges) &&
             !_resourceService.IsReadonlyPath(tracking.Path))
         {
             _resourceService.Save(tracking.Path, _activeEditor!.Asset);
-            tracking.HasChanges = false;
-            _tracking[_activeEditor] = tracking;
+            _tracking[_activeEditor] = (tracking.Path, EditorState.Default);
             Logger.Information("Saving {0}", _activeEditor);
             UpdateFlags();
         }
@@ -244,7 +250,7 @@ public partial class EditorService
                 var relativePath = _resourceService.GetRelativePath(files[0]);
                 _resourceService.Save(relativePath, _activeEditor!.Asset);
                 _activeEditor!.Title = relativePath;
-                _tracking[_activeEditor!] = new EditorTracking(relativePath, false);
+                _tracking[_activeEditor!] = (relativePath, EditorState.Default);
                 Logger.Information("Saved {0} as {1}", _activeEditor!, relativePath);
                 UpdateFlags();
             }, options);
@@ -253,12 +259,12 @@ public partial class EditorService
 
     public void SaveEditorChanges(EditorComponent editor)
     {
-        if (_tracking.TryGetValue(editor, out var tracking) && tracking.HasChanges &&
+        if (_tracking.TryGetValue(editor, out var tracking) &&
+            tracking.State.HasFlag(EditorState.HasChanges) &&
             !_resourceService.IsReadonlyPath(tracking.Path))
         {
             _resourceService.Save(tracking.Path, editor.Asset);
-            tracking.HasChanges = false;
-            _tracking[editor] = tracking;
+            _tracking[editor] = (tracking.Path, EditorState.Default);
             Logger.Information("Saving {0}", editor);
             UpdateFlags();
         }
@@ -311,6 +317,26 @@ public partial class EditorService
         return _pendingLoad.Contains(editor);
     }
 
+    private void OnProviderChanged()
+    {
+        foreach (var (editor, tracking) in _tracking.ToArray())
+        {
+            var isDeleted = !_resourceService.Exists(tracking.Path);
+            var state = isDeleted
+                ? tracking.State | EditorState.IsDeleted
+                : tracking.State & ~EditorState.IsDeleted;
+
+            if (tracking.State == state)
+            {
+                continue;
+            }
+
+            _tracking[editor] = (tracking.Path, state);
+        }
+
+        UpdateFlags();
+    }
+
     private void UpdateFlags()
     {
         if (_activeEditor is WelcomeSplash)
@@ -345,7 +371,8 @@ public partial class EditorService
             Flags &= ~EditorFlags.Redo;
         }
 
-        if (_tracking.TryGetValue(_activeEditor, out var activeTracking) && activeTracking.HasChanges &&
+        if (_tracking.TryGetValue(_activeEditor, out var activeTracking) &&
+            activeTracking.State.HasFlag(EditorState.HasChanges) &&
             !_resourceService.IsReadonlyPath(activeTracking.Path))
         {
             Flags |= EditorFlags.SaveFile;
@@ -355,7 +382,8 @@ public partial class EditorService
             Flags &= ~EditorFlags.SaveFile;
         }
 
-        if (_tracking.Any(kv => kv.Value.HasChanges && !_resourceService.IsReadonlyPath(kv.Value.Path)))
+        if (_tracking.Any(kv =>
+                kv.Value.State.HasFlag(EditorState.HasChanges) && !_resourceService.IsReadonlyPath(kv.Value.Path)))
         {
             Flags |= EditorFlags.SaveAll;
         }
@@ -365,5 +393,11 @@ public partial class EditorService
         }
     }
 
-    private record struct EditorTracking(string Path, bool HasChanges);
+    [Flags]
+    private enum EditorState
+    {
+        Default = 0,
+        HasChanges = 1 << 0,
+        IsDeleted = 1 << 1
+    }
 }

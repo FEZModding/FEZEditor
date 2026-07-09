@@ -105,15 +105,21 @@ public class MainLayout : DrawableGameComponent
                                 {
                                     title = $"{Lucide.LockKeyhole} {title}";
                                 }
-                                else if (_editorService.HasEditorUnsavedChanges(editor))
+
+                                if (_editorService.IsEditorDeleted(editor))
                                 {
-                                    title = $"{Lucide.Asterisk} {title}";
+                                    title = $"{Lucide.Trash2} {title}";
                                 }
 
                                 var tabFlags = ImGuiTabItemFlags.NoAssumedClosure;
                                 if (_editorService.ShouldFocusEditor(editor))
                                 {
                                     tabFlags |= ImGuiTabItemFlags.SetSelected;
+                                }
+
+                                if (_editorService.HasEditorUnsavedChanges(editor))
+                                {
+                                    tabFlags |= ImGuiTabItemFlags.UnsavedDocument;
                                 }
 
                                 var tabLabel = title + "###" + editor.Title;
