@@ -25,6 +25,8 @@ public abstract class EditorComponent
 
     protected StatusService StatusService { get; }
 
+    private readonly ContentService _contentService;
+
     protected EditorComponent(Game game, string title)
     {
         Game = game;
@@ -34,7 +36,8 @@ public abstract class EditorComponent
         RenderingService = game.GetService<RenderingService>();
         ResourceService = game.GetService<ResourceService>();
         StatusService = game.GetService<StatusService>();
-        ContentManager = game.GetService<ContentService>().Get(this);
+        _contentService = game.GetService<ContentService>();
+        ContentManager = _contentService.Get(this);
     }
 
     public virtual void LoadContent()
@@ -52,7 +55,7 @@ public abstract class EditorComponent
     public virtual void Dispose()
     {
         History.Dispose();
-        Game.GetService<ContentService>().Unload(this);
+        _contentService.Unload(this);
     }
 
     public override string ToString()
