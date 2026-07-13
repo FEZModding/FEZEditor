@@ -16,11 +16,12 @@ public class StatusBar : DrawableGameComponent
 
     public void Draw()
     {
-        var (left, right, activity) = _statusService.GetSnapshot();
+        var (left, right, activity, message) = _statusService.GetSnapshot();
         var hintText = string.Join(" | ", left.Select(FormatStatusHint));
-        var statusText = activity == null || string.IsNullOrEmpty(hintText)
-            ? activity?.Text ?? hintText
-            : $"{activity.Text} | {hintText}";
+        var primaryText = activity?.Text ?? message?.Text;
+        var statusText = string.IsNullOrEmpty(primaryText) || string.IsNullOrEmpty(hintText)
+            ? primaryText ?? hintText
+            : $"{primaryText} | {hintText}";
 
         ImGui.Separator();
         if (ImGuiX.BeginChild("StatusBar", Vector2.Zero, ImGuiChildFlags.None, ImGuiWindowFlags.NoScrollbar))

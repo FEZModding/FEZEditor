@@ -17,6 +17,10 @@ public class StatusService : IDisposable
 
     private long _activityId;
 
+    private readonly Lock _messageLock = new();
+
+    private StatusMessage? _currentMessage;
+
     public StatusService(Game game)
     {
         _storageService = game.GetService<AppStorageService>();
@@ -40,6 +44,17 @@ public class StatusService : IDisposable
             activity = _currentActivity;
         }
 
+        StatusMessage? message;
+        lock (_messageLock)
+        {
+            if (_currentMessage != null && _currentMessage.ExpiresAt <= DateTime.UtcNow)
+            {
+                _currentMessage = null;
+            }
+
+            message = _currentMessage;
+        }
+
         var hatStatus = string.IsNullOrWhiteSpace(_storageService.HatLauncherPath)
             ? "Not configured"
             : File.Exists(_storageService.HatLauncherPath)
@@ -52,7 +67,7 @@ public class StatusService : IDisposable
             new("", $"{FezEditor.Version} ({FezEditor.Commit})")
         };
 
-        return new StatusSnapshot(_hints.ToArray(), appStatus, activity);
+        return new StatusSnapshot(_hints.ToArray(), appStatus, activity, message);
     }
 
     public StatusActivityHandle BeginActivity(string text, float? progress = null)
@@ -62,6 +77,14 @@ public class StatusService : IDisposable
             var id = ++_activityId;
             _currentActivity = new StatusActivity(text, NormalizeProgress(progress));
             return new StatusActivityHandle(this, id);
+        }
+    }
+
+    public void ShowMessage(string text, TimeSpan duration)
+    {
+        lock (_messageLock)
+        {
+            _currentMessage = new StatusMessage(text, DateTime.UtcNow + duration);
         }
     }
 
@@ -101,6 +124,11 @@ public class StatusService : IDisposable
             _currentActivity = null;
             _activityId++;
         }
+
+        lock (_messageLock)
+        {
+            _currentMessage = null;
+        }
     }
 }
 
@@ -109,9 +137,12 @@ public sealed record StatusHint(string Binding, string Label);
 public sealed record StatusSnapshot(
     IReadOnlyList<StatusHint> Left,
     IReadOnlyList<StatusHint> Right,
-    StatusActivity? Activity);
+    StatusActivity? Activity,
+    StatusMessage? Message);
 
 public sealed record StatusActivity(string Text, float? Progress);
+
+public sealed record StatusMessage(string Text, DateTime ExpiresAt);
 
 public sealed class StatusActivityHandle : IDisposable
 {

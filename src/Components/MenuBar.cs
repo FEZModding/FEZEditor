@@ -29,6 +29,10 @@ public class MenuBar : DrawableGameComponent
 
     private readonly ImGuiService _imguiService;
 
+    private readonly StatusService _statusService;
+
+    private string? _lastModResolutionNoticeRoot;
+
     private MainLayout _mainLayout = null!;
 
     private FileBrowser _fileBrowser = null!;
@@ -42,6 +46,7 @@ public class MenuBar : DrawableGameComponent
         _inputService = game.GetService<InputService>();
         _storageService = game.GetService<AppStorageService>();
         _imguiService = game.GetService<ImGuiService>();
+        _statusService = game.GetService<StatusService>();
         _resourceService.ProviderChanged += OnProviderChanged;
         _resourceService.ModOpenedFirstTime += OnModOpenedFirstTime;
     }
@@ -57,18 +62,33 @@ public class MenuBar : DrawableGameComponent
 
     private void OnProviderChanged()
     {
-        if (!_resourceService.HasNoProvider)
+        if (_resourceService.HasNoProvider)
         {
-            _storageService.PruneRecentFiles(_resourceService.RootPath, _resourceService.Exists);
+            _lastModResolutionNoticeRoot = null;
+            return;
+        }
+
+        _storageService.PruneRecentFiles(_resourceService.RootPath, _resourceService.Exists);
+        var resolution = _resourceService.ModResolution;
+        if (resolution == null || _lastModResolutionNoticeRoot == _resourceService.RootPath)
+        {
+            return;
+        }
+
+        _lastModResolutionNoticeRoot = _resourceService.RootPath;
+        if (resolution is ModDirectoryResolution.Redirected)
+        {
+            ShowStatusNotice("Mod root selected: opened the Assets directory inside the selected mod");
+        }
+        else if (resolution is ModDirectoryResolution.Created)
+        {
+            ShowStatusNotice("Assets directory created and opened inside the selected mod");
         }
     }
 
     private void OnModOpenedFirstTime()
     {
-        _confirmWindow.Title = "Mod assets opened";
-        _confirmWindow.Text = "You can add or manage references at any time\nvia Editor > Manage References.";
-        _confirmWindow.ConfirmButtonText = "Ok";
-        _confirmWindow.DenyButtonText = "";
+        ShowStatusNotice("Mod assets opened. Manage references via Editor > Manage References");
     }
 
     protected override void LoadContent()
@@ -304,10 +324,11 @@ public class MenuBar : DrawableGameComponent
 
         _confirmWindow.Text = "You have unsaved changes. Close the file?";
         _confirmWindow.Title = "Confirm Closing";
-        _confirmWindow.Confirmed = () =>
-        {
-            _editorService.CloseActiveEditor();
-        };
+        _confirmWindow.ConfirmButtonText = "Yes";
+        _confirmWindow.DenyButtonText = "No";
+        _confirmWindow.Confirmed = () => _editorService.CloseActiveEditor();
+        _confirmWindow.Denied = null;
+        _confirmWindow.Closed = null;
     }
 
     private void ShowCloseAllDialog()
@@ -322,12 +343,16 @@ public class MenuBar : DrawableGameComponent
 
         _confirmWindow.Text = "You have unsaved changes. Close all files?";
         _confirmWindow.Title = "Confirm Closing All";
+        _confirmWindow.ConfirmButtonText = "Yes";
+        _confirmWindow.DenyButtonText = "No";
         _confirmWindow.Confirmed = () =>
         {
             _resourceService.CloseProvider();
             _editorService.CloseAllEditors();
             _editorService.OpenEditor(new WelcomeSplash(Game));
         };
+        _confirmWindow.Denied = null;
+        _confirmWindow.Closed = null;
     }
 
     private void ShowQuitDialog()
@@ -340,10 +365,11 @@ public class MenuBar : DrawableGameComponent
 
         _confirmWindow.Text = "You have unsaved changes. Quit the editor?";
         _confirmWindow.Title = "Confirm Quitting";
-        _confirmWindow.Confirmed = () =>
-        {
-            Game.Exit();
-        };
+        _confirmWindow.ConfirmButtonText = "Yes";
+        _confirmWindow.DenyButtonText = "No";
+        _confirmWindow.Confirmed = () => Game.Exit();
+        _confirmWindow.Denied = null;
+        _confirmWindow.Closed = null;
     }
 
     private void SetHatLauncherPath(string[] files)
@@ -353,5 +379,10 @@ public class MenuBar : DrawableGameComponent
         {
             _storageService.HatLauncherPath = path;
         }
+    }
+
+    private void ShowStatusNotice(string text)
+    {
+        _statusService.ShowMessage(text, TimeSpan.FromSeconds(5));
     }
 }

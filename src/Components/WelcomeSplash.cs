@@ -34,11 +34,14 @@ public class WelcomeSplash : EditorComponent
 
     private readonly ResourceService _resourceService;
 
+    private readonly StatusService _statusService;
+
     public WelcomeSplash(Game game) : base(game, "Welcome!")
     {
         _appStorageService = game.GetService<AppStorageService>();
         _editorService = game.GetService<EditorService>();
         _resourceService = game.GetService<ResourceService>();
+        _statusService = game.GetService<StatusService>();
     }
 
     public override void LoadContent()
@@ -255,8 +258,26 @@ public class WelcomeSplash : EditorComponent
 
     private void OpenMod(string[] files)
     {
-        var modPath = files.FirstOrDefault()!;
-        var provider = new ModResourceProvider(new DirectoryInfo(modPath), _appStorageService);
+        var modPath = files.FirstOrDefault();
+        if (string.IsNullOrEmpty(modPath))
+        {
+            return;
+        }
+
+        ModResourceProvider provider;
+        try
+        {
+            provider = new ModResourceProvider(new DirectoryInfo(modPath), _appStorageService);
+        }
+        catch (DirectoryNotFoundException)
+        {
+            Logger.Warning("Invalid mod directory selected: {Path}", modPath);
+            _statusService.ShowMessage(
+                "Invalid mod directory: select a folder containing Metadata.xml or its Assets directory",
+                TimeSpan.FromSeconds(5));
+            return;
+        }
+
         if (provider.References.Count < 1)
         {
             var options = new FileDialog.Options

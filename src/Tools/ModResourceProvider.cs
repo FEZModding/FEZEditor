@@ -11,6 +11,8 @@ internal class ModResourceProvider : IResourceProvider
 
     public string RootPath => _inner.RootPath;
 
+    public ModDirectoryResolution Resolution { get; }
+
     public IEnumerable<ResourceEntry> Entries => _inner.Entries.Union(_referenceEntries);
 
     public IEnumerable<ResourceEntry> VirtualEntries => _inner.Entries.Concat(_referenceVirtualEntries);
@@ -31,10 +33,17 @@ internal class ModResourceProvider : IResourceProvider
 
     public ModResourceProvider(DirectoryInfo dir, AppStorageService storage)
     {
-        _inner = new DirResourceProvider(dir);
+        var resolution = ModDirectoryResolution.Resolve(dir);
+        if (resolution is ModDirectoryResolution.Invalid invalid)
+        {
+            throw new DirectoryNotFoundException(invalid.Original.FullName);
+        }
+
+        Resolution = resolution;
+        _inner = new DirResourceProvider(resolution.AssetsDirectory);
         _storage = storage;
 
-        var savedPaths = storage.GetReferenceProviders(dir.FullName);
+        var savedPaths = storage.GetReferenceProviders(_inner.RootPath);
         if (savedPaths.Count > 0)
         {
             LoadReferences(SortPakPaths(savedPaths.Where(p => File.Exists(p) || Directory.Exists(p))));

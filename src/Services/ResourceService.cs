@@ -55,6 +55,17 @@ public class ResourceService : IDisposable
         }
     }
 
+    public ModDirectoryResolution? ModResolution
+    {
+        get
+        {
+            lock (_providerLock)
+            {
+                return _provider is ModResourceProvider mod ? mod.Resolution : null;
+            }
+        }
+    }
+
     public IEnumerable<string> Files
     {
         get
