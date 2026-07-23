@@ -1,5 +1,53 @@
 # Changelog
 
+## 2026.07 - 2026-07-23
+
+Fezzing Further!
+
+#### Features
+
+- `EddyEditor`: Launch levels through the HAT modloader (available from commit `b462ec2`)
+- `EddyEditor`: Reworked asset and instance browsers with filtering, zoom, and faster large-list rendering
+- `FileBrowser`: Directory display and creation, including empty directories
+- `FileBrowser`: FEZ asset icons for PAK contents
+- Automatic generation and centralized caching of missing or stale thumbnails
+- Mod directory detection and automatic `Assets` directory creation
+
+#### Fixes
+
+- `EddyEditor`: Trile editing and visualization on overlap layers
+- `EddyEditor`: Script fields, trailing arguments, nullable NPC properties, and path controls
+- `EddyEditor`: Editing newly created trile-group paths
+- `EddyEditor`: Paint ghost appearance and no-geometry trile collision rendering
+- `EddyEditor`: Browser scrolling with scaled UI
+- `EddyEditor`: Faraway preview capture and export scaling
+- `EddyEditor`: Background-plane clipping and hover detection
+- `EddyEditor`: Gizmo drag history and rendering lag
+- `EditorService`: Open-file deletion and disposal after service teardown
+- `FileBrowser`: Unsupported assets and reliable path parsing
+- `JadeEditor`: Map icon actor destruction order
+- `MenuBar`: ImGui ID collision and current asset icon
+- `RenderingService`: Empty multi-mesh crashes
+- `Thumbnails`: Async enumeration and per-asset failure handling
+- Backbuffer sizing when launched unfocused
+- ImGui child-window cleanup
+- Unhandled exception logging
+
+#### Changes
+
+- `EddyEditor`: System-based architecture with the level as the source of truth
+- `EddyEditor`: Faraway previewer integrated into the editor lifecycle
+- `History`: Simplified tracking with before/after change notifications
+- `StatusBar`: Dedicated component and refactored status reporting
+- Level names populated from name files
+- Shared `GraphicsDeviceManager` and standard Serilog logger creation
+- Reduced face-orientation allocations and proper asset bundle disposal
+- Modernized .NET project layout
+
+#### Build
+
+- Updated `ImGui.NET` and native cimgui libraries to `1.91.6.1`
+
 ## 2026.06.1 - 2026-06-16
 
 #### Fixes
