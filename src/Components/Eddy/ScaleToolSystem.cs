@@ -19,29 +19,50 @@ public class ScaleToolSystem : EddySystem
 
     public override void Update()
     {
-        if (Eddy is { OverlapIndex: > 0, Selected: SelectionState.Trile or SelectionState.TrileGroup })
-        {
-            return;
-        }
-
         if (Eddy.Tool is not ToolState.Scale tool)
         {
             return;
         }
 
-        switch (Eddy.Selected)
+        // Overlapped triles cannot be scaled, but the tool still handles selection input
+        if (Eddy is not { OverlapIndex: > 0, Selected: SelectionState.Trile or SelectionState.TrileGroup })
         {
-            case SelectionState.Trile triles:
-                UpdateTrileScale(tool, triles);
-                break;
+            switch (Eddy.Selected)
+            {
+                case SelectionState.Trile triles:
+                    UpdateTrileScale(tool, triles);
+                    break;
 
-            case SelectionState.TrileGroup trileGroup:
-                UpdateTrileGroupScale(tool, trileGroup);
-                break;
+                case SelectionState.TrileGroup trileGroup:
+                    UpdateTrileGroupScale(tool, trileGroup);
+                    break;
 
-            case SelectionState.Instance instances:
-                UpdateInstanceScale(tool, instances.Selected);
-                break;
+                case SelectionState.Instance instances:
+                    UpdateInstanceScale(tool, instances.Selected);
+                    break;
+            }
+        }
+
+        // Keep an active transform intact until its gizmo drag has finished
+        if (ImGui.IsKeyPressed(ImGuiKey.Escape))
+        {
+            if (tool.HistoryScope is null)
+            {
+                Eddy.Tool = new ToolState.Select();
+            }
+
+            return;
+        }
+
+        // Only an unhandled click on empty viewport space clears the selection
+        if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) &&
+            !ImGui.GetIO().KeyShift &&
+            Eddy.Frame.AllowsSelection &&
+            Eddy.Hovered is null &&
+            !_gizmo.IsActive)
+        {
+            Eddy.Selected = new SelectionState.Empty();
+            Eddy.Tool = new ToolState.Select();
         }
     }
 

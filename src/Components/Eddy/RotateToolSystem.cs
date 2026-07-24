@@ -2,6 +2,7 @@ using FezEditor.Actors;
 using FezEditor.Tools;
 using FEZRepacker.Core.Definitions.Game.Common;
 using FEZRepacker.Core.Definitions.Game.Level;
+using ImGuiNET;
 using Microsoft.Xna.Framework;
 
 namespace FezEditor.Components.Eddy;
@@ -22,19 +23,38 @@ public class RotateToolSystem : EddySystem
             return;
         }
 
+        var gizmoCapturedMouse = false;
         switch (Eddy.Selected)
         {
             case SelectionState.Trile triles:
-                UpdateTrileRotate(triles);
+                gizmoCapturedMouse = UpdateTrileRotate(triles);
                 break;
 
             case SelectionState.TrileGroup trileGroup:
-                UpdateTrileGroupRotate(trileGroup);
+                gizmoCapturedMouse = UpdateTrileGroupRotate(trileGroup);
                 break;
 
             case SelectionState.Instance instances:
-                UpdateInstanceRotate(instances.Selected);
+                gizmoCapturedMouse = UpdateInstanceRotate(instances.Selected);
                 break;
+        }
+
+        if (ImGui.IsKeyPressed(ImGuiKey.Escape))
+        {
+            Eddy.Tool = new ToolState.Select();
+            return;
+        }
+
+        // Only an unhandled click on empty viewport space clears the selection
+        if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) &&
+            !ImGui.GetIO().KeyShift &&
+            Eddy.Frame.AllowsSelection &&
+            Eddy.Hovered is null &&
+            !_gizmo.IsActive &&
+            !gizmoCapturedMouse)
+        {
+            Eddy.Selected = new SelectionState.Empty();
+            Eddy.Tool = new ToolState.Select();
         }
     }
 
@@ -53,7 +73,7 @@ public class RotateToolSystem : EddySystem
 
     #region Triles and Trile Groups
 
-    private void UpdateTrileGroupRotate(SelectionState.TrileGroup selection)
+    private bool UpdateTrileGroupRotate(SelectionState.TrileGroup selection)
     {
         var emplacements = new List<TrileEmplacement>();
         foreach (var groupId in selection.Selected)
@@ -73,21 +93,22 @@ public class RotateToolSystem : EddySystem
 
         if (emplacements.Count == 0)
         {
-            return;
+            return false;
         }
 
-        UpdateTrileRotate(new SelectionState.Trile(emplacements, FaceOrientation.Top, emplacements[0]));
+        return UpdateTrileRotate(new SelectionState.Trile(emplacements, FaceOrientation.Top, emplacements[0]));
     }
 
-    private void UpdateTrileRotate(SelectionState.Trile selection)
+    private bool UpdateTrileRotate(SelectionState.Trile selection)
     {
         if (selection.Selected.Count == 0)
         {
-            return;
+            return false;
         }
 
         var centroid = ComputeTrileCentroid(selection);
-        if (_gizmo.Rotate(centroid))
+        var gizmoCapturedMouse = _gizmo.Rotate(centroid);
+        if (gizmoCapturedMouse)
         {
             using (Eddy.History.BeginScope("Rotate Trile(s)"))
             {
@@ -100,6 +121,8 @@ public class RotateToolSystem : EddySystem
                 Eddy.Visualize(new InstanceId.PickableBounds());
             }
         }
+
+        return gizmoCapturedMouse;
     }
 
     private Vector3 ComputeTrileCentroid(SelectionState.Trile selection)
@@ -137,16 +160,17 @@ public class RotateToolSystem : EddySystem
 
     #region Instances
 
-    private void UpdateInstanceRotate(HashSet<InstanceId> selection)
+    private bool UpdateInstanceRotate(HashSet<InstanceId> selection)
     {
         var rotatable = selection.Where(ii => TryGetInstancePosition(ii, out _)).ToList();
         if (rotatable.Count == 0)
         {
-            return;
+            return false;
         }
 
         var centroid = ComputeInstanceCentroid(rotatable);
-        if (_gizmo.Rotate(centroid))
+        var gizmoCapturedMouse = _gizmo.Rotate(centroid);
+        if (gizmoCapturedMouse)
         {
             using (Eddy.History.BeginScope("Rotate Instance(s)"))
             {
@@ -159,6 +183,8 @@ public class RotateToolSystem : EddySystem
                 }
             }
         }
+
+        return gizmoCapturedMouse;
     }
 
     private Vector3 ComputeInstanceCentroid(IReadOnlyCollection<InstanceId> instances)

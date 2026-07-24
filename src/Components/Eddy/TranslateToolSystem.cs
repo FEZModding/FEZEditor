@@ -41,6 +41,28 @@ public class TranslateToolSystem : EddySystem
                 UpdatePathTranslate(tool, path);
                 break;
         }
+
+        // Keep an active transform intact until its gizmo drag has finished
+        if (ImGui.IsKeyPressed(ImGuiKey.Escape))
+        {
+            if (tool.HistoryScope is null)
+            {
+                Eddy.Tool = new ToolState.Select();
+            }
+
+            return;
+        }
+
+        // Only an unhandled click on empty viewport space clears the selection
+        if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) &&
+            !ImGui.GetIO().KeyShift &&
+            Eddy.Frame.AllowsSelection &&
+            Eddy.Hovered is null &&
+            !_gizmo.IsActive)
+        {
+            Eddy.Selected = new SelectionState.Empty();
+            Eddy.Tool = new ToolState.Select();
+        }
     }
 
     public override bool IsToolEnabled(ToolState tool)
