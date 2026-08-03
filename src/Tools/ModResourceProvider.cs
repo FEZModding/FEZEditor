@@ -112,7 +112,7 @@ internal class ModResourceProvider : IResourceProvider
                     _referenceVirtualEntries.Add(virtualEntry);
                 }
 
-                _referenceLookup[entryLookupKey] = reference;
+                _referenceLookup[entry.Path] = reference;
             }
         }
     }
