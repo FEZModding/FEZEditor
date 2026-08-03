@@ -244,11 +244,6 @@ public class ResourceExtractor : DrawableGameComponent
             ct.ThrowIfCancellationRequested();
 
             var outputDir = _directoryPath;
-            if (file.EndsWith("Music.pak"))
-            {
-                outputDir = Path.Combine(_directoryPath, "Music");
-            }
-
             if (!Directory.Exists(outputDir))
             {
                 Directory.CreateDirectory(outputDir);
