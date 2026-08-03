@@ -58,6 +58,8 @@ public class BackgroundPlaneSystem : EddySystem
             var asset = Resources.Load<object>("Background Planes/" + bgPlane.TextureName);
             mesh = actor.AddComponent<BackgroundPlaneMesh>();
             mesh.Visualize(asset);
+
+            bgPlane.Animated = asset is RAnimatedTexture;
         }
 
         mesh!.Camera = _camera;
@@ -174,11 +176,6 @@ public class BackgroundPlaneSystem : EddySystem
             _filterScope?.Dispose();
             _filterScope = null;
         }
-
-        var animated = backgroundPlaneMesh.Animated;
-        ImGui.BeginDisabled();
-        ImGui.Checkbox("Animated", ref animated);
-        ImGui.EndDisabled();
 
         var doublesided = bgPlane.Doublesided;
         if (ImGui.Checkbox("Double Sided", ref doublesided))
