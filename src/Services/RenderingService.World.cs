@@ -82,4 +82,9 @@ public partial class RenderingService
     {
         return TryGetResource(_worlds, world, out var wd) && (wd?.Camera.IsValid ?? false);
     }
+
+    public bool WorldIsValid(Rid world)
+    {
+        return TryGetResource(_worlds, world, out var wd) && wd != null;
+    }
 }

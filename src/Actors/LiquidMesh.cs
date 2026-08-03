@@ -71,7 +71,10 @@ public class LiquidMesh : ActorComponent
     public override void Dispose()
     {
         GC.SuppressFinalize(this);
-        _rendering.WorldSetFogType(_world, FogType.None);
+        if (_rendering.WorldIsValid(_world))
+        {
+            _rendering.WorldSetFogType(_world, FogType.None);
+        }
         _rendering.FreeRid(_mesh);
         _rendering.FreeRid(_material);
         _rendering.FreeRid(_overlay);
