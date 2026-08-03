@@ -98,19 +98,21 @@ internal class ModResourceProvider : IResourceProvider
                     _ => throw new InvalidOperationException()
                 };
 
-                if (entryIndices.TryGetValue(entry.Path, out var index))
+                var entryLookupKey = entry.Path + (entry is ResourceEntry.Directory ? "/" : "");
+
+                if (entryIndices.TryGetValue(entryLookupKey, out var index))
                 {
                     _referenceEntries[index] = entry;
                     _referenceVirtualEntries[index] = virtualEntry;
                 }
                 else
                 {
-                    entryIndices[entry.Path] = _referenceEntries.Count;
+                    entryIndices[entryLookupKey] = _referenceEntries.Count;
                     _referenceEntries.Add(entry);
                     _referenceVirtualEntries.Add(virtualEntry);
                 }
 
-                _referenceLookup[entry.Path] = reference;
+                _referenceLookup[entryLookupKey] = reference;
             }
         }
     }
