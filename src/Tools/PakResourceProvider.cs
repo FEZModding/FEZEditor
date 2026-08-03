@@ -153,7 +153,7 @@ internal class PakResourceProvider : IResourceProvider
             if (extension != ".xnb")
             {
                 _records[key] = extension;
-                return;
+                continue;
             }
 
             try
