@@ -1,4 +1,5 @@
-﻿using FEZRepacker.Core.Definitions.Game.Common;
+﻿using FezEditor.Structure;
+using FEZRepacker.Core.Definitions.Game.Common;
 using Microsoft.Xna.Framework;
 
 namespace FezEditor.Tools;
@@ -78,6 +79,19 @@ public static class FaceExtensions
             FaceOrientation.Down => Vector3.Down,
             FaceOrientation.Left => Vector3.Left,
             _ => Vector3.Right
+        };
+    }
+
+    public static Vector3I AsIntVector(this FaceOrientation face)
+    {
+        return face switch
+        {
+            FaceOrientation.Back => Vector3I.Forward,
+            FaceOrientation.Front => Vector3I.Backward,
+            FaceOrientation.Top => Vector3I.Up,
+            FaceOrientation.Down => Vector3I.Down,
+            FaceOrientation.Left => Vector3I.Left,
+            _ => Vector3I.Right
         };
     }
 

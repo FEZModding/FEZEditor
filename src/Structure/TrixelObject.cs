@@ -99,8 +99,12 @@ public class TrixelObject
 
     public bool IsMissing(Vector3I emplacement)
     {
-        var i = BitIndex(emplacement);
-        return (MissingTrixels[i >> 3] & (1 << (i & 7))) != 0;
+        return IsMissing(BitIndex(emplacement));
+    }
+
+    private bool IsMissing(int bitIndex)
+    {
+        return (MissingTrixels[bitIndex >> 3] & (1 << (bitIndex & 7))) != 0;
     }
 
     public void SetMissing(Vector3I emplacement, bool missing)
@@ -160,112 +164,52 @@ public class TrixelObject
 
     private IEnumerable<TrixelFace> RebuildVisualFaces()
     {
-        var w = Width;
-        var h = Height;
-        var d = Depth;
+        var trixelFaces = new List<TrixelFace>();
 
-        // Boundary faces: trixels on the 6 outer surfaces of the bounding box.
-        // These are always visible (no neighbor on the outside), so only check if trixel exists.
+        var size = new Vector3I(Width, Height, Depth);
 
-        // Front (z = d-1, normal = -Z) / Back (z = 0, normal = +Z)
-        for (var x = 0; x < w; x++)
+        FaceOrientation[] axes = [FaceOrientation.Right, FaceOrientation.Top, FaceOrientation.Front];
+        foreach (var orientation in axes)
         {
-            for (var y = 0; y < h; y++)
-            {
-                if (!IsMissing(new Vector3I(x, y, d - 1)))
-                {
-                    yield return new TrixelFace(new Vector3I(x, y, d - 1), FaceOrientation.Front);
-                }
+            var oppositeOrientation = orientation.GetOpposite();
 
-                if (!IsMissing(new Vector3I(x, y, 0)))
+            var direction = orientation.AsIntVector();
+            var directionIndexDiff = BitIndex(direction);
+
+            var tangent = Vector3I.Abs(orientation.GetTangent().AsIntVector());
+            var bitangent = Vector3I.Abs(orientation.GetBitangent().AsIntVector());
+
+            var tangentLength = Vector3I.Dot(size, tangent);
+            var bitangentLength = Vector3I.Dot(size, bitangent);
+            var directionLength = Vector3I.Dot(size, direction);
+
+            for (var x = 0; x < tangentLength; x++)
+            {
+                for (var y = 0; y < bitangentLength; y++)
                 {
-                    yield return new TrixelFace(new Vector3I(x, y, 0), FaceOrientation.Back);
+                    var lineStart = tangent * x + bitangent * y;
+                    var initialPositionIndex = BitIndex(tangent * x + bitangent * y);
+
+                    var lastTrixelMissing = true;
+                    for (var z = 0; z <= directionLength; z++)
+                    {
+                        var trixelIndex = initialPositionIndex + directionIndexDiff * z;
+                        var trixelMissing = z >= directionLength || IsMissing(trixelIndex);
+
+                        if (lastTrixelMissing != trixelMissing)
+                        {
+                            var emplacement = lineStart + direction * (trixelMissing ? z - 1 : z);
+                            var faceOrientation = trixelMissing ? orientation : oppositeOrientation;
+                            trixelFaces.Add(new TrixelFace(emplacement, faceOrientation));
+                        }
+
+                        lastTrixelMissing = trixelMissing;
+                    }
                 }
             }
         }
 
-        // Right (x = w-1, normal = +X) / Left (x = 0, normal = -X)
-        for (var y = 0; y < h; y++)
-        {
-            for (var z = 0; z < d; z++)
-            {
-                if (!IsMissing(new Vector3I(w - 1, y, z)))
-                {
-                    yield return new TrixelFace(new Vector3I(w - 1, y, z), FaceOrientation.Right);
-                }
-
-                if (!IsMissing(new Vector3I(0, y, z)))
-                {
-                    yield return new TrixelFace(new Vector3I(0, y, z), FaceOrientation.Left);
-                }
-            }
-        }
-
-        // Top (y = h-1, normal = +Y) / Down (y = 0, normal = -Y)
-        for (var x = 0; x < w; x++)
-        {
-            for (var z = 0; z < d; z++)
-            {
-                if (!IsMissing(new Vector3I(x, h - 1, z)))
-                {
-                    yield return new TrixelFace(new Vector3I(x, h - 1, z), FaceOrientation.Top);
-                }
-
-                if (!IsMissing(new Vector3I(x, 0, z)))
-                {
-                    yield return new TrixelFace(new Vector3I(x, 0, z), FaceOrientation.Down);
-                }
-            }
-        }
-
-        // Inner faces: exposed when a missing trixel is adjacent to an existing one.
-        // For each missing trixel, check all 6 neighbors - if the neighbor exists and
-        // is within bounds, emit a face on that neighbor pointing toward the void.
-        // The face orientation is the direction FROM the neighbor TOWARD the missing trixel
-        for (var x = 0; x < w; x++)
-        {
-            for (var y = 0; y < h; y++)
-            {
-                for (var z = 0; z < d; z++)
-                {
-                    var emplacement = new Vector3I(x, y, z);
-                    if (!IsMissing(emplacement))
-                    {
-                        continue;
-                    }
-
-                    if (z + 1 < d && !IsMissing(new Vector3I(x, y, z + 1)))
-                    {
-                        yield return new TrixelFace(new Vector3I(x, y, z + 1), FaceOrientation.Back);
-                    }
-
-                    if (z - 1 >= 0 && !IsMissing(new Vector3I(x, y, z - 1)))
-                    {
-                        yield return new TrixelFace(new Vector3I(x, y, z - 1), FaceOrientation.Front);
-                    }
-
-                    if (x + 1 < w && !IsMissing(new Vector3I(x + 1, y, z)))
-                    {
-                        yield return new TrixelFace(new Vector3I(x + 1, y, z), FaceOrientation.Left);
-                    }
-
-                    if (x - 1 >= 0 && !IsMissing(new Vector3I(x - 1, y, z)))
-                    {
-                        yield return new TrixelFace(new Vector3I(x - 1, y, z), FaceOrientation.Right);
-                    }
-
-                    if (y + 1 < h && !IsMissing(new Vector3I(x, y + 1, z)))
-                    {
-                        yield return new TrixelFace(new Vector3I(x, y + 1, z), FaceOrientation.Down);
-                    }
-
-                    if (y - 1 >= 0 && !IsMissing(new Vector3I(x, y - 1, z)))
-                    {
-                        yield return new TrixelFace(new Vector3I(x, y - 1, z), FaceOrientation.Top);
-                    }
-                }
-            }
-        }
+        return trixelFaces;
     }
 
     private class Base64Converter : JsonConverter<byte[]>

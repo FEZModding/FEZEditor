@@ -121,6 +121,16 @@ public struct Vector3I : IEquatable<Vector3I>, IComparable<Vector3I>
         );
     }
 
+    public static int Dot(Vector3I lhs, Vector3I rhs)
+    {
+        return lhs.X * rhs.X + lhs.Y * rhs.Y + lhs.Z * rhs.Z;
+    }
+
+    public static Vector3I Abs(Vector3I vector)
+    {
+        return new Vector3I(Math.Abs(vector.X), Math.Abs(vector.Y), Math.Abs(vector.Z));
+    }
+
     public static bool operator ==(Vector3I lhs, Vector3I rhs)
     {
         return lhs.Equals(rhs);
