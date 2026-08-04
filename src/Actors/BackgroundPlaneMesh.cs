@@ -178,7 +178,7 @@ public class BackgroundPlaneMesh : ActorComponent, IPickable, ITinted
             var textureSize = new Vector2(_texture!.Width, _texture.Height);
             var frameTransform = Mathz.CreateTextureTransform(currentFrame.Rectangle.ToXna(), textureSize);
             textureTransform *= frameTransform;
-            animationFrame = new Vector4(frameTransform.M41, frameTransform.M42, frameTransform.M11, frameTransform.M22);
+            animationFrame = new Vector4(frameTransform.M31, frameTransform.M32, frameTransform.M11, frameTransform.M22);
         }
 
         if (Billboard)
