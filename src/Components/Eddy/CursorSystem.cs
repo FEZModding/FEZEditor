@@ -99,7 +99,7 @@ public sealed class CursorSystem : EddySystem
 
         var face = Eddy.Hovered is { Instance: InstanceId.Trile, Face: var fo } ? fo : FaceOrientation.Top;
         var center = instance.Position.ToXna() + new Vector3(0.5f);
-        var origin = center + (face.AsVector() * (0.5f + CursorMesh.OverlayOffset));
+        var origin = center + (face.AsVector() * 0.5f);
         var surface = MeshSurface.CreateFaceQuad(Vector3.One, origin, face);
         _cursor.SetHoverSurfaces([(surface, PrimitiveType.TriangleList)], HoverColor);
     }
@@ -112,7 +112,7 @@ public sealed class CursorSystem : EddySystem
             .Select(emplacement =>
             {
                 var center = Eddy.GetActiveTrile(emplacement)!.Position.ToXna() + new Vector3(0.5f);
-                var origin = center + (normal * (0.5f + CursorMesh.OverlayOffset));
+                var origin = center + (normal * 0.5f);
                 var surface = MeshSurface.CreateFaceQuad(Vector3.One, origin, face);
                 return (surface, PrimitiveType.TriangleList);
             });

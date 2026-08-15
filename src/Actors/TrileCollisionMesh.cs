@@ -10,7 +10,7 @@ namespace FezEditor.Actors;
 
 public class TrileCollisionMesh : ActorComponent
 {
-    private const float OverlayOversize = 1.025f;
+    private const float OverlayOversize = 1.0125f;
 
     private readonly List<InstanceData> _instances = new();
 

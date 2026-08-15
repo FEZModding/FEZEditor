@@ -10,7 +10,8 @@ namespace FezEditor.Actors;
 
 public sealed class CursorMesh : ActorComponent
 {
-    public const float OverlayOffset = 0.01f;
+    public const float CursorDepthBias = -0.001f;
+    public const float CollisionDepthBias = -0.0005f;
 
     private readonly RenderingService _rendering;
 
@@ -41,11 +42,13 @@ public sealed class CursorMesh : ActorComponent
         _rendering.MaterialAssignEffect(_hover.Material, _rendering.BasicEffect);
         _rendering.MaterialSetCullMode(_hover.Material, CullMode.None);
         _rendering.MaterialSetBlendMode(_hover.Material, BlendMode.AlphaBlend);
+        _rendering.MaterialSetDepthBias(_hover.Material, CursorDepthBias, 0.0f);
 
         _selection.Material = _rendering.MaterialCreate();
         _rendering.MaterialAssignEffect(_selection.Material, _rendering.BasicEffect);
         _rendering.MaterialSetCullMode(_selection.Material, CullMode.None);
         _rendering.MaterialSetBlendMode(_selection.Material, BlendMode.AlphaBlend);
+        _rendering.MaterialSetDepthBias(_selection.Material, CursorDepthBias, 0.0f);
 
         _hologram.Material = _rendering.MaterialCreate();
         _rendering.MaterialAssignEffect(_hologram.Material, _rendering.BasicEffectTextured);
@@ -53,6 +56,7 @@ public sealed class CursorMesh : ActorComponent
         _rendering.MaterialSetBlendMode(_hologram.Material, BlendMode.AlphaBlend);
         _rendering.MaterialSetDepthWrite(_hologram.Material, false);
         _rendering.MaterialSetAlbedo(_hologram.Material, Color.White with { A = 120 });
+        _rendering.MaterialSetDepthBias(_hologram.Material, CursorDepthBias, 0.0f);
 
         foreach (var collision in Enum.GetValues<CollisionType>())
         {
@@ -63,6 +67,7 @@ public sealed class CursorMesh : ActorComponent
             _rendering.MaterialSetDepthWrite(material, false);
             _rendering.MaterialSetAlbedo(material, Color.White with { A = 120 });
             _rendering.MaterialAssignBaseTexture(material, content.Load<Texture2D>($"Textures/{collision}"));
+            _rendering.MaterialSetDepthBias(material, CollisionDepthBias, 0.0f);
             _hologram.CollisionMaterials[collision] = material;
         }
     }
