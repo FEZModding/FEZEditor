@@ -268,6 +268,58 @@ public class MeshSurface
         };
     }
 
+    // Used for visualizing side collisions, face with two triangles extending to center of a box.
+    // Four of those from each side form a full box.
+    public static MeshSurface CreateFaceCakeSlice(Vector3 size, FaceOrientation face)
+    {
+        var normal = face.AsVector();
+        var right = face.RightVector();
+        var up = face.UpVector();
+        var center = normal * size / 2f;
+
+        var hr = right * size / 2f;
+        var hu = up * size / 2f;
+        var hf = normal * size / 2f;
+
+        return new MeshSurface
+        {
+            Vertices =
+            [
+                center - hr - hu,
+                center + hr - hu,
+                center - hr + hu,
+                center + hr + hu,
+                center - hu - hf,
+                center + hu - hf,
+            ],
+            Normals =
+            [
+                Vector3.Forward,
+                Vector3.Forward,
+                Vector3.Forward,
+                Vector3.Forward,
+                Vector3.Forward,
+                Vector3.Forward,
+            ],
+            TexCoords =
+            [
+                new Vector2(0, 1),
+                new Vector2(1, 1),
+                new Vector2(0, 0),
+                new Vector2(1, 0),
+                new Vector2(0.5f, 1),
+                new Vector2(0.5f, 0),
+            ],
+            Indices =
+            [
+                0, 2, 1,
+                2, 3, 1,
+                0, 1, 4,
+                3, 2, 5,
+            ]
+        };
+    }
+
     public static MeshSurface CreateArrow(Vector3 axis, int sides, float shaftLength, float shaftRadius, float tipLength, float tipRadius)
     {
         axis = Vector3.Normalize(axis);

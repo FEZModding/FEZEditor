@@ -133,7 +133,7 @@ public class TrilesMesh : ActorComponent, IPickable
             var faces = new List<MeshSurface>(trile!.Faces.Count);
             foreach (var face in trile.Faces.Keys)
             {
-                var fallback = MeshSurface.CreateFaceQuad(_size, face);
+                var fallback = MeshSurface.CreateFaceCakeSlice(_size, face);
                 fallback.Translate(_offset / 2f);
                 faces.Add(fallback);
             }
