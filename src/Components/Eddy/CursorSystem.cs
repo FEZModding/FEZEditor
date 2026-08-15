@@ -148,7 +148,7 @@ public sealed class CursorSystem : EddySystem
         }
 
         var position = target.ToXna().ToVector3() + Mathz.EmplacementCenter;
-        var phi = (byte)(tool.RotationMode switch
+        var phi = (byte)(Eddy.TrilePaintRotationMode switch
         {
             PaintRotationMode.Fixed fixedRotation => fixedRotation.Phi,
             PaintRotationMode.Random randomRotation => randomRotation.LastPhi,

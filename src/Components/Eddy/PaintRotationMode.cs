@@ -1,4 +1,6 @@
-﻿namespace FezEditor.Components.Eddy;
+﻿using FezEditor.Tools;
+
+namespace FezEditor.Components.Eddy;
 
 public abstract record PaintRotationMode
 {
@@ -6,6 +8,7 @@ public abstract record PaintRotationMode
     {
         Copy => "Copy",
         Random => "Random",
+        Fixed f => $"{FaceExtensions.SidesOnly[f.Phi]} (Scroll)",
         _ => "Fixed"
     };
 

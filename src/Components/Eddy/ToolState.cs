@@ -46,7 +46,6 @@ public abstract record ToolState
     {
         public sealed record Trile(string AssetName, int Id) : Paint
         {
-            public PaintRotationMode RotationMode { get; set; } = new PaintRotationMode.Fixed(0);
             public HashSet<InstanceId> Stroke { get; } = new();
             public IDisposable? HistoryScope { get; set; }
             public (TrileEmplacement Anchor, TrileEmplacement Position, FaceOrientation Face)? ParkingSpot { get; set; }

@@ -17,17 +17,17 @@ public class TrilePaintToolSystem : EddySystem
 
         #region Update rotation of trile
 
-        if (tool.RotationMode is PaintRotationMode.Fixed @fixed &&
+        if (Eddy.TrilePaintRotationMode is PaintRotationMode.Fixed @fixed &&
             Input.CaptureScrollWheelDelta(out var scroll))
         {
             var delta = scroll > 0 ? 1 : -1;
             var phi = (byte)((@fixed.Phi + delta + 4) % 4);
-            tool.RotationMode = new PaintRotationMode.Fixed(phi);
+            Eddy.TrilePaintRotationMode = new PaintRotationMode.Fixed(phi);
         }
 
         if (ImGui.IsKeyPressed(ImGuiKey.R))
         {
-            tool.RotationMode = tool.RotationMode switch
+            Eddy.TrilePaintRotationMode = Eddy.TrilePaintRotationMode switch
             {
                 PaintRotationMode.Fixed fixedRotation => new PaintRotationMode.Random(fixedRotation.Phi),
                 PaintRotationMode.Random => new PaintRotationMode.Copy(),
@@ -52,7 +52,7 @@ public class TrilePaintToolSystem : EddySystem
             Status.AddHint("Ctrl+LMB", "Erase");
         }
 
-        Status.AddHint("R", $"Rotate: {tool.RotationMode.DisplayName}");
+        Status.AddHint("R", $"Rotate: {Eddy.TrilePaintRotationMode.DisplayName}");
 
         #endregion
 
@@ -165,7 +165,7 @@ public class TrilePaintToolSystem : EddySystem
             return;
         }
 
-        var phi = ResolvePhi(tool, instance);
+        var phi = ResolvePhi(instance);
         if (instance.TrileId == tool.Id && instance.PhiLight == phi)
         {
             return;
@@ -198,7 +198,7 @@ public class TrilePaintToolSystem : EddySystem
             return;
         }
 
-        var phi = ResolvePhi(tool, sourceTrile);
+        var phi = ResolvePhi(sourceTrile);
         var instance = new TrileInstance
         {
             TrileId = tool.Id,
@@ -245,7 +245,7 @@ public class TrilePaintToolSystem : EddySystem
         }
 
         var oldOverlap = GetOverlap(main, slot);
-        var phi = ResolvePhi(tool, oldOverlap ?? main);
+        var phi = ResolvePhi(oldOverlap ?? main);
         if (oldOverlap is { TrileId: var oldId, PhiLight: var oldPhi } && oldId == tool.Id && oldPhi == phi)
         {
             return;
@@ -309,16 +309,16 @@ public class TrilePaintToolSystem : EddySystem
         SyncOverlap(emplacement, slot, before, null);
     }
 
-    private static byte ResolvePhi(ToolState.Paint.Trile tool, TrileInstance? source)
+    private byte ResolvePhi(TrileInstance? source)
     {
-        switch (tool.RotationMode)
+        switch (Eddy.TrilePaintRotationMode)
         {
             case PaintRotationMode.Fixed fixedRotation:
                 return fixedRotation.Phi;
 
             case PaintRotationMode.Random randomRotation:
                 var phi = randomRotation.LastPhi;
-                tool.RotationMode = randomRotation with { LastPhi = (byte)Random.Shared.Next(4) };
+                Eddy.TrilePaintRotationMode = randomRotation with { LastPhi = (byte)Random.Shared.Next(4) };
                 return phi;
 
             case PaintRotationMode.Copy:

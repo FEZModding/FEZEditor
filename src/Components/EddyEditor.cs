@@ -78,6 +78,8 @@ public class EddyEditor : EditorComponent
 
     public (InstanceId.Trile Trile, FaceOrientation Face)? HoveredTrile { get; set; }
 
+    public PaintRotationMode TrilePaintRotationMode { get; set; } = new PaintRotationMode.Fixed(0);
+
     public AssetEntry? SelectedEntry { get; private set; }
 
     public IReadOnlyList<AssetEntry> RecentEntries => _recentEntries;
