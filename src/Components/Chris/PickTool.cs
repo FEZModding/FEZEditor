@@ -137,7 +137,7 @@ internal class PickTool : TextureTool
         }
 
         var face = Chris.Hit!.Value;
-        var picked = GetTrixelColor(face);
+        var picked = Chris.Obj.GetTrixelColor(face);
         Chris.PaintColor = picked;
         PushRecentColor(new Color(picked.R, picked.G, picked.B, byte.MaxValue));
     }

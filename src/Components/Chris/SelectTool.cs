@@ -17,6 +17,8 @@ internal class SelectTool : BaseTool
 
     private readonly HashSet<TrixelFace> _lastSelection = new();
 
+    private bool _fullFaceSelectionActive;
+
     public SelectTool(Game game, IChrisEditor chris) : base(game, chris)
     {
     }
@@ -76,11 +78,25 @@ internal class SelectTool : BaseTool
             }
         }
 
+        if (ImGui.GetIO().KeyShift && Chris.Hit.HasValue)
+        {
+            _fullFaceSelectionActive = true;
+            if (!Chris.SelectedFaces.Contains(Chris.Hit.Value))
+            {
+                ApplySelection(Chris.Obj.FloodFillFaces(Chris.Hit.Value, _ => true));
+            }
+        }
+        else if (_fullFaceSelectionActive)
+        {
+            _fullFaceSelectionActive = false;
+            Chris.SelectedFaces.Clear();
+        }
+
         if (!ImGui.IsMouseDown(ImGuiMouseButton.Left))
         {
             _dragStartFace = null;
         }
-        else if (Chris.Hit.HasValue && _dragStartFace.HasValue)
+        else if (Chris.Hit.HasValue && _dragStartFace.HasValue && !_fullFaceSelectionActive)
         {
             var min = Vector3I.Min(_dragStartFace.Value.Emplacement, Chris.Hit.Value.Emplacement);
             var max = Vector3I.Max(_dragStartFace.Value.Emplacement, Chris.Hit.Value.Emplacement);
@@ -96,14 +112,16 @@ internal class SelectTool : BaseTool
                 }
             }
 
-            if (!result.SetEquals(Chris.SelectedFaces))
-            {
-                Chris.SelectedFaces.Clear();
-                foreach (var f in result)
-                {
-                    Chris.SelectedFaces.Add(f);
-                }
-            }
+            ApplySelection(result);
+        }
+    }
+
+    private void ApplySelection(HashSet<TrixelFace> result)
+    {
+        if (!result.SetEquals(Chris.SelectedFaces))
+        {
+            Chris.SelectedFaces.Clear();
+            Chris.SelectedFaces.UnionWith(result);
         }
     }
 

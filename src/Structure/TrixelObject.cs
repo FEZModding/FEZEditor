@@ -122,6 +122,87 @@ public class TrixelObject
         _visibleFaces = _visibleFaces.Marked();
     }
 
+    public Color GetTrixelColor(TrixelFace face)
+    {
+        var textureData = Texture.TextureData;
+        var idx = GetTrixelFaceTextureDataIndex(face);
+
+        return new Color(
+            textureData[idx + 0],
+            textureData[idx + 1],
+            textureData[idx + 2],
+            textureData[idx + 3]
+        );
+    }
+
+    public int GetTrixelFaceTextureDataIndex(TrixelFace face)
+    {
+        var (lx, y) = face.Face switch
+        {
+            FaceOrientation.Front => (face.Emplacement.X, Height - 1 - face.Emplacement.Y),
+            FaceOrientation.Right => (Depth - 1 - face.Emplacement.Z, Height - 1 - face.Emplacement.Y),
+            FaceOrientation.Back => (Width - 1 - face.Emplacement.X, Height - 1 - face.Emplacement.Y),
+            FaceOrientation.Left => (face.Emplacement.Z, Height - 1 - face.Emplacement.Y),
+            FaceOrientation.Top => (face.Emplacement.X, face.Emplacement.Z),
+            FaceOrientation.Down => (face.Emplacement.X, Depth - 1 - face.Emplacement.Z),
+            _ => throw new InvalidOperationException()
+        };
+
+        var faceIndex = Array.IndexOf(FaceExtensions.NaturalOrder, face.Face);
+        var x = (faceIndex * Texture.Width / 6) + lx;
+        return ((y * Texture.Width) + x) * 4;
+    }
+
+    public HashSet<TrixelFace> FloodFillFaces(TrixelFace originFace, Func<TrixelFace, bool> includeFace)
+    {
+        var floodAxisX = new Vector3I(originFace.Face.GetTangent().AsVector());
+        var floodAxisY = new Vector3I(originFace.Face.GetBitangent().AsVector());
+        var floodAxisZ = new Vector3I(originFace.Face.AsVector());
+
+        Vector3I[] floodFillOffsets = [floodAxisX, floodAxisY, floodAxisX * -1, floodAxisY * -1];
+
+        var result = new HashSet<TrixelFace>();
+        var facesToExpandFrom = new HashSet<TrixelFace> { originFace };
+
+        while (facesToExpandFrom.Count > 0)
+        {
+            var next = new HashSet<TrixelFace>();
+            foreach (var face in facesToExpandFrom)
+            {
+                if (result.Contains(face))
+                {
+                    continue;
+                }
+
+                if (!SizeContains(face.Emplacement) || IsMissing(face.Emplacement))
+                {
+                    continue;
+                }
+
+                var coveringTrixel = face.Emplacement + floodAxisZ;
+                if (SizeContains(coveringTrixel) && !IsMissing(coveringTrixel))
+                {
+                    continue;
+                }
+
+                if (!includeFace(face))
+                {
+                    continue;
+                }
+
+                result.Add(face);
+                foreach (var offset in floodFillOffsets)
+                {
+                    next.Add(new TrixelFace(face.Emplacement + offset, face.Face));
+                }
+            }
+
+            facesToExpandFrom = next;
+        }
+
+        return result;
+    }
+
     private void ReallocateBitset(int oldW, int oldH, int oldD)
     {
         var w = Width;
