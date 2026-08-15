@@ -14,7 +14,7 @@ internal interface IChrisEditor
 
     TrixelFace? Hit { get; }
 
-    CursorMesh Cursor { get; }
+    TrixelCursorMesh Cursor { get; }
 
     TrixelsMesh Trixels { get; }
 

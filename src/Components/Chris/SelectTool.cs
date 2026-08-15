@@ -1,9 +1,7 @@
-using FezEditor.Actors;
 using FezEditor.Structure;
 using FezEditor.Tools;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 
 namespace FezEditor.Components.Chris;
 
@@ -15,6 +13,10 @@ internal class SelectTool : BaseTool
 
     private TrixelFace? _dragStartFace;
 
+    private TrixelFace? _lastHover;
+
+    private readonly HashSet<TrixelFace> _lastSelection = new();
+
     public SelectTool(Game game, IChrisEditor chris) : base(game, chris)
     {
     }
@@ -23,19 +25,36 @@ internal class SelectTool : BaseTool
     {
         if (Chris.CurrentTool == ChrisTool.Look)
         {
+            _lastHover = null;
+            _lastSelection.Clear();
+            Chris.Cursor.Clear();
             return;
-        }
-
-        if (Chris.Hit is not null)
-        {
-            var surface = BuildTrixelFaceQuad(Chris.Hit.Value);
-            Chris.Cursor.SetHoverSurfaces([(surface, PrimitiveType.TriangleList)], HoverColor);
         }
 
         if (Chris.SelectedFaces.Count != 0)
         {
-            var surfaces = Chris.SelectedFaces.Select(tf => (BuildTrixelFaceQuad(tf), PrimitiveType.TriangleList));
-            Chris.Cursor.SetSelectionSurfaces(surfaces, SelectionColor);
+            _lastHover = null;
+            if (!_lastSelection.SetEquals(Chris.SelectedFaces))
+            {
+                _lastSelection.Clear();
+                _lastSelection.UnionWith(Chris.SelectedFaces);
+                Chris.Cursor.SetFaces(Chris.SelectedFaces, Chris.Obj.Offset, SelectionColor);
+            }
+            return;
+        }
+
+        _lastSelection.Clear();
+        if (Chris.Hit != _lastHover)
+        {
+            _lastHover = Chris.Hit;
+            if (Chris.Hit.HasValue)
+            {
+                Chris.Cursor.SetFaces([Chris.Hit.Value], Chris.Obj.Offset, HoverColor);
+            }
+            else
+            {
+                Chris.Cursor.Clear();
+            }
         }
     }
 
@@ -91,13 +110,5 @@ internal class SelectTool : BaseTool
     protected override bool IsToolAllowed(ChrisTool tool)
     {
         return true;
-    }
-
-    private MeshSurface BuildTrixelFaceQuad(TrixelFace tf)
-    {
-        var faceCenter =
-            ((tf.Emplacement.ToVector3() + ((Vector3.One + tf.Face.AsVector()) * 0.5f)) * Mathz.TrixelSize) -
-            Chris.Obj.Offset;
-        return MeshSurface.CreateFaceQuad(Vector3.One * Mathz.TrixelSize, faceCenter, tf.Face);
     }
 }

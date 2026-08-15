@@ -25,7 +25,7 @@ public class ChrisEditor : EditorComponent, IChrisEditor
 
     public TrixelFace? Hit { get; private set; }
 
-    public CursorMesh Cursor => _cursorActor.GetComponent<CursorMesh>();
+    public TrixelCursorMesh Cursor => _cursorActor.GetComponent<TrixelCursorMesh>();
 
     public TrixelsMesh Trixels => _meshActor.GetComponent<TrixelsMesh>();
 
@@ -133,7 +133,7 @@ public class ChrisEditor : EditorComponent, IChrisEditor
         }
         {
             _cursorActor = _scene.CreateActor();
-            _cursorActor.AddComponent<CursorMesh>();
+            _cursorActor.AddComponent<TrixelCursorMesh>();
         }
         {
             _tools.Add(new SelectTool(Game, this));
@@ -156,8 +156,6 @@ public class ChrisEditor : EditorComponent, IChrisEditor
             _pendingRevisualize = false;
         }
 
-        Cursor.ClearHover();
-        Cursor.ClearSelection();
         StatusService.ClearHints();
 
         foreach (var tool in _tools)
