@@ -29,7 +29,8 @@ public class RaycastSystem : EddySystem
 
     public override void Update()
     {
-        if (!Eddy.Frame.AllowsRaycast || _gizmo.IsActive)
+        var isTransformTool = Eddy.Tool is ToolState.Translate or ToolState.Rotate or ToolState.Scale;
+        if (!Eddy.Frame.AllowsRaycast || (_gizmo.IsActive && isTransformTool))
         {
             Eddy.Hovered = null;
             Eddy.HoveredTrile = null;
