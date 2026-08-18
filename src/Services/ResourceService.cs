@@ -254,6 +254,20 @@ public class ResourceService : IDisposable
         }
     }
 
+    public bool TryLoad<T>(string path, [NotNullWhen(true)] out T? resource) where T : class
+    {
+        try
+        {
+            resource = Load<T>(path);
+            return true;
+        }
+        catch (FileNotFoundException)
+        {
+            resource = null;
+            return false;
+        }
+    }
+
     public SaveData LoadSaveDataFromContent(string path)
     {
         using var stream = _content.LoadStream(path);
@@ -307,23 +321,14 @@ public class ResourceService : IDisposable
         }
     }
 
-    public bool TryLoadSkyTexture(string sky, string? textureName, [NotNullWhen(true)] out RTexture2D? texture) {
+    public bool TryLoadSkyTexture(string sky, string? textureName, [NotNullWhen(true)] out RTexture2D? texture)
+    {
         if (string.IsNullOrEmpty(sky) || string.IsNullOrEmpty(textureName))
         {
             texture = null;
             return false;
         }
-
-        try
-        {
-            texture = Load<RTexture2D>($"Skies/{sky}/{textureName}");
-            return true;
-        }
-        catch (FileNotFoundException)
-        {
-            texture = null;
-            return false;
-        }
+        return TryLoad($"Skies/{sky}/{textureName}", out texture);
     }
 
     public void Save(string path, object asset)
