@@ -65,23 +65,31 @@ public class SkyLayersMesh : SkyBaseMesh
             var layer = layers[index];
             if (!_textures.TryGetValue(layer.Name, out var layerTexture))
             {
-                var texture = _resources.Load<RTexture2D>($"Skies/{sky}/{layer.Name}");
-                layerTexture = RepackerExtensions.ConvertToTexture2D(texture);
-                _textures[layer.Name] = layerTexture;
+                if (_resources.TryLoadSkyTexture(sky, layer.Name, out var texture))
+                {
+                    layerTexture = RepackerExtensions.ConvertToTexture2D(texture);
+                    _textures[layer.Name] = layerTexture;
+                }
             }
 
             Texture2D? obsTexture = null;
             if (layer.Name == "OBS_SKY_A")
             {
-                var texture = _resources.Load<RTexture2D>($"Skies/{sky}/OBS_SKY_C");
-                obsTexture = RepackerExtensions.ConvertToTexture2D(texture);
-                _textures[layer.Name] = obsTexture;
+                if (_resources.TryLoadSkyTexture(sky, "OBS_SKY_C", out var texture))
+                {
+                    obsTexture = RepackerExtensions.ConvertToTexture2D(texture);
+                    _textures[layer.Name] = obsTexture;
+                }
             }
 
             var side = 0;
             foreach (var (face, instancesList) in _sides)
             {
                 var texture = obsTexture != null && face != FaceOrientation.Left ? obsTexture : layerTexture;
+                if (texture == null)
+                {
+                    continue;
+                }
                 var material = _rendering.MaterialCreate();
                 var compareFunction = layer.InFront ? CompareFunction.Always : CompareFunction.LessEqual;
 

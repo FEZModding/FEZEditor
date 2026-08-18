@@ -62,13 +62,12 @@ public class SkyShadowsMesh : SkyBaseMesh
         Texture?.Dispose();
         Texture = null;
 
-        if (string.IsNullOrEmpty(shadows))
+        if (!_resources.TryLoadSkyTexture(skyName, shadows, out var rTexture))
         {
             Actor.Visible = false;
             return;
         }
 
-        var rTexture = _resources.Load<RTexture2D>($"Skies/{skyName}/{shadows}");
         Texture = RepackerExtensions.ConvertToTexture2D(rTexture);
         _rendering.MaterialAssignBaseTexture(_material, Texture);
 

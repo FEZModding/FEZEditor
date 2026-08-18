@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using FezEditor.Services;
 using FezEditor.Structure;
 using FezEditor.Tools;
@@ -147,9 +148,8 @@ public class SkyVisualizer : ActorComponent
 
         #region Fog colors
 
-        if (!string.IsNullOrEmpty(sky.Background))
+        if (_resources.TryLoadSkyTexture(sky.Name, sky.Background, out var bgTexture))
         {
-            var bgTexture = _resources.Load<RTexture2D>($"Skies/{sky.Name}/{sky.Background}");
             _fogColors = new Color[bgTexture.Width];
             for (var x = 0; x < bgTexture.Width; x++)
             {
@@ -162,6 +162,10 @@ public class SkyVisualizer : ActorComponent
                 );
             }
         }
+        else
+        {
+            _fogColors = [Color.Wheat];
+        }
 
         #endregion
 
@@ -170,9 +174,8 @@ public class SkyVisualizer : ActorComponent
         _cloudTintTexture?.Dispose();
         _cloudTintTexture = null;
 
-        if (!string.IsNullOrEmpty(sky.CloudTint))
+        if (_resources.TryLoadSkyTexture(sky.Name, sky.CloudTint, out var tintTexture))
         {
-            var tintTexture = _resources.Load<RTexture2D>($"Skies/{sky.Name}/{sky.CloudTint}");
             _cloudTintTexture = RepackerExtensions.ConvertToTexture2D(tintTexture);
             _cloudTintColors = new Color[tintTexture.Width];
             for (var x = 0; x < tintTexture.Width; x++)

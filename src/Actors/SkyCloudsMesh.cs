@@ -90,12 +90,20 @@ public class SkyCloudsMesh : SkyBaseMesh
         {
             if (!_textures.TryGetValue(cloud, out var tex))
             {
-                var rTexture = _resources.Load<RTexture2D>($"Skies/{sky}/{cloud}");
+                if (!_resources.TryLoadSkyTexture(sky, cloud, out var rTexture))
+                {
+                    continue;
+                }
                 tex = RepackerExtensions.ConvertToTexture2D(rTexture);
                 _textures[cloud] = tex;
             }
 
             textures.Add(tex);
+        }
+
+        if (textures.Count == 0)
+        {
+            return;
         }
 
         var total = (int)(BaseCloudCount * density);

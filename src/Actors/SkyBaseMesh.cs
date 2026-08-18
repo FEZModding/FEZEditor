@@ -1,6 +1,8 @@
-﻿using FezEditor.Services;
+﻿using System.Diagnostics.CodeAnalysis;
+using FezEditor.Services;
 using FezEditor.Tools;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace FezEditor.Actors;
 
@@ -37,4 +39,6 @@ public abstract class SkyBaseMesh : ActorComponent
         _rendering = game.GetService<RenderingService>();
         _resources = game.GetService<ResourceService>();
     }
+
+
 }

@@ -52,12 +52,11 @@ public class SkyStarsMesh : SkyBaseMesh
     public void Visualize(string sky, string stars, bool rainy)
     {
         Texture?.Dispose();
-        if (string.IsNullOrEmpty(stars))
+
+        if (!_resources.TryLoadSkyTexture(sky, stars, out var texture))
         {
             return;
         }
-
-        var texture = _resources.Load<RTexture2D>($"Skies/{sky}/{stars}");
         Texture = RepackerExtensions.ConvertToTexture2D(texture);
 
         foreach (var (face, side) in _sides)

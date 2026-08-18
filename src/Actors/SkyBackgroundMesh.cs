@@ -47,8 +47,11 @@ public class SkyBackgroundMesh : SkyBaseMesh
 
     public void Visualize(string name, string background)
     {
-        var texture = _resources.Load<RTexture2D>($"Skies/{name}/{background}");
         Texture?.Dispose();
+        if (!_resources.TryLoadSkyTexture(name, background, out var texture))
+        {
+            return;
+        }
         Texture = RepackerExtensions.ConvertToTexture2D(texture);
 
         _rendering.MaterialAssignBaseTexture(_material, Texture);
