@@ -249,7 +249,7 @@ public class ThumbnailGenerator : DrawableGameComponent
                                 break;
                             }
 
-                            if (trile.Geometry.Indices.Length > 0)
+                            if (!trile.Geometry.IsNullOrEmpty())
                             {
                                 thumbnailer = new Thumbnailer(cachePath, lastWrite, trile, cachedTrileSet.TextureAtlas);
                             }

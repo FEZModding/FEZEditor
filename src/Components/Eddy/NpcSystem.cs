@@ -132,27 +132,25 @@ public class NpcSystem : EddySystem
             }
         }
 
-        var speech = new Dirty<List<SpeechLine>>(npc.Speech.EmptyIfNull());
+        var speech = new Dirty<List<SpeechLine>>(npc.Speech);
         if (ImGuiX.EditableList("Speech", ref speech, RenderSpeechLine, () => new SpeechLine()))
         {
             using (Eddy.History.BeginScope("Edit NPC Speech"))
             {
-                npc.Speech = speech.Value.NullIfEmpty();
+                npc.Speech = speech.Value;
             }
         }
 
         // NpcAction is not IEquatable, so int key is being used
         var actions = new Dirty<Dictionary<int, NpcActionContent>>(
-            npc.Actions.EmptyIfNull().ToDictionary(kv => (int)kv.Key, kv => kv.Value));
+            npc.Actions.ToDictionary(kv => (int)kv.Key, kv => kv.Value));
 
         if (ImGuiX.EditableDict("Actions", ref actions, RenderNpcActionContent, RenderNewContent,
                 () => new NpcActionContent()))
         {
             using (Eddy.History.BeginScope("Edit NPC Actions"))
             {
-                npc.Actions = actions.Value.Count != 0
-                    ? actions.Value.ToDictionary(kv => (NpcAction)kv.Key, kv => kv.Value)
-                    : null;
+                npc.Actions = actions.Value.ToDictionary(kv => (NpcAction)kv.Key, kv => kv.Value);
             }
         }
     }
@@ -163,10 +161,10 @@ public class NpcSystem : EddySystem
         var edited = false;
 
         {
-            var text = item.Text;
+            var text = item.Text.EmptyIfNull();
             if (ImGui.InputText("Text##sl" + index, ref text, 255))
             {
-                item.Text = text;
+                item.Text = text.NullIfEmpty();
                 edited = true;
             }
         }
@@ -184,17 +182,17 @@ public class NpcSystem : EddySystem
 
         if (item.OverrideContent != null)
         {
-            var animationName = item.OverrideContent.AnimationName;
+            var animationName = item.OverrideContent.AnimationName.EmptyIfNull();
             if (ImGui.InputText("Animation Name##sl1" + index, ref animationName, 255))
             {
-                item.OverrideContent.AnimationName = animationName;
+                item.OverrideContent.AnimationName = animationName.NullIfEmpty();
                 edited = true;
             }
 
-            var soundName = item.OverrideContent.SoundName;
+            var soundName = item.OverrideContent.SoundName.EmptyIfNull();
             if (ImGui.InputText("Sound Name##sl2" + index, ref soundName, 255))
             {
-                item.OverrideContent.SoundName = soundName;
+                item.OverrideContent.SoundName = soundName.NullIfEmpty();
                 edited = true;
             }
         }

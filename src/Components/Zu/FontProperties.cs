@@ -66,7 +66,10 @@ internal class FontProperties
             ImGui.PopFont();
 
             ImGui.SameLine();
-            ImGui.TextDisabled($"U+{(int)_zu.Font.DefaultCharacter!:X4}");
+            var characterToDisplay = _zu.Font.DefaultCharacter != null
+                ? $"U+{(int)_zu.Font.DefaultCharacter:X4}"
+                : "U+----";
+            ImGui.TextDisabled(characterToDisplay);
         }
     }
 

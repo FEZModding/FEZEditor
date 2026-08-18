@@ -4,15 +4,17 @@ using FezEditor.Structure;
 using FezEditor.Tools;
 using FEZRepacker.Core.Definitions.Game.Common;
 using FEZRepacker.Core.Definitions.Game.Level;
-using FEZRepacker.Core.Definitions.Game.Level.Scripting;
 using FEZRepacker.Core.Definitions.Game.MapTree;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
+using Serilog;
 
 namespace FezEditor.Components;
 
 public class JadeEditor : EditorComponent
 {
+    private static readonly ILogger Logger = Log.ForContext<JadeEditor>();
+
     public override object Asset => _mapTree;
 
     private readonly MapTree _mapTree;
@@ -342,6 +344,12 @@ public class JadeEditor : EditorComponent
 
     private void AddMapNode(Level level)
     {
+        if (level.Name == null)
+        {
+            Logger.Warning("Attempted to add an invalid level with no name into a map. Fix level file first.");
+            return;
+        }
+
         var allNodes = _mapTree.Root
             .EnumerateNodes()
             .ToDictionary(mn => mn.LevelName, mn => mn, StringComparer.OrdinalIgnoreCase);
@@ -353,9 +361,9 @@ public class JadeEditor : EditorComponent
 
         // Forward: new level's script targets an already-existing node.
         MapNode? parent = null;
-        foreach (var (action, _) in GetLevelTransitions(level))
+        foreach (var (targetLevel, _) in GetLevelTransitions(level))
         {
-            if (allNodes.TryGetValue(action.Arguments[0], out var targetNode))
+            if (allNodes.TryGetValue(targetLevel, out var targetNode))
             {
                 parent = targetNode;
                 break;
@@ -368,9 +376,9 @@ public class JadeEditor : EditorComponent
             foreach (var existingNode in allNodes.Values)
             {
                 var existingLevel = ResourceService.Load<Level>("Levels/" + existingNode.LevelName);
-                foreach (var (action, _) in GetLevelTransitions(existingLevel))
+                foreach (var (targetLevel, _) in GetLevelTransitions(existingLevel))
                 {
-                    if (string.Equals(action.Arguments[0], level.Name, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(targetLevel, level.Name, StringComparison.OrdinalIgnoreCase))
                     {
                         parent = existingNode;
                         break;
@@ -402,23 +410,19 @@ public class JadeEditor : EditorComponent
         }
     }
 
-    private static IEnumerable<(ScriptAction Action, Volume Volume)> GetLevelTransitions(Level level)
+    private static IEnumerable<(string TargetLevel, Volume Volume)> GetLevelTransitions(Level level)
     {
         foreach (var script in level.Scripts.Values)
         {
-            if (script.Actions == null || script.Triggers == null)
-            {
-                continue;
-            }
-
             foreach (var action in script.Actions)
             {
-                if (action.Object.Type != "Level" || !action.Operation.Contains("Level"))
+                if (action.Object?.Type != "Level" || !action.Operation.Contains("Level"))
                 {
                     continue;
                 }
 
-                if (action.Operation == "ReturnToLastLevel" || action.Arguments.Length == 0)
+                if (action.Operation == "ReturnToLastLevel"
+                    || action.Arguments is not { Length: > 0 } arguments)
                 {
                     continue;
                 }
@@ -432,12 +436,12 @@ public class JadeEditor : EditorComponent
                     continue;
                 }
 
-                if (!level.Volumes.TryGetValue(trigger.Object.Identifier!.Value, out var volume))
+                if (!level.Volumes.TryGetValue(trigger.Object!.Identifier!.Value, out var volume))
                 {
                     continue;
                 }
 
-                yield return (action, volume);
+                yield return (arguments[0], volume);
                 break;
             }
         }

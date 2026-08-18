@@ -56,12 +56,12 @@ public class MuEditor : EditorComponent
                 }
             }
 
-            var soundPath = _npcMetadata.SoundPath;
+            var soundPath = _npcMetadata.SoundPath.EmptyIfNull();
             if (ImGui.InputText("Sound Path", ref soundPath, 255))
             {
                 using (History.BeginScope("Edit Sound Path"))
                 {
-                    _npcMetadata.SoundPath = soundPath;
+                    _npcMetadata.SoundPath = soundPath.NullIfEmpty();
                 }
             }
 

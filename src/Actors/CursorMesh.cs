@@ -109,7 +109,9 @@ public sealed class CursorMesh : ActorComponent
         _hologram.Texture?.Dispose();
         _rendering.MeshClear(_hologram.Mesh);
 
-        if (trileSet.Triles.TryGetValue(trileId, out var trile) && trile.Geometry.Indices.Length > 0)
+        if (trileSet.Triles.TryGetValue(trileId, out var trile)
+            && !trile.Geometry.IsNullOrEmpty()
+            && trileSet.TextureAtlas != null)
         {
             _hologram.Texture = RepackerExtensions.ExtractColorToTexture2D(trileSet.TextureAtlas);
             _rendering.MaterialAssignBaseTexture(_hologram.Material, _hologram.Texture);

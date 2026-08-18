@@ -207,14 +207,15 @@ public class PhilExporter : DrawableGameComponent
             var set = _resources.Load<TrileSet>($"Trile Sets/{_level.TrileSetName}");
             var meshes = new Dictionary<int, Mesh>();
 
-            using (var atlasAlbedo = ExtractAlbedo(set.TextureAtlas))
+            var atlasAlbedo = set.TextureAtlas != null ? ExtractAlbedo(set.TextureAtlas) : null;
+            using (atlasAlbedo)
             {
                 var material = CreateMaterial(levelModel, atlasAlbedo, "TrileSet");
 
                 foreach (var id in triles.Values.Select(ti => ti.TrileId).Distinct())
                 {
                     ct.ThrowIfCancellationRequested();
-                    if (!set.Triles.TryGetValue(id, out var trile) || trile.Geometry.Vertices.Length == 0)
+                    if (!set.Triles.TryGetValue(id, out var trile) || trile.Geometry.IsNullOrEmpty())
                     {
                         continue;
                     }
@@ -263,9 +264,9 @@ public class PhilExporter : DrawableGameComponent
                     try
                     {
                         var ao = _resources.Load<ArtObject>($"Art Objects/{instance.Name}");
-                        if (ao.Geometry.Vertices.Length > 0)
+                        if (!ao.Geometry.IsNullOrEmpty())
                         {
-                            using var image = ExtractAlbedo(ao.Cubemap);
+                            using var image = ao.Cubemap != null ? ExtractAlbedo(ao.Cubemap) : null;
                             var material = CreateMaterial(levelModel, image, instance.Name);
                             mesh = BuildMeshFromVertexInstances(levelModel, ao.Geometry, material)!;
                             meshes[instance.Name] = mesh;
@@ -812,7 +813,7 @@ public class PhilExporter : DrawableGameComponent
         return ms.ToArray();
     }
 
-    private static Material CreateMaterial(ModelRoot model, RgbaImage image, string name,
+    private static Material CreateMaterial(ModelRoot model, RgbaImage? image, string name,
         GltfAlphaMode alphaMode = GltfAlphaMode.OPAQUE, float opacity = 1f, bool doubleSided = false)
     {
         var mb = new MaterialBuilder(name)
@@ -822,10 +823,13 @@ public class PhilExporter : DrawableGameComponent
 
         var channel = mb.UseChannel(KnownChannel.BaseColor);
         channel.Parameters[KnownProperty.RGBA] = new NVector4(1f, 1f, 1f, opacity);
-        channel.UseTexture()
-            .WithPrimaryImage(ImageToBytes(image))
-            .WithSampler(TextureWrapMode.REPEAT, TextureWrapMode.REPEAT,
-                TextureMipMapFilter.NEAREST, TextureInterpolationFilter.NEAREST);
+        if (image != null)
+        {
+            channel.UseTexture()
+                .WithPrimaryImage(ImageToBytes(image))
+                .WithSampler(TextureWrapMode.REPEAT, TextureWrapMode.REPEAT,
+                    TextureMipMapFilter.NEAREST, TextureInterpolationFilter.NEAREST);
+        }
 
         return model.CreateMaterial(mb);
     }

@@ -79,7 +79,7 @@ internal class TrileSetContext : IContext
         _missing = game.Content.Load<Texture2D>("Textures/Missing");
         _id = set.Triles
             .OrderBy(kv => kv.Key)
-            .First(kv => kv.Value.Geometry.Vertices.Length > 0)
+            .First(kv => !kv.Value.Geometry.IsNullOrEmpty())
             .Key;
     }
 
@@ -92,17 +92,18 @@ internal class TrileSetContext : IContext
 
     public TrixelObject Materialize()
     {
-        var obj = TrixelMaterializer.ReconstructGeometry(
-            Trile.Size.ToXna(), Trile.Geometry.Vertices, Trile.Geometry.Indices, new Vector3(0.5f));
+        var geometry = Trile.Geometry;
+        var obj = geometry == null
+            ? TrixelMaterializer.ReconstructGeometry(
+                Trile.Size.ToXna(), [], [], new Vector3(0.5f))
+            : TrixelMaterializer.ReconstructGeometry(
+                Trile.Size.ToXna(), geometry.Vertices, geometry.Indices, new Vector3(0.5f));
 
-        var atlas = _set.TextureAtlas;
-        var px = (int)MathF.Round(Trile.AtlasOffset.X * atlas.Width);
-        var py = (int)MathF.Round(Trile.AtlasOffset.Y * atlas.Height);
         obj.Texture = new RTexture2D
         {
             Width = TrileWidth,
             Height = TrileHeight,
-            TextureData = ReadTrileFromAtlas(atlas.TextureData, atlas.Width, px, py)
+            TextureData = ReadTrileTexture()
         };
 
         obj.Properties = _properties = new TrileProperties(Trile);
@@ -111,9 +112,27 @@ internal class TrileSetContext : IContext
         return obj;
     }
 
+    private byte[] ReadTrileTexture()
+    {
+        var atlas = _set.TextureAtlas;
+        if (atlas == null)
+        {
+            return new byte[TrileWidth * TrileHeight * 4];
+        }
+
+        var px = (int)MathF.Round(Trile.AtlasOffset.X * atlas.Width);
+        var py = (int)MathF.Round(Trile.AtlasOffset.Y * atlas.Height);
+        return ReadTrileFromAtlas(atlas.TextureData, atlas.Width, px, py);
+    }
+
     public void FlushThumbnail(TrixelObject obj)
     {
         var atlas = _set.TextureAtlas;
+        if (atlas == null)
+        {
+            return;
+        }
+
         var px = (int)MathF.Round(Trile.AtlasOffset.X * atlas.Width);
         var py = (int)MathF.Round(Trile.AtlasOffset.Y * atlas.Height);
         WriteTrileToAtlas(obj.Texture.TextureData, atlas.TextureData, AtlasWidth, px, py);
@@ -360,7 +379,7 @@ internal class TrileSetContext : IContext
                 continue;
             }
 
-            if (trile.Geometry.Vertices.Length < 1)
+            if (trile.Geometry.IsNullOrEmpty() || _set.TextureAtlas == null)
             {
                 yield return new Entry(id, trile.Name, _missing, Vector2.Zero, Vector2.One);
                 continue;
@@ -384,11 +403,21 @@ internal class TrileSetContext : IContext
 
     private static void ApplyAtlasOffsets(TrileSet set)
     {
+        if (set.TextureAtlas == null)
+        {
+            return;
+        }
+
         var atlasW = set.TextureAtlas.Width;
         var atlasH = set.TextureAtlas.Height;
 
         foreach (var trile in set.Triles.Values)
         {
+            if (trile.Geometry.IsNullOrEmpty())
+            {
+                continue;
+            }
+
             foreach (var vertex in trile.Geometry.Vertices)
             {
                 var orientation = FaceExtensions.OrientationFromDirection(vertex.Normal.ToXna());
@@ -449,7 +478,7 @@ internal class TrileSetContext : IContext
             {
                 src = pending;
             }
-            else if (set.TextureAtlas.TextureData.Length > 0)
+            else if (set.TextureAtlas != null && set.TextureAtlas.TextureData.Length > 0)
             {
                 var atlas = set.TextureAtlas;
                 var px = (int)MathF.Round(trile.AtlasOffset.X * atlas.Width);
@@ -560,8 +589,8 @@ internal class TrileSetContext : IContext
                 Geometry = new IndexedPrimitives<VertexInstance, RVector4>
                 {
                     PrimitiveType = PrimitiveType.TriangleList,
-                    Vertices = source.Geometry.Vertices.ToArray(),
-                    Indices = source.Geometry.Indices.ToArray()
+                    Vertices = source.Geometry?.Vertices.ToArray() ?? [],
+                    Indices = source.Geometry?.Indices.ToArray() ?? []
                 }
             };
 
@@ -584,6 +613,12 @@ internal class TrileSetContext : IContext
             }
 
             var atlas = _set.TextureAtlas;
+            if (atlas == null)
+            {
+                slices.Add((trile, new byte[TrileWidth * TrileHeight * 4]));
+                continue;
+            }
+
             var px = (int)MathF.Round(trile.AtlasOffset.X * atlas.Width);
             var py = (int)MathF.Round(trile.AtlasOffset.Y * atlas.Height);
             slices.Add((trile, ReadTrileFromAtlas(atlas.TextureData, atlas.Width, px, py)));
@@ -605,10 +640,14 @@ internal class TrileSetContext : IContext
                 Type = trile.Type,
                 Face = trile.Face,
                 SurfaceType = trile.SurfaceType,
-                Faces = new Dictionary<FaceOrientation, CollisionType>(trile.Faces)
+                Faces = new Dictionary<FaceOrientation, CollisionType>(trile.Faces),
+                Geometry = new IndexedPrimitives<VertexInstance, RVector4>
+                {
+                    PrimitiveType = PrimitiveType.TriangleList,
+                    Vertices = trile.Geometry?.Vertices.ToArray() ?? [],
+                    Indices = trile.Geometry?.Indices.ToArray() ?? []
+                }
             };
-            (copy.Geometry.Vertices, copy.Geometry.Indices) =
-                (trile.Geometry.Vertices.ToArray(), trile.Geometry.Indices.ToArray());
             targetSet.Triles[nextId++] = copy;
         }
 

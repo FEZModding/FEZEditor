@@ -75,12 +75,12 @@ public class VolumeSystem : EddySystem
             }
         }
 
-        var orientations = new Dirty<FaceOrientation[]>(volume.Orientations.EmptyIfNull());
+        var orientations = new Dirty<FaceOrientation[]>(volume.Orientations);
         if (ImGuiX.EditableArray("Orientations", ref orientations, RenderFace, () => default))
         {
             using (Eddy.History.BeginScope("Edit Orientations"))
             {
-                volume.Orientations = orientations.Value.NullIfEmpty();
+                volume.Orientations = orientations.Value;
             }
         }
 
@@ -190,10 +190,10 @@ public class VolumeSystem : EddySystem
     {
         ImGui.TextDisabled(index + ":");
 
-        var resourceText = item.ResourceText;
+        var resourceText = item.ResourceText.EmptyIfNull();
         if (ImGui.InputText("Resource Text##dd1" + index, ref resourceText, 255))
         {
-            item.ResourceText = resourceText;
+            item.ResourceText = resourceText.NullIfEmpty();
             return true;
         }
 

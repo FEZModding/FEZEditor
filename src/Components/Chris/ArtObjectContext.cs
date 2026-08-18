@@ -2,8 +2,10 @@ using FezEditor.Structure;
 using FezEditor.Tools;
 using FEZRepacker.Core.Definitions.Game.ArtObject;
 using FEZRepacker.Core.Definitions.Game.Common;
+using FEZRepacker.Core.Definitions.Game.Graphics;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
+using Matrix = FEZRepacker.Core.Definitions.Game.XNA.Matrix;
 
 namespace FezEditor.Components.Chris;
 
@@ -27,9 +29,17 @@ internal class ArtObjectContext : IContext
 
     public TrixelObject Materialize()
     {
-        var obj = TrixelMaterializer.ReconstructGeometry(
-            _ao.Size.ToXna(), _ao.Geometry.Vertices, _ao.Geometry.Indices, _ao.Size.ToXna() / 2f);
-        obj.Texture = _ao.Cubemap;
+        var obj = _ao.Geometry == null
+            ? TrixelMaterializer.ReconstructGeometry(
+                _ao.Size.ToXna(), [], [], _ao.Size.ToXna() / 2f)
+            : TrixelMaterializer.ReconstructGeometry(
+                _ao.Size.ToXna(), _ao.Geometry.Vertices, _ao.Geometry.Indices, _ao.Size.ToXna() / 2f);
+
+        if (_ao.Cubemap != null)
+        {
+            obj.Texture = _ao.Cubemap;
+        }
+
         obj.Properties = _properties = new ArtObjectProperties(_ao);
         _resized = obj.Resize;
         return obj;
@@ -46,6 +56,7 @@ internal class ArtObjectContext : IContext
     public object Dematerialize(TrixelObject obj)
     {
         _ao.Size = obj.Size.ToRepacker();
+        _ao.Geometry ??= new IndexedPrimitives<VertexInstance, Matrix>();
         (_ao.Geometry.Vertices, _ao.Geometry.Indices) = TrixelMaterializer.Dematerialize(obj);
         _ao.Cubemap = obj.Texture;
 

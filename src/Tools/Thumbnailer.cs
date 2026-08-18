@@ -24,6 +24,11 @@ public class Thumbnailer
     public Thumbnailer(string path, DateTime lastWrite, ArtObject ao) : this(path, lastWrite)
     {
         var cubemap = ao.Cubemap;
+        if (cubemap == null)
+        {
+            return;
+        }
+
         var faceWidth = cubemap.Width / 6;
         var faceRect = new Rectangle(0, 0, faceWidth, cubemap.Height);
         var data = CropRawRegion(cubemap.TextureData, cubemap.Width, faceRect);
@@ -36,8 +41,13 @@ public class Thumbnailer
         };
     }
 
-    public Thumbnailer(string path, DateTime lastWrite, Trile trile, RTexture2D atlas) : this(path, lastWrite)
+    public Thumbnailer(string path, DateTime lastWrite, Trile trile, RTexture2D? atlas) : this(path, lastWrite)
     {
+        if (atlas == null)
+        {
+            return;
+        }
+
         var px = (int)MathF.Round(trile.AtlasOffset.X * atlas.Width);
         var py = (int)MathF.Round(trile.AtlasOffset.Y * atlas.Height);
         var rect = new Rectangle(px + 1, py + 1, 16, 16);

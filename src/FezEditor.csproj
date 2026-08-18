@@ -38,7 +38,7 @@
       <_Parameter1>SplashAuthors</_Parameter1>
       <_Parameter2>$(SplashAuthors)</_Parameter2>
     </AssemblyAttribute>
-    <PackageReference Include="FEZRepacker.Core" Version="1.3.1" />
+    <PackageReference Include="FEZRepacker.Core" Version="1.3.3" />
     <PackageReference Include="GitInfo" Version="3.6.0" PrivateAssets="all" />
     <PackageReference Include="ImGui.NET" Version="1.91.6.1" ExcludeAssets="native" />
     <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />

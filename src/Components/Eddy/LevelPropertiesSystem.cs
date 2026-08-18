@@ -125,7 +125,7 @@ public class LevelPropertiesSystem : EddySystem
             }
         }
 
-        ImGui.LabelText("Sky Name", Level.SkyName.EmptyIfNull());
+        ImGui.LabelText("Sky Name", Level.SkyName);
         ImGui.SameLine();
         if (ImGui.Button("...##SkyPick"))
         {
@@ -243,10 +243,10 @@ public class LevelPropertiesSystem : EddySystem
     {
         ImGui.TextDisabled(index + ":");
 
-        var name = item.Name;
+        var name = item.Name.EmptyIfNull();
         if (ImGui.InputText("Name##name" + index, ref name, 255))
         {
-            item.Name = name;
+            item.Name = name.NullIfEmpty();
             return true;
         }
 

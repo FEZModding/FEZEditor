@@ -42,15 +42,32 @@ public class ArtObjectMesh : ActorComponent, IPickable, ITinted
     public void Visualize(ArtObject ao)
     {
         _texture?.Dispose();
-        _texture = RepackerExtensions.ConvertToTexture2D(ao.Cubemap);
-        _rendering.MaterialAssignBaseTexture(_material, _texture);
+
         _size = ao.Size.ToXna();
 
-        var surface = RepackerExtensions.ConvertToMesh(ao.Geometry.Vertices, ao.Geometry.Indices);
-        _vertices = surface.Vertices;
-        _indices = surface.Indices;
+        if (ao.Cubemap != null)
+        {
+            _texture = RepackerExtensions.ConvertToTexture2D(ao.Cubemap);
+            _rendering.MaterialAssignBaseTexture(_material, _texture);
+        }
+        else
+        {
+            _texture = null;
+        }
+
         _rendering.MeshClear(_mesh);
-        _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface, _material);
+        if (ao.Geometry != null)
+        {
+            var surface = RepackerExtensions.ConvertToMesh(ao.Geometry.Vertices, ao.Geometry.Indices);
+            _vertices = surface.Vertices;
+            _indices = surface.Indices;
+            _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface, _material);
+        }
+        else
+        {
+            _vertices = [];
+            _indices = [];
+        }
     }
 
     public override void Update(GameTime gameTime)

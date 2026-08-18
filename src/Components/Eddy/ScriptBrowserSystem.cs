@@ -177,13 +177,13 @@ public class ScriptBrowserSystem : EddySystem
                 }
 
                 ImGui.TableSetColumnIndex(1);
-                ImGui.Text(TruncateLines(script.Triggers.EmptyIfNull().Select(st => st.Stringify())));
+                ImGui.Text(TruncateLines(script.Triggers.Select(st => st.Stringify())));
 
                 ImGui.TableSetColumnIndex(2);
                 ImGui.Text(TruncateLines(script.Conditions.EmptyIfNull().Select(sc => sc.Stringify())));
 
                 ImGui.TableSetColumnIndex(3);
-                ImGui.Text(TruncateLines(script.Actions.EmptyIfNull().Select(sa => sa.Stringify())));
+                ImGui.Text(TruncateLines(script.Actions.Select(sa => sa.Stringify())));
             }
 
             ImGui.EndTable();
@@ -376,15 +376,19 @@ public class ScriptBrowserSystem : EddySystem
         }
     }
 
-    private static ScriptApiEntry? FindEntry(string typeName)
+    private static ScriptApiEntry? FindEntry(Entity? entity)
     {
-        return Array.Find(ScriptingApi.Entries, e => e.TypeName == typeName);
+        if (entity == null)
+        {
+            return null;
+        }
+        return Array.Find(ScriptingApi.Entries, e => e.TypeName == entity.Type);
     }
 
-    private void DrawEntityFields(Entity entity, ref string dependentField, string scopeLabel)
+    private void DrawEntityFields(ref Entity? entity, ref string dependentField, string scopeLabel)
     {
         var typeNames = Array.ConvertAll(ScriptingApi.Entries, e => e.TypeName);
-        var typeIdx = Array.IndexOf(typeNames, entity.Type);
+        var typeIdx = Array.IndexOf(typeNames, entity?.Type);
         var currentType = typeIdx >= 0 ? typeNames[typeIdx] : "";
 
         if (ImGui.BeginCombo("Entity Type", currentType))
@@ -396,6 +400,7 @@ public class ScriptBrowserSystem : EddySystem
                 {
                     using (Eddy.History.BeginScope($"Change {scopeLabel} Entity Type"))
                     {
+                        entity ??= new Entity();
                         entity.Type = typeNames[i];
                         dependentField = "";
                         entity.Identifier = null;
@@ -411,8 +416,8 @@ public class ScriptBrowserSystem : EddySystem
             ImGui.EndCombo();
         }
 
-        var entry = FindEntry(entity.Type);
-        if (entry is not { IsStatic: true })
+        var entry = FindEntry(entity);
+        if (entity != null && entry is not { IsStatic: true })
         {
             var id = entity.Identifier?.ToString(CultureInfo.InvariantCulture) ?? "";
             if (ImGui.InputText("Identifier", ref id, 11, ImGuiInputTextFlags.CharsDecimal))
@@ -465,7 +470,6 @@ public class ScriptBrowserSystem : EddySystem
         {
             using (Eddy.History.BeginScope("Add Trigger"))
             {
-                _script!.Triggers = _script.Triggers.EmptyIfNull();
                 _script!.Triggers.Add(new ScriptTrigger());
                 _triggerIndex = _script.Triggers.Count - 1;
             }
@@ -473,7 +477,7 @@ public class ScriptBrowserSystem : EddySystem
 
         ImGui.SameLine();
         ImGui.BeginDisabled(_triggerIndex == -1);
-        if (ImGui.Button($"{Lucide.Copy} Clone") && _script!.Triggers != null)
+        if (ImGui.Button($"{Lucide.Copy} Clone"))
         {
             using (Eddy.History.BeginScope("Clone Trigger"))
             {
@@ -484,12 +488,11 @@ public class ScriptBrowserSystem : EddySystem
         }
 
         ImGui.SameLine();
-        if (ImGui.Button($"{Lucide.Trash2} Remove") && _script!.Triggers != null)
+        if (ImGui.Button($"{Lucide.Trash2} Remove"))
         {
             using (Eddy.History.BeginScope("Remove Trigger"))
             {
                 _script!.Triggers.RemoveAt(_triggerIndex);
-                _script!.Triggers = _script.Triggers.NullIfEmpty();
                 _triggerIndex = -1;
             }
         }
@@ -512,7 +515,7 @@ public class ScriptBrowserSystem : EddySystem
                 ImGui.Text(empty);
             }
 
-            for (var i = 0; i < _script.Triggers?.Count; i++)
+            for (var i = 0; i < _script.Triggers.Count; i++)
             {
                 var trigger = _script.Triggers[i];
                 if (ImGui.Selectable(trigger.Stringify() + $"##{i}", _triggerIndex == i))
@@ -528,18 +531,20 @@ public class ScriptBrowserSystem : EddySystem
 
         if (ImGuiX.BeginChild("##TriggerForm", Vector2.Zero))
         {
-            if (_triggerIndex >= 0 && _triggerIndex < _script!.Triggers?.Count)
+            if (_triggerIndex >= 0 && _triggerIndex < _script!.Triggers.Count)
             {
                 var t = _script.Triggers[_triggerIndex];
 
                 var tEvent = t.Event;
-                DrawEntityFields(t.Object, ref tEvent, "Trigger");
+                var tObject = t.Object;
+                DrawEntityFields(ref tObject, ref tEvent, "Trigger");
                 if (!string.Equals(tEvent, t.Event, StringComparison.Ordinal))
                 {
                     t.Event = tEvent;
                 }
+                t.Object = tObject;
 
-                var triggerEntry = FindEntry(t.Object.Type);
+                var triggerEntry = FindEntry(t.Object);
                 var eventNames = triggerEntry != null
                     ? Array.ConvertAll(triggerEntry.Triggers, tr => tr.Name)
                     : Array.Empty<string>();
@@ -664,13 +669,15 @@ public class ScriptBrowserSystem : EddySystem
                 var c = _script.Conditions[_conditionIndex];
 
                 var cProp = c.Property;
-                DrawEntityFields(c.Object, ref cProp, "Condition");
+                var cObject = c.Object;
+                DrawEntityFields(ref cObject, ref cProp, "Condition");
                 if (!string.Equals(cProp, c.Property, StringComparison.Ordinal))
                 {
                     c.Property = cProp;
                 }
+                c.Object = cObject;
 
-                var condEntry = FindEntry(c.Object.Type);
+                var condEntry = FindEntry(c.Object);
                 var propNames = condEntry != null
                     ? Array.ConvertAll(condEntry.Conditions, cd => cd.Name)
                     : Array.Empty<string>();
@@ -760,7 +767,6 @@ public class ScriptBrowserSystem : EddySystem
         {
             using (Eddy.History.BeginScope("Add Action"))
             {
-                _script!.Actions = _script!.Actions.EmptyIfNull();
                 _script!.Actions.Add(new ScriptAction());
                 _actionIndex = _script.Actions.Count - 1;
             }
@@ -768,7 +774,7 @@ public class ScriptBrowserSystem : EddySystem
 
         ImGui.SameLine();
         ImGui.BeginDisabled(_actionIndex == -1);
-        if (ImGui.Button($"{Lucide.Copy} Clone") && _script!.Actions != null)
+        if (ImGui.Button($"{Lucide.Copy} Clone"))
         {
             using (Eddy.History.BeginScope("Clone Action"))
             {
@@ -779,12 +785,11 @@ public class ScriptBrowserSystem : EddySystem
         }
 
         ImGui.SameLine();
-        if (ImGui.Button($"{Lucide.Trash2} Remove") && _script!.Actions != null)
+        if (ImGui.Button($"{Lucide.Trash2} Remove"))
         {
             using (Eddy.History.BeginScope("Remove Action"))
             {
                 _script!.Actions.RemoveAt(_actionIndex);
-                _script!.Actions = _script.Actions.NullIfEmpty();
                 _actionIndex = -1;
             }
         }
@@ -807,7 +812,7 @@ public class ScriptBrowserSystem : EddySystem
                 ImGui.Text(empty);
             }
 
-            for (var i = 0; i < _script.Actions?.Count; i++)
+            for (var i = 0; i < _script.Actions.Count; i++)
             {
                 var action = _script.Actions[i];
                 if (ImGui.Selectable(action.Stringify() + $"##{i}", _actionIndex == i))
@@ -823,18 +828,20 @@ public class ScriptBrowserSystem : EddySystem
 
         if (ImGuiX.BeginChild("##ActionForm", Vector2.Zero, ImGuiChildFlags.None, ImGuiWindowFlags.HorizontalScrollbar))
         {
-            if (_actionIndex >= 0 && _actionIndex < _script!.Actions?.Count)
+            if (_actionIndex >= 0 && _actionIndex < _script!.Actions.Count)
             {
                 var a = _script.Actions[_actionIndex];
 
                 var aOp = a.Operation;
-                DrawEntityFields(a.Object, ref aOp, "Action");
+                var aObject = a.Object;
+                DrawEntityFields(ref aObject, ref aOp, "Action");
                 if (!string.Equals(aOp, a.Operation, StringComparison.Ordinal))
                 {
                     a.Operation = aOp;
                 }
+                a.Object = aObject;
 
-                var actionEntry = FindEntry(a.Object.Type);
+                var actionEntry = FindEntry(a.Object);
                 var opNames = actionEntry != null
                     ? Array.ConvertAll(actionEntry.Actions, ac => ac.Name)
                     : Array.Empty<string>();
@@ -855,7 +862,7 @@ public class ScriptBrowserSystem : EddySystem
                                     a.Operation = opNames[oi];
                                     var newActionDef = actionEntry!.Actions[oi];
                                     var expectedCount = newActionDef.Parameters.Length;
-                                    a.Arguments = TrimArguments(a.Arguments.Take(expectedCount).ToArray());
+                                    a.Arguments = TrimArguments(a.Arguments.EmptyIfNull().Take(expectedCount).ToArray());
                                 }
                             }
 
@@ -909,12 +916,12 @@ public class ScriptBrowserSystem : EddySystem
                     for (var i = 0; i < currentActionDef.Parameters.Length; i++)
                     {
                         var param = currentActionDef.Parameters[i];
-                        var arg = i < a.Arguments.Length ? a.Arguments[i] : "";
+                        var arg = a.Arguments != null && i < a.Arguments.Length ? a.Arguments[i] : "";
                         if (ImGui.InputText($"{param.Name}##{i}", ref arg, 255))
                         {
                             using (Eddy.History.BeginScope($"Change Action Argument [{param.Name}]"))
                             {
-                                var arguments = a.Arguments;
+                                var arguments = a.Arguments.EmptyIfNull();
                                 if (arguments.Length <= i)
                                 {
                                     Array.Resize(ref arguments, i + 1);

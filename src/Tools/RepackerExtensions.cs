@@ -1,5 +1,7 @@
-﻿using FezEditor.Structure;
+﻿using System.Diagnostics.CodeAnalysis;
+using FezEditor.Structure;
 using FEZRepacker.Core.Definitions.Game.ArtObject;
+using FEZRepacker.Core.Definitions.Game.Graphics;
 using FEZRepacker.Core.Definitions.Game.Level;
 using FEZRepacker.Core.Definitions.Game.TrileSet;
 using Microsoft.Xna.Framework;
@@ -93,6 +95,13 @@ public static class RepackerExtensions
         }
 
         texture.SetData(rgba);
+    }
+
+    public static bool IsNullOrEmpty<TTemplate, TInstance>(
+        [NotNullWhen(false)] this IndexedPrimitives<TTemplate, TInstance>? geometry
+    )
+    {
+        return geometry is not { Vertices.Length: > 0 };
     }
 
     public static (int Id, Trile? Trile) FindByName(this TrileSet set, string name)

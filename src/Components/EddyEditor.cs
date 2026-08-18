@@ -258,10 +258,17 @@ public class EddyEditor : EditorComponent
         #region Camera's initial position
 
         {
-            var gomezPos = _level.StartingFace!.Id.ToXna().ToVector3() + (Vector3.Up * 1.5f);
-            var approachDir = _level.StartingFace.Face.AsVector();
             var fpc = _cameraActor.GetComponent<FirstPersonControl>();
-            fpc.FocusOn(gomezPos, approachDir, 10f);
+
+            if (_level.StartingFace is { } startingFace)
+            {
+                var gomezPos = startingFace.Id.ToXna().ToVector3() + (Vector3.Up * 1.5f);
+                fpc.FocusOn(gomezPos, startingFace.Face.AsVector(), 10f);
+            }
+            else
+            {
+                fpc.FocusOn(_level.Size.ToXna() / 2f, Vector3.Forward, 10f);
+            }
         }
 
         #endregion
@@ -509,7 +516,7 @@ public class EddyEditor : EditorComponent
         var trileId = -1;
         foreach (var (id, trile) in trileSet.Triles)
         {
-            if (trile.Geometry.Vertices.Length > 0)
+            if (!trile.Geometry.IsNullOrEmpty())
             {
                 trileId = id;
                 break;

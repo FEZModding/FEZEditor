@@ -225,14 +225,9 @@ public class MapTreeGenerator : DrawableGameComponent
 
             foreach (var script in level.Scripts.Values)
             {
-                if (script.Actions == null)
-                {
-                    continue;
-                }
-
                 foreach (var action in script.Actions)
                 {
-                    if (action.Object.Type != "Level" || !action.Operation.Contains("Level"))
+                    if (action.Object?.Type != "Level" || !action.Operation.Contains("Level"))
                     {
                         continue;
                     }
@@ -240,14 +235,13 @@ public class MapTreeGenerator : DrawableGameComponent
                     var connection = new MapNodeConnection();
                     var hasConnection = true;
 
-                    var trigger = script.Triggers.EmptyIfNull()
-                        .Where(st => st.Object.Type == "Volume")
-                        .Where(st => st.Object.Identifier.HasValue)
+                    var trigger = script.Triggers
+                        .Where(st => st.Object is { Type: "Volume", Identifier: not null })
                         .FirstOrDefault(st => st.Event == "Enter");
 
                     if (trigger != null)
                     {
-                        var volumeId = trigger.Object.Identifier!.Value;
+                        var volumeId = trigger.Object!.Identifier!.Value;
                         if (!level.Volumes.TryGetValue(volumeId, out var volume))
                         {
                             Logger.Warning(
@@ -272,7 +266,7 @@ public class MapTreeGenerator : DrawableGameComponent
 
                     var lastLevel = action.Operation == "ReturnToLastLevel"
                         ? parentNode?.LevelName ?? ""
-                        : action.Arguments[0];
+                        : action.Arguments?.FirstOrDefault() ?? "";
 
                     switch (lastLevel)
                     {
@@ -409,7 +403,7 @@ public class MapTreeGenerator : DrawableGameComponent
             .Count(kv => !kv.Value.Name.Contains("BROKEN", StringComparison.OrdinalIgnoreCase));
 
         node.Conditions.SecretCount += level.Scripts.Values
-            .Count(s => s.Actions != null && s.Actions.Any(sa => sa.Object.Type == "Level" && sa.Operation == "ResolvePuzzle"));
+            .Count(s => s.Actions.Any(sa => sa.Object?.Type == "Level" && sa.Operation == "ResolvePuzzle"));
 
         node.Conditions.SecretCount += PuzzleLevels.Contains(level.Name)
             ? level.Name != "CLOCK" ? 1 : 4

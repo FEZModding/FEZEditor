@@ -107,18 +107,9 @@ public class ArtObjectSystem : EddySystem
 
         ImGui.SeparatorText("Actor Settings");
 
-        if (ImGuiX.NullableToggleButton("ActorSettings", artObject.ActorSettings))
-        {
-            var shouldAdd = artObject.ActorSettings == null;
-            var actionName = shouldAdd ? "Add" : "Remove";
-            using (Eddy.History.BeginScope($"{actionName} ActorSettings"))
-            {
-                artObject.ActorSettings = shouldAdd ? new ArtObjectActorSettings { Segment = null } : null;
-            }
-        }
-
         var settings = artObject.ActorSettings;
-        if (settings != null)
+
+        /* Actor settings stuff*/
         {
             var inactive = settings.Inactive;
             if (ImGui.Checkbox("Inactive", ref inactive))
@@ -249,12 +240,12 @@ public class ArtObjectSystem : EddySystem
                 }
             }
 
-            var invisibleSides = new Dirty<FaceOrientation[]>(settings.InvisibleSides.EmptyIfNull());
+            var invisibleSides = new Dirty<FaceOrientation[]>(settings.InvisibleSides);
             if (ImGuiX.EditableArray("Invisible Sides", ref invisibleSides, RenderFaceOrientationItem, () => default))
             {
                 using (Eddy.History.BeginScope("Edit AO Invisible Sides"))
                 {
-                    settings.InvisibleSides = invisibleSides.Value.Distinct().ToArray().NullIfEmpty();
+                    settings.InvisibleSides = invisibleSides.Value.Distinct().ToArray();
                 }
             }
 
@@ -379,12 +370,12 @@ public class ArtObjectSystem : EddySystem
                         }
                     }
 
-                    var soundName = customData.SoundName;
+                    var soundName = customData.SoundName.EmptyIfNull();
                     if (ImGui.InputText("Sound Name##cd", ref soundName, 255))
                     {
                         using (Eddy.History.BeginScope("Edit AO Segment Custom Data Sound Name"))
                         {
-                            customData.SoundName = soundName;
+                            customData.SoundName = soundName.NullIfEmpty();
                         }
                     }
                 }

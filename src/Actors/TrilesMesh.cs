@@ -94,43 +94,43 @@ public class TrilesMesh : ActorComponent, IPickable
         _rendering.FreeRid(_material);
     }
 
-    public void Visualize(Trile? trile, RTexture2D textureAtlas)
+    public void Visualize(Trile trile, RTexture2D? textureAtlas)
     {
-        if (trile != null)
+        _size = trile.Size.ToXna();
+        _offset = trile.Offset.ToXna();
+        _collisionTypes = new Vector4
         {
-            _size = trile.Size.ToXna();
-            _offset = trile.Offset.ToXna();
-            _collisionTypes = new Vector4
-            {
-                X = (float)trile.Faces[FaceOrientation.Front],
-                Y = (float)trile.Faces[FaceOrientation.Right],
-                Z = (float)trile.Faces[FaceOrientation.Back],
-                W = (float)trile.Faces[FaceOrientation.Left]
-            };
-            HasGeometry = trile.Geometry.Indices.Length > 0;
-        }
-        else
-        {
-            _size = Vector3.One;
-            _offset = Vector3.Zero;
-            _collisionTypes = Vector4.Zero;
-            HasGeometry = false;
-        }
+            X = (float)trile.Faces[FaceOrientation.Front],
+            Y = (float)trile.Faces[FaceOrientation.Right],
+            Z = (float)trile.Faces[FaceOrientation.Back],
+            W = (float)trile.Faces[FaceOrientation.Left]
+        };
+
+        HasGeometry = !trile.Geometry.IsNullOrEmpty();
 
         if (HasGeometry)
         {
             _texture?.Dispose();
-            _texture = RepackerExtensions.ConvertToTexture2D(textureAtlas);
-            _rendering.MaterialAssignBaseTexture(_material, _texture);
+
+            if (textureAtlas != null)
+            {
+                _texture = RepackerExtensions.ConvertToTexture2D(textureAtlas);
+                _rendering.MaterialAssignBaseTexture(_material, _texture);
+            }
+            else
+            {
+                _texture = null;
+            }
+
             _rendering.MaterialSetDepthBias(_material, 0f, 0f);
 
-            var surface = RepackerExtensions.ConvertToMesh(trile!.Geometry.Vertices, trile.Geometry.Indices);
+            var surface = RepackerExtensions.ConvertToMesh(trile.Geometry!.Vertices, trile.Geometry!.Indices);
             _rendering.MeshAddSurface(_mesh, PrimitiveType.TriangleList, surface, _material);
         }
         else
         {
             _rendering.MaterialSetDepthBias(_material, DepthBias, SlopeScaleDepthBias);
-            var faces = new List<MeshSurface>(trile!.Faces.Count);
+            var faces = new List<MeshSurface>(trile.Faces.Count);
             foreach (var face in trile.Faces.Keys)
             {
                 var fallback = MeshSurface.CreateFaceCakeSlice(_size, face);

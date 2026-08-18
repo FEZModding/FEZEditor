@@ -40,9 +40,10 @@ public class TrileSystem : EddySystem
         {
             Visualize(new InstanceId.TrileChange(emplacement, null, trile));
 
-            for (var index = 0; index < trile.OverlappedTriles.EmptyIfNull().Count; index++)
+            var overlaps = trile.OverlappedTriles.EmptyIfNull();
+            for (var index = 0; index < overlaps.Count; index++)
             {
-                var overlap = trile.OverlappedTriles![index];
+                var overlap = overlaps[index];
                 Visualize(new InstanceId.TrileOverlapChange(emplacement, index, null, overlap));
             }
         }
@@ -239,12 +240,12 @@ public class TrileSystem : EddySystem
                 }
             }
 
-            var signText = instance.ActorSettings.SignText;
+            var signText = instance.ActorSettings.SignText.EmptyIfNull();
             if (ImGui.InputText("Sign Text", ref signText, 1024))
             {
                 using (Eddy.History.BeginScope("Edit Sign Text"))
                 {
-                    instance.ActorSettings.SignText = signText;
+                    instance.ActorSettings.SignText = signText.NullIfEmpty();
                 }
             }
 

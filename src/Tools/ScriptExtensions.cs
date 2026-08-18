@@ -19,9 +19,9 @@ public static class ScriptExtensions
         };
     }
 
-    private static string ToPropertyIdentifier(Entity entity, string property)
+    private static string ToPropertyIdentifier(Entity? entity, string property)
     {
-        if (string.IsNullOrEmpty(entity.Type))
+        if (entity == null || string.IsNullOrEmpty(entity.Type))
         {
             return "?";
         }
@@ -53,14 +53,16 @@ public static class ScriptExtensions
         var output = ToPropertyIdentifier(action.Object, action.Operation);
 
         output += "(";
-        for (var i = 0; i < action.Arguments.Length; i++)
+
+        var arguments = action.Arguments.EmptyIfNull();
+        for (var i = 0; i < arguments.Length; i++)
         {
             if (i > 0)
             {
                 output += ", ";
             }
 
-            output += action.Arguments[i];
+            output += arguments[i];
         }
 
         output += ")";
