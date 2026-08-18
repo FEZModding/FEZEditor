@@ -59,7 +59,7 @@ internal class FontProperties
             {
                 using (_zu.History.BeginScope("Edit Default Char"))
                 {
-                    _zu.Font.DefaultCharacter = defStr.Length > 0 ? defStr[0] : '\u0000';
+                    _zu.Font.DefaultCharacter = defStr.Length > 0 ? defStr[0] : null;
                 }
             }
 
