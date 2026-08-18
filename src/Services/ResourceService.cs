@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using FezEditor.Components;
 using FezEditor.Structure;
 using FezEditor.Tools;
@@ -303,6 +304,25 @@ public class ResourceService : IDisposable
             _cache[path] = new WeakReference<object>(animations);
             Logger.Information("Loaded animations - {0}", path);
             return animations;
+        }
+    }
+
+    public bool TryLoadSkyTexture(string sky, string? textureName, [NotNullWhen(true)] out RTexture2D? texture) {
+        if (string.IsNullOrEmpty(sky) || string.IsNullOrEmpty(textureName))
+        {
+            texture = null;
+            return false;
+        }
+
+        try
+        {
+            texture = Load<RTexture2D>($"Skies/{sky}/{textureName}");
+            return true;
+        }
+        catch (FileNotFoundException)
+        {
+            texture = null;
+            return false;
         }
     }
 
