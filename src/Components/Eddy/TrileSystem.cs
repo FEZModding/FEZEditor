@@ -419,7 +419,11 @@ public class TrileSystem : EddySystem
 
     private void DrawGroupProperties(InstanceId.TrileGroup instance)
     {
-        var group = Level.Groups[instance.Id];
+        if (!Level.Groups.TryGetValue(instance.Id, out var group))
+        {
+            return;
+        }
+
         ImGui.Text($"Trile Group: {group.Triles.Count} trile(s), ID={instance.Id}");
 
         if (ImGui.Button($"{Lucide.Ungroup} Ungroup"))
