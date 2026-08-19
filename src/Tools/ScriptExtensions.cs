@@ -1,4 +1,5 @@
-﻿using FEZRepacker.Core.Definitions.Game.Level.Scripting;
+﻿using FezEditor.Structure;
+using FEZRepacker.Core.Definitions.Game.Level.Scripting;
 
 namespace FezEditor.Tools;
 
@@ -68,12 +69,12 @@ public static class ScriptExtensions
         output += ")";
         if (action.Blocking)
         {
-            output = "#" + output;
+            output = $"{Lucide.Clock} {output}";
         }
 
         if (action.Killswitch)
         {
-            output = "!" + output;
+            output = $"{Lucide.OctagonMinus} {output}";
         }
 
         return output;
