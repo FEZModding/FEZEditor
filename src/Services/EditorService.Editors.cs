@@ -118,7 +118,7 @@ public partial class EditorService
         if (assetType == typeof(TrackedSong)) asset = DiezEditor.Create(defaultName);
         if (assetType == typeof(TextStorage)) asset = PoEditor.Create();
         if (assetType == typeof(FezFont)) asset = ZuEditor.Create();
-        if (assetType == typeof(ArtObject)) asset = ChrisEditor.CreateAo(defaultName);
+        if (assetType == typeof(ArtObject)) asset = ChrisEditor.CreateAo(Path.GetFileName(relativePath));
         if (assetType == typeof(TrileSet)) asset = ChrisEditor.CreateTs(defaultName);
         if (assetType == typeof(Sky)) asset = LukeEditor.Create(defaultName);
         if (assetType == typeof(NpcMetadata)) asset = MuEditor.Create();

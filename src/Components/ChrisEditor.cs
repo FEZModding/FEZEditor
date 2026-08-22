@@ -17,7 +17,18 @@ namespace FezEditor.Components;
 
 public class ChrisEditor : EditorComponent, IChrisEditor
 {
-    public override object Asset => _context.Dematerialize(Obj);
+    public override object Asset
+    {
+        get
+        {
+            if (_context is ArtObjectContext artObject)
+            {
+                artObject.Name = Path.GetFileName(Title);
+            }
+
+            return _context.Dematerialize(Obj);
+        }
+    }
 
     public bool IsViewportHovered { get; private set; }
 
@@ -73,6 +84,7 @@ public class ChrisEditor : EditorComponent, IChrisEditor
 
     public ChrisEditor(Game game, string title, ArtObject ao) : this(game, title, new ArtObjectContext(ao))
     {
+        ((ArtObjectContext)_context).Name = Path.GetFileName(title);
     }
 
     public ChrisEditor(Game game, string title, TrileSet set) : this(game, title, new TrileSetContext(set, game))

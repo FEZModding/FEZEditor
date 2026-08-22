@@ -11,6 +11,15 @@ namespace FezEditor.Components.Chris;
 
 internal class ArtObjectContext : IContext
 {
+    public string Name
+    {
+        set
+        {
+            _ao.Name = value;
+            _properties.Name = value;
+        }
+    }
+
     private readonly ArtObject _ao;
 
     private ArtObjectProperties _properties = null!;
@@ -71,15 +80,7 @@ internal class ArtObjectContext : IContext
     public bool DrawProperties(History history)
     {
         var revisualize = false;
-
-        var name = _properties.Name;
-        if (ImGui.InputText("Name", ref name, 255))
-        {
-            using (history.BeginScope("Edit Name"))
-            {
-                _properties.Name = name;
-            }
-        }
+        ImGui.LabelText("Name", _properties.Name);
 
         var size = _properties.Size.ToXna();
         if (ImGuiX.DragFloat3("Size", ref size))
