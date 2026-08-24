@@ -496,7 +496,7 @@ public static class ImGuiX
         ImGui.Text(label);
         ImGui.SameLine();
 
-        var header = $"{timeSpan.ToString("g", CultureInfo.InvariantCulture)}##{label}";
+        var header = $"{timeSpan.ToString("g", CultureInfo.InvariantCulture)}###{label}";
         if (ImGui.CollapsingHeader(header))
         {
             if (BeginChild($"##Child_{label}", Vector2.Zero, flags))
