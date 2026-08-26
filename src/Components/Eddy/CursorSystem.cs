@@ -11,17 +11,25 @@ namespace FezEditor.Components.Eddy;
 
 public sealed class CursorSystem : EddySystem
 {
-    private static readonly Color HoverColor = Color.Blue with { A = 85 };
+    private static readonly Color HoverColor = Color.Blue with { A = 64 }; // 25%
 
-    private static readonly Color SelectionColor = Color.Red with { A = 85 };
+    private static readonly Color SelectionColor = Color.Red with { A = 64 }; // 25%
 
     private static readonly Color VolumeColor = Color.LimeGreen;
 
     private static readonly Color PathColor = new(1f, 0.5f, 0f, 0.8f);
 
+    private static readonly MeshSurface UnitBox = MeshSurface.CreateColoredBox(Vector3.One, Color.White);
+
     private readonly CursorMesh _cursor;
 
     private int? _hologramTrileId;
+
+    private GroupCursorState? _hoverGroupState;
+
+    private GroupCursorState? _selectionGroupState;
+
+    private int _groupGeometryVersion;
 
     public CursorSystem(CursorMesh cursor)
     {
@@ -34,57 +42,73 @@ public sealed class CursorSystem : EddySystem
         ClearVolumes();
         ClearPaths();
 
-        _cursor.ClearHover();
-        switch (Eddy.Hovered?.Instance)
+        if (Eddy.Hovered?.Instance is InstanceId.TrileGroup trileGroup)
         {
-            case InstanceId.Trile trile:
-                DrawHoveredTrile(trile);
-                break;
+            DrawHoveredTrileGroup(trileGroup);
+        }
+        else
+        {
+            _hoverGroupState = null;
+            _cursor.ClearHover();
+            switch (Eddy.Hovered?.Instance)
+            {
+                case InstanceId.Trile trile:
+                    DrawHoveredTrile(trile);
+                    break;
 
-            case InstanceId.TrileGroup trileGroup:
-                DrawHoveredTrileGroup(trileGroup);
-                break;
+                case InstanceId.Volume volume:
+                    DrawHoveredVolume(volume);
+                    break;
 
-            case InstanceId.Volume volume:
-                DrawHoveredVolume(volume);
-                break;
+                case InstanceId.PathWaypoint waypoint:
+                    DrawHoveredPathWaypoint(waypoint);
+                    break;
 
-            case InstanceId.PathWaypoint waypoint:
-                DrawHoveredPathWaypoint(waypoint);
-                break;
+                case InstanceId.BackgroundPlane bgPlane:
+                    DrawHoveredBackgroundPlane(bgPlane);
+                    break;
 
-            case InstanceId.BackgroundPlane bgPlane:
-                DrawHoveredBackgroundPlane(bgPlane);
-                break;
-
-            case { } instance:
-                DrawHoveredInstance(instance);
-                break;
+                case { } instance:
+                    DrawHoveredInstance(instance);
+                    break;
+            }
         }
 
-        _cursor.ClearSelection();
-        switch (Eddy.Selected)
+        if (Eddy.Selected is SelectionState.TrileGroup selection)
         {
-            case SelectionState.Trile trile:
-                DrawSelectedTriles(trile.Selected, trile.Face);
-                break;
+            DrawSelectedTrileGroup(selection.Selected);
+        }
+        else
+        {
+            _selectionGroupState = null;
+            _cursor.ClearSelection();
+            switch (Eddy.Selected)
+            {
+                case SelectionState.Trile trile:
+                    DrawSelectedTriles(trile.Selected, trile.Face);
+                    break;
 
-            case SelectionState.TrileGroup trileGroup:
-                DrawSelectedTrileGroup(trileGroup.Selected);
-                break;
+                case SelectionState.Path path:
+                    DrawSelectedPathWaypoints(path.Selected, path.Waypoints);
+                    break;
 
-            case SelectionState.Path path:
-                DrawSelectedPathWaypoints(path.Selected, path.Waypoints);
-                break;
-
-            case SelectionState.Instance instance:
-                DrawSelectedVolumes(instance.Selected.Where(id => id is InstanceId.Volume));
-                DrawSelectedBackgroundPlanes(instance.Selected.Where(id => id is InstanceId.BackgroundPlane).ToList());
-                DrawSelectedInstances(instance.Selected.Where(id => id is not InstanceId.Volume and not InstanceId.BackgroundPlane).ToList());
-                break;
+                case SelectionState.Instance instance:
+                    DrawSelectedVolumes(instance.Selected.Where(id => id is InstanceId.Volume));
+                    DrawSelectedBackgroundPlanes(instance.Selected.Where(id => id is InstanceId.BackgroundPlane).ToList());
+                    DrawSelectedInstances(instance.Selected.Where(id => id is not InstanceId.Volume and not InstanceId.BackgroundPlane).ToList());
+                    break;
+            }
         }
 
         DrawPaintHologram();
+    }
+
+    public override void Visualize(InstanceId instance)
+    {
+        if (instance is InstanceId.TrileChange or InstanceId.TrileOverlapChange or InstanceId.TrileGroup)
+        {
+            _groupGeometryVersion++;
+        }
     }
 
     #region Triles
@@ -185,44 +209,57 @@ public sealed class CursorSystem : EddySystem
     {
         if (!Level.Groups.TryGetValue(trileGroup.Id, out var group))
         {
+            _hoverGroupState = null;
+            _cursor.ClearHover();
             return;
         }
 
-        var groupSet = group.Triles.Select(ti => new TrileEmplacement(ti.Position));
-        _cursor.SetHoverSurfaces(BuildBoxSurfaces(groupSet, HoverColor), HoverColor);
+        var state = new GroupCursorState(trileGroup, _groupGeometryVersion);
+        if (_hoverGroupState == state)
+        {
+            return;
+        }
+
+        _hoverGroupState = state;
+        _cursor.ClearHover();
+        _cursor.UploadHoverMesh(UnitBox, PrimitiveType.TriangleList, HoverColor);
+        _cursor.SetHoverInstances(BuildBoxInstances(group.Triles));
     }
 
     private void DrawSelectedTrileGroup(IReadOnlyCollection<int> trileGroups)
     {
-        var surfaces = trileGroups
-            .Where(groupId => Level.Groups.ContainsKey(groupId))
-            .Select(groupId =>
-            {
-                var emplacements = Level.Groups[groupId].Triles.Select(ti => new TrileEmplacement(ti.Position));
-                return BuildBoxSurfaces(emplacements, SelectionColor);
-            })
-            .SelectMany(x => x);
+        var state = new GroupCursorState(trileGroups, _groupGeometryVersion);
+        if (_selectionGroupState == state)
+        {
+            return;
+        }
 
-        _cursor.SetSelectionSurfaces(surfaces, SelectionColor);
+        _selectionGroupState = state;
+        _cursor.ClearSelection();
+        _cursor.UploadSelectionMesh(UnitBox, PrimitiveType.TriangleList, SelectionColor);
+        _cursor.SetSelectionInstances(trileGroups
+            .Where(groupId => Level.Groups.ContainsKey(groupId))
+            .SelectMany(groupId => Level.Groups[groupId].Triles)
+            .Select(CreateBoxInstance));
     }
 
-    private IEnumerable<(MeshSurface, PrimitiveType)> BuildBoxSurfaces(
-        IEnumerable<TrileEmplacement> emplacements,
-        Color color)
+    private IEnumerable<Matrix> BuildBoxInstances(IEnumerable<TrileInstance> triles)
     {
-        return emplacements
-            .Where(e => Level.Triles.TryGetValue(e, out _))
-            .Select(e =>
-            {
-                var center = Level.Triles[e].Position.ToXna() + new Vector3(0.5f);
-                var surface = MeshSurface.CreateColoredBox(Vector3.One, color);
-                for (var i = 0; i < surface.Vertices.Length; i++)
-                {
-                    surface.Vertices[i] += center;
-                }
+        return triles
+            .Select(trile => new TrileEmplacement(trile.Position))
+            .Where(Level.Triles.ContainsKey)
+            .Select(emplacement => CreateBoxInstance(Level.Triles[emplacement]));
+    }
 
-                return (surface, PrimitiveType.TriangleList);
-            });
+    private static Matrix CreateBoxInstance(TrileInstance trile)
+    {
+        var center = trile.Position.ToXna() + new Vector3(0.5f);
+        return new Matrix(
+            center.X, center.Y, center.Z, 0f,
+            0f, 0f, 0f, 1f,
+            1f, 1f, 1f, 0f,
+            0f, 0f, 0f, 0f
+        );
     }
 
     #endregion
@@ -440,4 +477,6 @@ public sealed class CursorSystem : EddySystem
     }
 
     #endregion
+
+    private sealed record GroupCursorState(object Selection, int GeometryVersion);
 }

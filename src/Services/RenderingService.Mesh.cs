@@ -36,6 +36,7 @@ public partial class RenderingService
         var data = GetResource(_meshes, mesh);
         DisposeBuffers(data);
         data.Surfaces.Clear();
+        InvalidateMultiMesh(mesh);
         Logger.Verbose("Mesh {0} cleared", mesh);
     }
 

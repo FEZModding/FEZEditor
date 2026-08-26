@@ -412,7 +412,7 @@ public class EddyEditor : EditorComponent
 
     public void Visualize(InstanceId instanceId)
     {
-        foreach (var system in _instances)
+        foreach (var system in _instances.Concat(_tools))
         {
             system.Visualize(instanceId);
         }

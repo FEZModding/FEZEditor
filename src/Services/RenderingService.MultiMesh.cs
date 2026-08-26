@@ -283,13 +283,18 @@ public partial class RenderingService
         RestoreDefaultState();
     }
 
-    private void InvalidateMultiMesh(Rid mesh)
+    private void InvalidateMultiMesh(Rid mesh, bool removeMesh = false)
     {
         foreach (var mm in _multiMeshes.Values)
         {
             if (mm.Mesh == mesh)
             {
-                mm.Mesh = Rid.Invalid;
+                // Clear cached buffers before their mesh disposes or replaces them
+                if (removeMesh)
+                {
+                    mm.Mesh = Rid.Invalid;
+                }
+
                 mm.TemplateVertexBuffer = null;
                 mm.TemplateIndexBuffer = null;
                 mm.TemplateVertexCount = 0;

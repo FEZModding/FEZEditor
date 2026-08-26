@@ -206,7 +206,7 @@ public partial class RenderingService : IDisposable
             if (RemoveResource(_meshes, rid, out var mesh))
             {
                 DisposeBuffers(mesh!);
-                InvalidateMultiMesh(rid);
+                InvalidateMultiMesh(rid, true);
                 Logger.Verbose("Freed Mesh {0}", rid);
             }
         }

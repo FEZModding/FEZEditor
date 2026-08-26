@@ -1,8 +1,8 @@
 using FezEditor.Services;
 using FezEditor.Structure;
 using FezEditor.Tools;
-using FEZRepacker.Core.Definitions.Game.TrileSet;
 using FEZRepacker.Core.Definitions.Game.Common;
+using FEZRepacker.Core.Definitions.Game.TrileSet;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -10,26 +10,25 @@ namespace FezEditor.Actors;
 
 public sealed class CursorMesh : ActorComponent
 {
-    public const float CursorDepthBias = -0.001f;
-    public const float CollisionDepthBias = -0.0005f;
+    private const float CursorDepthBias = -0.000001f;
+
+    private const float CollisionDepthBias = -0.0005f;
+
+    private static readonly Matrix[] IdentityInstance = [CreateInstanceMatrix(Vector3.Zero)];
 
     private readonly RenderingService _rendering;
 
-    private readonly Rid _mesh;
+    private readonly Overlay _selection;
 
-    private MeshInstance _selection = new();
-
-    private MeshInstance _hover = new();
+    private readonly Overlay _hover;
 
     private HologramInstance _hologram = new();
-
-    private bool _dirty;
 
     internal CursorMesh(Game game, Actor actor) : base(game, actor)
     {
         _rendering = game.GetService<RenderingService>();
-        _mesh = _rendering.MeshCreate();
-        _rendering.InstanceSetMesh(actor.InstanceRid, _mesh);
+        _hover = new Overlay(_rendering, actor.InstanceRid);
+        _selection = new Overlay(_rendering, actor.InstanceRid);
         _hologram.Mesh = _rendering.MeshCreate();
         _hologram.Instance = _rendering.InstanceCreate(actor.InstanceRid);
         _rendering.InstanceSetMesh(_hologram.Instance, _hologram.Mesh);
@@ -38,17 +37,9 @@ public sealed class CursorMesh : ActorComponent
 
     public override void LoadContent(IContentManager content)
     {
-        _hover.Material = _rendering.MaterialCreate();
-        _rendering.MaterialAssignEffect(_hover.Material, _rendering.BasicEffect);
-        _rendering.MaterialSetCullMode(_hover.Material, CullMode.None);
-        _rendering.MaterialSetBlendMode(_hover.Material, BlendMode.AlphaBlend);
-        _rendering.MaterialSetDepthBias(_hover.Material, CursorDepthBias, 0.0f);
-
-        _selection.Material = _rendering.MaterialCreate();
-        _rendering.MaterialAssignEffect(_selection.Material, _rendering.BasicEffect);
-        _rendering.MaterialSetCullMode(_selection.Material, CullMode.None);
-        _rendering.MaterialSetBlendMode(_selection.Material, BlendMode.AlphaBlend);
-        _rendering.MaterialSetDepthBias(_selection.Material, CursorDepthBias, 0.0f);
+        var effect = content.Load<Effect>("Effects/CursorMesh");
+        _hover.Load(effect);
+        _selection.Load(effect);
 
         _hologram.Material = _rendering.MaterialCreate();
         _rendering.MaterialAssignEffect(_hologram.Material, _rendering.BasicEffectTextured);
@@ -74,34 +65,52 @@ public sealed class CursorMesh : ActorComponent
 
     public void SetHoverSurfaces(IEnumerable<(MeshSurface, PrimitiveType)> surfaces, Color color)
     {
-        _hover.Surfaces.AddRange(surfaces);
-        _hover.Color = color;
-        _dirty = true;
+        foreach (var (surface, primitive) in surfaces)
+        {
+            UploadHoverMesh(surface, primitive, color);
+            SetHoverInstances(IdentityInstance);
+        }
+    }
+
+    public void UploadHoverMesh(MeshSurface surface, PrimitiveType primitive, Color color)
+    {
+        _hover.UploadMesh(surface, primitive, color);
+    }
+
+    public void SetHoverInstances(IEnumerable<Matrix> instances)
+    {
+        _hover.SetInstances(instances);
     }
 
     public void ClearHover()
     {
-        if (_hover.Surfaces.Count > 0)
-        {
-            _hover.Surfaces.Clear();
-            _dirty = true;
-        }
+        // Keep template meshes resident while removing their active instances
+        _hover.Clear();
     }
 
     public void SetSelectionSurfaces(IEnumerable<(MeshSurface, PrimitiveType)> surfaces, Color color)
     {
-        _selection.Surfaces.AddRange(surfaces);
-        _selection.Color = color;
-        _dirty = true;
+        foreach (var (surface, primitive) in surfaces)
+        {
+            UploadSelectionMesh(surface, primitive, color);
+            SetSelectionInstances(IdentityInstance);
+        }
+    }
+
+    public void UploadSelectionMesh(MeshSurface surface, PrimitiveType primitive, Color color)
+    {
+        _selection.UploadMesh(surface, primitive, color);
+    }
+
+    public void SetSelectionInstances(IEnumerable<Matrix> instances)
+    {
+        _selection.SetInstances(instances);
     }
 
     public void ClearSelection()
     {
-        if (_selection.Surfaces.Count > 0)
-        {
-            _selection.Surfaces.Clear();
-            _dirty = true;
-        }
+        // Keep template meshes resident while removing their active instances
+        _selection.Clear();
     }
 
     public void UpdateHologram(TrileSet trileSet, int trileId)
@@ -109,9 +118,9 @@ public sealed class CursorMesh : ActorComponent
         _hologram.Texture?.Dispose();
         _rendering.MeshClear(_hologram.Mesh);
 
-        if (trileSet.Triles.TryGetValue(trileId, out var trile)
-            && !trile.Geometry.IsNullOrEmpty()
-            && trileSet.TextureAtlas != null)
+        if (trileSet.Triles.TryGetValue(trileId, out var trile) &&
+            !trile.Geometry.IsNullOrEmpty() &&
+            trileSet.TextureAtlas != null)
         {
             _hologram.Texture = RepackerExtensions.ExtractColorToTexture2D(trileSet.TextureAtlas);
             _rendering.MaterialAssignBaseTexture(_hologram.Material, _hologram.Texture);
@@ -151,43 +160,10 @@ public sealed class CursorMesh : ActorComponent
         }
     }
 
-    public override void Update(GameTime gameTime)
-    {
-        if (!_dirty)
-        {
-            return;
-        }
-
-        _dirty = false;
-        _rendering.MeshClear(_mesh);
-
-        if (_hover.Surfaces.Count > 0)
-        {
-            _rendering.MaterialSetAlbedo(_hover.Material, _hover.Color);
-            foreach (var (surface, primitive) in _hover.Surfaces)
-            {
-                _rendering.MeshAddSurface(_mesh, primitive, surface, _hover.Material);
-            }
-        }
-
-        if (_selection.Surfaces.Count > 0)
-        {
-            _rendering.MaterialSetAlbedo(_selection.Material, _selection.Color);
-            foreach (var (surface, primitive) in _selection.Surfaces)
-            {
-                _rendering.MeshAddSurface(_mesh, primitive, surface, _selection.Material);
-            }
-        }
-
-        var isVisible = _hover.Surfaces is { Count: > 0 } || _selection.Surfaces is { Count: > 0 };
-        _rendering.InstanceSetVisibility(Actor.InstanceRid, isVisible);
-    }
-
     public override void Dispose()
     {
-        _rendering.FreeRid(_selection.Material);
-        _rendering.FreeRid(_hover.Material);
-        _rendering.FreeRid(_mesh);
+        _selection.Dispose();
+        _hover.Dispose();
         _hologram.Texture?.Dispose();
         _rendering.FreeRid(_hologram.Instance);
         _rendering.FreeRid(_hologram.Mesh);
@@ -198,13 +174,6 @@ public sealed class CursorMesh : ActorComponent
         }
     }
 
-    private struct MeshInstance()
-    {
-        public Rid Material = Rid.Invalid;
-        public Color Color = Color.Transparent;
-        public readonly List<(MeshSurface Surface, PrimitiveType Primitive)> Surfaces = new();
-    }
-
     private struct HologramInstance()
     {
         public Rid Instance = Rid.Invalid;
@@ -213,5 +182,179 @@ public sealed class CursorMesh : ActorComponent
         public Texture2D? Texture = null!;
         public readonly Dictionary<CollisionType, Rid> CollisionMaterials = new();
         public bool Visible = false;
+    }
+
+    private static Matrix CreateInstanceMatrix(Vector3 position)
+    {
+        return new Matrix(
+            position.X, position.Y, position.Z, 0f,
+            0f, 0f, 0f, 1f,
+            1f, 1f, 1f, 0f,
+            0f, 0f, 0f, 0f
+        );
+    }
+
+    private sealed class Overlay : IDisposable
+    {
+        private readonly RenderingService _rendering;
+
+        private readonly Rid _parent;
+
+        private readonly List<Batch> _batches = new();
+
+        private Effect? _effect;
+
+        private int _activeBatchIndex = -1;
+
+        public Overlay(RenderingService rendering, Rid parent)
+        {
+            _rendering = rendering;
+            _parent = parent;
+        }
+
+        public void Load(Effect effect)
+        {
+            _effect = effect;
+            foreach (var batch in _batches)
+            {
+                batch.Load(effect);
+            }
+        }
+
+        public void UploadMesh(MeshSurface surface, PrimitiveType primitive, Color color)
+        {
+            var batchIndex = ++_activeBatchIndex;
+            while (_batches.Count <= batchIndex)
+            {
+                _batches.Add(new Batch(_rendering, _parent));
+            }
+
+            var batch = _batches[batchIndex];
+            if (_effect != null)
+            {
+                batch.Load(_effect);
+            }
+
+            batch.UploadMesh(surface, primitive, color);
+        }
+
+        public void SetInstances(IEnumerable<Matrix> instances)
+        {
+            if (_activeBatchIndex < 0)
+            {
+                throw new InvalidOperationException("Upload a cursor mesh before setting its instances.");
+            }
+
+            _batches[_activeBatchIndex].SetInstances(instances);
+        }
+
+        public void Clear()
+        {
+            foreach (var batch in _batches)
+            {
+                batch.Clear();
+            }
+
+            _activeBatchIndex = -1;
+        }
+
+        public void Dispose()
+        {
+            foreach (var batch in _batches)
+            {
+                batch.Dispose();
+            }
+        }
+    }
+
+    private sealed class Batch : IDisposable
+    {
+        private readonly RenderingService _rendering;
+
+        private readonly Rid _mesh;
+
+        private readonly Rid _material;
+
+        private readonly Rid _multiMesh;
+
+        private readonly Rid _instance;
+
+        private MeshSurface? _surface;
+
+        private PrimitiveType _primitive;
+
+        private int _instanceCount;
+
+        private bool _loaded;
+
+        public Batch(RenderingService rendering, Rid parent)
+        {
+            _rendering = rendering;
+            _mesh = _rendering.MeshCreate();
+            _material = _rendering.MaterialCreate();
+            _multiMesh = _rendering.MultiMeshCreate();
+            _rendering.MultiMeshSetMesh(_multiMesh, _mesh);
+            _instance = _rendering.InstanceCreate(parent);
+            _rendering.InstanceSetMultiMesh(_instance, _multiMesh);
+            _rendering.InstanceSetVisibility(_instance, false);
+        }
+
+        public void Load(Effect effect)
+        {
+            if (!_loaded)
+            {
+                _rendering.MaterialAssignEffect(_material, effect);
+                _rendering.MaterialSetCullMode(_material, CullMode.None);
+                _rendering.MaterialSetBlendMode(_material, BlendMode.AlphaBlend);
+                _rendering.MaterialSetDepthBias(_material, CursorDepthBias, 0.0f);
+                _loaded = true;
+            }
+        }
+
+        public void UploadMesh(MeshSurface surface, PrimitiveType primitive, Color color)
+        {
+            _rendering.MaterialSetAlbedo(_material, color);
+            if (!ReferenceEquals(_surface, surface) || _primitive != primitive)
+            {
+                // Replace only the template geometry; instance data stays separate
+                _rendering.MeshClear(_mesh);
+                _rendering.MultiMeshSetMesh(_multiMesh, _mesh);
+                _rendering.MeshAddSurface(_mesh, primitive, surface, _material);
+                _surface = surface;
+                _primitive = primitive;
+            }
+        }
+
+        public void SetInstances(IEnumerable<Matrix> instances)
+        {
+            var data = instances as IReadOnlyList<Matrix> ?? instances.ToList();
+            if (_instanceCount != data.Count)
+            {
+                _rendering.MultiMeshAllocate(_multiMesh, data.Count, MultiMeshDataType.Matrix);
+                _instanceCount = data.Count;
+            }
+
+            for (var i = 0; i < data.Count; i++)
+            {
+                _rendering.MultiMeshSetInstanceMatrix(_multiMesh, i, data[i]);
+            }
+
+            _rendering.MultiMeshSetVisibleInstances(_multiMesh, data.Count);
+            _rendering.InstanceSetVisibility(_instance, data.Count > 0);
+        }
+
+        public void Clear()
+        {
+            _rendering.MultiMeshSetVisibleInstances(_multiMesh, 0);
+            _rendering.InstanceSetVisibility(_instance, false);
+        }
+
+        public void Dispose()
+        {
+            _rendering.FreeRid(_instance);
+            _rendering.FreeRid(_multiMesh);
+            _rendering.FreeRid(_mesh);
+            _rendering.FreeRid(_material);
+        }
     }
 }
