@@ -1,5 +1,4 @@
 using FezEditor.Actors;
-using FezEditor.Components.Eddy;
 using FezEditor.Structure;
 using FezEditor.Tools;
 using FEZRepacker.Core.Definitions.Game.Sky;

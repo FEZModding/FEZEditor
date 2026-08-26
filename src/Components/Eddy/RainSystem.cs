@@ -1,5 +1,4 @@
 using FezEditor.Actors;
-using FezEditor.Components.Eddy;
 using FezEditor.Tools;
 
 namespace FezEditor.Components.Eddy;
