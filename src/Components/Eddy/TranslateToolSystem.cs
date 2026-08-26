@@ -1,4 +1,5 @@
 using FezEditor.Actors;
+using FezEditor.Structure;
 using FezEditor.Tools;
 using FEZRepacker.Core.Definitions.Game.Common;
 using FEZRepacker.Core.Definitions.Game.Level;
@@ -62,6 +63,29 @@ public class TranslateToolSystem : EddySystem
         {
             Eddy.Selected = new SelectionState.Empty();
             Eddy.Tool = new ToolState.Select();
+        }
+    }
+
+    public override void Draw()
+    {
+        if (Eddy.Tool is not ToolState.Translate ||
+            Eddy.Selected is not SelectionState.Instance instances)
+        {
+            return;
+        }
+
+        foreach (var instance in instances.Selected)
+        {
+            if (instance is InstanceId.Gomez)
+            {
+                if (Level.StartingFace is { } startingFace &&
+                    (!Level.Triles.TryGetValue(startingFace.Id, out var trile) ||
+                     trile.TrileId == EddyEditor.InvalidId))
+                {
+                    ImGuiX.DrawCursorLabel(
+                        $"{Lucide.TriangleAlert} Gomez starts in the air. The spawn may be invalid!");
+                }
+            }
         }
     }
 
