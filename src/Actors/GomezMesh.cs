@@ -10,6 +10,8 @@ namespace FezEditor.Actors;
 
 public class GomezMesh : ActorComponent, IPickable, ITinted
 {
+    private static readonly Vector3 EmplacementOffset = Mathz.EmplacementCenter * Mathz.XzMask;
+
     public Color Tint { get; set; } = Color.Transparent;
 
     private readonly RenderingService _rendering;
@@ -80,7 +82,11 @@ public class GomezMesh : ActorComponent, IPickable, ITinted
     public IEnumerable<BoundingBox> GetBounds()
     {
         var offset = Vector3.Transform(Vector3.UnitY * _scale.Y / 2f, _transform.Rotation);
-        yield return Mathz.ComputeBoundingBox(_transform.Position + offset, _transform.Rotation, _scale, Vector3.One);
+        yield return Mathz.ComputeBoundingBox(
+            _transform.Position + EmplacementOffset + offset,
+            _transform.Rotation,
+            _scale,
+            Vector3.One);
     }
 
     public PickHit? Pick(Ray ray)
@@ -109,6 +115,7 @@ public class GomezMesh : ActorComponent, IPickable, ITinted
         }
 
         _transform.Scale = _scale;
+        _rendering.InstanceSetPosition(Actor.InstanceRid, _transform.Position + EmplacementOffset);
     }
 
     private void ApplyTextureTransform(Rid material, Texture2D texture, Rectangle rect)
