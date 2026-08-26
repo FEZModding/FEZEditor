@@ -45,6 +45,11 @@ public class PickToolSystem : EddySystem
         {
             Eddy.Tool = Eddy.PickAndPaint(_hovered);
         }
+
+        if (ImGui.IsKeyPressed(ImGuiKey.Escape))
+        {
+            Eddy.Tool = new ToolState.Select();
+        }
     }
 
     public override void Draw()
