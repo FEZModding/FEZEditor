@@ -16,7 +16,17 @@ public class PaintToolSystem : EddySystem
             return;
         }
 
-        if (tool is ToolState.Paint.None or ToolState.Paint.Trile)
+        if (tool is ToolState.Paint.None)
+        {
+            if (ImGui.IsKeyPressed(ImGuiKey.Escape))
+            {
+                Eddy.Tool = new ToolState.Select();
+            }
+
+            return;
+        }
+
+        if (tool is ToolState.Paint.Trile)
         {
             return;
         }
