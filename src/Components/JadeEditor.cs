@@ -21,6 +21,8 @@ public class JadeEditor : EditorComponent
 
     private readonly ConfirmWindow _confirm;
 
+    private readonly InputHints _hints = new();
+
     private Scene _scene = null!;
 
     private Actor _cameraActor = null!;
@@ -47,7 +49,7 @@ public class JadeEditor : EditorComponent
 
     public override void LoadContent()
     {
-        _scene = new Scene(Game, ContentManager);
+        _scene = new Scene(Game, ContentManager, _hints);
         _scene.Lighting.Ambient = new Color(new Vector3(1f / 3f));
         Camera camera;
         {
@@ -77,6 +79,7 @@ public class JadeEditor : EditorComponent
 
     public override void Update(GameTime gameTime)
     {
+        _hints.Clear();
         if (_pendingRevisualize)
         {
             _context.PartialRevisualize();
@@ -84,7 +87,7 @@ public class JadeEditor : EditorComponent
             return;
         }
 
-        StatusService.AddHint("LMB", "Select Node");
+        _hints.Add("LMB", "Select Node");
         _scene.Update(gameTime);
     }
 
@@ -107,15 +110,17 @@ public class JadeEditor : EditorComponent
             if (texture is { IsDisposed: false })
             {
                 ImGuiX.Image(texture, size);
-                InputService.IsViewportHovered = ImGui.IsItemHovered();
+                var viewportHovered = ImGui.IsItemHovered();
+                InputService.IsViewportHovered = viewportHovered;
 
                 var imageMin = ImGuiX.GetItemRectMin();
                 var gizmo = _cameraActor.GetComponent<OrientationGizmo>();
                 gizmo.UseFaceLabels = true;
                 gizmo.Draw(imageMin + new Vector2(size.X - 8f, 8f));
                 ImGuiX.DrawStats(imageMin + new Vector2(8, 8), RenderingService.GetStats());
+                ImGuiX.DrawHintsOverlay(_hints, imageMin, size, viewportHovered);
 
-                if (ImGui.IsItemHovered() && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
+                if (viewportHovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
                 {
                     var viewportMin = ImGuiX.GetItemRectMin();
                     var ray = _scene.Viewport.Unproject(ImGuiX.GetMousePos(), viewportMin);

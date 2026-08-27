@@ -16,20 +16,17 @@ public class ZoomControl : ActorComponent
 
     private readonly InputService _input;
 
-    private readonly StatusService _status;
-
     private readonly Camera _camera;
 
     internal ZoomControl(Game game, Actor actor) : base(game, actor)
     {
         _input = game.GetService<InputService>();
-        _status = game.GetService<StatusService>();
         _camera = actor.GetComponent<Camera>();
     }
 
     public override void Update(GameTime gameTime)
     {
-        _status.AddHint("Scroll Wheel", "Zoom");
+        Hints?.Add("Scroll Wheel", "Zoom");
         if (_input.CaptureScrollWheelDelta(out var scroll))
         {
             Distance -= scroll * ZoomSensitivity;

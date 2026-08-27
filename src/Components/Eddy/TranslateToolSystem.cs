@@ -169,7 +169,7 @@ public class TranslateToolSystem : EddySystem
 
         #region Reset local translation of triles
 
-        Status.AddHint("R", "Reset");
+        Hints.Add("R", "Reset");
 
         if (ImGui.IsKeyPressed(ImGuiKey.R) && tool.HistoryScope == null)
         {

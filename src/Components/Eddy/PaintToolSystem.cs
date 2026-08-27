@@ -41,7 +41,7 @@ public class PaintToolSystem : EddySystem
             _ => throw new ArgumentOutOfRangeException(nameof(tool))
         };
 
-        Status.AddHint("LMB", label);
+        Hints.Add("LMB", label);
 
         if (ImGui.IsKeyPressed(ImGuiKey.Escape))
         {

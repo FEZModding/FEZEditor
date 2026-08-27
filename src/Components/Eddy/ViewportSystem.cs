@@ -75,5 +75,6 @@ public class ViewportSystem : EddySystem
 
         var topCenter = position + new Vector2(size.X / 2f, 8f);
         ImGuiX.DrawClock(topCenter, _clock);
+        ImGuiX.DrawHintsOverlay(Hints, position, size, hovered && !faraway);
     }
 }

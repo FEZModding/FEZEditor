@@ -1,4 +1,5 @@
 using FezEditor.Services;
+using FezEditor.Structure;
 using FEZRepacker.Core.Definitions.Game.Level;
 using Microsoft.Xna.Framework;
 
@@ -14,11 +15,11 @@ public abstract class EddySystem : IDisposable
 
     public ResourceService Resources { protected get; set; } = null!;
 
-    public StatusService Status { protected get; set; } = null!;
-
     public RenderingService Rendering { protected get; set; } = null!;
 
     public InputService Input { protected get; set; } = null!;
+
+    public InputHints Hints { protected get; set; } = null!;
 
     public virtual void Initialize()
     {

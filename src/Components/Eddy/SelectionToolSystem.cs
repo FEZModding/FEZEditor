@@ -18,18 +18,18 @@ public class SelectionToolSystem : EddySystem
 
         if (Eddy.Frame.AllowsSelection)
         {
-            Status.AddHint("LMB", "Select");
-            Status.AddHint("Shift+LMB", "Add to Selection");
+            Hints.Add("LMB", "Select");
+            Hints.Add("Shift+LMB", "Add to Selection");
 
             if (Eddy.Hovered?.Instance is not InstanceId.Trile and not InstanceId.TrileGroup)
             {
-                Status.AddHint("Alt+LMB", "Cycle Selection");
+                Hints.Add("Alt+LMB", "Cycle Selection");
             }
         }
 
         if (Eddy.Hovered?.Instance is InstanceId.Trile)
         {
-            Status.AddHint("LMB Drag", "Select Multiple");
+            Hints.Add("LMB Drag", "Select Multiple");
         }
 
         #endregion

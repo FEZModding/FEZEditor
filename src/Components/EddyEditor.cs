@@ -100,6 +100,8 @@ public class EddyEditor : EditorComponent
 
     private FarAwayPreviewSystem _farAwayPreviewer = null!;
 
+    private readonly InputHints _inputHints = new();
+
     private readonly List<EddySystem> _tools = new();
 
     private readonly List<EddySystem> _instances = new();
@@ -122,7 +124,7 @@ public class EddyEditor : EditorComponent
         #region Setup a minimal 3D scene
 
         {
-            _scene = new Scene(Game, ContentManager);
+            _scene = new Scene(Game, ContentManager, _inputHints);
 
             _cameraActor = _scene.CreateActor();
             _cameraActor.Name = "Camera";
@@ -276,7 +278,7 @@ public class EddyEditor : EditorComponent
 
     public override void Update(GameTime gameTime)
     {
-        StatusService.ClearHints();
+        _inputHints.Clear();
         _gizmoActor.Visible = false;
 
         foreach (var system in _tools)
@@ -482,7 +484,7 @@ public class EddyEditor : EditorComponent
         _recentEntries.Clear();
     }
 
-    private void AddSystems(ICollection<EddySystem> collection, params EddySystem[] systems)
+    private void AddSystems(List<EddySystem> collection, params EddySystem[] systems)
     {
         foreach (var system in systems)
         {
@@ -490,9 +492,9 @@ public class EddyEditor : EditorComponent
             system.Eddy = this;
             system.Level = _level;
             system.Resources = ResourceService;
-            system.Status = StatusService;
             system.Rendering = RenderingService;
             system.Input = InputService;
+            system.Hints = _inputHints;
             system.Initialize();
             collection.Add(system);
         }

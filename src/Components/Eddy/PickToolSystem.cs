@@ -15,10 +15,10 @@ public class PickToolSystem : EddySystem
             return;
         }
 
-        Status.AddHint("LMB", "Pick Asset");
+        Hints.Add("LMB", "Pick Asset");
         if (Eddy.Hovered?.Instance is not InstanceId.Trile and not InstanceId.TrileGroup)
         {
-            Status.AddHint("Alt+LMB", "Cycle Pick");
+            Hints.Add("Alt+LMB", "Cycle Pick");
         }
 
         _hovered = Eddy.Hovered?.Instance switch

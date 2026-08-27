@@ -21,16 +21,19 @@ public class Scene : IDisposable
 
     private readonly IContentManager _content;
 
+    private readonly InputHints? _hints;
+
     private readonly HashSet<Actor> _actors = new();
 
     private readonly Dictionary<Actor, HierarchyNode> _hierarchy = new();
 
     private bool _disposed;
 
-    public Scene(Game game, IContentManager content)
+    public Scene(Game game, IContentManager content, InputHints? hints = null)
     {
         _game = game;
         _content = content;
+        _hints = hints;
         _rendering = game.GetService<RenderingService>();
 
         _worldRid = _rendering.WorldCreate();
@@ -38,7 +41,7 @@ public class Scene : IDisposable
         Lighting = new SceneLighting(game, _worldRid);
 
         var rootRid = _rendering.WorldGetRoot(_worldRid);
-        Root = new Actor(_game, rootRid, _content);
+        Root = new Actor(_game, rootRid, _content, hints);
         _actors.Add(Root);
         _hierarchy[Root] = new HierarchyNode(null, new List<Actor>());
     }
@@ -46,7 +49,7 @@ public class Scene : IDisposable
     public Actor CreateActor(Actor? parent = null)
     {
         var parentActor = parent ?? Root;
-        var actor = new Actor(_game, parentActor.InstanceRid, _content);
+        var actor = new Actor(_game, parentActor.InstanceRid, _content, _hints);
         _actors.Add(actor);
         _hierarchy[parentActor].Children.Add(actor);
         _hierarchy[actor] = new HierarchyNode(parentActor, new List<Actor>());

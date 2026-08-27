@@ -36,8 +36,6 @@ public partial class EditorService
 
     private readonly ResourceService _resourceService;
 
-    private readonly StatusService _statusService;
-
     private readonly AppStorageService _storageService;
 
     private EditorComponent? _activeEditor;
@@ -47,15 +45,12 @@ public partial class EditorService
         _game = game;
         _inputService = game.GetService<InputService>();
         _resourceService = game.GetService<ResourceService>();
-        _statusService = game.GetService<StatusService>();
         _storageService = game.GetService<AppStorageService>();
         _resourceService.ProviderChanged += OnProviderChanged;
     }
 
     public void Update(GameTime gameTime)
     {
-        _statusService.ClearHints();
-
         if (_activeEditor == null || _pendingLoad.Contains(_activeEditor))
         {
             return;

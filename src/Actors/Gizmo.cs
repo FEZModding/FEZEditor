@@ -86,8 +86,6 @@ public class Gizmo : ActorComponent
 
     private readonly RenderingService _rendering;
 
-    private readonly StatusService _status;
-
     private readonly Rid _mesh;
 
     private readonly GizmoHandle _translateX, _translateY, _translateZ;
@@ -125,7 +123,6 @@ public class Gizmo : ActorComponent
     public Gizmo(Game game, Actor actor) : base(game, actor)
     {
         _rendering = game.GetService<RenderingService>();
-        _status = game.GetService<StatusService>();
 
         _mesh = _rendering.MeshCreate();
         _rendering.InstanceSetMesh(actor.InstanceRid, _mesh);
@@ -171,9 +168,9 @@ public class Gizmo : ActorComponent
 
     public bool Translate(ref Vector3 origin, BoundingBox? bounds = null)
     {
-        _status.AddHint("LMB Drag", "Move X or Z");
-        _status.AddHint("Alt+LMB Drag", "Move Y");
-        _status.AddHint("Shift", "Snap to trile");
+        Hints?.Add("LMB Drag", "Move X or Z");
+        Hints?.Add("Alt+LMB Drag", "Move Y");
+        Hints?.Add("Shift", "Snap to trile");
 
         var gizmoScale = ComputeGizmoScale(origin);
         var changed = false;
@@ -244,7 +241,7 @@ public class Gizmo : ActorComponent
 
     public bool Rotate(Vector3 origin)
     {
-        _status.AddHint("LMB", "Rotate 90°");
+        Hints?.Add("LMB", "Rotate 90°");
 
         var gizmoScale = ComputeGizmoScale(origin);
         var clicked = ImGui.IsMouseClicked(ImGuiMouseButton.Left);
@@ -258,7 +255,7 @@ public class Gizmo : ActorComponent
 
     public bool Scale(Vector3 origin, ref Vector3 scale)
     {
-        _status.AddHint("LMB Drag", "Scale");
+        Hints?.Add("LMB Drag", "Scale");
 
         var gizmoScale = ComputeGizmoScale(origin);
         var changed = false;
@@ -322,7 +319,7 @@ public class Gizmo : ActorComponent
 
     public bool ScaleFace(Vector3 origin, FaceOrientation face, out float delta, bool disabled = false)
     {
-        _status.AddHint("LMB Drag", "Add / Remove Trile");
+        Hints?.Add("LMB Drag", "Add / Remove Trile");
 
         delta = 0;
         var gizmoScale = ComputeGizmoScale(origin);

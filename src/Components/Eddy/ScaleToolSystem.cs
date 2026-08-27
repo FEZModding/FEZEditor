@@ -310,7 +310,7 @@ public class ScaleToolSystem : EddySystem
         var resettable = scalable.Any(id => id is InstanceId.ArtObject or InstanceId.BackgroundPlane);
         if (resettable)
         {
-            Status.AddHint("R", "Reset");
+            Hints.Add("R", "Reset");
         }
 
         if (resettable && ImGui.IsKeyPressed(ImGuiKey.R) && tool.HistoryScope == null)

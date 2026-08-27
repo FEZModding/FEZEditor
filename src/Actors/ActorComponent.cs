@@ -1,4 +1,5 @@
 using FezEditor.Tools;
+using FezEditor.Structure;
 using Microsoft.Xna.Framework;
 
 namespace FezEditor.Actors;
@@ -10,6 +11,8 @@ public abstract class ActorComponent : IComponent
     protected Game Game { get; }
 
     public bool Enabled { get; set; } = true;
+
+    public InputHints? Hints { get; set; }
 
     internal ActorComponent(Game game, Actor actor)
     {

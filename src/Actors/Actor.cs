@@ -22,14 +22,17 @@ public class Actor : IDisposable
 
     private readonly IContentManager _content;
 
+    private readonly InputHints? _hints;
+
     private readonly RenderingService _rendering;
 
     private bool _disposed;
 
-    internal Actor(Game game, Rid parentRid, IContentManager content)
+    internal Actor(Game game, Rid parentRid, IContentManager content, InputHints? hints = null)
     {
         _game = game;
         _content = content;
+        _hints = hints;
         _rendering = game.GetService<RenderingService>();
         InstanceRid = _rendering.InstanceCreate(parentRid);
         Transform = AddComponent<Transform>();
@@ -49,6 +52,11 @@ public class Actor : IDisposable
 
         const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
         var component = (T)Activator.CreateInstance(typeof(T), flags, null, new object[] { _game, this }, null)!;
+        if (component is ActorComponent actorComponent)
+        {
+            actorComponent.Hints = _hints;
+        }
+
         component.LoadContent(_content);
         _components.Add(component);
         return component;

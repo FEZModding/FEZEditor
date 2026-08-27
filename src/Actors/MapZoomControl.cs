@@ -15,8 +15,6 @@ public class MapZoomControl : ActorComponent
 
     private readonly InputService _input;
 
-    private readonly StatusService _status;
-
     private readonly RenderingService _rendering;
 
     private readonly Camera _camera;
@@ -30,7 +28,6 @@ public class MapZoomControl : ActorComponent
     public MapZoomControl(Game game, Actor actor) : base(game, actor)
     {
         _input = game.GetService<InputService>();
-        _status = game.GetService<StatusService>();
         _rendering = game.GetService<RenderingService>();
         _camera = actor.GetComponent<Camera>();
         _rt = _rendering.WorldGetRenderTarget(_rendering.InstanceGetWorld(actor.InstanceRid));
@@ -58,7 +55,7 @@ public class MapZoomControl : ActorComponent
 
     public override void Update(GameTime gameTime)
     {
-        _status.AddHint("Scroll Wheel", "Cycle Zoom");
+        Hints?.Add("Scroll Wheel", "Cycle Zoom");
         var targetSize = _sizeOverride ?? ComputeTargetSize();
         if (MathF.Abs(_camera.Size - targetSize) > 0.01f)
         {

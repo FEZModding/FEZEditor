@@ -1,5 +1,4 @@
 using FezEditor.Structure;
-using FezEditor.Tools;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
 
@@ -19,7 +18,7 @@ internal class SelectTool : BaseTool
 
     private bool _fullFaceSelectionActive;
 
-    public SelectTool(Game game, IChrisEditor chris) : base(game, chris)
+    public SelectTool(IChrisEditor chris) : base(chris)
     {
     }
 

@@ -865,7 +865,7 @@ public static class ImGuiX
         return clicked;
     }
 
-    public static void DrawStats(Vector2 position, Dictionary<string, string> stats)
+    public static void DrawStats(Vector2 position, IReadOnlyDictionary<string, string> stats)
     {
         var dl = ImGui.GetWindowDrawList();
         var pos = position.ToNumerics();
@@ -883,14 +883,42 @@ public static class ImGuiX
         // Draw background
         var bgMin = pos - padding;
         var bgMax = pos + new NVector2(maxWidth, lineHeight * stats.Count) + padding;
-        dl.AddRectFilled(bgMin, bgMax, 0xAA000000, 0f);
+        dl.AddRectFilled(bgMin, bgMax, new Color(0, 0, 0, 170).PackedValue, 0f);
 
         // Draw text
         var i = 0;
         foreach (var (key, value) in stats)
         {
-            dl.AddText(pos + new NVector2(0, lineHeight * i), 0xFFFFFFFF, $"{key}: {value}");
+            dl.AddText(pos + new NVector2(0, lineHeight * i), Color.White.PackedValue, $"{key}: {value}");
             i++;
+        }
+    }
+
+    public static void DrawHintsOverlay(InputHints hints, Vector2 position, Vector2 viewport, bool isFocused)
+    {
+        if (hints.Count == 0 || !isFocused)
+        {
+            return;
+        }
+
+        var lineHeight = ImGui.GetTextLineHeight();
+        var contentWidth = hints.Max(hint => ImGui.CalcTextSize($"{hint.Label}: {hint.Binding}").X);
+        var statsPosition = position + viewport - new Vector2(
+            contentWidth + 16f,
+            (lineHeight * hints.Count) + 16f);
+
+        var drawList = ImGui.GetWindowDrawList();
+        var textPosition = statsPosition.ToNumerics();
+        var padding = new NVector2(4f, 4f);
+        var backgroundMin = textPosition - padding;
+        var backgroundMax = textPosition + new NVector2(contentWidth, lineHeight * hints.Count) + padding;
+        drawList.AddRectFilled(backgroundMin, backgroundMax, new Color(0, 0, 0, 170).PackedValue, 0f);
+
+        for (var i = 0; i < hints.Count; i++)
+        {
+            var hint = hints[i];
+            drawList.AddText(textPosition + new NVector2(0f, lineHeight * i), Color.White.PackedValue,
+                $"{hint.Label}: {hint.Binding}");
         }
     }
 
@@ -948,7 +976,7 @@ public static class ImGuiX
         var drawMin = ImGui.GetMousePos() + new NVector2(12f, 12f);
         var drawMax = drawMin + new NVector2(32f, 32f);
 
-        drawList.AddImage(ImGuiX.Bind(thumb), drawMin, drawMax);
+        drawList.AddImage(Bind(thumb), drawMin, drawMax);
 
         var textSize = ImGui.CalcTextSize(label);
         var padding = new NVector2(4f, 2f);

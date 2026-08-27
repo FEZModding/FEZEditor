@@ -9,8 +9,6 @@ public class StatusService : IDisposable
 {
     private readonly AppStorageService _storageService;
 
-    private readonly List<StatusHint> _hints = new();
-
     private readonly Lock _activityLock = new();
 
     private StatusActivity? _currentActivity;
@@ -24,16 +22,6 @@ public class StatusService : IDisposable
     public StatusService(Game game)
     {
         _storageService = game.GetService<AppStorageService>();
-    }
-
-    public void ClearHints()
-    {
-        _hints.Clear();
-    }
-
-    public void AddHint(string binding, string label)
-    {
-        _hints.Add(new StatusHint(binding, label));
     }
 
     public StatusSnapshot GetSnapshot()
@@ -67,7 +55,7 @@ public class StatusService : IDisposable
             new("", $"{FezEditor.Version} ({FezEditor.Commit})")
         };
 
-        return new StatusSnapshot(_hints.ToArray(), appStatus, activity, message);
+        return new StatusSnapshot(appStatus, activity, message);
     }
 
     public StatusActivityHandle BeginActivity(string text, float? progress = null)
@@ -118,7 +106,6 @@ public class StatusService : IDisposable
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-        _hints.Clear();
         lock (_activityLock)
         {
             _currentActivity = null;
@@ -135,8 +122,7 @@ public class StatusService : IDisposable
 public sealed record StatusHint(string Binding, string Label);
 
 public sealed record StatusSnapshot(
-    IReadOnlyList<StatusHint> Left,
-    IReadOnlyList<StatusHint> Right,
+    IReadOnlyList<StatusHint> Hints,
     StatusActivity? Activity,
     StatusMessage? Message);
 

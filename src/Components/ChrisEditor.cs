@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using FezEditor.Actors;
 using FezEditor.Components.Chris;
+using FezEditor.Services;
 using FezEditor.Structure;
 using FezEditor.Tools;
 using FEZRepacker.Core.Definitions.Game.ArtObject;
@@ -46,9 +47,11 @@ public class ChrisEditor : EditorComponent, IChrisEditor
 
     public HashSet<TrixelFace> SelectedFaces { get; } = new();
 
-    public SymmetryMode SymmetryMode { get; set; } = SymmetryMode.None;
+    public SymmetryMode SymmetryMode { get; private set; } = SymmetryMode.None;
 
-    public PaintMode PaintMode { get; set; } = PaintMode.Color;
+    public PaintMode PaintMode { get; private set; } = PaintMode.Color;
+
+    public InputHints Hints { get; } = new();
 
     private readonly IContext _context;
 
@@ -110,7 +113,7 @@ public class ChrisEditor : EditorComponent, IChrisEditor
 
     public override void LoadContent()
     {
-        _scene = new Scene(Game, ContentManager);
+        _scene = new Scene(Game, ContentManager, Hints);
         _scene.Viewport.SetClearColor(new Color(0.04f, 0.04f, 0.045f));
         _scene.Lighting.Ambient = Color.LightGray;
         {
@@ -148,11 +151,12 @@ public class ChrisEditor : EditorComponent, IChrisEditor
             _cursorActor.AddComponent<TrixelCursorMesh>();
         }
         {
-            _tools.Add(new SelectTool(Game, this));
-            _tools.Add(new AddRemoveTool(Game, this));
-            _tools.Add(new PaintTool(Game, this));
-            _tools.Add(new BucketTool(Game, this));
-            _tools.Add(new PickTool(Game, this));
+            var storage = Game.GetService<AppStorageService>();
+            _tools.Add(new SelectTool(this));
+            _tools.Add(new AddRemoveTool(this));
+            _tools.Add(new PaintTool(this));
+            _tools.Add(new BucketTool(this));
+            _tools.Add(new PickTool(storage, this));
         }
 
         RevisualizeSubject();
@@ -168,7 +172,7 @@ public class ChrisEditor : EditorComponent, IChrisEditor
             _pendingRevisualize = false;
         }
 
-        StatusService.ClearHints();
+        Hints.Clear();
 
         foreach (var tool in _tools)
         {
@@ -199,11 +203,12 @@ public class ChrisEditor : EditorComponent, IChrisEditor
                 ImGuiX.Image(texture, size);
                 const ImGuiHoveredFlags hoverFlags = ImGuiHoveredFlags.AllowWhenBlockedByActiveItem |
                                                      ImGuiHoveredFlags.AllowWhenBlockedByPopup;
-                InputService.IsViewportHovered = ImGui.IsItemHovered(hoverFlags);
+                var viewportHovered = ImGui.IsItemHovered(hoverFlags);
+                InputService.IsViewportHovered = viewportHovered;
                 var viewportMin = ImGuiX.GetItemRectMin();
 
                 Hit = null;
-                IsViewportHovered = ImGui.IsItemHovered(hoverFlags) && !ImGui.IsMouseDragging(ImGuiMouseButton.Right);
+                IsViewportHovered = viewportHovered && !ImGui.IsMouseDragging(ImGuiMouseButton.Right);
                 if (IsViewportHovered)
                 {
                     var ray = _scene.Viewport.Unproject(ImGuiX.GetMousePos(), viewportMin);
@@ -219,6 +224,7 @@ public class ChrisEditor : EditorComponent, IChrisEditor
                 orientation.UseFaceLabels = true;
                 orientation.Draw(viewportMin + new Vector2(size.X - 8f, 8f));
                 ImGuiX.DrawStats(viewportMin + new Vector2(8, 8), RenderingService.GetStats());
+                ImGuiX.DrawHintsOverlay(Hints, viewportMin, size, viewportHovered);
             }
         }
 

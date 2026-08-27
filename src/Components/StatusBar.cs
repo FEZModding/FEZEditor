@@ -16,18 +16,14 @@ public class StatusBar : DrawableGameComponent
 
     public void Draw()
     {
-        var (left, right, activity, message) = _statusService.GetSnapshot();
-        var hintText = string.Join(" | ", left.Select(FormatStatusHint));
-        var primaryText = activity?.Text ?? message?.Text;
-        var statusText = string.IsNullOrEmpty(primaryText) || string.IsNullOrEmpty(hintText)
-            ? primaryText ?? hintText
-            : $"{primaryText} | {hintText}";
+        var (appStatus, activity, message) = _statusService.GetSnapshot();
+        var statusText = activity?.Text ?? message?.Text ?? string.Empty;
 
         ImGui.Separator();
         if (ImGuiX.BeginChild("StatusBar", Vector2.Zero, ImGuiChildFlags.None, ImGuiWindowFlags.NoScrollbar))
         {
             const float rightItemSpacing = 16f;
-            var rightItems = BuildRightStatusItems(right, rightItemSpacing);
+            var rightItems = BuildRightStatusItems(appStatus, rightItemSpacing);
             var rightContentX = rightItems.Count > 0
                 ? rightItems.Min(item => item.X)
                 : ImGui.GetWindowWidth() - ImGui.GetStyle().WindowPadding.X;

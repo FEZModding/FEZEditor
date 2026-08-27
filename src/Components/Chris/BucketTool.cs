@@ -1,6 +1,5 @@
 using FezEditor.Structure;
 using ImGuiNET;
-using Microsoft.Xna.Framework;
 
 namespace FezEditor.Components.Chris;
 
@@ -8,14 +7,14 @@ internal class BucketTool : TextureTool
 {
     private LmbState _lmb;
 
-    public BucketTool(Game game, IChrisEditor chris) : base(game, chris)
+    public BucketTool(IChrisEditor chris) : base(chris)
     {
     }
 
     protected override void Act()
     {
-        StatusService.AddHint("LMB", "Fill");
-        StatusService.AddHint("LMB + Drag", "Paint Region");
+        Chris.Hints.Add("LMB", "Fill");
+        Chris.Hints.Add("LMB + Drag", "Paint Region");
 
         if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {

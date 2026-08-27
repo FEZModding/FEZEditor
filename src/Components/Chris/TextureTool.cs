@@ -7,7 +7,7 @@ internal abstract class TextureTool : BaseTool
 {
     private bool _dirty;
 
-    protected TextureTool(Game game, IChrisEditor chris) : base(game, chris) { }
+    protected TextureTool(IChrisEditor chris) : base(chris) { }
 
     protected void PaintTrixel(TrixelFace face)
     {

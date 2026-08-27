@@ -42,17 +42,17 @@ public class TrilePaintToolSystem : EddySystem
 
         if (Eddy.OverlapIndex > 0)
         {
-            Status.AddHint("LMB", $"Paint Layer {Eddy.OverlapIndex}");
-            Status.AddHint("Ctrl+LMB", $"Erase Layer {Eddy.OverlapIndex}");
+            Hints.Add("LMB", $"Paint Layer {Eddy.OverlapIndex}");
+            Hints.Add("Ctrl+LMB", $"Erase Layer {Eddy.OverlapIndex}");
         }
         else
         {
-            Status.AddHint("LMB", "Paint");
-            Status.AddHint("Shift+LMB", "Append");
-            Status.AddHint("Ctrl+LMB", "Erase");
+            Hints.Add("LMB", "Paint");
+            Hints.Add("Shift+LMB", "Append");
+            Hints.Add("Ctrl+LMB", "Erase");
         }
 
-        Status.AddHint("R", $"Rotate: {Eddy.TrilePaintRotationMode.DisplayName}");
+        Hints.Add("R", $"Rotate: {Eddy.TrilePaintRotationMode.DisplayName}");
 
         #endregion
 

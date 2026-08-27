@@ -21,14 +21,11 @@ public class FirstPersonControl : ActorComponent
 
     private readonly InputService _input;
 
-    private readonly StatusService _status;
-
     private readonly Transform _transform;
 
     internal FirstPersonControl(Game game, Actor actor) : base(game, actor)
     {
         _input = game.GetService<InputService>();
-        _status = game.GetService<StatusService>();
         _transform = actor.GetComponent<Transform>();
     }
 
@@ -50,10 +47,10 @@ public class FirstPersonControl : ActorComponent
         var b = _input.GetActionBinding(InputActions.MoveBackward);
         var r = _input.GetActionBinding(InputActions.MoveRight);
 
-        _status.AddHint(f + l + b + r, "Movement");
-        _status.AddHint("RMB", "Look around");
-        _status.AddHint("Scroll", $"Speed: {SpeedSteps[_speedIndex]}");
-        _status.AddHint("Shift", "Speed boost");
+        Hints?.Add(f + l + b + r, "Movement");
+        Hints?.Add("RMB", "Look around");
+        Hints?.Add("Scroll", $"Speed: {SpeedSteps[_speedIndex]}");
+        Hints?.Add("Shift", "Speed boost");
 
         #endregion
 

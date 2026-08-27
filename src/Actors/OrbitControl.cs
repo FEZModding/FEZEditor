@@ -14,8 +14,8 @@ public class OrbitControl : ActorComponent
 
     public float Pitch
     {
-        get => _pitch;
-        set => _pitch = MathHelper.Clamp(value, PitchClamp.X + 0.01f, PitchClamp.Y - 0.01f);
+        get;
+        set => field = MathHelper.Clamp(value, PitchClamp.X + 0.01f, PitchClamp.Y - 0.01f);
     }
 
     public Vector2 PitchClamp { get; set; } = new Vector2(-1f, 1f) * MathHelper.PiOver2;
@@ -24,22 +24,17 @@ public class OrbitControl : ActorComponent
 
     private readonly InputService _input;
 
-    private readonly StatusService _status;
-
     private readonly Transform _transform;
-
-    private float _pitch;
 
     internal OrbitControl(Game game, Actor actor) : base(game, actor)
     {
         _input = game.GetService<InputService>();
-        _status = game.GetService<StatusService>();
         _transform = actor.GetComponent<Transform>();
     }
 
     public override void Update(GameTime gameTime)
     {
-        _status.AddHint(UseRightMouseButton ? "RMB" : "MMB", "Orbit");
+        Hints?.Add(UseRightMouseButton ? "RMB" : "MMB", "Orbit");
         CaptureMouseDelta captureMouseDelta = UseRightMouseButton
             ? _input.CaptureRightMouseDelta
             : _input.CaptureMiddleMouseDelta;

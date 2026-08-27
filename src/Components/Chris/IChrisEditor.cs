@@ -27,4 +27,6 @@ internal interface IChrisEditor
     HashSet<TrixelFace> SelectedFaces { get; }
 
     SymmetryMode SymmetryMode { get; }
+
+    InputHints Hints { get; }
 }

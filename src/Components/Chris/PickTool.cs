@@ -1,5 +1,4 @@
 using FezEditor.Services;
-using FezEditor.Tools;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
 
@@ -23,9 +22,9 @@ internal class PickTool : TextureTool
 
     private ChrisTool _lastTextureTool = ChrisTool.Paint;
 
-    public PickTool(Game game, IChrisEditor chris) : base(game, chris)
+    public PickTool(AppStorageService storage, IChrisEditor chris) : base(chris)
     {
-        _storage = game.GetService<AppStorageService>();
+        _storage = storage;
         LoadRecentColors();
     }
 
@@ -129,7 +128,7 @@ internal class PickTool : TextureTool
 
     protected override void Act()
     {
-        StatusService.AddHint("LMB", "Pick Color");
+        Chris.Hints.Add("LMB", "Pick Color");
 
         if (!Chris.Hit.HasValue || !ImGui.IsMouseClicked(ImGuiMouseButton.Left) || !Chris.IsViewportHovered)
         {

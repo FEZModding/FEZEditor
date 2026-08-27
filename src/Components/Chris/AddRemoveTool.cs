@@ -1,7 +1,6 @@
 using FezEditor.Structure;
 using FezEditor.Tools;
 using ImGuiNET;
-using Microsoft.Xna.Framework;
 
 namespace FezEditor.Components.Chris;
 
@@ -9,15 +8,15 @@ internal class AddRemoveTool : BaseTool
 {
     private LmbState _lmb;
 
-    public AddRemoveTool(Game game, IChrisEditor chris) : base(game, chris)
+    public AddRemoveTool(IChrisEditor chris) : base(chris)
     {
     }
 
     protected override void Act()
     {
-        StatusService.AddHint("LMB / Drag",
+        Chris.Hints.Add("LMB / Drag",
             Chris.CurrentTool == ChrisTool.Add ? "Add" : "Remove");
-        StatusService.AddHint("Shift + LMB",
+        Chris.Hints.Add("Shift + LMB",
             Chris.CurrentTool == ChrisTool.Add ? "Extrude Surface" : "Shrink Surface");
 
         if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))

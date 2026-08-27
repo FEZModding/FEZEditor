@@ -1,11 +1,10 @@
 using ImGuiNET;
-using Microsoft.Xna.Framework;
 
 namespace FezEditor.Components.Chris;
 
 internal class PaintTool : TextureTool
 {
-    public PaintTool(Game game, IChrisEditor chris) : base(game, chris)
+    public PaintTool(IChrisEditor chris) : base(chris)
     {
     }
 
@@ -13,7 +12,7 @@ internal class PaintTool : TextureTool
 
     protected override void Act()
     {
-        StatusService.AddHint("LMB", "Paint");
+        Chris.Hints.Add("LMB", "Paint");
 
         if (!Chris.Hit.HasValue || !Chris.IsViewportHovered)
         {
