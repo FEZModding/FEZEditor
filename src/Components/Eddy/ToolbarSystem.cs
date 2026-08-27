@@ -17,66 +17,63 @@ public class ToolbarSystem : EddySystem
 
     public override void Draw()
     {
-        DrawToolButton(Lucide.MousePointer2, new ToolState.Select());
+        DrawToolButton(Lucide.MousePointer2, new ToolState.Select(), ImGuiKey._1);
 
         ImGui.SameLine();
-        DrawToolButton(Lucide.Move3D, new ToolState.Translate());
+        DrawToolButton(Lucide.Move3D, new ToolState.Translate(), ImGuiKey._2);
 
         ImGui.SameLine();
-        DrawToolButton(Lucide.Rotate3D, new ToolState.Rotate());
+        DrawToolButton(Lucide.Rotate3D, new ToolState.Rotate(), ImGuiKey._3);
 
         ImGui.SameLine();
-        DrawToolButton(Lucide.Scale3D, new ToolState.Scale());
+        DrawToolButton(Lucide.Scale3D, new ToolState.Scale(), ImGuiKey._4);
 
         ImGui.SameLine();
         ImGui.TextDisabled("|");
 
         ImGui.SameLine();
-        DrawToolButton(Lucide.Pencil, Eddy.PickAndPaint(Eddy.SelectedEntry));
+        DrawToolButton(Lucide.Pencil, Eddy.PickAndPaint(Eddy.SelectedEntry), ImGuiKey._5);
 
         ImGui.SameLine();
-        DrawToolButton(Lucide.Pipette, new ToolState.Pick());
+        DrawToolButton(Lucide.Pipette, new ToolState.Pick(), ImGuiKey._6);
 
         ImGui.SameLine();
         {
-            ImGui.BeginDisabled(Eddy.ShowAssetBrowser);
-            if (ImGui.Button($"{Lucide.Sprout}"))
+            if (ImGui.Button($"{Lucide.Sprout}") || IsBindingPressed(ImGuiKey._7))
             {
-                Eddy.ShowAssetBrowser = true;
+                Eddy.ShowAssetBrowser = !Eddy.ShowAssetBrowser;
             }
-
-            ImGui.EndDisabled();
 
             if (ImGui.IsItemHovered())
             {
-                ImGui.SetTooltip("Asset Browser");
+                ImGui.SetTooltip("Asset Browser (7)");
             }
         }
 
         ImGui.SameLine();
         {
-            if (ImGui.Button($"{Lucide.SquareDashed}"))
+            if (ImGui.Button($"{Lucide.SquareDashed}") || IsBindingPressed(ImGuiKey._8))
             {
                 Eddy.Tool = new ToolState.Paint.Volume();
             }
 
             if (ImGui.IsItemHovered())
             {
-                ImGui.SetTooltip("Place Volume");
+                ImGui.SetTooltip("Place Volume (8)");
             }
         }
 
 
         ImGui.SameLine();
         {
-            if (ImGui.Button($"{Lucide.Route}"))
+            if (ImGui.Button($"{Lucide.Route}") || IsBindingPressed(ImGuiKey._9))
             {
                 Eddy.Tool = new ToolState.Paint.Path();
             }
 
             if (ImGui.IsItemHovered())
             {
-                ImGui.SetTooltip("Start a new Path");
+                ImGui.SetTooltip("Start a new Path (9)");
             }
         }
 
@@ -85,49 +82,40 @@ public class ToolbarSystem : EddySystem
 
         ImGui.SameLine();
         {
-            ImGui.BeginDisabled(Eddy.ShowInstanceBrowser);
-            if (ImGui.Button($"{Lucide.Trees}"))
+            if (ImGui.Button($"{Lucide.Trees}") || IsBindingPressed(ImGuiKey._0))
             {
-                Eddy.ShowInstanceBrowser = true;
+                Eddy.ShowInstanceBrowser = !Eddy.ShowInstanceBrowser;
             }
-
-            ImGui.EndDisabled();
 
             if (ImGui.IsItemHovered())
             {
-                ImGui.SetTooltip("Instance Browser");
+                ImGui.SetTooltip("Instance Browser (0)");
             }
         }
 
         ImGui.SameLine();
         {
-            ImGui.BeginDisabled(Eddy.ShowScriptBrowser);
-            if (ImGui.Button($"{Lucide.CodeXml}"))
+            if (ImGui.Button($"{Lucide.CodeXml}") || IsBindingPressed(ImGuiKey.Minus))
             {
-                Eddy.ShowScriptBrowser = true;
+                Eddy.ShowScriptBrowser = !Eddy.ShowScriptBrowser;
             }
-
-            ImGui.EndDisabled();
 
             if (ImGui.IsItemHovered())
             {
-                ImGui.SetTooltip("Script Browser");
+                ImGui.SetTooltip("Script Browser (-)");
             }
         }
 
         ImGui.SameLine();
         {
-            ImGui.BeginDisabled(Eddy.ShowProperties);
-            if (ImGui.Button($"{Lucide.List}"))
+            if (ImGui.Button($"{Lucide.List}") || IsBindingPressed(ImGuiKey.Equal))
             {
-                Eddy.ShowProperties = true;
+                Eddy.ShowProperties = !Eddy.ShowProperties;
             }
-
-            ImGui.EndDisabled();
 
             if (ImGui.IsItemHovered())
             {
-                ImGui.SetTooltip("Show Properties Window");
+                ImGui.SetTooltip("Show Properties Window (+)");
             }
         }
 
@@ -181,7 +169,6 @@ public class ToolbarSystem : EddySystem
 
         ImGui.SameLine();
         {
-            ImGui.BeginDisabled(Eddy.ShowProperties);
             if (ImGui.Button($"{Lucide.FileAxis3d}"))
             {
                 var options = new FileDialog.Options
@@ -197,8 +184,6 @@ public class ToolbarSystem : EddySystem
                     options
                 );
             }
-
-            ImGui.EndDisabled();
 
             if (ImGui.IsItemHovered())
             {
@@ -305,7 +290,7 @@ public class ToolbarSystem : EddySystem
         }
     }
 
-    private void DrawToolButton<T>(string icon, T tool) where T : ToolState
+    private void DrawToolButton<T>(string icon, T tool, ImGuiKey binding) where T : ToolState
     {
         var active = Eddy.Tool is T;
         if (active)
@@ -319,8 +304,10 @@ public class ToolbarSystem : EddySystem
             }
         }
 
-        ImGui.BeginDisabled(!(active || Eddy.IsToolEnabled(tool)) || Eddy.PreviewState.Current != FayAwayPreviewState.Closed);
-        if (ImGui.Button($"{icon}##{typeof(T).Name}"))
+        var isEnabled = (active || Eddy.IsToolEnabled(tool)) && Eddy.PreviewState.Current == FayAwayPreviewState.Closed;
+        ImGui.BeginDisabled(!isEnabled);
+        if (ImGui.Button($"{icon}##{typeof(T).Name}") ||
+            (isEnabled && !ImGui.GetIO().WantTextInput && ImGui.IsKeyPressed(binding)))
         {
             Eddy.Tool = tool;
         }
@@ -349,7 +336,12 @@ public class ToolbarSystem : EddySystem
                 _ => throw new ArgumentOutOfRangeException(nameof(tool), tool, null)
             };
 
-            ImGui.SetItemTooltip(label);
+            ImGui.SetItemTooltip($"{label} ({binding.ToString().TrimStart('_')})");
         }
+    }
+
+    private static bool IsBindingPressed(ImGuiKey binding)
+    {
+        return !ImGui.GetIO().WantTextInput && ImGui.IsKeyPressed(binding);
     }
 }
