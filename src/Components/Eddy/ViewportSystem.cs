@@ -71,10 +71,16 @@ public class ViewportSystem : EddySystem
         _gizmo.ViewportPosition = Eddy.Frame.Position;
 
         _orientation.Draw(position + new Vector2(size.X - 8f, 8f));
-        ImGuiX.DrawStats(position + new Vector2(8, 8), Rendering.GetStats());
+        if (Storage.ShowRenderingStats)
+        {
+            ImGuiX.DrawStats(position + new Vector2(8, 8), Rendering.GetStats());
+        }
 
         var topCenter = position + new Vector2(size.X / 2f, 8f);
         ImGuiX.DrawClock(topCenter, _clock);
-        ImGuiX.DrawHintsOverlay(Hints, position, size, hovered && !faraway);
+        if (Storage.ShowInputHints)
+        {
+            ImGuiX.DrawHintsOverlay(Hints, position, size, hovered && !faraway);
+        }
     }
 }

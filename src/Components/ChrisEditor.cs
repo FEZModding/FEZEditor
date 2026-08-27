@@ -223,8 +223,15 @@ public class ChrisEditor : EditorComponent, IChrisEditor
                 var orientation = _cameraActor.GetComponent<OrientationGizmo>();
                 orientation.UseFaceLabels = true;
                 orientation.Draw(viewportMin + new Vector2(size.X - 8f, 8f));
-                ImGuiX.DrawStats(viewportMin + new Vector2(8, 8), RenderingService.GetStats());
-                ImGuiX.DrawHintsOverlay(Hints, viewportMin, size, viewportHovered);
+                if (StorageService.ShowRenderingStats)
+                {
+                    ImGuiX.DrawStats(viewportMin + new Vector2(8, 8), RenderingService.GetStats());
+                }
+
+                if (StorageService.ShowInputHints)
+                {
+                    ImGuiX.DrawHintsOverlay(Hints, viewportMin, size, viewportHovered);
+                }
             }
         }
 

@@ -17,11 +17,15 @@ public record Settings
 
     public WindowSize Window { get; init; } = new(1280, 720);
 
-    public bool IsWindowMaximized { get; init; } = false;
+    public bool IsWindowMaximized { get; init; }
 
     public Color[] PaintPalette { get; init; } = Array.Empty<Color>();
 
     public float? DisplayScale { get; init; } // null - automatic
+
+    public bool ShowRenderingStats { get; init; }
+
+    public bool ShowInputHints { get; init; } = true;
 
     public string HatLauncherPath { get; init; } = "";
 

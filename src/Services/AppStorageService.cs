@@ -37,6 +37,26 @@ public class AppStorageService : IDisposable
         }
     }
 
+    public bool ShowRenderingStats
+    {
+        get => _data.ShowRenderingStats;
+        set
+        {
+            _data = _data with { ShowRenderingStats = value };
+            Save();
+        }
+    }
+
+    public bool ShowInputHints
+    {
+        get => _data.ShowInputHints;
+        set
+        {
+            _data = _data with { ShowInputHints = value };
+            Save();
+        }
+    }
+
     public string HatLauncherPath
     {
         get => _data.HatLauncherPath;

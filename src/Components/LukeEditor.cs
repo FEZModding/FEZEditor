@@ -205,7 +205,10 @@ public class LukeEditor : EditorComponent
                 InputService.IsViewportHovered = ImGui.IsItemHovered();
 
                 var imageMin = ImGuiX.GetItemRectMin();
-                ImGuiX.DrawStats(imageMin + new Vector2(8, 8), RenderingService.GetStats());
+                if (StorageService.ShowRenderingStats)
+                {
+                    ImGuiX.DrawStats(imageMin + new Vector2(8, 8), RenderingService.GetStats());
+                }
 
                 var topCenter = imageMin + new Vector2(size.X / 2f, 8f);
                 ImGuiX.DrawClock(topCenter, _clock);

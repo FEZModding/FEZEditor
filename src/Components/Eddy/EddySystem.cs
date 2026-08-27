@@ -19,6 +19,8 @@ public abstract class EddySystem : IDisposable
 
     public InputService Input { protected get; set; } = null!;
 
+    public AppStorageService Storage { protected get; set; } = null!;
+
     public InputHints Hints { protected get; set; } = null!;
 
     public virtual void Initialize()

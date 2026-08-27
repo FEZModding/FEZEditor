@@ -280,6 +280,18 @@ public class MenuBar : DrawableGameComponent
 
                 ImGui.Separator();
 
+                if (ImGui.MenuItem("Rendering Stats", null, _storageService.ShowRenderingStats))
+                {
+                    _storageService.ShowRenderingStats = !_storageService.ShowRenderingStats;
+                }
+
+                if (ImGui.MenuItem("Input Hints", null, _storageService.ShowInputHints))
+                {
+                    _storageService.ShowInputHints = !_storageService.ShowInputHints;
+                }
+
+                ImGui.Separator();
+
                 if (ImGui.MenuItem("File Browser", null, _mainLayout.ShowFileBrowser))
                 {
                     _mainLayout.ShowFileBrowser = !_mainLayout.ShowFileBrowser;

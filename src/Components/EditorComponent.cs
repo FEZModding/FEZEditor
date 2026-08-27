@@ -25,6 +25,8 @@ public abstract class EditorComponent
 
     protected StatusService StatusService { get; }
 
+    protected AppStorageService StorageService { get; }
+
     private readonly ContentService _contentService;
 
     protected EditorComponent(Game game, string title)
@@ -36,6 +38,7 @@ public abstract class EditorComponent
         RenderingService = game.GetService<RenderingService>();
         ResourceService = game.GetService<ResourceService>();
         StatusService = game.GetService<StatusService>();
+        StorageService = game.GetService<AppStorageService>();
         _contentService = game.GetService<ContentService>();
         ContentManager = _contentService.Get(this);
     }
