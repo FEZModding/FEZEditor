@@ -5,7 +5,7 @@
     <Authors>zerocker, FEZModding community</Authors>
     <SplashAuthors>Krzyhau</SplashAuthors>
     <Description>A modding editor for FEZ</Description>
-    <Version>2026.07</Version>
+    <Version>2026.09</Version>
     <LangVersion>14</LangVersion>
   </PropertyGroup>
 

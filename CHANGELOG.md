@@ -1,5 +1,48 @@
 # Changelog
 
+## 2026.09 - 2026-09-01
+
+Freshly Fezzed!
+
+#### Features
+
+- `EddyEditor`: Keyboard shortcuts for toolbar tools
+- `EddyEditor`: Cursor overlays for level instances
+- `EddyEditor`: Warning for airborne Gomez spawn points
+- `ChrisEditor`: Additional extrusion modes
+- `ChrisEditor`: Art object names derived from filenames
+- HAT mod creation wizard
+- Script action icons
+- Persistent toggles for rendering statistics and input hints
+
+#### Fixes
+
+- `EddyEditor`: Transform-tool selection and persistent trile rotation state
+- `EddyEditor`: Selection after using transform tools
+- `EddyEditor`: Crashes when ungrouping triles
+- `EddyEditor`: Animated background planes and textures
+- `EddyEditor`: Gomez visual placement centering
+- `EddyEditor`: Visibility and positioning of cursor meshes
+- `LukeEditor`: Crashes caused by invalid texture paths
+- `ZuEditor`: Nullable default character handling
+- `FileBrowser`: Assets hidden by matching directory names
+- `FileBrowser`: Invalid non-XNB assets in PAK archives
+- Music extraction paths
+- Time-span controls collapsing the UI
+- Unwanted exceptions during disposal
+
+#### Changes
+
+- `EddyEditor`: Pick and empty-paint tools can be cancelled
+- `EddyEditor`: Top and bottom cursor faces for empty triles
+- `ChrisEditor`: Faster trixel rebuilding and cursor-face rendering
+- Resource service cleanup and centralized sky texture loading
+- Input hints moved to an overlay with persistent visibility controls
+
+#### Build
+
+- Updated `FEZRepacker` to `1.4.0`
+
 ## 2026.07 - 2026-07-23
 
 Fezzing Further!
