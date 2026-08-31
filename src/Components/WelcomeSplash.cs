@@ -28,6 +28,8 @@ public class WelcomeSplash : EditorComponent
 
     private ResourceExtractor? _resourceExtractor;
 
+    private HatModWizard? _hatModWizard;
+
     private readonly AppStorageService _appStorageService;
 
     private readonly EditorService _editorService;
@@ -52,9 +54,9 @@ public class WelcomeSplash : EditorComponent
 
     public override void Draw()
     {
-        if (_resourceExtractor != null)
+        if (_resourceExtractor != null || _hatModWizard != null)
         {
-            // Yield to the extractor modal
+            // Yield to an active modal workflow.
             return;
         }
 
@@ -177,6 +179,12 @@ public class WelcomeSplash : EditorComponent
             }
 
             ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offsetX);
+            if (ImGui.Button($"{Lucide.FilePlusCorner} Create HAT mod", buttonWidth))
+            {
+                OpenHatModWizard();
+            }
+
+            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offsetX);
             if (ImGui.Button($"{Lucide.ArrowsUpFromLine} Extract assets and open them...", buttonWidth))
             {
                 var selectOptions = new FileDialog.Options
@@ -231,6 +239,17 @@ public class WelcomeSplash : EditorComponent
             _resourceExtractor.Disposed += (_, _) => _resourceExtractor = null;
             _resourceExtractor.Competed += () => OpenDirectory(targets);
             Game.AddComponent(_resourceExtractor);
+        }
+    }
+
+    private void OpenHatModWizard()
+    {
+        if (_hatModWizard == null)
+        {
+            _hatModWizard = new HatModWizard(Game);
+            _hatModWizard.Disposed += (_, _) => _hatModWizard = null;
+            _hatModWizard.Completed += () => _editorService.CloseEditor(this);
+            Game.AddComponent(_hatModWizard);
         }
     }
 

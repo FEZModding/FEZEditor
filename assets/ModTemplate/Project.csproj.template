@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>{{ASSEMBLY_NAME}}</AssemblyName>
+    <RootNamespace>{{NAMESPACE}}</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <DebugType>portable</DebugType>
+    <PathMap>$(MSBuildProjectDirectory)=/_/</PathMap>
+  </PropertyGroup>
+
+  <Import Project="$(ProjectDir)UserProperties.xml" />
+
+  <Target Name="VerifyModReferences" BeforeTargets="Build">
+    <Error Text="FEZ references are not configured. Edit UserProperties.xml." Condition="$(UserPropertiesSetUp) != True" />
+  </Target>
+
+  <Target Name="PrepareMod" AfterTargets="Build">
+    <MakeDir Directories="$(ModOutputDir)" />
+    <ItemGroup>
+      <ModCompiledOutput Include="$(TargetDir)$(TargetName).dll" />
+      <ModCompiledOutput Include="$(TargetDir)$(TargetName).pdb" Condition="Exists('$(TargetDir)$(TargetName).pdb')" />
+      <ModAsset Include="$(ProjectDir)Assets\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ModCompiledOutput)" DestinationFolder="$(ModOutputDir)\" Retries="0" />
+    <Copy SourceFiles="$(ProjectDir)Metadata.xml" DestinationFolder="$(ModOutputDir)\" Retries="0" />
+    <Copy SourceFiles="@(ModAsset)"
+          DestinationFiles="@(ModAsset->'$(ModOutputDir)\Assets\%(RecursiveDir)%(Filename)%(Extension)')"
+          Retries="0" />
+  </Target>
+
+  <ItemGroup>
+    <Reference Include="FEZ">
+      <HintPath>$(FezDir)\FEZ.exe</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="FezEngine">
+      <HintPath>$(FezDir)\FezEngine.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="FNA">
+      <HintPath>$(FezDir)\FNA.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="MonoMod">
+      <HintPath>$(MonoModDir)\MonoMod.exe</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="MonoMod.RuntimeDetour">
+      <HintPath>$(MonoModDir)\MonoMod.RuntimeDetour.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="MonoMod.Utils">
+      <HintPath>$(MonoModDir)\MonoMod.Utils.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Mono.Cecil">
+      <HintPath>$(MonoModDir)\Mono.Cecil.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+</Project>

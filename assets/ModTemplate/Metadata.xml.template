@@ -1,0 +1,11 @@
+<Metadata>
+  <Name>{{MOD_NAME}}</Name>
+  <Description>{{DESCRIPTION}}</Description>
+  <Author>{{AUTHOR}}</Author>
+  <Version>{{VERSION}}</Version>
+  <LibraryName>{{ASSEMBLY_NAME}}.dll</LibraryName>
+  <Entrypoint>{{NAMESPACE}}.ModMain</Entrypoint>
+  <Dependencies>
+    <DependencyInfo Name="HAT" MinimumVersion="2.0" />
+  </Dependencies>
+</Metadata>

@@ -1,0 +1,12 @@
+using Common;
+using Microsoft.Xna.Framework;
+
+namespace {{NAMESPACE}};
+
+public sealed class ModMain : GameComponent
+{
+    public ModMain(Game game) : base(game)
+    {
+        Logger.Log(nameof({{NAMESPACE}}), "Hello, world!");
+    }
+}
