@@ -224,6 +224,18 @@ public class ScriptBrowserSystem : EddySystem
             return;
         }
 
+        if (!Level.Scripts.TryGetValue(_id, out var script))
+        {
+            _script = null;
+            _id = -1;
+            _triggerIndex = -1;
+            _conditionIndex = -1;
+            _actionIndex = -1;
+            return;
+        }
+
+        _script = script;
+
         var title = $"Edit {_script.Name} ({_id}) script##ScriptEditor";
         var open = true;
 
