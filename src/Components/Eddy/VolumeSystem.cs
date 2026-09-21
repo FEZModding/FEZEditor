@@ -54,9 +54,20 @@ public class VolumeSystem : EddySystem
         }
 
         var volume = Level.Volumes[instance.Id];
-        ImGui.Text($"Volume: ID={instance.Id}");
-
         var from = volume.From.ToXna();
+        var to = volume.To.ToXna();
+
+        ImGui.Text($"Volume: ID={instance.Id}");
+        if (from.X > to.X || from.Y > to.Y || from.Z > to.Z)
+        {
+            ImGui.SameLine();
+            ImGuiX.TextColored(Color.Yellow, Lucide.TriangleAlert);
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip("\"From\" must not exceed \"To\". FEZ will ignore this volume.");
+            }
+        }
+
         if (ImGuiX.InputFloat3("From", ref from))
         {
             using (Eddy.History.BeginScope("Edit From"))
@@ -65,7 +76,6 @@ public class VolumeSystem : EddySystem
             }
         }
 
-        var to = volume.To.ToXna();
         if (ImGuiX.InputFloat3("To", ref to))
         {
             using (Eddy.History.BeginScope("Edit To"))
