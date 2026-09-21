@@ -499,6 +499,24 @@ public class ScriptBrowserSystem : EddySystem
 
         ImGui.EndDisabled();
 
+        ImGui.SameLine();
+        ImGui.BeginDisabled(_actionIndex is -1 or 0);
+        if (ImGui.Button($"{Lucide.ChevronUp} Up"))
+        {
+            MoveAction(_actionIndex, --_actionIndex);
+        }
+
+        ImGui.EndDisabled();
+
+        ImGui.SameLine();
+        ImGui.BeginDisabled(_actionIndex == -1 || _actionIndex == _script!.Actions.Count - 1);
+        if (ImGui.Button($"{Lucide.ChevronDown} Down"))
+        {
+            MoveAction(_actionIndex, ++_actionIndex);
+        }
+
+        ImGui.EndDisabled();
+
         ImGui.Separator();
 
         if (ImGuiX.BeginChild("##TriggerList", new Vector2(0, -TriggerFormHeight)))
@@ -796,6 +814,24 @@ public class ScriptBrowserSystem : EddySystem
 
         ImGui.EndDisabled();
 
+        ImGui.SameLine();
+        ImGui.BeginDisabled(_actionIndex == -1 || _actionIndex == _script!.Actions.Count - 1);
+        if (ImGui.Button($"{Lucide.ChevronDown} Down"))
+        {
+            MoveAction(_actionIndex, ++_actionIndex);
+        }
+
+        ImGui.EndDisabled();
+
+        ImGui.SameLine();
+        ImGui.BeginDisabled(_actionIndex is -1 or 0);
+        if (ImGui.Button($"{Lucide.ChevronUp} Up"))
+        {
+            MoveAction(_actionIndex, --_actionIndex);
+        }
+
+        ImGui.EndDisabled();
+
         ImGui.Separator();
 
         if (ImGuiX.BeginChild("##ActionList", new Vector2(0, -ActionFormHeight)))
@@ -938,6 +974,16 @@ public class ScriptBrowserSystem : EddySystem
         }
 
         ImGui.EndChild();
+    }
+
+    private void MoveAction(int from, int to)
+    {
+        using (Eddy.History.BeginScope($"Move Action from {from} to {to}"))
+        {
+            var action = _script!.Actions[from];
+            _script.Actions.RemoveAt(from);
+            _script.Actions.Insert(to, action);
+        }
     }
 
     private static void DrawEmptyCombo(string label)
