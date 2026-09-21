@@ -55,6 +55,11 @@ public class ConfirmWindow : DrawableGameComponent
 
     public override void Draw(GameTime gameTime)
     {
+        Draw();
+    }
+
+    public void Draw()
+    {
         var strId = $"{Title.Value}##DialogWindow_{_popupId}";
         if (IsDirty())
         {

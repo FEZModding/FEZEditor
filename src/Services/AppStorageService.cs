@@ -99,6 +99,16 @@ public class AppStorageService : IDisposable
         Save();
     }
 
+    public void RemoveRecentProvider(Settings.RecentProvider provider)
+    {
+        if (_data.RecentProviders.RemoveAll(rp =>
+                string.Equals(rp.Path, provider.Path, StringComparison.OrdinalIgnoreCase) &&
+                rp.Kind == provider.Kind) > 0)
+        {
+            Save();
+        }
+    }
+
     public void AddRecentFile(string provider, string path)
     {
         if (!_data.RecentFiles.TryGetValue(provider, out var list))

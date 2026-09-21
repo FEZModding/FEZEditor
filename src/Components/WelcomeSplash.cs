@@ -30,6 +30,8 @@ public class WelcomeSplash : EditorComponent
 
     private HatModWizard? _hatModWizard;
 
+    private readonly ConfirmWindow _confirm;
+
     private readonly AppStorageService _appStorageService;
 
     private readonly EditorService _editorService;
@@ -44,6 +46,7 @@ public class WelcomeSplash : EditorComponent
         _editorService = game.GetService<EditorService>();
         _resourceService = game.GetService<ResourceService>();
         _statusService = game.GetService<StatusService>();
+        _confirm = new ConfirmWindow(game);
     }
 
     public override void LoadContent()
@@ -112,6 +115,10 @@ public class WelcomeSplash : EditorComponent
                         ImGui.Indent();
                         foreach (var entry in recentPaths)
                         {
+                            var exists = entry.Kind == "File"
+                                ? File.Exists(entry.Path)
+                                : Directory.Exists(entry.Path);
+
                             var name = ResourceService.GetProviderDisplayName(entry.Path);
                             if (string.IsNullOrEmpty(name))
                             {
@@ -125,6 +132,8 @@ public class WelcomeSplash : EditorComponent
                                 "Mod" => Lucide.FolderCog,
                                 _ => throw new InvalidOperationException()
                             };
+
+                            icon = exists ? icon : Lucide.CircleAlert;
                             if (ImGuiX.Button($"{icon} {name}##recent_{entry.Path}", new Vector2(-1, 0)))
                             {
                                 OpenRecentEntry(entry);
@@ -132,7 +141,7 @@ public class WelcomeSplash : EditorComponent
 
                             if (ImGui.IsItemHovered())
                             {
-                                ImGui.SetTooltip(entry.Path);
+                                ImGui.SetTooltip(exists ? entry.Path : $"Path no longer exists: {entry.Path}");
                             }
                         }
 
@@ -225,6 +234,7 @@ public class WelcomeSplash : EditorComponent
                 Game.Exit();
             }
 
+            _confirm.Draw();
             ImGui.EndPopup();
         }
 
@@ -337,6 +347,13 @@ public class WelcomeSplash : EditorComponent
         if (!exists)
         {
             Logger.Warning("Recent path no longer exists: {Path}", provider.Path);
+            _confirm.Title = "Missing Recent Entry";
+            _confirm.Text = $"{provider.Path}\n\nRemove this missing entry from recent files?";
+            _confirm.ConfirmButtonText = "Remove";
+            _confirm.DenyButtonText = "Keep";
+            _confirm.Confirmed = () => _appStorageService.RemoveRecentProvider(provider);
+            _confirm.Denied = null;
+            _confirm.ForceToShow();
             return;
         }
 
