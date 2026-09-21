@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026.09.1 - 2026-09-21
+
+#### Features
+
+- `EddyEditor`: Reorder script actions
+- History change visualization window
+
+#### Fixes
+
+- `EddyEditor`: Warning for invalid volume ranges
+- `EddyEditor`: Script undo synchronization and empty early script parameters
+- Welcome splash handling of missing recent entries
+
+#### Changes
+
+- `History`: Disk-backed asset change storage using FastCDC chunks
+- `Thumbnails`: Simplified thumbnail cache storage
+- `RenderingService`: Reduced allocation overhead and shared trile atlas/collision textures
+- Load ImGui language fonts on demand
+
 ## 2026.09 - 2026-09-01
 
 Freshly Fezzed!
