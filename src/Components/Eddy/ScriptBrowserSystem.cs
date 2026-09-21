@@ -960,7 +960,9 @@ public class ScriptBrowserSystem : EddySystem
                                 var arguments = a.Arguments.EmptyIfNull();
                                 if (arguments.Length <= i)
                                 {
+                                    var previousLength = arguments.Length;
                                     Array.Resize(ref arguments, i + 1);
+                                    Array.Fill(arguments, "", previousLength, arguments.Length - previousLength);
                                 }
 
                                 arguments[i] = arg;
