@@ -215,7 +215,7 @@ public class ResourceExtractor : DrawableGameComponent
                 ct.ThrowIfCancellationRequested();
 
                 var path = file.EndsWith("Music.pak")
-                    ? Path.Combine("music", pakFile.Path)
+                    ? "music" + "\\" + pakFile.Path
                     : pakFile.Path;
 
                 if (_contentListing.ContainsKey(path))
@@ -257,7 +257,7 @@ public class ResourceExtractor : DrawableGameComponent
                 ct.ThrowIfCancellationRequested();
 
                 _currentFile = file.EndsWith("Music.pak")
-                    ? _contentListing[Path.Combine("music", pakFile.Path)]
+                    ? _contentListing["music" + "\\" + pakFile.Path]
                     : _contentListing[pakFile.Path];
 
                 _status = $"Extracting: {file}";
