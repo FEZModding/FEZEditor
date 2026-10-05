@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026.09.2 - 2026-10-05
+
+#### Fixes
+
+- Fix extracting `Music.pak` on Linux and macOS
+- Fix content listing paths
+
 ## 2026.09.1 - 2026-09-21
 
 #### Features
