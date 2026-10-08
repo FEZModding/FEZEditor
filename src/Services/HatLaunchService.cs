@@ -15,9 +15,7 @@ public class HatLaunchService : IDisposable
 
     private const string LevelsPrefix = "Levels/";
 
-    private const string ModName = "FEZEditor";
-
-    private const string MetadataAsset = "Metadata.xml";
+    private string ModSourcePath => _resources.ModResolution?.ModRootDirectory.FullName ?? _resources.RootPath;
 
     private readonly AppStorageService _storage;
 
@@ -27,6 +25,8 @@ public class HatLaunchService : IDisposable
 
     private readonly IContentManager _content;
 
+    private readonly HatModMount _modMount = new();
+
     private Process? _hatProcess;
 
     public HatLaunchService(Game game)
@@ -35,6 +35,7 @@ public class HatLaunchService : IDisposable
         _editors = game.GetService<EditorService>();
         _resources = game.GetService<ResourceService>();
         _content = game.GetService<ContentService>().Global;
+        _resources.ProviderReset += OnProviderReset;
     }
 
     public HatAvailability GetAvailability(EddyEditor editor)
@@ -92,7 +93,7 @@ public class HatLaunchService : IDisposable
         try
         {
             var launcherPath = _storage.HatLauncherPath;
-            StageLevelMod(launcherPath, path);
+            _modMount.Stage(launcherPath, ModSourcePath, _resources.ModResolution != null, _content);
 
             var startInfo = new ProcessStartInfo
             {
@@ -107,6 +108,7 @@ public class HatLaunchService : IDisposable
             _hatProcess.EnableRaisingEvents = true;
             _hatProcess.Exited += (_, _) =>
             {
+                RemovePreviousMod();
                 _hatProcess = null;
                 Logger.Information("FEZ closed");
             };
@@ -123,51 +125,24 @@ public class HatLaunchService : IDisposable
         }
     }
 
-    private void StageLevelMod(string launcherPath, string levelPath)
+    private void OnProviderReset()
     {
-        var launcherDirectory = Path.GetDirectoryName(launcherPath) ?? throw new DirectoryNotFoundException(launcherPath);
-        var levelDirectory = Path.Combine(launcherDirectory, "Mods", ModName, "Assets", "Levels");
-        var metadataFile = Path.Combine(launcherDirectory, "Mods", ModName, MetadataAsset);
-        Directory.CreateDirectory(levelDirectory);
-
-        #region Copy Metadata.xml
-
+        if (_hatProcess == null)
         {
-            using var metadata = _content.LoadStream(MetadataAsset);
-            using var output = File.Create(metadataFile);
-            metadata.CopyTo(output);
+            RemovePreviousMod();
         }
+    }
 
-        #endregion
-
-        #region Copy level file
-
+    private void RemovePreviousMod()
+    {
+        try
         {
-            var sourcePath = _resources.GetFullPath(levelPath);
-            if (!File.Exists(sourcePath))
-            {
-                throw new FileNotFoundException(levelPath, sourcePath);
-            }
-
-            if (!TryGetLevelName(levelPath, out var levelName))
-            {
-                throw new InvalidOperationException("Level asset must have a valid name.");
-            }
-
-            var sourceDirectory = Path.GetDirectoryName(sourcePath)!;
-            var sourceFileName = Path.GetFileName(sourcePath);
-            var dotIndex = sourceFileName.IndexOf('.');
-            var prefix = dotIndex >= 0 ? sourceFileName[..dotIndex] : Path.GetFileNameWithoutExtension(sourceFileName);
-
-            foreach (var sourceFile in Directory.EnumerateFiles(sourceDirectory, prefix + ".*"))
-            {
-                var suffix = Path.GetFileName(sourceFile)[prefix.Length..];
-                var destination = Path.Combine(levelDirectory, levelName + suffix);
-                File.Copy(sourceFile, destination, overwrite: true);
-            }
+            _modMount.RemoveIfDifferent(ModSourcePath);
         }
-
-        #endregion
+        catch (Exception e)
+        {
+            Logger.Error(e, "Unable to remove the previous playtest mod");
+        }
     }
 
     private static bool TryGetLevelName(string path, out string levelName)
@@ -179,13 +154,14 @@ public class HatLaunchService : IDisposable
             normalized = normalized[LevelsPrefix.Length..];
         }
 
-        levelName = Path.GetFileName(normalized);
+        levelName = normalized;
         return !string.IsNullOrWhiteSpace(levelName);
     }
 
     public void Dispose()
     {
         GC.SuppressFinalize(this);
+        _resources.ProviderReset -= OnProviderReset;
         if (_hatProcess is { HasExited: false })
         {
             if (_hatProcess.CloseMainWindow())
