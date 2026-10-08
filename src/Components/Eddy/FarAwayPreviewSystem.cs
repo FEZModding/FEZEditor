@@ -31,6 +31,10 @@ public class FarAwayPreviewSystem : EddySystem
 
     private readonly Camera _camera;
 
+    private readonly Actor _gizmoActor;
+
+    private readonly Actor _cursorActor;
+
     private EddyVisuals _savedVisuals;
 
     private (int W, int H) _savedRtSize;
@@ -43,11 +47,13 @@ public class FarAwayPreviewSystem : EddySystem
 
     private ExportKind _pendingExport;
 
-    public FarAwayPreviewSystem(Scene scene, EditorService editors, Actor cameraActor)
+    public FarAwayPreviewSystem(Scene scene, EditorService editors, Actor cameraActor, Actor gizmoActor, Actor cursorActor)
     {
         _scene = scene;
         _editors = editors;
         _cameraActor = cameraActor;
+        _gizmoActor = gizmoActor;
+        _cursorActor = cursorActor;
         _camera = cameraActor.GetComponent<Camera>();
     }
 
@@ -62,6 +68,10 @@ public class FarAwayPreviewSystem : EddySystem
         {
             Close();
         }
+
+        var exporting = Eddy.PreviewState.Current != FayAwayPreviewState.Closed;
+        _gizmoActor.Visible &= !exporting;
+        _cursorActor.Visible = !exporting;
     }
 
     public void BeforeDraw()

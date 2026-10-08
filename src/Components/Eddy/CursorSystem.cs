@@ -42,6 +42,11 @@ public sealed class CursorSystem : EddySystem
         ClearVolumes();
         ClearPaths();
 
+        if (Eddy.PreviewState.Current != FayAwayPreviewState.Closed)
+        {
+            return;
+        }
+
         if (Eddy.Hovered?.Instance is InstanceId.TrileGroup trileGroup)
         {
             DrawHoveredTrileGroup(trileGroup);

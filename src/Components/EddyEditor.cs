@@ -225,7 +225,7 @@ public class EddyEditor : EditorComponent
             var editors = Game.GetService<EditorService>();
             AddSystems(_interfaces,
                 new ToolbarSystem(),
-                _farAwayPreviewer = new FarAwayPreviewSystem(_scene, editors, _cameraActor),
+                _farAwayPreviewer = new FarAwayPreviewSystem(_scene, editors, _cameraActor, _gizmoActor, _cursorActor),
                 new ViewportSystem(_scene, _clock, orientation, gizmo),
                 new InstanceInspectorSystem(),
                 new AssetBrowserSystem(),
@@ -286,6 +286,7 @@ public class EddyEditor : EditorComponent
             system.Update();
         }
 
+        _farAwayPreviewer.Update();
         _clock.Tick(gameTime);
         _scene.Update(gameTime);
     }
