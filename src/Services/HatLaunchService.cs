@@ -41,17 +41,17 @@ public class HatLaunchService : IDisposable
     {
         if (_hatProcess != null)
         {
-            return new HatAvailability.Unavailable("HAT launcher is already running.");
+            return new HatAvailability.Unavailable("FEZ is already running.");
         }
 
         if (string.IsNullOrWhiteSpace(_storage.HatLauncherPath))
         {
-            return new HatAvailability.Unavailable("Locate HAT launcher before launching levels.");
+            return new HatAvailability.Unavailable("Locate the FEZ executable with HAT 3 installed before launching levels.");
         }
 
         if (!File.Exists(_storage.HatLauncherPath))
         {
-            return new HatAvailability.Unavailable($"HAT launcher does not exist: {_storage.HatLauncherPath}");
+            return new HatAvailability.Unavailable($"FEZ executable does not exist: {_storage.HatLauncherPath}");
         }
 
         if (!_editors.TryGetEditorPath(editor, out var path))
@@ -77,7 +77,7 @@ public class HatLaunchService : IDisposable
         var availability = GetAvailability(editor);
         if (availability is HatAvailability.Unavailable)
         {
-            Logger.Error("Unable to launch HAT");
+            Logger.Error("Unable to launch FEZ");
             return;
         }
 
@@ -108,18 +108,18 @@ public class HatLaunchService : IDisposable
             _hatProcess.Exited += (_, _) =>
             {
                 _hatProcess = null;
-                Logger.Information("HAT closed");
+                Logger.Information("FEZ closed");
             };
             if (!_hatProcess.Start())
             {
                 _hatProcess = null;
             }
 
-            Logger.Information("Launched HAT - {Launcher} --level {Level}", launcherPath, levelName);
+            Logger.Information("Launched FEZ - {Launcher} --level {Level}", launcherPath, levelName);
         }
         catch (Exception e)
         {
-            Logger.Error(e, "Unable to launch HAT");
+            Logger.Error(e, "Unable to launch FEZ");
         }
     }
 

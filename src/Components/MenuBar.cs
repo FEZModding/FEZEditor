@@ -229,11 +229,11 @@ public class MenuBar : DrawableGameComponent
                 }
 
                 ImGui.SeparatorText("HAT");
-                if (ImGui.MenuItem("Locate HAT launcher..."))
+                if (ImGui.MenuItem("Locate FEZ executable (HAT 3)..."))
                 {
                     FileDialog.Show(FileDialog.Type.OpenFile, SetHatLauncherPath, new FileDialog.Options
                     {
-                        Title = "Locate HAT launcher...",
+                        Title = "Select FEZ.exe (Windows) or FEZ (Linux/macOS) with HAT 3 installed...",
                         DefaultLocation = _storageService.HatLauncherPath,
                         Filters =
                         [
