@@ -11,9 +11,9 @@ namespace FezEditor.Components;
 
 public sealed class HatModWizard : DrawableGameComponent
 {
-    private const string PopupTitle = "HAT Mod Creation Wizard##hatModWizard";
+    private const string PopupTitle = "HAT 3 Mod Creation Wizard##hatModWizard";
 
-    private const string CreatedPopupTitle = "HAT Mod Created##hatModCreated";
+    private const string CreatedPopupTitle = "HAT 3 Mod Created##hatModCreated";
 
     private const float FieldWidth = 520f;
 
@@ -21,10 +21,9 @@ public sealed class HatModWizard : DrawableGameComponent
 
     private static readonly string[] RequiredGameFiles =
     [
-        "FEZ.exe",
+        "HAT.dll",
         "FezEngine.dll",
-        "FNA.dll",
-        "HAT.exe"
+        "FNA.dll"
     ];
 
     private readonly IContentManager _contentManager;
@@ -117,8 +116,7 @@ public sealed class HatModWizard : DrawableGameComponent
     private void DrawForm()
     {
         ImGui.PushTextWrapPos(ImGui.GetCursorPosX() + FieldWidth);
-        ImGui.TextWrapped(
-            "This wizard will create a .NET Standard 2.0 HAT mod project and\ndeploy builds to the selected FEZ installation.");
+        ImGui.TextWrapped("This wizard will create a HAT 3 mod project and\ndeploy builds to the selected FEZ installation.");
         ImGui.PopTextWrapPos();
         ImGui.Separator();
 
@@ -140,7 +138,7 @@ public sealed class HatModWizard : DrawableGameComponent
             path =>
             {
                 _fezDirectory = path;
-                _storage.HatLauncherPath = Path.Combine(path, "HAT.exe");
+                _storage.HatLauncherPath = Path.Combine(path, OperatingSystem.IsWindows() ? "FEZ.exe" : "FEZ");
             },
             "Choose FEZ folder with HAT installed...");
 
@@ -256,17 +254,17 @@ public sealed class HatModWizard : DrawableGameComponent
             };
 
             WriteTemplate("ModTemplate/Project.csproj", Path.Combine(temporaryDirectory, modName + ".csproj"), values);
+            WriteTemplate("ModTemplate/Assets.targets", Path.Combine(temporaryDirectory, "Assets.targets"), values);
+            WriteTemplate("ModTemplate/README.md", Path.Combine(temporaryDirectory, "README.md"), values);
             WriteTemplate("ModTemplate/Metadata.xml", Path.Combine(temporaryDirectory, "Metadata.xml"), values);
-            WriteTemplate("ModTemplate/UserPropertiesTemplate", Path.Combine(temporaryDirectory, "UserProperties.xml"),
-                values);
+            WriteTemplate("ModTemplate/UserPropertiesTemplate", Path.Combine(temporaryDirectory, "UserProperties.xml"), values);
             var templateValues = new Dictionary<string, string>(values)
             {
                 ["FEZ_DIRECTORY"] = string.Empty
             };
-            WriteTemplate("ModTemplate/UserPropertiesTemplate",
-                Path.Combine(temporaryDirectory, "UserProperties.xml.template"), templateValues);
+            WriteTemplate("ModTemplate/UserPropertiesTemplate", Path.Combine(temporaryDirectory, "UserProperties.xml.template"), templateValues);
             WriteTemplate("ModTemplate/.gitignore", Path.Combine(temporaryDirectory, ".gitignore"), values);
-            WriteTemplate("ModTemplate/ModMain.cs", Path.Combine(temporaryDirectory, "Source", "ModMain.cs"), values);
+            WriteTemplate("ModTemplate/ModComponent.cs", Path.Combine(temporaryDirectory, "Source", "ModComponent.cs"), values);
 
             foreach (var path in Directory.EnumerateFileSystemEntries(temporaryDirectory).ToArray())
             {

@@ -1,0 +1,34 @@
+<Project>
+  <PropertyGroup>
+    <AssetOnlyOutputDir Condition="'$(AssetOnlyOutputDir)' == ''">$(MSBuildProjectDirectory)/out-assets</AssetOnlyOutputDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ModAssets Include="Assets/**/*" />
+  </ItemGroup>
+
+  <Target Name="PrepareModAssets" AfterTargets="PrepareMod">
+    <Copy SourceFiles="@(ModAssets)"
+          DestinationFiles="@(ModAssets->'$(ModOutputDir)/Assets/%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="Assets.pak" DestinationFolder="$(ModOutputDir)"
+          Condition="Exists('Assets.pak')" />
+  </Target>
+
+  <Target Name="PackageAssetsOnly">
+    <Error Text="Add files under Assets/ or add Assets.pak before packaging an asset-only mod."
+           Condition="'@(ModAssets)' == '' and !Exists('Assets.pak')" />
+    <MakeDir Directories="$(AssetOnlyOutputDir)" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)/Metadata.xml"
+          DestinationFolder="$(AssetOnlyOutputDir)" />
+    <XmlPoke XmlInputPath="$(AssetOnlyOutputDir)/Metadata.xml"
+             Query="/Metadata/LibraryName" Value="" />
+    <XmlPoke XmlInputPath="$(AssetOnlyOutputDir)/Metadata.xml"
+             Query="/Metadata/Entrypoint" Value="" />
+    <Copy SourceFiles="@(ModAssets)"
+          DestinationFiles="@(ModAssets->'$(AssetOnlyOutputDir)/Assets/%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="Assets.pak" DestinationFolder="$(AssetOnlyOutputDir)"
+          Condition="Exists('Assets.pak')" />
+  </Target>
+</Project>

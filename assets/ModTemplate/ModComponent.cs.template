@@ -1,0 +1,29 @@
+using FezEngine.Tools;
+using FezGame.Services;
+using Microsoft.Xna.Framework;
+
+namespace {{NAMESPACE}};
+
+// HAT creates this component using its public Game constructor.
+public sealed class ModComponent : GameComponent
+{
+    [ServiceDependency]
+    public IGameLevelManager LevelManager { private get; set; } = null!;
+
+    private string? _previousLevel;
+
+    public ModComponent(Game game) : base(game)
+    {
+    }
+
+    public override void Update(GameTime gameTime)
+    {
+        base.Update(gameTime);
+
+        if (LevelManager.Name != _previousLevel)
+        {
+            _previousLevel = LevelManager.Name;
+            System.Console.WriteLine($"[{{NAMESPACE}}] Level: {_previousLevel}");
+        }
+    }
+}

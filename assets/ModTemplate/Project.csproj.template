@@ -1,40 +1,47 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
     <OutputType>Library</OutputType>
-    <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>{{ASSEMBLY_NAME}}</AssemblyName>
     <RootNamespace>{{NAMESPACE}}</RootNamespace>
-    <LangVersion>latest</LangVersion>
-    <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <DebugType>portable</DebugType>
-    <PathMap>$(MSBuildProjectDirectory)=/_/</PathMap>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <GenerateDependencyFile>true</GenerateDependencyFile>
   </PropertyGroup>
 
-  <Import Project="$(ProjectDir)UserProperties.xml" />
+  <Import Project="$(MSBuildThisFileDirectory)UserProperties.xml"
+    Condition="Exists('$(MSBuildThisFileDirectory)UserProperties.xml')" />
 
-  <Target Name="VerifyModReferences" BeforeTargets="Build">
-    <Error Text="FEZ references are not configured. Edit UserProperties.xml." Condition="$(UserPropertiesSetUp) != True" />
+  <Target Name="VerifyModReferences" BeforeTargets="ResolveReferences">
+    <Error Text="You forgot to configure UserProperties.xml"
+      Condition="!Exists('$(MSBuildThisFileDirectory)UserProperties.xml')" />
+    <Error Text="FEZ game directory not found: $(FezDir)"
+      Condition="'$(FezDir)' != '' and !Exists('$(FezDir)')" />
+    <Error Text="FEZ references missing from $(FezDir). Install HAT into FEZ first."
+      Condition="'$(FezDir)' != '' and Exists('$(FezDir)') and (!Exists('$(FezDir)/HAT.dll') or !Exists('$(FezDir)/FezEngine.dll') or !Exists('$(FezDir)/FNA.dll'))" />
   </Target>
 
-  <Target Name="PrepareMod" AfterTargets="Build">
-    <MakeDir Directories="$(ModOutputDir)" />
-    <ItemGroup>
-      <ModCompiledOutput Include="$(TargetDir)$(TargetName).dll" />
-      <ModCompiledOutput Include="$(TargetDir)$(TargetName).pdb" Condition="Exists('$(TargetDir)$(TargetName).pdb')" />
-      <ModAsset Include="$(ProjectDir)Assets\**\*" />
-    </ItemGroup>
-    <Copy SourceFiles="@(ModCompiledOutput)" DestinationFolder="$(ModOutputDir)\" Retries="0" />
-    <Copy SourceFiles="$(ProjectDir)Metadata.xml" DestinationFolder="$(ModOutputDir)\" Retries="0" />
-    <Copy SourceFiles="@(ModAsset)"
-          DestinationFiles="@(ModAsset->'$(ModOutputDir)\Assets\%(RecursiveDir)%(Filename)%(Extension)')"
-          Retries="0" />
-  </Target>
+  <PropertyGroup>
+    <ModOutputDir Condition="'$(ModOutputDir)' == ''">$(MSBuildProjectDirectory)/out</ModOutputDir>
+  </PropertyGroup>
 
   <ItemGroup>
+    <Reference Include="Common">
+      <HintPath>$(FezDir)\Common.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ContentSerialization">
+      <HintPath>$(FezDir)\ContentSerialization.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="EasyStorage">
+      <HintPath>$(FezDir)\EasyStorage.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="FEZ">
-      <HintPath>$(FezDir)\FEZ.exe</HintPath>
+      <HintPath>$(FezDir)\HAT.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="FezEngine">
@@ -45,8 +52,8 @@
       <HintPath>$(FezDir)\FNA.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="MonoMod">
-      <HintPath>$(MonoModDir)\MonoMod.exe</HintPath>
+    <Reference Include="XnaWordWrapCore">
+      <HintPath>$(FezDir)\XnaWordWrapCore.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="MonoMod.RuntimeDetour">
@@ -62,4 +69,13 @@
       <Private>False</Private>
     </Reference>
   </ItemGroup>
+
+  <Target Name="PrepareMod" AfterTargets="Build">
+    <MakeDir Directories="$(ModOutputDir)" />
+    <Copy
+      SourceFiles="$(TargetPath);$(TargetDir)$(TargetName).deps.json;$(MSBuildProjectDirectory)/Metadata.xml"
+      DestinationFolder="$(ModOutputDir)" />
+  </Target>
+
+  <Import Project="Assets.targets" />
 </Project>

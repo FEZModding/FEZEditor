@@ -4,8 +4,8 @@
   <Author>{{AUTHOR}}</Author>
   <Version>{{VERSION}}</Version>
   <LibraryName>{{ASSEMBLY_NAME}}.dll</LibraryName>
-  <Entrypoint>{{NAMESPACE}}.ModMain</Entrypoint>
+  <Entrypoint>{{NAMESPACE}}.ModComponent</Entrypoint>
   <Dependencies>
-    <DependencyInfo Name="HAT" MinimumVersion="2.0" />
+    <DependencyInfo Name="HAT" MinimumVersion="3.0" />
   </Dependencies>
 </Metadata>
