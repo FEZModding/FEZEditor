@@ -13,8 +13,6 @@ public class HatLaunchService : IDisposable
 {
     private static readonly ILogger Logger = Log.ForContext<HatLaunchService>();
 
-    private const string LevelsPrefix = "Levels/";
-
     private string ModSourcePath => _resources.ModResolution?.ModRootDirectory.FullName ?? _resources.RootPath;
 
     private readonly AppStorageService _storage;
@@ -65,9 +63,9 @@ public class HatLaunchService : IDisposable
             return new HatAvailability.Unavailable("Readonly levels cannot be launched.");
         }
 
-        if (!TryGetLevelName(path, out _))
+        if (!EditorService.TryGetLevelName(path, out _))
         {
-            return new HatAvailability.Unavailable("Level asset must have a valid name.");
+            return new HatAvailability.Unavailable("Move this level into Levels before launching.");
         }
 
         return new HatAvailability.Available();
@@ -76,15 +74,15 @@ public class HatLaunchService : IDisposable
     public void Launch(EddyEditor editor)
     {
         var availability = GetAvailability(editor);
-        if (availability is HatAvailability.Unavailable)
+        if (availability is HatAvailability.Unavailable unavailable)
         {
-            Logger.Error("Unable to launch FEZ");
+            Logger.Error("Unable to launch FEZ: {Reason}", unavailable.Reason);
             return;
         }
 
-        if (!_editors.TryGetEditorPath(editor, out var path) || !TryGetLevelName(path, out var levelName))
+        if (!_editors.TryGetEditorPath(editor, out var path) || !EditorService.TryGetLevelName(path, out var levelName))
         {
-            Logger.Error("Level asset must have a valid name.");
+            Logger.Error("Move this level into Levels with a valid name before launching.");
             return;
         }
 
@@ -143,19 +141,6 @@ public class HatLaunchService : IDisposable
         {
             Logger.Error(e, "Unable to remove the previous playtest mod");
         }
-    }
-
-    private static bool TryGetLevelName(string path, out string levelName)
-    {
-        levelName = string.Empty;
-        var normalized = path.Replace('\\', '/');
-        if (normalized.StartsWith(LevelsPrefix, StringComparison.OrdinalIgnoreCase))
-        {
-            normalized = normalized[LevelsPrefix.Length..];
-        }
-
-        levelName = normalized;
-        return !string.IsNullOrWhiteSpace(levelName);
     }
 
     public void Dispose()

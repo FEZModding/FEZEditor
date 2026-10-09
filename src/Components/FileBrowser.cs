@@ -545,11 +545,21 @@ public class FileBrowser : DrawableGameComponent
     {
         const string defaultName = "UNTITLED";
 
-        var absoluteDir = _resourceService.GetFullPath(basePath);
+        var creationPath = EditorService.GetCreationPath(assetType, basePath, defaultName);
+        var absolutePath = Path.Combine(_resourceService.RootPath, creationPath);
+        var directoryPath = creationPath.Contains('/')
+            ? creationPath[..creationPath.LastIndexOf('/')]
+            : string.Empty;
+
+        if (!string.IsNullOrEmpty(directoryPath) && !Directory.Exists(Path.GetDirectoryName(absolutePath)))
+        {
+            _resourceService.CreateDirectory(directoryPath);
+        }
+
         var extension = EditorService.GetExtensionForType(assetType);
         var options = new FileDialog.Options
         {
-            DefaultLocation = Path.Combine(absoluteDir, defaultName),
+            DefaultLocation = absolutePath,
             Title = "Create New " + assetType.Name,
             Filters = [new FileDialog.Filter(assetType.Name, extension)]
         };

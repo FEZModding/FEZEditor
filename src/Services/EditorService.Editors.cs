@@ -13,7 +13,7 @@ namespace FezEditor.Services;
 
 public partial class EditorService
 {
-    public static readonly IReadOnlyDictionary<string, Type> AssetTypes = new Dictionary<string, Type>()
+    public static readonly IReadOnlyDictionary<string, Type> AssetTypes = new Dictionary<string, Type>
     {
         ["Art Object"] = typeof(ArtObject),
         ["Localization Text"] = typeof(TextStorage),
@@ -24,6 +24,19 @@ public partial class EditorService
         ["Sky"] = typeof(Sky),
         ["Tracked Song"] = typeof(TrackedSong),
         ["Trile Set"] = typeof(TrileSet)
+    };
+
+    private static readonly IReadOnlyDictionary<Type, string> Directories = new Dictionary<Type, string>
+    {
+        [typeof(ArtObject)] = "Art Objects",
+        [typeof(TextStorage)] = "Resources",
+        [typeof(FezFont)] = "Fonts",
+        [typeof(Level)] = "Levels",
+        [typeof(MapTree)] = string.Empty,
+        [typeof(NpcMetadata)] = "Character Animations",
+        [typeof(Sky)] = "Skies",
+        [typeof(TrackedSong)] = "Music",
+        [typeof(TrileSet)] = "Trile Sets"
     };
 
     private EditorComponent CreateEditorFor(object asset, string path)
@@ -87,6 +100,58 @@ public partial class EditorService
             ".gif" => AtIcons.Film,
             _ => Lucide.FileQuestionMark
         };
+    }
+
+    public static string GetCreationPath(Type assetType, string selectedDirectory, string defaultName)
+    {
+        if (assetType == typeof(MapTree))
+        {
+            return "MapTree";
+        }
+
+        var directory = selectedDirectory.Replace('\\', '/').TrimEnd('/');
+        if (Directories.TryGetValue(assetType, out var assetDirectory))
+        {
+            if (!string.Equals(directory, assetDirectory, StringComparison.OrdinalIgnoreCase) &&
+                !directory.StartsWith(assetDirectory + "/", StringComparison.OrdinalIgnoreCase))
+            {
+                directory = assetDirectory;
+            }
+
+            if (assetType == typeof(NpcMetadata))
+            {
+                if (string.Equals(directory, assetDirectory, StringComparison.OrdinalIgnoreCase))
+                {
+                    directory += "/" + defaultName;
+                }
+
+                return directory + "/Metadata";
+            }
+        }
+
+        return string.IsNullOrEmpty(directory)
+            ? defaultName
+            : directory + "/" + defaultName;
+    }
+
+    public static bool TryGetLevelName(string path, out string levelName)
+    {
+        levelName = string.Empty;
+        var normalized = path.Replace('\\', '/');
+        var prefix = Directories[typeof(Level)] + "/";
+        if (!normalized.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var name = normalized[prefix.Length..];
+        if (name.Split('/').Any(part => string.IsNullOrWhiteSpace(part) || part is "." or ".."))
+        {
+            return false;
+        }
+
+        levelName = name;
+        return true;
     }
 
     public void CreateAndSaveAsset(Type assetType, string relativePath, string defaultName)
