@@ -13,6 +13,9 @@ foreach ($Rid in $Targets) {
     $PublishDir = Join-Path $Root "src\bin\publish\$Rid"
 
     dotnet publish $Project -c Release -r $Rid -o $PublishDir
+    if ($LASTEXITCODE -ne 0) {
+        throw "Publishing $Rid failed with exit code $LASTEXITCODE."
+    }
 
     if ($Rid.StartsWith("win")) {
         $Archive = Join-Path $Dist "FEZEditor-$Version-$Rid.zip"
@@ -21,6 +24,10 @@ foreach ($Rid in $Targets) {
         Write-Host "Created $Archive"
     } elseif ($Rid.StartsWith("osx")) {
         $AppDir = Join-Path $PublishDir "FEZEditor.app"
+        # Recreate the bundle so repeated publishes cannot collide with stale files.
+        if (Test-Path -LiteralPath $AppDir) {
+            Remove-Item -LiteralPath $AppDir -Recurse -Force
+        }
         $Contents = Join-Path $AppDir "Contents"
         $MacOS = Join-Path $Contents "MacOS"
         New-Item -ItemType Directory -Force -Path $MacOS | Out-Null

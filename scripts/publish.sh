@@ -18,6 +18,8 @@ for RID in "${TARGETS[@]}"; do
 
     if [[ "$RID" == osx-* ]]; then
         APP_DIR="$PUBLISH_DIR/FEZEditor.app"
+        # Recreate the bundle so repeated publishes cannot collide with stale files.
+        rm -rf "$APP_DIR"
         CONTENTS="$APP_DIR/Contents"
         mkdir -p "$CONTENTS/MacOS"
         mkdir -p "$CONTENTS/Resources"
