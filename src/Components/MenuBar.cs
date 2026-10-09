@@ -21,6 +21,8 @@ public class MenuBar : DrawableGameComponent
 
     private readonly HistoryWindow _historyWindow;
 
+    private readonly MapPackWindow _mapPackWindow;
+
     private readonly EditorService _editorService;
 
     private readonly ResourceService _resourceService;
@@ -44,6 +46,7 @@ public class MenuBar : DrawableGameComponent
         game.AddComponent(_confirmWindow = new ConfirmWindow(game));
         game.AddComponent(_referencesWindow = new ReferencesWindow(game));
         game.AddComponent(_historyWindow = new HistoryWindow(game));
+        game.AddComponent(_mapPackWindow = new MapPackWindow(game));
         _editorService = game.GetService<EditorService>();
         _resourceService = game.GetService<ResourceService>();
         _inputService = game.GetService<InputService>();
@@ -61,6 +64,7 @@ public class MenuBar : DrawableGameComponent
         _confirmWindow.Dispose();
         _referencesWindow.Dispose();
         _historyWindow.Dispose();
+        _mapPackWindow.Dispose();
         _aboutWindow?.Dispose();
     }
 
@@ -106,15 +110,18 @@ public class MenuBar : DrawableGameComponent
     {
         if (_inputService.IsActionJustPressed(InputActions.UiClose))
         {
-            ShowCloseDialog();
+            if (_mapPackWindow.IsOpen) _mapPackWindow.RequestClose();
+            else ShowCloseDialog();
         }
         else if (_inputService.IsActionJustPressed(InputActions.UiQuitToWelcome))
         {
-            ShowCloseAllDialog();
+            if (_mapPackWindow.IsOpen) _mapPackWindow.RequestClose(ShowCloseAllDialog);
+            else ShowCloseAllDialog();
         }
         else if (_inputService.IsActionJustPressed(InputActions.UiQuit))
         {
-            ShowQuitDialog();
+            if (_mapPackWindow.IsOpen) _mapPackWindow.RequestClose(ShowQuitDialog);
+            else ShowQuitDialog();
         }
     }
 
@@ -219,9 +226,27 @@ public class MenuBar : DrawableGameComponent
                     _historyWindow.Toggle();
                 }
 
+                ImGui.SeparatorText("Mod");
+                if (ImGui.BeginMenu("World Map Pack", _resourceService is { ModResolution: not null, IsReadonly: false }))
+                {
+                    var worldPath = Path.Combine(
+                        _resourceService.ModResolution!.ModRootDirectory.FullName, WorldMetadata.FileName);
+
+                    if (File.Exists(worldPath))
+                    {
+                        if (ImGui.MenuItem("Edit...")) _mapPackWindow.Show();
+                        if (ImGui.MenuItem("Remove")) ShowRemoveMapPackDialog(worldPath);
+                    }
+                    else if (ImGui.MenuItem("Create..."))
+                    {
+                        _mapPackWindow.Show();
+                    }
+
+                    ImGui.EndMenu();
+                }
+
                 if (_resourceService.GetModReferencePaths().Count > 0)
                 {
-                    ImGui.SeparatorText("Mod");
                     if (ImGui.MenuItem("Manage references"))
                     {
                         _referencesWindow.Show();
@@ -324,6 +349,29 @@ public class MenuBar : DrawableGameComponent
 
             ImGui.EndMainMenuBar();
         }
+    }
+
+    private void ShowRemoveMapPackDialog(string worldPath)
+    {
+        _confirmWindow.Title = "Remove World Map Pack";
+        _confirmWindow.Text = "Remove World.xml from this mod?";
+        _confirmWindow.ConfirmButtonText = "Remove";
+        _confirmWindow.DenyButtonText = "Cancel";
+        _confirmWindow.Confirmed = () =>
+        {
+            try
+            {
+                File.Delete(worldPath);
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Error(ex, "Could not remove World.xml");
+                _statusService.ShowMessage("Could not remove World.xml: " + ex.Message, TimeSpan.FromSeconds(10));
+            }
+        };
+        _confirmWindow.Denied = null;
+        _confirmWindow.Closed = null;
+        _confirmWindow.ForceToShow();
     }
 
     private void ShowAboutWindow()

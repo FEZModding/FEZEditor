@@ -17,11 +17,16 @@ public class AssetPickWindow : DrawableGameComponent
     public Dirty<string> CancelButtonText { get; set; } = new("Cancel");
 
     public Dirty<string> RootPath { get; set; } = new("");
+
     public Dirty<string> MissingAssetsText { get; set; } = new("");
 
     public Action<string>? Accepted { get; set; }
 
     public Action? Canceled { get; set; }
+
+    public Func<string, bool>? Filter { get; set; }
+
+    public bool Recursive { get; set; }
 
     private bool _isDirty;
 
@@ -141,15 +146,12 @@ public class AssetPickWindow : DrawableGameComponent
 
     private void RecacheAssetPaths()
     {
-        if (string.IsNullOrEmpty(RootPath))
-        {
-            throw new ArgumentException("Empty root path in asset pick window");
-        }
-
         _cachedAssetPaths = _resourceService.Files
             .Where(path => path.StartsWith(RootPath, StringComparison.OrdinalIgnoreCase))
+            .Where(path => Filter?.Invoke(path) ?? true)
             .Select(path => path[RootPath.Value.Length..])
-            .Where(path => !path.Contains('/') && !path.Contains('\\'))
+            .Where(path => Recursive || (!path.Contains('/') && !path.Contains('\\')))
+            .Order(StringComparer.OrdinalIgnoreCase)
             .ToArray();
         _selectedAssetIndex = -1;
     }

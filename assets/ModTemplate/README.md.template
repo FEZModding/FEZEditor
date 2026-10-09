@@ -24,6 +24,8 @@ Put loose assets under `Assets/`, keeping their game asset paths relative to tha
 
 For a **code and asset mod**, run either command in [Building mod](#building-mod). The build copies `Assets/` recursively and `Assets.pak` beside the DLL and metadata in `ModOutputDir` (or `out/` if unset).
 
+To define a custom world, choose **Editor > World Map Pack > Create...** in FEZEditor. Save writes `World.xml` beside `Metadata.xml`. When the file exists, the menu offers **Edit...** and **Remove**. Both build and asset-only packaging include the file when present. Levels, map trees, and thumbnail textures are created through the existing asset editors.
+
 For an **asset-only mod**, add at least one asset, then run `dotnet msbuild -t:PackageAssetsOnly`. This creates `out-assets/` with `Metadata.xml` and your assets; it does not need a .NET compile or `UserProperties.xml`. The target clears the code-only `LibraryName` and `Entrypoint` fields in its output metadata. Copy the **contents** of `out-assets/` to a folder under FEZ's `Mods` directory, or zip those contents with `Metadata.xml` at the ZIP root.
 
 The build copies files but does not remove assets you deleted from source. Clear old output files before packaging an updated mod.

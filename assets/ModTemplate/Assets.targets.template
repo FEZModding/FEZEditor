@@ -13,6 +13,10 @@
           SkipUnchangedFiles="true" />
     <Copy SourceFiles="Assets.pak" DestinationFolder="$(ModOutputDir)"
           Condition="Exists('Assets.pak')" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)/World.xml" DestinationFolder="$(ModOutputDir)"
+          Condition="Exists('$(MSBuildProjectDirectory)/World.xml')" />
+    <Delete Files="$(ModOutputDir)/World.xml"
+            Condition="!Exists('$(MSBuildProjectDirectory)/World.xml')" />
   </Target>
 
   <Target Name="PackageAssetsOnly">
@@ -30,5 +34,9 @@
           SkipUnchangedFiles="true" />
     <Copy SourceFiles="Assets.pak" DestinationFolder="$(AssetOnlyOutputDir)"
           Condition="Exists('Assets.pak')" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)/World.xml" DestinationFolder="$(AssetOnlyOutputDir)"
+          Condition="Exists('$(MSBuildProjectDirectory)/World.xml')" />
+    <Delete Files="$(AssetOnlyOutputDir)/World.xml"
+            Condition="!Exists('$(MSBuildProjectDirectory)/World.xml')" />
   </Target>
 </Project>
