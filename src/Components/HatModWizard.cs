@@ -19,6 +19,13 @@ public sealed class HatModWizard : DrawableGameComponent
 
     private static readonly ILogger Logger = Log.ForContext<HatModWizard>();
 
+    private static readonly string[] ModTypeLabels =
+    [
+        "Asset Mod",
+        "Code Mod",
+        "Asset + Code Mod"
+    ];
+
     private static readonly string[] RequiredGameFiles =
     [
         "HAT.dll",
@@ -33,6 +40,8 @@ public sealed class HatModWizard : DrawableGameComponent
     private readonly ResourceService _resources;
 
     private string _name = "MyHatMod";
+
+    private int _modType;
 
     private string _description = "";
 
@@ -116,9 +125,16 @@ public sealed class HatModWizard : DrawableGameComponent
     private void DrawForm()
     {
         ImGui.PushTextWrapPos(ImGui.GetCursorPosX() + FieldWidth);
-        ImGui.TextWrapped("This wizard will create a HAT 3 mod project and\ndeploy builds to the selected FEZ installation.");
+        ImGui.TextWrapped("This wizard will create a HAT 3 mod project for the selected FEZ installation.");
         ImGui.PopTextWrapPos();
         ImGui.Separator();
+
+        ImGui.Text("Mod type");
+        ImGui.SetNextItemWidth(FieldWidth);
+        if (ImGui.Combo("##modType", ref _modType, ModTypeLabels, ModTypeLabels.Length))
+        {
+            _error = null;
+        }
 
         DrawTextField("Mod name", "##modName", ref _name, 128);
         DrawTextField("Author", "##author", ref _author, 128);
@@ -142,13 +158,23 @@ public sealed class HatModWizard : DrawableGameComponent
             },
             "Choose FEZ folder with HAT installed...");
 
+        var requestType = _modType switch
+        {
+            0 => ModType.Asset,
+            1 => ModType.Code,
+            _ => ModType.Asset | ModType.Code
+        };
+
         var request = new ProjectRequest(
             _name,
             _description,
             _author,
             _version,
             _projectDirectory,
-            _fezDirectory);
+            _fezDirectory,
+            requestType
+        );
+
         var validationError = Validate(request);
 
         if (!string.IsNullOrWhiteSpace(_projectDirectory))
@@ -157,9 +183,9 @@ public sealed class HatModWizard : DrawableGameComponent
         }
 
         var modName = ToIdentifier(_name);
-        if (!string.IsNullOrWhiteSpace(_fezDirectory) && !string.IsNullOrEmpty(modName))
+        if (requestType.HasFlag(ModType.Code) && !string.IsNullOrWhiteSpace(_fezDirectory) && !string.IsNullOrEmpty(modName))
         {
-            ImGui.TextDisabled($"Build output: {Path.Combine(_fezDirectory, "Mods", modName)}");
+            ImGui.TextDisabled($"Mod output: {Path.Combine(_fezDirectory, "Mods", modName)}");
         }
 
         if (!string.IsNullOrWhiteSpace(_error))
@@ -239,32 +265,58 @@ public sealed class HatModWizard : DrawableGameComponent
         try
         {
             Directory.CreateDirectory(temporaryDirectory);
-            Directory.CreateDirectory(Path.Combine(temporaryDirectory, "Assets"));
-            Directory.CreateDirectory(Path.Combine(temporaryDirectory, "Source"));
+            if (request.Type.HasFlag(ModType.Asset))
+            {
+                Directory.CreateDirectory(Path.Combine(temporaryDirectory, "Assets"));
+            }
+
+            if (request.Type.HasFlag(ModType.Code))
+            {
+                Directory.CreateDirectory(Path.Combine(temporaryDirectory, "Source"));
+            }
 
             var values = new Dictionary<string, string>
             {
                 ["MOD_NAME"] = SecurityElement.Escape(request.Name.Trim()),
                 ["ASSEMBLY_NAME"] = modName,
                 ["NAMESPACE"] = modName,
+                ["LIBRARY_NAME"] = request.Type.HasFlag(ModType.Code) ? modName + ".dll" : string.Empty,
+                ["ENTRYPOINT"] = request.Type.HasFlag(ModType.Code) ? modName + ".ModComponent" : string.Empty,
+                ["ASSETS_IMPORT"] = request.Type.HasFlag(ModType.Asset)
+                    ? "<Import Project=\"Assets.targets\" />"
+                    : string.Empty,
                 ["AUTHOR"] = SecurityElement.Escape(request.Author.Trim()),
                 ["DESCRIPTION"] = SecurityElement.Escape(request.Description.Trim()),
                 ["VERSION"] = SecurityElement.Escape(request.Version.Trim()),
                 ["FEZ_DIRECTORY"] = SecurityElement.Escape(Path.GetFullPath(request.FezDirectory))
             };
 
-            WriteTemplate("ModTemplate/Project.csproj", Path.Combine(temporaryDirectory, modName + ".csproj"), values);
-            WriteTemplate("ModTemplate/Assets.targets", Path.Combine(temporaryDirectory, "Assets.targets"), values);
-            WriteTemplate("ModTemplate/README.md", Path.Combine(temporaryDirectory, "README.md"), values);
-            WriteTemplate("ModTemplate/Metadata.xml", Path.Combine(temporaryDirectory, "Metadata.xml"), values);
-            WriteTemplate("ModTemplate/UserPropertiesTemplate", Path.Combine(temporaryDirectory, "UserProperties.xml"), values);
-            var templateValues = new Dictionary<string, string>(values)
+            if (request.Type.HasFlag(ModType.Code))
             {
-                ["FEZ_DIRECTORY"] = string.Empty
-            };
-            WriteTemplate("ModTemplate/UserPropertiesTemplate", Path.Combine(temporaryDirectory, "UserProperties.xml.template"), templateValues);
-            WriteTemplate("ModTemplate/.gitignore", Path.Combine(temporaryDirectory, ".gitignore"), values);
-            WriteTemplate("ModTemplate/ModComponent.cs", Path.Combine(temporaryDirectory, "Source", "ModComponent.cs"), values);
+                WriteTemplate("ModTemplate/Project.csproj", Path.Combine(temporaryDirectory, modName + ".csproj"), values);
+                WriteTemplate("ModTemplate/ModComponent.cs", Path.Combine(temporaryDirectory, "Source", "ModComponent.cs"), values);
+
+                if (request.Type.HasFlag(ModType.Asset))
+                {
+                    WriteTemplate("ModTemplate/Assets.targets", Path.Combine(temporaryDirectory, "Assets.targets"), values);
+                }
+
+                var readmeTemplate = request.Type.HasFlag(ModType.Asset)
+                    ? "ModTemplate/README.md"
+                    : "ModTemplate/README.Code.md";
+
+                WriteTemplate(readmeTemplate, Path.Combine(temporaryDirectory, "README.md"), values);
+                WriteTemplate("ModTemplate/UserPropertiesTemplate", Path.Combine(temporaryDirectory, "UserProperties.xml"), values);
+                var templateValues = new Dictionary<string, string>(values)
+                {
+                    ["FEZ_DIRECTORY"] = string.Empty
+                };
+
+                WriteTemplate("ModTemplate/UserPropertiesTemplate", Path.Combine(temporaryDirectory, "UserProperties.xml.template"), templateValues);
+                WriteTemplate("ModTemplate/.gitignore", Path.Combine(temporaryDirectory, ".gitignore"), values);
+            }
+
+            WriteTemplate("ModTemplate/Metadata.xml", Path.Combine(temporaryDirectory, "Metadata.xml"), values);
 
             foreach (var path in Directory.EnumerateFileSystemEntries(temporaryDirectory).ToArray())
             {
@@ -280,7 +332,7 @@ public sealed class HatModWizard : DrawableGameComponent
             }
 
             Directory.Delete(temporaryDirectory);
-            return new ProjectResult(projectDirectory);
+            return new ProjectResult(projectDirectory, request.Type);
         }
         catch
         {
@@ -320,15 +372,22 @@ public sealed class HatModWizard : DrawableGameComponent
                 ImGuiWindowFlags.NoResize | ImGuiWindowFlags.AlwaysAutoResize))
         {
             ImGui.Text("HAT mod created successfully.");
-            ImGui.TextWrapped("Open the new mod project in the editor now?");
+            ImGui.TextWrapped(_createdProject!.Type.HasFlag(ModType.Asset)
+                ? "Open the new mod project in the editor now?"
+                : "Open the C# project in your code editor to start editing the mod.");
+            ImGui.TextWrapped(_createdProject.ProjectDirectory);
             ImGui.Spacing();
 
-            if (ImGui.Button($"{Lucide.FolderCog} Open in editor"))
+            if (_createdProject.Type.HasFlag(ModType.Asset))
             {
-                OpenCreatedProject();
+                if (ImGui.Button($"{Lucide.FolderCog} Open in editor"))
+                {
+                    OpenCreatedProject();
+                }
+
+                ImGui.SameLine();
             }
 
-            ImGui.SameLine();
             if (ImGui.Button("Close"))
             {
                 ImGui.CloseCurrentPopup();
@@ -421,13 +480,15 @@ public sealed class HatModWizard : DrawableGameComponent
             return "Choose the FEZ game folder with HAT installed.";
         }
 
-        var missing = RequiredGameFiles.FirstOrDefault(file => !File.Exists(Path.Combine(request.FezDirectory, file)));
+        var requiredFiles = request.Type.HasFlag(ModType.Code) ? RequiredGameFiles : ["HAT.dll"];
+        var missing = requiredFiles.FirstOrDefault(file => !File.Exists(Path.Combine(request.FezDirectory, file)));
         if (missing != null)
         {
             return $"The selected FEZ folder is missing {missing}.";
         }
 
-        if (!Directory.Exists(Path.Combine(request.FezDirectory, "HATDependencies", "MonoMod")))
+        if (request.Type.HasFlag(ModType.Code) &&
+            !Directory.Exists(Path.Combine(request.FezDirectory, "HATDependencies", "MonoMod")))
         {
             return "The selected FEZ folder is missing HATDependencies/MonoMod.";
         }
@@ -472,14 +533,22 @@ public sealed class HatModWizard : DrawableGameComponent
         ImGui.InputText(id, ref value, maxLength);
     }
 
+    [Flags]
+    private enum ModType
+    {
+        Asset = 0b01,
+        Code = 0b10
+    }
+
     private sealed record ProjectRequest(
         string Name,
         string Description,
         string Author,
         string Version,
         string ProjectDirectory,
-        string FezDirectory
+        string FezDirectory,
+        ModType Type
     );
 
-    private sealed record ProjectResult(string ProjectDirectory);
+    private sealed record ProjectResult(string ProjectDirectory, ModType Type);
 }

@@ -1,6 +1,6 @@
-# HAT mod template
+# {{ASSEMBLY_NAME}}
 
-A starting point for [HAT](https://github.com/FEZModding/HAT) code mods, asset mods, or both.
+A code and asset mod for [HAT](https://github.com/FEZModding/HAT).
 
 > [!NOTE]
 > The sample component logs the current FEZ level when it changes.

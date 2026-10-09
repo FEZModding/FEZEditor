@@ -3,8 +3,8 @@
   <Description>{{DESCRIPTION}}</Description>
   <Author>{{AUTHOR}}</Author>
   <Version>{{VERSION}}</Version>
-  <LibraryName>{{ASSEMBLY_NAME}}.dll</LibraryName>
-  <Entrypoint>{{NAMESPACE}}.ModComponent</Entrypoint>
+  <LibraryName>{{LIBRARY_NAME}}</LibraryName>
+  <Entrypoint>{{ENTRYPOINT}}</Entrypoint>
   <Dependencies>
     <DependencyInfo Name="HAT" MinimumVersion="3.0" />
   </Dependencies>

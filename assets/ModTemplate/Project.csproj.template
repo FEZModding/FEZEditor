@@ -77,5 +77,5 @@
       DestinationFolder="$(ModOutputDir)" />
   </Target>
 
-  <Import Project="Assets.targets" />
+  {{ASSETS_IMPORT}}
 </Project>

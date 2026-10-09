@@ -1,0 +1,29 @@
+# {{ASSEMBLY_NAME}}
+
+A code mod for [HAT](https://github.com/FEZModding/HAT).
+
+The sample component in `Source/ModComponent.cs` logs the current FEZ level when it changes. Open `{{ASSEMBLY_NAME}}.csproj` in your code editor to start editing it.
+
+`Metadata.xml` names the library and component HAT should load. Its `Entrypoint` must name a public `GameComponent` with a public `Game` constructor. To add more components, create them from `ModComponent` through `ServiceHelper.AddComponent` or omit `Entrypoint` to let HAT load all public `GameComponent` classes.
+
+## Building
+
+The wizard configured `UserProperties.xml` with your FEZ installation. On another machine, copy `UserProperties.xml.template` to `UserProperties.xml` and set `FezDir` to the FEZ folder with HAT installed. This file is ignored by Git.
+
+Install the .NET 10 SDK, then build in Debug mode:
+
+```sh
+dotnet build -c Debug
+```
+
+Or publish in Release mode:
+
+```sh
+dotnet publish -c Release -p:ContinuousIntegrationBuild=true
+```
+
+Both commands copy `{{ASSEMBLY_NAME}}.dll`, its `.deps.json`, and `Metadata.xml` to FEZ's `Mods/{{ASSEMBLY_NAME}}` directory. Change `ModOutputDir` in `UserProperties.xml` to build elsewhere; without it the output defaults to `out/`. Restart FEZ to load the mod.
+
+Game and HAT assemblies are resolved from the local FEZ installation. Add references with `<Private>false</Private>` when your mod needs them.
+
+To distribute the mod, zip the output folder's contents with `Metadata.xml` at the ZIP root.
