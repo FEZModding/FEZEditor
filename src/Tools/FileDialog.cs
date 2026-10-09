@@ -34,23 +34,17 @@ public static class FileDialog
         Options? options = null)
     {
         options ??= new Options();
-        var context = new DialogContext(callback);
-        var nativeFilters = ConvertFilters(options.Filters);
-        var props = SDL.SDL_CreateProperties();
+        var context = new DialogContext(callback, options.Filters);
+        uint props = 0;
+        var shown = false;
 
         try
         {
-            if (nativeFilters.Length > 0)
+            props = SDL.SDL_CreateProperties();
+            if (context.FilterCount > 0)
             {
-                unsafe
-                {
-                    fixed (SDL.SDL_DialogFileFilter* filterPtr = nativeFilters)
-                    {
-                        SDL.SDL_SetPointerProperty(props, SDL.SDL_PROP_FILE_DIALOG_FILTERS_POINTER, (IntPtr)filterPtr);
-                    }
-                }
-
-                SDL.SDL_SetNumberProperty(props, SDL.SDL_PROP_FILE_DIALOG_NFILTERS_NUMBER, nativeFilters.Length);
+                SDL.SDL_SetPointerProperty(props, SDL.SDL_PROP_FILE_DIALOG_FILTERS_POINTER, context.FilterPointer);
+                SDL.SDL_SetNumberProperty(props, SDL.SDL_PROP_FILE_DIALOG_NFILTERS_NUMBER, context.FilterCount);
             }
 
             if (!string.IsNullOrEmpty(options.DefaultLocation))
@@ -87,13 +81,21 @@ public static class FileDialog
                     _ => throw new ArgumentOutOfRangeException(nameof(type))
                 },
                 context.Callback,
-                GCHandle.ToIntPtr(context.Handle),
+                context.UserData,
                 props);
+            shown = true;
         }
         finally
         {
-            SDL.SDL_DestroyProperties(props);
-            FreeFilters(nativeFilters);
+            if (props != 0)
+            {
+                SDL.SDL_DestroyProperties(props);
+            }
+
+            if (!shown)
+            {
+                context.Dispose();
+            }
         }
     }
 
@@ -105,16 +107,21 @@ public static class FileDialog
         }
 
         var nativeFilters = new SDL.SDL_DialogFileFilter[filters.Length];
-        for (var i = 0; i < filters.Length; i++)
+        try
         {
-            nativeFilters[i] = new SDL.SDL_DialogFileFilter
+            for (var i = 0; i < filters.Length; i++)
             {
-                name = (byte*)Marshal.StringToCoTaskMemUTF8(filters[i].Name),
-                pattern = (byte*)Marshal.StringToCoTaskMemUTF8(filters[i].Pattern)
-            };
-        }
+                nativeFilters[i].name = (byte*)Marshal.StringToCoTaskMemUTF8(filters[i].Name);
+                nativeFilters[i].pattern = (byte*)Marshal.StringToCoTaskMemUTF8(filters[i].Pattern);
+            }
 
-        return nativeFilters;
+            return nativeFilters;
+        }
+        catch
+        {
+            FreeFilters(nativeFilters);
+            throw;
+        }
     }
 
     private static unsafe void FreeFilters(SDL.SDL_DialogFileFilter[] filters)
@@ -133,19 +140,65 @@ public static class FileDialog
         }
     }
 
-    private class DialogContext
+    private sealed class DialogContext : IDisposable
     {
-        public GCHandle Handle { get; }
+        public IntPtr UserData => GCHandle.ToIntPtr(_handle);
 
         public SDL.SDL_DialogFileCallback Callback { get; }
 
+        public int FilterCount => _nativeFilters.Length;
+
+        public IntPtr FilterPointer => _filterHandle.IsAllocated ? _filterHandle.AddrOfPinnedObject() : IntPtr.Zero;
+
         private readonly Action<string[]> _userCallback;
 
-        public DialogContext(Action<string[]> userCallback)
+        private readonly SDL.SDL_DialogFileFilter[] _nativeFilters;
+
+        private GCHandle _filterHandle;
+
+        private GCHandle _handle;
+
+        private int _disposed;
+
+        public DialogContext(Action<string[]> userCallback, Filter[]? filters)
         {
             _userCallback = userCallback;
             Callback = OnDialogComplete;
-            Handle = GCHandle.Alloc(this);
+            _nativeFilters = ConvertFilters(filters);
+            try
+            {
+                if (_nativeFilters.Length > 0)
+                {
+                    // SDL keeps the filters until the asynchronous dialog callback.
+                    _filterHandle = GCHandle.Alloc(_nativeFilters, GCHandleType.Pinned);
+                }
+
+                _handle = GCHandle.Alloc(this);
+            }
+            catch
+            {
+                Dispose();
+                throw;
+            }
+        }
+
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            {
+                return;
+            }
+
+            FreeFilters(_nativeFilters);
+            if (_filterHandle.IsAllocated)
+            {
+                _filterHandle.Free();
+            }
+
+            if (_handle.IsAllocated)
+            {
+                _handle.Free();
+            }
         }
 
         private void OnDialogComplete(IntPtr userdata, IntPtr filelist, int filter)
@@ -160,11 +213,7 @@ public static class FileDialog
             }
             finally
             {
-                var handle = GCHandle.FromIntPtr(userdata);
-                if (handle.IsAllocated)
-                {
-                    handle.Free();
-                }
+                Dispose();
             }
         }
 
