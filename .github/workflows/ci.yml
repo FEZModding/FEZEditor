@@ -16,8 +16,12 @@ on:
       - 'LICENSE'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build:
+    if: github.repository == 'FEZModding/FEZEditor'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -43,3 +47,128 @@ jobs:
 
       - name: Build
         run: dotnet build src/FezEditor.csproj -c Debug
+
+
+      - name: Upload compiled shaders
+        if: github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@v4
+        with:
+          name: shaders
+          path: assets/Effects/*.fxb
+          if-no-files-found: error
+
+  continuous-build:
+    if: github.ref == 'refs/heads/master'
+    needs: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - rid: win-x64
+            os: windows-latest
+          - rid: linux-x64
+            os: ubuntu-latest
+          - rid: osx-arm64
+            os: macos-latest
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.x'
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: shaders
+          path: assets/Effects/
+
+      - name: Publish
+        run: >
+          dotnet publish src/FezEditor.csproj
+          -c Release
+          -r ${{ matrix.rid }}
+          -o publish/
+
+      - name: Archive (Windows)
+        if: matrix.rid == 'win-x64'
+        shell: pwsh
+        run: Compress-Archive -Path publish/* -DestinationPath FEZEditor-continuous-${{ matrix.rid }}.zip
+
+      - name: Bundle (macOS)
+        if: startsWith(matrix.rid, 'osx-')
+        run: |
+          APP=publish/FEZEditor.app/Contents
+          mkdir -p "$APP/MacOS" "$APP/Resources"
+          find publish -maxdepth 1 -mindepth 1 ! -name FEZEditor.app -exec mv {} "$APP/MacOS/" \;
+          sed "s/\$(Version)/continuous/g" assets/Info.plist > "$APP/Info.plist"
+
+      - name: Archive (macOS)
+        if: startsWith(matrix.rid, 'osx-')
+        run: tar -czf FEZEditor-continuous-${{ matrix.rid }}.tar.gz --exclude='*.pdb' -C publish FEZEditor.app
+
+      - name: Archive (Linux)
+        if: matrix.rid == 'linux-x64'
+        run: tar -czf FEZEditor-continuous-${{ matrix.rid }}.tar.gz --exclude='*.pdb' -C publish .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: continuous-${{ matrix.rid }}
+          path: FEZEditor-continuous-${{ matrix.rid }}.*
+          if-no-files-found: error
+
+  continuous-release:
+    if: github.ref == 'refs/heads/master' && github.repository == 'FEZModding/FEZEditor'
+    needs: continuous-build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: continuous-release
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: continuous-*
+          merge-multiple: true
+
+      - name: Update rolling prerelease
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(FEZEditor-continuous-*)
+          if (( ${#files[@]} != 3 )); then
+            echo "Expected three release archives, found ${#files[@]}" >&2
+            exit 1
+          fi
+
+          # Only the latest master commit may replace the rolling release.
+          master_sha=$(gh api "repos/$GH_REPO/git/ref/heads/master" --jq '.object.sha')
+          if [[ "$SHA" != "$master_sha" ]]; then
+            echo "Skipping superseded commit: $SHA"
+            exit 0
+          fi
+
+          title="FEZEditor Continuous Build"
+          built_at=$(date -u '+%Y-%m-%d %H:%M UTC')
+          notes=$(printf 'Published: %s\n' "$built_at")
+
+          if gh release view continuous >/dev/null 2>&1; then
+            gh api -X PATCH "repos/$GH_REPO/git/refs/tags/continuous" \
+              -f sha="$SHA" -F force=true
+            gh release edit continuous \
+              --title "$title" --notes "$notes" --prerelease --latest=false
+            gh release upload continuous "${files[@]}" --clobber
+          else
+            gh release create continuous "${files[@]}" \
+              --target "$SHA" --title "$title" --notes "$notes" \
+              --prerelease --latest=false
+          fi
