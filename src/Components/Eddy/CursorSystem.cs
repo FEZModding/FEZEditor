@@ -79,7 +79,15 @@ public sealed class CursorSystem : EddySystem
             }
         }
 
-        if (Eddy.Selected is SelectionState.TrileGroup selection)
+        if (Eddy.Tool is ToolState.Paint.Trile { EraseStroke: { } stroke } && stroke.OverlapIndex == Eddy.OverlapIndex)
+        {
+            _selectionGroupState = null;
+            _cursor.ClearSelection();
+            _cursor.UploadSelectionMesh(UnitBox, PrimitiveType.TriangleList, SelectionColor);
+            _cursor.SetSelectionInstances(stroke.Targets.Select(Eddy.GetActiveTrile)
+                .OfType<TrileInstance>().Select(CreateBoxInstance));
+        }
+        else if (Eddy.Selected is SelectionState.TrileGroup selection)
         {
             DrawSelectedTrileGroup(selection.Selected);
         }
@@ -151,7 +159,8 @@ public sealed class CursorSystem : EddySystem
 
     private void DrawPaintHologram()
     {
-        if (Eddy.Tool is not ToolState.Paint.Trile tool || Eddy.HoveredTrile is not { } hovered)
+        if (Eddy.Tool is not ToolState.Paint.Trile { EraseStroke: null } tool ||
+            Eddy.HoveredTrile is not { } hovered)
         {
             _hologramTrileId = null;
             _cursor.ClearHologram();

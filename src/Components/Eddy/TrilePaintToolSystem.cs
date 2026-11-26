@@ -43,13 +43,13 @@ public class TrilePaintToolSystem : EddySystem
         if (Eddy.OverlapIndex > 0)
         {
             Hints.Add("LMB", $"Paint Layer {Eddy.OverlapIndex}");
-            Hints.Add("Ctrl+LMB", $"Erase Layer {Eddy.OverlapIndex}");
+            Hints.Add("Ctrl+LMB", $"Erase Layer {Eddy.OverlapIndex} on Release");
         }
         else
         {
             Hints.Add("LMB", "Paint");
             Hints.Add("Shift+LMB", "Append");
-            Hints.Add("Ctrl+LMB", "Erase");
+            Hints.Add("Ctrl+LMB", "Erase on Release");
         }
 
         Hints.Add("R", $"Rotate: {Eddy.TrilePaintRotationMode.DisplayName}");
@@ -66,12 +66,45 @@ public class TrilePaintToolSystem : EddySystem
 
         if (ImGui.IsMouseReleased(ImGuiMouseButton.Left))
         {
-            Eddy.Tool.Clear();
+            var eraseStroke = tool.EraseStroke;
+            tool.Clear();
+            if (eraseStroke is { Targets.Count: > 0 } stroke && stroke.OverlapIndex == Eddy.OverlapIndex)
+            {
+                EraseTriles(stroke.Targets, stroke.OverlapIndex);
+            }
+
+            return;
+        }
+
+        var clicked = ImGui.IsMouseClicked(ImGuiMouseButton.Left);
+        var inputFrame = ImGui.GetFrameCount();
+        if (tool.EraseStroke is { } activeStroke &&
+            (!ImGui.IsMouseDown(ImGuiMouseButton.Left) || (clicked && activeStroke.StartFrame != inputFrame)))
+        {
+            tool.Clear();
+        }
+
+        if (tool.EraseStroke != null)
+        {
+            return;
+        }
+
+        if (ImGui.GetIO().KeyCtrl && (Eddy.OverlapIndex > 0 || !ImGui.GetIO().KeyShift))
+        {
+            if (clicked && Eddy.Frame.AllowsRaycast &&
+                Eddy.HoveredTrile is { } eraseTarget &&
+                Eddy.GetActiveTrile(eraseTarget.Trile.Emplacement) != null)
+            {
+                tool.Clear();
+                var origin = eraseTarget.Trile.Emplacement;
+                tool.EraseStroke = (Eddy.OverlapIndex, origin, [origin], inputFrame);
+            }
+
             return;
         }
 
         if (Eddy.HoveredTrile is not { } hovered ||
-            (!ImGui.IsMouseClicked(ImGuiMouseButton.Left) && !ImGui.IsMouseDragging(ImGuiMouseButton.Left)))
+            (!clicked && !ImGui.IsMouseDragging(ImGuiMouseButton.Left)))
         {
             return;
         }
@@ -108,8 +141,7 @@ public class TrilePaintToolSystem : EddySystem
         #region Process paint stroke
 
         if (Eddy.Selected is not SelectionState.Trile selection ||
-            !selection.Selected.Contains(hovered.Trile.Emplacement) ||
-            ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+            !selection.Selected.Contains(hovered.Trile.Emplacement))
         {
             PaintTriles(tool, hovered.Face, [hovered.Trile.Emplacement]);
         }
@@ -121,6 +153,22 @@ public class TrilePaintToolSystem : EddySystem
         #endregion
     }
 
+    private void EraseTriles(IEnumerable<TrileEmplacement> targets, int overlapIndex)
+    {
+        using var scope = Eddy.History.BeginScope("Erase Triles");
+        foreach (var emplacement in targets.Where(emplacement => Eddy.GetActiveTrile(emplacement) != null))
+        {
+            if (overlapIndex > 0)
+            {
+                EraseOverlap(emplacement, overlapIndex - 1);
+            }
+            else
+            {
+                EraseTrile(emplacement);
+            }
+        }
+    }
+
     private void PaintTriles(
         ToolState.Paint.Trile tool,
         FaceOrientation face,
@@ -130,26 +178,11 @@ public class TrilePaintToolSystem : EddySystem
         {
             if (Eddy.OverlapIndex > 0)
             {
-                var slot = Eddy.OverlapIndex - 1;
-                if (ImGui.GetIO().KeyCtrl)
-                {
-                    EraseOverlap(tool, emplacement, slot);
-                }
-                else
-                {
-                    PaintOverlap(tool, emplacement, slot);
-                }
-
-                continue;
+                PaintOverlap(tool, emplacement, Eddy.OverlapIndex - 1);
             }
-
-            if (ImGui.GetIO().KeyShift)
+            else if (ImGui.GetIO().KeyShift)
             {
                 AppendTrile(tool, emplacement, face);
-            }
-            else if (ImGui.GetIO().KeyCtrl)
-            {
-                EraseTrile(tool, emplacement);
             }
             else
             {
@@ -216,14 +249,9 @@ public class TrilePaintToolSystem : EddySystem
         }
     }
 
-    private void EraseTrile(ToolState.Paint.Trile tool, TrileEmplacement emplacement)
+    private void EraseTrile(TrileEmplacement emplacement)
     {
         if (!Level.Triles.TryGetValue(emplacement, out var instance))
-        {
-            return;
-        }
-
-        if (!tool.Stroke.Add(new InstanceId.Trile(emplacement)))
         {
             return;
         }
@@ -285,7 +313,7 @@ public class TrilePaintToolSystem : EddySystem
         SyncOverlap(emplacement, slot, oldOverlap, overlap.Clone());
     }
 
-    private void EraseOverlap(ToolState.Paint.Trile tool, TrileEmplacement emplacement, int slot)
+    private void EraseOverlap(TrileEmplacement emplacement, int slot)
     {
         if (!Level.Triles.TryGetValue(emplacement, out var main))
         {
@@ -294,11 +322,6 @@ public class TrilePaintToolSystem : EddySystem
 
         var overlap = GetOverlap(main, slot);
         if (overlap == null)
-        {
-            return;
-        }
-
-        if (!tool.Stroke.Add(new InstanceId.TrileOverlap(emplacement, slot)))
         {
             return;
         }

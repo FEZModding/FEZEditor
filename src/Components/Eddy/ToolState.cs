@@ -49,12 +49,14 @@ public abstract record ToolState
             public HashSet<InstanceId> Stroke { get; } = new();
             public IDisposable? HistoryScope { get; set; }
             public (TrileEmplacement Anchor, TrileEmplacement Position, FaceOrientation Face)? ParkingSpot { get; set; }
+            public (int OverlapIndex, TrileEmplacement Origin, HashSet<TrileEmplacement> Targets, int StartFrame)? EraseStroke { get; set; }
 
             public override void Clear()
             {
                 HistoryScope?.Dispose();
                 HistoryScope = null;
                 ParkingSpot = null;
+                EraseStroke = null;
                 Stroke.Clear();
             }
         }

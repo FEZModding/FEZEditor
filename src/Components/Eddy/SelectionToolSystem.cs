@@ -9,6 +9,12 @@ public class SelectionToolSystem : EddySystem
 {
     public override void Update()
     {
+        if (Eddy.Tool is ToolState.Paint.Trile { EraseStroke: { } stroke })
+        {
+            UpdateEraseSelection(stroke.Origin, stroke.OverlapIndex, stroke.Targets);
+            return;
+        }
+
         if (Eddy.Tool is not ToolState.Select state)
         {
             return;
@@ -42,7 +48,7 @@ public class SelectionToolSystem : EddySystem
 
         if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.GetIO().KeyAlt)
         {
-            if (Eddy.Hovered is { } h && Eddy.Frame.AllowsSelection)
+            if (Eddy is { Hovered: { } h, Frame.AllowsSelection: true })
             {
                 SelectCandidate(h.Instance, h.Face, false);
             }
@@ -105,6 +111,19 @@ public class SelectionToolSystem : EddySystem
         }
 
         #endregion
+    }
+
+    private void UpdateEraseSelection(TrileEmplacement origin, int overlapIndex, HashSet<TrileEmplacement> targets)
+    {
+        if (overlapIndex == Eddy.OverlapIndex &&
+            ImGui.IsMouseDragging(ImGuiMouseButton.Left) &&
+            ImGui.GetIO().MouseDelta != NVector2.Zero &&
+            Eddy.HoveredTrile is { } target &&
+            Eddy.GetActiveTrile(target.Trile.Emplacement) != null)
+        {
+            targets.Clear();
+            AddTrilesInRect(origin, target.Trile.Emplacement, targets);
+        }
     }
 
     private void SelectCandidate(InstanceId instance, FaceOrientation? face, bool additive)
@@ -197,9 +216,20 @@ public class SelectionToolSystem : EddySystem
         TrileEmplacement current,
         FaceOrientation? face)
     {
+        var selected = new List<TrileEmplacement>();
+        AddTrilesInRect(origin, current, selected);
+        Eddy.Selected = selected.Count == 0
+            ? new SelectionState.Empty()
+            : new SelectionState.Trile(selected, face ?? FaceOrientation.Front, origin);
+    }
+
+    private void AddTrilesInRect(
+        TrileEmplacement origin,
+        TrileEmplacement current,
+        ICollection<TrileEmplacement> selected)
+    {
         var min = origin.Min(current);
         var max = origin.Max(current);
-        var selected = new List<TrileEmplacement>();
 
         for (var x = min.X; x <= max.X; x++)
         {
@@ -238,8 +268,5 @@ public class SelectionToolSystem : EddySystem
             }
         }
 
-        Eddy.Selected = selected.Count == 0
-            ? new SelectionState.Empty()
-            : new SelectionState.Trile(selected, face ?? FaceOrientation.Front, origin);
     }
 }
