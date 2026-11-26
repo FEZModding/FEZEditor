@@ -17,6 +17,21 @@ localization, save files, and other game resources.
 
 It also supports extracting assets and exporting levels as GLTF dioramas.
 
+## Downloading
+
+Download and extract the archive for your platform from the [Releases](../../releases) page.
+
+| Platform | Release archive |
+|----------|-----------------|
+| Windows (x64) | `FEZEditor-<version>-win-x64.zip` |
+| Linux (x64) | `FEZEditor-<version>-linux-x64.tar.gz` |
+| macOS (Apple silicon) | `FEZEditor-<version>-osx-arm64.tar.gz` |
+
+> [!NOTE]
+> To try changes before the next stable release, download an archive from the
+> [continuous prerelease](../../releases/tag/continuous). It is updated after
+> successful builds of `master`.
+
 ## User Guide
 
 Available on the [FEZModding Wiki](https://fezmodding.github.io/wiki/editor).
